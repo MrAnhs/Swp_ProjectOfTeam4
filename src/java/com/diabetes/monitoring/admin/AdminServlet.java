@@ -274,7 +274,7 @@ public class AdminServlet extends HttpServlet {
     private boolean ensureAdminAccess(HttpServletRequest request, HttpServletResponse response) throws IOException {
         HttpSession session = request.getSession(false);
         User currentUser = session == null ? null : (User) session.getAttribute("currentUser");
-        if (currentUser != null && "admin".equalsIgnoreCase(currentUser.getRole())) {
+        if (currentUser != null && "Admin".equalsIgnoreCase(currentUser.getRole())) {
             return true;
         }
 

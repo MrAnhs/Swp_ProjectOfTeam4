@@ -935,6 +935,10 @@ public class AdminRepository {
             return false;
         }
 
+        if (isAccountEmailExistsForOtherAccount(email, accountId)) {
+            return false;
+        }
+
         String sqlGetRole = "SELECT role FROM Account WHERE account_id = ?";
         String sqlUpdateAccount = "UPDATE Account SET full_name = ?, email = ? WHERE account_id = ?";
         String sqlUpdatePatientByAccount = "UPDATE Patient SET full_name = ?, email = ?, phone = ?, address = ? WHERE account_id = ?";
@@ -1193,6 +1197,9 @@ public class AdminRepository {
 
     // Tạo dịch vụ y tế mới.
     public boolean createMedicalService(String serviceName, BigDecimal price, String serviceType, String status) {
+        if (serviceName == null || serviceName.isBlank() || price == null || price.compareTo(BigDecimal.ZERO) <= 0) {
+            return false;
+        }
         if (!isAllowedServiceType(serviceType) || !isAllowedServiceStatus(status)) {
             return false;
         }
@@ -1212,6 +1219,9 @@ public class AdminRepository {
 
     // Cập nhật thông tin dịch vụ y tế.
     public boolean updateMedicalService(int serviceId, String serviceName, BigDecimal price, String serviceType, String status) {
+        if (serviceId <= 0 || serviceName == null || serviceName.isBlank() || price == null || price.compareTo(BigDecimal.ZERO) <= 0) {
+            return false;
+        }
         if (!isAllowedServiceType(serviceType) || !isAllowedServiceStatus(status)) {
             return false;
         }
@@ -3291,6 +3301,25 @@ public class AdminRepository {
                 return "Admin";
             default:
                 return null;
+        }
+    }
+
+    // Kiểm tra email có thuộc tài khoản khác hay không.
+    private boolean isAccountEmailExistsForOtherAccount(String email, int accountId) {
+        if (email == null || email.isBlank() || accountId <= 0) {
+            return false;
+        }
+
+        String sql = "SELECT COUNT(*) FROM Account WHERE LOWER(email) = LOWER(?) AND account_id <> ?";
+        try (Connection connection = DatabaseConnection.getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, email.trim());
+            statement.setInt(2, accountId);
+            try (ResultSet rs = statement.executeQuery()) {
+                return rs.next() && rs.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to check duplicate account email for profile edit", e);
+            return true;
         }
     }
 
