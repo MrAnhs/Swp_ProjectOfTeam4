@@ -1,14 +1,14 @@
-window.addEventListener("scroll", function () {
+document.addEventListener("DOMContentLoaded", function () {
     const navbar = document.getElementById("navbar");
-    if (!navbar) return;
-    navbar.classList.toggle("scrolled", window.scrollY > 50);
-});
+    if (!navbar) {
+        return;
+    }
 
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener("click", function (event) {
-        const target = document.querySelector(this.getAttribute("href"));
-        if (!target) return;
-        event.preventDefault();
-        target.scrollIntoView({ behavior: "smooth" });
+    window.addEventListener("scroll", function () {
+        if (window.scrollY > 50) {
+            navbar.classList.add("scrolled");
+        } else {
+            navbar.classList.remove("scrolled");
+        }
     });
 });

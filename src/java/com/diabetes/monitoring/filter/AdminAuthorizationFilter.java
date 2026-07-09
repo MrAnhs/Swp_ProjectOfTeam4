@@ -28,7 +28,7 @@ public class AdminAuthorizationFilter implements Filter {
 
         if (!"Admin".equalsIgnoreCase(currentUser.getRole())) {
             if (isJsonRequest(httpRequest)) {
-                writeJsonError(httpResponse, HttpServletResponse.SC_FORBIDDEN, "Access denied");
+                writeJsonError(httpResponse, HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền truy cập.");
             } else {
                 httpResponse.sendError(HttpServletResponse.SC_FORBIDDEN);
             }

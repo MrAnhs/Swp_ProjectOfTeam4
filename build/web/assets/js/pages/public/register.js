@@ -18,7 +18,7 @@
     ].join("-");
 
     dob.max = today;
-    phoneFeedback.textContent = "Vui lòng nhập số điện thoại Việt Nam hợp lệ, ví dụ 0912345678 hoặc +84912345678.";
+    phoneFeedback.textContent = "Enter a valid Vietnamese mobile number, for example 0912345678 or +84912345678.";
 
     function validatePasswordConfirmation() {
         if (confirmPassword.value && password.value !== confirmPassword.value) {
@@ -27,17 +27,17 @@
             return;
         }
         confirmPassword.setCustomValidity("");
-        confirmFeedback.textContent = "Vui lòng xác nhận mật khẩu.";
+        confirmFeedback.textContent = "Confirm your password.";
     }
 
     function validateDob() {
         if (dob.value && (dob.value < dob.min || dob.value > today)) {
-            dob.setCustomValidity("Ngày sinh không hợp lệ");
-            dobFeedback.textContent = "Ngày sinh phải nằm trong khoảng từ 01/01/1900 đến hôm nay.";
+            dob.setCustomValidity("Invalid date of birth");
+            dobFeedback.textContent = "Date of birth must be between 01/01/1900 and today.";
             return;
         }
         dob.setCustomValidity("");
-        dobFeedback.textContent = "Ngày sinh phải hợp lệ và không được vượt quá ngày hiện tại.";
+        dobFeedback.textContent = "Enter a valid date of birth that is not in the future.";
     }
 
     function normalizePhone(value) {
@@ -50,7 +50,7 @@
     function validatePhone() {
         const cleaned = phone.value.trim().replace(/[\s.\-()]/g, "");
         if (phone.value && !phonePattern.test(cleaned)) {
-            phone.setCustomValidity("Số điện thoại Việt Nam không hợp lệ");
+            phone.setCustomValidity("Invalid Vietnamese phone number");
             return;
         }
         phone.setCustomValidity("");

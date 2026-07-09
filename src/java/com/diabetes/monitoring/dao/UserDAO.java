@@ -105,18 +105,17 @@ public class UserDAO {
     }
 
     /**
-     * Validate login using Account table
-     * For patients: also fetch patient_id and additional info from Patient table
+     * Validate login using Account table.
+     * Role is resolved from the account after the password is verified.
      */
-    public User validateLogin(String email, String password, String role) {
+    public User validateLogin(String email, String password) {
         // Step 1: Check Account table
         String sqlAccount = "SELECT account_id, full_name, email, role, password_hash, status "
-                + "FROM Account WHERE LOWER(email) = LOWER(?) AND LOWER(role) = LOWER(?)";
+                + "FROM Account WHERE LOWER(email) = LOWER(?)";
         
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sqlAccount)) {
             statement.setString(1, email);
-            statement.setString(2, role);
             
             try (ResultSet rs = statement.executeQuery()) {
                 if (rs.next()) {

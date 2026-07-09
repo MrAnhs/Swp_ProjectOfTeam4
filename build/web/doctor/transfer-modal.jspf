@@ -1,0 +1,38 @@
+<div class="modal fade" id="transferModal${transferRecord.healthRecordId}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form action="${pageContext.request.contextPath}/TransferRecordServlet" method="post">
+                <div class="modal-header border-secondary">
+                    <div>
+                        <h5 class="modal-title">Benh nhan #${transferRecord.healthRecordId}</h5>
+                        <small class="text-secondary">${transferRecord.patientName}</small>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="record_id" value="${transferRecord.healthRecordId}">
+                    <div class="mb-3">
+                        <label class="form-label">Chuyen bac si</label>
+                        <select class="form-select" name="to_doctor_id" required>
+                            <option value="">-- Chon bac si chuyen mon --</option>
+                            <c:forEach var="doctor" items="${doctorList}">
+                                <option value="${doctor.doctorId}">
+                                    ${doctor.fullName} ${empty doctor.department ? '' : '-'} ${doctor.department}
+                                </option>
+                            </c:forEach>
+                        </select>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label">Li do chuyen</label>
+                        <textarea class="form-control" name="reason" rows="3"
+                                  placeholder="Nh?p lí do chuy?n bác s?"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Thoat</button>
+                    <button type="submit" class="btn btn-warning fw-bold">Chuyen bac si</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -13,76 +13,54 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/pages/public/common.css" />
 </head>
 <body class="bg-light d-flex align-items-center justify-content-center" style="min-height: 100vh; background: linear-gradient(135deg, #f4fbf9 0%, #e8f7f4 100%);">
-
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-12 d-flex justify-content-center">
-                
                 <div class="card login-card border-0 shadow-lg p-3 bg-white">
                     <div class="card-body p-4 p-md-5">
                         <div class="text-center mb-4">
-                            <h2 class="fw-bold text-dark mb-2">Đăng nhập hệ thống</h2>
-                            <p class="text-secondary small">Đăng nhập để sử dụng các chức năng theo vai trò của bạn.</p>
+                            <h2 class="fw-bold text-dark mb-2">Đăng nhập</h2>
+                            <p class="text-secondary small">Hệ thống sẽ tự điều hướng theo vai trò trong tài khoản của bạn.</p>
                         </div>
                         <c:if test="${not empty loginError}">
-                            <div class="alert alert-danger" role="alert">
-                                ${loginError}
-                            </div>
+                            <div class="alert alert-danger" role="alert">${loginError}</div>
                         </c:if>
-                        
+
                         <form action="auth" method="post" class="needs-validation" novalidate>
-                            
                             <div class="mb-3">
                                 <label for="email" class="form-label text-secondary fw-semibold small">Email</label>
                                 <div class="input-group custom-input-group">
                                     <span class="input-group-text bg-white border-end-0 text-secondary">
                                         <i class="bi bi-envelope-fill"></i>
                                     </span>
-                                    <input type="email" class="form-control border-start-0 ps-0 shadow-none" id="email" name="email" placeholder="trunhiu0305@gmail.com" required>
+                                    <input type="email" class="form-control border-start-0 ps-0 shadow-none" id="email" name="email" placeholder="example@gmail.com" required>
                                     <div class="invalid-feedback ms-3">Vui lòng nhập email.</div>
                                 </div>
                             </div>
-                            
+
                             <div class="mb-3">
                                 <label for="password" class="form-label text-secondary fw-semibold small">Mật khẩu</label>
                                 <div class="input-group custom-input-group">
                                     <span class="input-group-text bg-white border-end-0 text-secondary">
                                         <i class="bi bi-key-fill"></i>
                                     </span>
-                                    <input type="password" class="form-control border-start-0 ps-0 shadow-none" id="password" name="password" placeholder="**********" required>
+                                    <input type="password" class="form-control border-start-0 ps-0 shadow-none" id="password" name="password" placeholder="Nhập mật khẩu" required>
                                     <div class="invalid-feedback ms-3">Vui lòng nhập mật khẩu.</div>
                                 </div>
                             </div>
-                            
-                            <div class="mb-3">
-                                <label for="role" class="form-label text-secondary fw-semibold small">Vai trò đăng nhập</label>
-                                <div class="input-group custom-input-group">
-                                    <span class="input-group-text bg-white border-end-0 text-secondary">
-                                        <i class="bi bi-person-badge-fill"></i>
-                                    </span>
-                                    <select class="form-select border-start-0 ps-0 shadow-none text-secondary" id="role" name="role" required>
-                                        <option value="Patient">Bệnh nhân</option>
-                                        <option value="Doctor">Bác sĩ</option>
-                                        <option value="doctor_lab">Bác sĩ phòng xét nghiệm</option>
-                                        <option value="Receptionist">Lễ tân</option>
-                                        <option value="Admin">Quản trị viên</option>
-                                    </select>
-                                </div>
-                            </div>
-                            
+
                             <div class="d-flex justify-content-end align-items-center mb-4 pt-1">
                                 <a href="#" class="text-decoration-none text-secondary small link-hover-vinmec">Quên mật khẩu?</a>
                             </div>
-                            
+
                             <button type="submit" class="btn btn-vinmec w-100 fw-bold py-2-5 text-white shadow-sm">Đăng nhập</button>
                         </form>
-                        
+
                         <p class="text-center text-secondary mt-4 mb-0 small">
                             Chưa có tài khoản? <a href="register.jsp" class="text-decoration-none fw-bold text-dark link-hover-vinmec">Đăng ký</a>
                         </p>
                     </div>
                 </div>
-                
             </div>
         </div>
     </div>

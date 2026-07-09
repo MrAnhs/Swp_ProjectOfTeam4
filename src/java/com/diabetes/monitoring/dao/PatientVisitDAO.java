@@ -16,7 +16,7 @@ public class PatientVisitDAO {
             + "d.full_name doctor_name, d.department, mr.record_id, mr.result_visibility, "
             + "mr.final_diagnosis, mr.doctor_note, mr.processed_at, "
             + "hr.health_record_id, hr.status health_record_status, hr.urea, hr.cr, hr.hba1c, "
-            + "hr.chol, hr.tg, hr.hdl, hr.ldl, hr.vldl, hr.bmi, hr.weight, hr.height, "
+            + "hr.chol, hr.tg, hr.hdl, hr.idl AS ldl, hr.vldl, hr.bmi, hr.weight, hr.height, "
             + "hr.other_information "
             + "FROM Appointment a "
             + "INNER JOIN Patient p ON p.patient_id = a.patient_id "

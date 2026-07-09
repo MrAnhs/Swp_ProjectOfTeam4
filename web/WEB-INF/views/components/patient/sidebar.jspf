@@ -57,7 +57,7 @@
     <div class="sidebar-footer">
         <a href="${pageContext.request.contextPath}/login.jsp" class="btn-logout">
             <i class="bi bi-box-arrow-left"></i>
-            <span class="nav-text" data-i18n="logout">Đăng xuất</span>
+            <span class="nav-text" data-i18n="logout">Logout</span>
         </a>
     </div>
 </aside>

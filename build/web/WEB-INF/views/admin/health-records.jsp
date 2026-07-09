@@ -4,7 +4,7 @@
 <c:set var="currentAction" value="exception" />
 
 <%--
-    Trang hồ sơ sức khỏe (ngoại lệ vận hành):
+    Trang Health Records (ngoại lệ vận hành):
     - Hiển thị dữ liệu hồ sơ sức khỏe phục vụ điều phối khẩn
     - Hỗ trợ thao tác kiểm tra, rà soát trạng thái hồ sơ
 --%>
@@ -98,7 +98,7 @@
                         <i class="bi bi-arrow-left-right me-2"></i> Điều phối ca đang kẹt
                     </a>
                     <a class="btn btn-primary text-start" href="${pageContext.request.contextPath}/admin">
-                        <i class="bi bi-speedometer2 me-2"></i> Quay lại tổng quan quản trị
+                        <i class="bi bi-speedometer2 me-2"></i> Quay lại Dashboard Admin
                     </a>
                 </div>
             </div>

@@ -2,6 +2,26 @@
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
-        <group/>
+        <group>
+            <file>file:/C:/Users/LENOVO/Documents/Môn%20P/Swp_Project_Team4-main/web/FRONTEND_STRUCTURE.md</file>
+            <file>file:/C:/Users/LENOVO/Documents/Môn%20P/Swp_Project_Team4-main/web/assets/js/pages/doctor/README.md</file>
+            <file>file:/C:/Users/LENOVO/Documents/Môn%20P/Swp_Project_Team4-main/web/assets/css/pages/doctor/README.md</file>
+            <file>file:/C:/Users/LENOVO/Documents/Môn%20P/Swp_Project_Team4-main/web/assets/js/pages/admin/reports.js</file>
+            <file>file:/C:/Users/LENOVO/Documents/Môn%20P/Swp_Project_Team4-main/web/assets/js/pages/admin/schedule-management.js</file>
+            <file>file:/C:/Users/LENOVO/Documents/Môn%20P/Swp_Project_Team4-main/src/java/com/diabetes/monitoring/servlet/ProcessAIServlet.java</file>
+            <file>file:/C:/Users/LENOVO/Documents/Môn%20P/Swp_Project_Team4-main/src/java/com/diabetes/monitoring/servlet/SaveNotesServlet.java</file>
+            <file>file:/C:/Users/LENOVO/Documents/Môn%20P/Swp_Project_Team4-main/web/login.jsp</file>
+            <file>file:/C:/Users/LENOVO/Documents/Môn%20P/Swp_Project_Team4-main/web/doctor/examinationList.jsp</file>
+            <file>file:/C:/Users/LENOVO/Documents/Môn%20P/Swp_Project_Team4-main/web/assets/js/pages/receptionist/appointment-registration.js</file>
+            <file>file:/C:/Users/LENOVO/Documents/Môn%20P/Swp_Project_Team4-main/web/assets/css/pages/receptionist/receptionist.css</file>
+            <file>file:/C:/Users/LENOVO/Documents/Môn%20P/Swp_Project_Team4-main/web/assets/js/pages/admin/dashboard.js</file>
+            <file>file:/C:/Users/LENOVO/Documents/Môn%20P/Swp_Project_Team4-main/web/index.jsp</file>
+            <file>file:/C:/Users/LENOVO/Documents/Môn%20P/Swp_Project_Team4-main/web/assets/js/pages/patient/appointment-booking.js</file>
+            <file>file:/C:/Users/LENOVO/Documents/Môn%20P/Swp_Project_Team4-main/src/java/com/diabetes/monitoring/model/Appointment.java</file>
+            <file>file:/C:/Users/LENOVO/Documents/Môn%20P/Swp_Project_Team4-main/src/java/com/diabetes/monitoring/admin/common/AdminJsonUtil.java</file>
+            <file>file:/C:/Users/LENOVO/Documents/Môn%20P/Swp_Project_Team4-main/src/java/com/diabetes/monitoring/model/AvailabilitySlot.java</file>
+            <file>file:/C:/Users/LENOVO/Documents/Môn%20P/Swp_Project_Team4-main/src/java/com/diabetes/monitoring/admin/patientflow/AdminPatientFlowService.java</file>
+            <file>file:/C:/Users/LENOVO/Documents/Môn%20P/Swp_Project_Team4-main/web/doctor/searchPatient.jsp</file>
+        </group>
     </open-files>
 </project-private>

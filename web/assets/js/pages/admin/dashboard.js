@@ -577,7 +577,7 @@ const dashboardBasePath = window.AdminConfig && window.AdminConfig.contextPath ?
                                                             const items = Array.isArray(data) ? data : (Array.isArray(data.items) ? data.items : []);
                                                             renderCompletedAppointmentsModalRows(items);
                                                         } catch (error) {
-                                                            setQuickModalContent('Danh sách lượt khám hoàn tất', '<div class="alert alert-danger mb-0">Không thể tải danh sách ca khám đã hoàn tất.</div>');
+                                                            setQuickModalContent('Danh sách lượt khám hoàn tất', '<div class="alert alert-danger mb-0">Không thể tải danh sách ca khám Completed.</div>');
                                                         }
                                                     }
 

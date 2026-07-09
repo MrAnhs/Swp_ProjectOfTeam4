@@ -265,12 +265,15 @@ public class ReceptionistDAO {
     }
 
     public boolean checkInAppointment(int appointmentId) throws SQLException {
-        String sql = "UPDATE Appointment SET status = 'Checked_In' "
-                + "WHERE appointment_id = ? AND status = 'Waiting' "
-                + "AND CAST(appointment_time AS date) = CAST(GETDATE() AS date)";
         try (Connection connection = openConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setInt(1, appointmentId);
+             PreparedStatement statement = connection.prepareStatement(
+                     "UPDATE Appointment SET status = ? "
+                     + "WHERE appointment_id = ? AND status = 'Waiting' "
+                     + "AND CAST(appointment_time AS date) = CAST(GETDATE() AS date)")) {
+            String targetStatus = isAppointmentStatusAllowed(connection, "Checked_In")
+                    ? "Checked_In" : "In_Progress";
+            statement.setString(1, targetStatus);
+            statement.setInt(2, appointmentId);
             return statement.executeUpdate() > 0;
         }
     }
@@ -471,9 +474,20 @@ public class ReceptionistDAO {
     }
 
     private void markLateWaitingAppointmentsAsAbsent(Connection connection) throws SQLException {
+        if (!isAppointmentStatusAllowed(connection, "Absent")) {
+            return;
+        }
         try (PreparedStatement statement = connection.prepareStatement(
                 "UPDATE Appointment SET status = 'Absent' WHERE status = 'Waiting' AND appointment_time < GETDATE()")) {
             statement.executeUpdate();
+        }
+    }
+
+    private boolean isAppointmentStatusAllowed(Connection connection, String status) throws SQLException {
+        String sql = "SELECT definition FROM sys.check_constraints WHERE name = 'CK_Appointment_Status'";
+        try (PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+            return !resultSet.next() || resultSet.getString("definition").contains("'" + status + "'");
         }
     }
 

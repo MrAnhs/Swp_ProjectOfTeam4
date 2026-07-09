@@ -30,7 +30,7 @@ public class PatientAuthorizationFilter implements Filter {
             if (isPageRequest(httpRequest)) {
                 httpResponse.sendError(HttpServletResponse.SC_FORBIDDEN);
             } else {
-                writeJsonError(httpResponse, HttpServletResponse.SC_FORBIDDEN, "Access denied");
+                writeJsonError(httpResponse, HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền truy cập.");
             }
             return;
         }
