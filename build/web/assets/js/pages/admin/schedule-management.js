@@ -8,7 +8,7 @@ const adminLoginUrl = window.AdminConfig && window.AdminConfig.loginUrl ? window
                 const bsModal = new bootstrap.Modal(modalEl);
                 document.getElementById('transferSelectedInfo').textContent = doctorName + ' - ' + department + ' - ' + workDate + ' - ' + timeSlot;
                 const select = document.getElementById('transferTargetDoctor');
-                select.innerHTML = '<option>Đang tải...</option>';
+                select.innerHTML = '<option>\u0110ang t\u1EA3i...</option>';
                 try {
                     const resp = await fetch(adminContextPath + '/admin?action=getTransferCandidates&scheduleId=' + encodeURIComponent(scheduleId), {
                         headers: { 'Accept': 'application/json' }
@@ -17,14 +17,14 @@ const adminLoginUrl = window.AdminConfig && window.AdminConfig.loginUrl ? window
                     const data = await resp.json();
                     const currentId = data.currentDoctorId || null;
                     const items = data.items || [];
-                    let options = '<option value="">-- Chọn bác sĩ thay thế --</option>';
+                    let options = '<option value="">-- Ch\u1ECDn b\u00E1c s\u0129 thay th\u1EBF --</option>';
                     for (const d of items) {
                         if (currentId && String(d.doctorId) === String(currentId)) continue; // skip current doctor
                         options += '<option value="' + d.doctorId + '">' + escapeHtml(d.fullName) + ' - ' + escapeHtml(d.department) + '</option>';
                     }
                     select.innerHTML = options;
                 } catch (err) {
-                    select.innerHTML = '<option value="">Không tải được danh sách bác sĩ</option>';
+                    select.innerHTML = '<option value="">Kh\u00F4ng t\u1EA3i \u0111\u01B0\u1EE3c danh s\u00E1ch b\u00E1c s\u0129</option>';
                 }
                 // attach schedule id to confirm button
                 document.getElementById('transferConfirmBtn').setAttribute('data-schedule-id', scheduleId);
@@ -44,7 +44,7 @@ const adminLoginUrl = window.AdminConfig && window.AdminConfig.loginUrl ? window
                 alertBox.className = 'alert d-none';
                 if (!targetDoctorId) {
                     alertBox.className = 'alert alert-danger';
-                    alertBox.textContent = 'Vui lòng chọn bác sĩ nhận ca.';
+                    alertBox.textContent = 'Vui l\u00F2ng ch\u1ECDn b\u00E1c s\u0129 nh\u1EADn ca.';
                     return;
                 }
                 try {
@@ -65,7 +65,7 @@ const adminLoginUrl = window.AdminConfig && window.AdminConfig.loginUrl ? window
                     try { json = await resp.json(); } catch (e) { /* ignore parse error */ }
                     if (json && json.success) {
                         alertBox.className = 'alert alert-success';
-                        alertBox.textContent = json.message || 'Đã chuyển giao ca trực';
+                        alertBox.textContent = json.message || '\u0110\u00E3 chuy\u1EC3n giao ca tr\u1EF1c';
                         // Update table row in-place if present
                         const row = document.querySelector('tr[data-schedule-id="' + scheduleId + '"]');
                         if (row) {
@@ -81,11 +81,11 @@ const adminLoginUrl = window.AdminConfig && window.AdminConfig.loginUrl ? window
                     } else {
                         const msg = (json && json.message) ? json.message : ('HTTP ' + resp.status);
                         alertBox.className = 'alert alert-danger';
-                        alertBox.textContent = 'Không thể chuyển giao ca: ' + msg;
+                        alertBox.textContent = 'Kh\u00F4ng th\u1EC3 chuy\u1EC3n giao ca: ' + msg;
                     }
                 } catch (err) {
                     alertBox.className = 'alert alert-danger';
-                    alertBox.textContent = 'Lỗi khi gửi yêu cầu: ' + err.message;
+                    alertBox.textContent = 'L\u1ED7i khi g\u1EEDi y\u00EAu c\u1EA7u: ' + err.message;
                 }
             });
 
@@ -111,7 +111,7 @@ const adminLoginUrl = window.AdminConfig && window.AdminConfig.loginUrl ? window
                     <div class="modal-content">
                         <form id="editScheduleForm">
                             <div class="modal-header">
-                                <h5 class="modal-title">Chỉnh sửa ca trực</h5>
+                                <h5 class="modal-title">Ch\u1EC9nh s\u1EEDa ca tr\u1EF1c</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body">
@@ -119,11 +119,11 @@ const adminLoginUrl = window.AdminConfig && window.AdminConfig.loginUrl ? window
                                 <input type="hidden" name="scheduleId" id="editScheduleId">
                                 <input type="hidden" name="csrfToken" value="${adminCsrfToken}">
                                 <div class="mb-3">
-                                    <label class="form-label">Bác sĩ</label>
+                                    <label class="form-label">B\u00E1c s\u0129</label>
                                     <select id="editDoctorId" name="doctorId" class="form-select" required></select>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Khung giờ</label>
+                                    <label class="form-label">Khung gi\u1EDD</label>
                                     <select id="editTimeSlot" name="timeSlot" class="form-select" required>
                                         <option value="07:00-09:00">07:00-09:00</option>
                                         <option value="09:00-11:00">09:00-11:00</option>
@@ -134,26 +134,26 @@ const adminLoginUrl = window.AdminConfig && window.AdminConfig.loginUrl ? window
                                     </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Số bệnh nhân tối đa</label>
+                                    <label class="form-label">S\u1ED1 b\u1EC7nh nh\u00E2n t\u1ED1i \u0111a</label>
                                     <input type="number" id="editMaxPatients" name="maxPatients" class="form-control" min="1" required>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Slot online</label>
                                     <input type="number" id="editOnlineQuota" name="onlineQuota" class="form-control" min="0">
-                                    <div class="form-text">Nếu để trống, hệ thống sẽ tự đặt theo cấu hình an toàn mặc định.</div>
+                                    <div class="form-text">N\u1EBFu \u0111\u1EC3 tr\u1ED1ng, h\u1EC7 th\u1ED1ng s\u1EBD t\u1EF1 \u0111\u1EB7t theo c\u1EA5u h\u00ECnh an to\u00E0n m\u1EB7c \u0111\u1ECBnh.</div>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Trạng thái</label>
+                                    <label class="form-label">Tr\u1EA1ng th\u00E1i</label>
                                     <select id="editStatus" name="status" class="form-select">
-                                        <option value="Available">Khả dụng</option>
-                                        <option value="Full">Đã đầy</option>
-                                        <option value="Cancelled">Đã hủy</option>
+                                        <option value="Available">Kh\u1EA3 d\u1EE5ng</option>
+                                        <option value="Full">\u0110\u00E3 \u0111\u1EA7y</option>
+                                        <option value="Cancelled">\u0110\u00E3 h\u1EE7y</option>
                                     </select>
                                 </div>
                             </div>
                             <div class="modal-footer">
-                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Đóng</button>
-                                <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">\u0110\u00F3ng</button>
+                                <button type="submit" class="btn btn-primary">L\u01B0u thay \u0111\u1ED5i</button>
                             </div>
                         </form>
                     </div>
@@ -187,7 +187,7 @@ const adminLoginUrl = window.AdminConfig && window.AdminConfig.loginUrl ? window
 
                     // populate doctors list
                     const doctorSelect = document.getElementById('editDoctorId');
-                    doctorSelect.innerHTML = '<option>Đang tải...</option>';
+                    doctorSelect.innerHTML = '<option>\u0110ang t\u1EA3i...</option>';
                     const doctors = data.doctors || [];
                     let opts = '';
                     for (const d of doctors) {
@@ -199,7 +199,7 @@ const adminLoginUrl = window.AdminConfig && window.AdminConfig.loginUrl ? window
                     const alert = document.getElementById('editScheduleAlert');
                     if (alert) {
                         alert.className = 'alert alert-danger';
-                        alert.textContent = 'Không tải được dữ liệu ca trực.';
+                        alert.textContent = 'Kh\u00F4ng t\u1EA3i \u0111\u01B0\u1EE3c d\u1EEF li\u1EC7u ca tr\u1EF1c.';
                     }
                 }
 
@@ -242,7 +242,7 @@ const adminLoginUrl = window.AdminConfig && window.AdminConfig.loginUrl ? window
                                 row.setAttribute('data-reserved-slots', reservedSlots);
                                 row.querySelector('td:nth-child(5) div').textContent = (row.dataset.bookedAppointments || 0) + ' / ' + payload.maxPatients;
                                 const reserveText = row.querySelector('td:nth-child(5) small:nth-of-type(2)');
-                                if (reserveText) reserveText.textContent = 'Dự phòng: ' + reservedSlots + ' slot';
+                                if (reserveText) reserveText.textContent = 'D\u1EF1 ph\u00F2ng: ' + reservedSlots + ' slot';
                                 const onlineQuota = Number(row.dataset.onlineQuota || 0);
                                 const onlineBooked = Number(row.dataset.onlineBookedCount || 0);
                                 const quotaCell = row.querySelector('td:nth-child(6)');
@@ -253,9 +253,9 @@ const adminLoginUrl = window.AdminConfig && window.AdminConfig.loginUrl ? window
                                 }
                                 // update status badge
                                 const statusCell = row.querySelector('td:nth-child(8)');
-                                if (statusCell) statusCell.innerHTML = '<span class="badge text-bg-' + (payload.status === 'Available' ? 'success' : (payload.status === 'Full' ? 'danger' : 'dark')) + '">' + (payload.status === 'Available' ? '<i class="bi bi-check-circle"></i> Khả dụng' : (payload.status === 'Full' ? '<i class="bi bi-exclamation-circle"></i> Đã đầy' : '<i class="bi bi-x-circle"></i> Đã hủy')) + '</span>';
+                                if (statusCell) statusCell.innerHTML = '<span class="badge text-bg-' + (payload.status === 'Available' ? 'success' : (payload.status === 'Full' ? 'danger' : 'dark')) + '">' + (payload.status === 'Available' ? '<i class="bi bi-check-circle"></i> Kh\u1EA3 d\u1EE5ng' : (payload.status === 'Full' ? '<i class="bi bi-exclamation-circle"></i> \u0110\u00E3 \u0111\u1EA7y' : '<i class="bi bi-x-circle"></i> \u0110\u00E3 h\u1EE7y')) + '</span>';
                             }
-                            showTempAlert('Cập nhật ca trực thành công.', 'success');
+                            showTempAlert('C\u1EADp nh\u1EADt ca tr\u1EF1c th\u00E0nh c\u00F4ng.', 'success');
                         } else {
                             const alertEl = container.querySelector('#editScheduleAlert');
                             if (alertEl) {
@@ -267,7 +267,7 @@ const adminLoginUrl = window.AdminConfig && window.AdminConfig.loginUrl ? window
                         const alertEl = container.querySelector('#editScheduleAlert');
                         if (alertEl) {
                             alertEl.className = 'alert alert-danger';
-                            alertEl.textContent = 'Lỗi khi gửi yêu cầu cập nhật.';
+                            alertEl.textContent = 'L\u1ED7i khi g\u1EEDi y\u00EAu c\u1EA7u c\u1EADp nh\u1EADt.';
                         }
                     }
                 });
@@ -317,13 +317,13 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
                                                           }
 
                                                           const departmentMapping = {
-                                                              'Nội tiết - Tiểu đường': 'Endocrinology',
+                                                              'N\u1ED9i ti\u1EBFt - Ti\u1EC3u \u0111\u01B0\u1EDDng': 'Endocrinology',
                                                               'Endocrinology': 'Endocrinology',
-                                                              'Tim mạch': 'Cardiology',
+                                                              'Tim m\u1EA1ch': 'Cardiology',
                                                               'Cardiology': 'Cardiology',
-                                                              'Thận học': 'Nephrology',
+                                                              'Th\u1EADn h\u1ECDc': 'Nephrology',
                                                               'Nephrology': 'Nephrology',
-                                                              'Tổng quát': 'General',
+                                                              'T\u1ED5ng qu\u00E1t': 'General',
                                                               'General': 'General'
                                                           };
 
@@ -437,9 +437,9 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
                                                               const total = days * shifts * doctorsPerShift;
                                                               maxSchedules.value = total;
                                                               if (summary) {
-                                                                  summary.textContent = 'Hệ thống sẽ tạo ra: ' + days + ' ngày x ' + shifts
-                                                                          + ' ca x ' + doctorsPerShift + ' bác sĩ/ca = ' + total
-                                                                          + ' slot lịch trực, sau đó Gemini điền bác sĩ.';
+                                                                  summary.textContent = 'H\u1EC7 th\u1ED1ng s\u1EBD t\u1EA1o ra: ' + days + ' ng\u00E0y x ' + shifts
+                                                                          + ' ca x ' + doctorsPerShift + ' b\u00E1c s\u0129/ca = ' + total
+                                                                          + ' slot l\u1ECBch tr\u1EF1c, sau \u0111\u00F3 Gemini \u0111i\u1EC1n b\u00E1c s\u0129.';
                                                               }
                                                           }
                                                           function setAiScheduleBusy(isBusy) {
@@ -453,15 +453,15 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
                                                               if (submitButton) {
                                                                   submitButton.disabled = isBusy;
                                                                   submitButton.innerHTML = isBusy
-                                                                          ? '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Gemini đang phân bổ...'
-                                                                          : '<i class="fa-solid fa-rocket me-2"></i>Tiến hành phân bổ bằng AI';
+                                                                          ? '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Gemini \u0111ang ph\u00E2n b\u1ED5...'
+                                                                          : '<i class="fa-solid fa-rocket me-2"></i>Ti\u1EBFn h\u00E0nh ph\u00E2n b\u1ED5 b\u1EB1ng AI';
                                                               }
                                                               if (loadingBox) {
                                                                   loadingBox.classList.toggle('d-none', !isBusy);
                                                                   loadingBox.classList.toggle('d-flex', isBusy);
                                                               }
                                                               if (detail) {
-                                                                  detail.textContent = isBusy ? 'Đang ghi lịch trực thật vào hệ thống...' : '';
+                                                                  detail.textContent = isBusy ? '\u0110ang ghi l\u1ECBch tr\u1EF1c th\u1EADt v\u00E0o h\u1EC7 th\u1ED1ng...' : '';
                                                               }
                                                           }
 
@@ -479,40 +479,40 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
                                                                       : Math.max(0, maxPatients - onlineQuota);
 
                                                               const departmentMap = {
-                                                                  Endocrinology: 'Nội tiết - Tiểu đường',
-                                                                  Cardiology: 'Tim mạch',
-                                                                  Nephrology: 'Thận học',
-                                                                  General: 'Tổng quát'
+                                                                  Endocrinology: 'N\u1ED9i ti\u1EBFt - Ti\u1EC3u \u0111\u01B0\u1EDDng',
+                                                                  Cardiology: 'Tim m\u1EA1ch',
+                                                                  Nephrology: 'Th\u1EADn h\u1ECDc',
+                                                                  General: 'T\u1ED5ng qu\u00E1t'
                                                               };
-                                                              const department = departmentMap[schedule.department] || (schedule.department || 'Chưa xác định');
+                                                              const department = departmentMap[schedule.department] || (schedule.department || 'Ch\u01B0a x\u00E1c \u0111\u1ECBnh');
 
                                                               const isGemini = schedule.source === 'Gemini AI';
-                                                              const sourceLabel = isGemini ? 'Gemini AI tạo lịch' : 'Cân bằng tải dự phòng';
+                                                              const sourceLabel = isGemini ? 'Gemini AI t\u1EA1o l\u1ECBch' : 'C\u00E2n b\u1EB1ng t\u1EA3i d\u1EF1 ph\u00F2ng';
                                                               const sourceIcon = isGemini ? 'fa-brain' : 'fa-scale-balanced';
 
                                                               const status = schedule.effectiveStatus || schedule.status || 'Available';
 
-                                                              let statusBadge = '<span class="badge text-bg-success"><i class="bi bi-check-circle"></i> Khả dụng</span>';
+                                                              let statusBadge = '<span class="badge text-bg-success"><i class="bi bi-check-circle"></i> Kh\u1EA3 d\u1EE5ng</span>';
 
                                                               if (status === 'Expired') {
-                                                                  statusBadge = '<span class="badge text-bg-secondary"><i class="bi bi-clock"></i> Đã qua</span>';
+                                                                  statusBadge = '<span class="badge text-bg-secondary"><i class="bi bi-clock"></i> \u0110\u00E3 qua</span>';
                                                               } else if (status === 'Cancelled') {
-                                                                  statusBadge = '<span class="badge text-bg-dark"><i class="bi bi-x-circle"></i> Đã hủy</span>';
+                                                                  statusBadge = '<span class="badge text-bg-dark"><i class="bi bi-x-circle"></i> \u0110\u00E3 h\u1EE7y</span>';
                                                               } else if (status === 'Full') {
-                                                                  statusBadge = '<span class="badge text-bg-danger"><i class="bi bi-exclamation-circle"></i> Đã đầy</span>';
+                                                                  statusBadge = '<span class="badge text-bg-danger"><i class="bi bi-exclamation-circle"></i> \u0110\u00E3 \u0111\u1EA7y</span>';
                                                               }
 
                                                               let actionColumn = '<span class="badge ai-schedule-badge" title="'
                                                                       + escapeHtmlForSchedule(schedule.reason || '')
-                                                                      + '"><i class="fa-solid fa-database me-1"></i>Đã lưu DB</span>';
+                                                                      + '"><i class="fa-solid fa-database me-1"></i>\u0110\u00E3 l\u01B0u DB</span>';
 
                                                               if (status === 'Expired') {
                                                                   actionColumn = '<button type="button" class="btn btn-sm btn-outline-secondary" disabled>'
-                                                                          + '<i class="bi bi-clock"></i> Đã qua'
+                                                                          + '<i class="bi bi-clock"></i> \u0110\u00E3 qua'
                                                                           + '</button>';
                                                               } else if (status === 'Cancelled') {
                                                                   actionColumn = '<button type="button" class="btn btn-sm btn-outline-dark" disabled>'
-                                                                          + '<i class="bi bi-x-circle"></i> Đã hủy'
+                                                                          + '<i class="bi bi-x-circle"></i> \u0110\u00E3 h\u1EE7y'
                                                                           + '</button>';
                                                               }
 
@@ -534,8 +534,8 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
 
                                                                       + '<td><div style="background-color: #f0f8f4; padding: 6px 10px; border-radius: 4px; font-weight: 500; text-align: center;">'
                                                                       + bookedAppointments + ' / ' + maxPatients + '</div>'
-                                                                      + '<small class="text-muted d-block text-center mt-1">Đã check-in/đang khám: ' + activeAppointments + '</small>'
-                                                                      + '<small class="text-muted d-block text-center">Dự phòng: ' + reservedSlots + ' slot</small></td>'
+                                                                      + '<small class="text-muted d-block text-center mt-1">\u0110\u00E3 check-in/\u0111ang kh\u00E1m: ' + activeAppointments + '</small>'
+                                                                      + '<small class="text-muted d-block text-center">D\u1EF1 ph\u00F2ng: ' + reservedSlots + ' slot</small></td>'
 
                                                                       + '<td class="text-center">'
                                                                       + '<div class="fw-semibold">' + onlineBookedCount + ' / ' + onlineQuota + '</div>'
@@ -544,12 +544,12 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
                                                                       + '</td>'
 
                                                                       + '<td class="schedule-load-cell">'
-                                                                      + '<div class="schedule-load-wrap" title="' + (loadPct >= 100 ? 'Quá tải' : (loadPct >= 80 ? 'Cận đầy' : 'Bình thường')) + '">'
+                                                                      + '<div class="schedule-load-wrap" title="' + (loadPct >= 100 ? 'Qu\u00E1 t\u1EA3i' : (loadPct >= 80 ? 'C\u1EADn \u0111\u1EA7y' : 'B\u00ECnh th\u01B0\u1EDDng')) + '">'
                                                                       + '<div class="progress schedule-load-progress">'
                                                                       + '<div class="progress-bar ' + (loadPct >= 100 ? 'bg-danger' : (loadPct >= 80 ? 'bg-warning' : 'bg-success')) + '" role="progressbar" style="width: ' + (loadPct > 100 ? 100 : loadPct) + '%;" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + loadPct + '"></div>'
                                                                       + '</div>'
                                                                       + '<span class="badge schedule-load-percent ' + (loadPct >= 100 ? 'text-bg-danger' : (loadPct >= 80 ? 'text-bg-warning' : 'text-bg-success')) + '">' + loadPct + '%</span>'
-                                                                      + '<small class="text-muted schedule-load-state">' + (loadPct >= 100 ? 'Quá tải' : (loadPct >= 80 ? 'Cận đầy' : 'Bình thường')) + '</small>'
+                                                                      + '<small class="text-muted schedule-load-state">' + (loadPct >= 100 ? 'Qu\u00E1 t\u1EA3i' : (loadPct >= 80 ? 'C\u1EADn \u0111\u1EA7y' : 'B\u00ECnh th\u01B0\u1EDDng')) + '</small>'
                                                                       + '</div>'
                                                                       + '</td>'
 
@@ -626,7 +626,7 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
                                                                           const badge = document.createElement('span');
                                                                           badge.className = 'badge bg-info text-dark cursor-pointer';
                                                                           badge.setAttribute('data-dept', normalizedDept);
-                                                                          badge.textContent = normalizedDept + ' ✕';
+                                                                          badge.textContent = normalizedDept + ' \u2715';
                                                                           departmentList.appendChild(badge);
                                                                           departmentInput.value = '';
                                                                           updateTemplatePreview();
@@ -684,11 +684,11 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
                                                                   formData.forEach((value, key) => params.append(key, value));
 
                                                                   if (getSelectedWeekdays().length === 0) {
-                                                                      showAiScheduleMessage('Vui lòng chọn ít nhất một ngày áp dụng trong tuần.', false);
+                                                                      showAiScheduleMessage('Vui l\u00F2ng ch\u1ECDn \u00EDt nh\u1EA5t m\u1ED9t ng\u00E0y \u00E1p d\u1EE5ng trong tu\u1EA7n.', false);
                                                                       return;
                                                                   }
                                                                   if (Number(document.getElementById('aiMaxSchedules').value) <= 0) {
-                                                                      showAiScheduleMessage('Khoảng ngày đã chọn không có ngày áp dụng phù hợp.', false);
+                                                                      showAiScheduleMessage('Kho\u1EA3ng ng\u00E0y \u0111\u00E3 ch\u1ECDn kh\u00F4ng c\u00F3 ng\u00E0y \u00E1p d\u1EE5ng ph\u00F9 h\u1EE3p.', false);
                                                                       return;
                                                                   }
 
@@ -706,7 +706,7 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
                                                                           throw new Error('HTTP ' + response.status);
                                                                       }
                                                                       const data = await response.json();
-                                                                      showAiScheduleMessage(data.message || 'Đã xử lý yêu cầu lập lịch.', data.success);
+                                                                      showAiScheduleMessage(data.message || '\u0110\u00E3 x\u1EED l\u00FD y\u00EAu c\u1EA7u l\u1EADp l\u1ECBch.', data.success);
                                                                       if (data.success) {
                                                                           appendCreatedSchedules(data.items || []);
                                                                           window.setTimeout(() => {
@@ -718,40 +718,40 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
                                                                           }, 900);
                                                                       }
                                                                   } catch (error) {
-                                                                      showAiScheduleMessage('Không thể tạo lịch bằng Gemini: ' + error.message, false);
+                                                                      showAiScheduleMessage('Kh\u00F4ng th\u1EC3 t\u1EA1o l\u1ECBch b\u1EB1ng Gemini: ' + error.message, false);
                                                                   } finally {
                                                                       setAiScheduleBusy(false);
                                                                   }
                                                               });
                                                           });
 
-// Event listener bấp vào hàng schedule để xem bệnh nhân
+// Event listener b\u1EA5p v\u00E0o h\u00E0ng schedule \u0111\u1EC3 xem b\u1EC7nh nh\u00E2n
             document.addEventListener('click', function(e) {
                 const row = e.target.closest('tbody tr');
                 if (!row) return;
                 
-                // Bỏ qua nếu bấp vào button hoặc form elements
+                // B\u1ECF qua n\u1EBFu b\u1EA5p v\u00E0o button ho\u1EB7c form elements
                 if (e.target.closest('button') || e.target.closest('form')) return;
                 
-                // Lấy schedule ID từ data attribute
+                // L\u1EA5y schedule ID t\u1EEB data attribute
                 const scheduleId = row.dataset.scheduleId;
-                const doctorName = row.dataset.doctorName || 'Không xác định';
+                const doctorName = row.dataset.doctorName || 'Kh\u00F4ng x\u00E1c \u0111\u1ECBnh';
                 const timeSlot = row.querySelector('td:nth-child(4)')?.textContent || '';
                 const workDate = row.querySelector('td:nth-child(3)')?.textContent || '';
                 
                 if (!scheduleId) return;
                 
-                // Cập nhật tiêu đề modal
+                // C\u1EADp nh\u1EADt ti\u00EAu \u0111\u1EC1 modal
                 const titleEl = document.getElementById('appointmentsModalTitle');
                 if (titleEl) {
                     titleEl.textContent = doctorName + ' (' + workDate + ' ' + timeSlot + ')';
                 }
                 
-                // Mở modal
+                // M\u1EDF modal
                 const modal = new bootstrap.Modal(document.getElementById('scheduleAppointmentsModal'));
                 modal.show();
                 
-                // Tải danh sách bệnh nhân
+                // T\u1EA3i danh s\u00E1ch b\u1EC7nh nh\u00E2n
                 fetch(adminContextPath + '/admin?action=scheduleAppointments&scheduleId=' + scheduleId)
                     .then(async response => {
                         const ct = response.headers.get('content-type') || '';
@@ -759,12 +759,12 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
                             // Session expired for AJAX request - try to show message then redirect
                             if (ct.toLowerCase().indexOf('application/json') !== -1) {
                                 const err = await response.json().catch(() => null);
-                                const msg = (err && err.message) ? err.message : 'Phiên làm việc đã hết, vui lòng đăng nhập lại.';
+                                const msg = (err && err.message) ? err.message : 'Phi\u00EAn l\u00E0m vi\u1EC7c \u0111\u00E3 h\u1EBFt, vui l\u00F2ng \u0111\u0103ng nh\u1EADp l\u1EA1i.';
                                 const tbody = document.getElementById('appointmentsTableBody');
                                 tbody.innerHTML = '<tr><td colspan="4" class="text-center text-warning py-3"><i class="bi bi-exclamation-triangle me-2"></i>' + escapeHtmlForSchedule(msg) + '</td></tr>';
                             } else {
                                 const tbody = document.getElementById('appointmentsTableBody');
-                                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-warning py-3"><i class="bi bi-exclamation-triangle me-2"></i>Phiên làm việc có thể đã hết. Bạn sẽ được chuyển đến đăng nhập...</td></tr>';
+                                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-warning py-3"><i class="bi bi-exclamation-triangle me-2"></i>Phi\u00EAn l\u00E0m vi\u1EC7c c\u00F3 th\u1EC3 \u0111\u00E3 h\u1EBFt. B\u1EA1n s\u1EBD \u0111\u01B0\u1EE3c chuy\u1EC3n \u0111\u1EBFn \u0111\u0103ng nh\u1EADp...</td></tr>';
                             }
                             setTimeout(() => { window.location.href = adminLoginUrl; }, 1200);
                             return Promise.reject(new Error('HTTP 401'));
@@ -777,9 +777,9 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
                             const tbody = document.getElementById('appointmentsTableBody');
                             // Detect common signs of login page or server error
                             const low = snippet.toLowerCase();
-                            const looksLikeLogin = low.indexOf('đăng nhập') !== -1 || low.indexOf('login') !== -1 || low.indexOf('j_username') !== -1 || low.indexOf('<form') !== -1;
+                            const looksLikeLogin = low.indexOf('\u0111\u0103ng nh\u1EADp') !== -1 || low.indexOf('login') !== -1 || low.indexOf('j_username') !== -1 || low.indexOf('<form') !== -1;
                             if (looksLikeLogin) {
-                                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-warning py-3"><i class="bi bi-exclamation-triangle me-2"></i>Phiên làm việc có thể đã hết. Bạn sẽ được chuyển đến trang đăng nhập...</td></tr>';
+                                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-warning py-3"><i class="bi bi-exclamation-triangle me-2"></i>Phi\u00EAn l\u00E0m vi\u1EC7c c\u00F3 th\u1EC3 \u0111\u00E3 h\u1EBFt. B\u1EA1n s\u1EBD \u0111\u01B0\u1EE3c chuy\u1EC3n \u0111\u1EBFn trang \u0111\u0103ng nh\u1EADp...</td></tr>';
                                 // Redirect to login after short delay
                                 setTimeout(() => {
                                     window.location.href = adminLoginUrl;
@@ -787,7 +787,7 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
                                 // Stop further processing
                                 return Promise.reject(new Error('Session expired - redirecting to login'));
                             }
-                            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger py-3"><i class="bi bi-exclamation-circle me-2"></i>Server trả về nội dung không hợp lệ: ' + escapeHtmlForSchedule(snippet) + '</td></tr>';
+                            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger py-3"><i class="bi bi-exclamation-circle me-2"></i>Server tr\u1EA3 v\u1EC1 n\u1ED9i dung kh\u00F4ng h\u1EE3p l\u1EC7: ' + escapeHtmlForSchedule(snippet) + '</td></tr>';
                             return Promise.reject(new Error('Server returned non-JSON response'));
                         }
                         return response.json();
@@ -795,7 +795,7 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
                     .then(data => {
                         const tbody = document.getElementById('appointmentsTableBody');
                         if (!data.items || data.items.length === 0) {
-                            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3">Chưa có bệnh nhân nào đặt lịch</td></tr>';
+                            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3">Ch\u01B0a c\u00F3 b\u1EC7nh nh\u00E2n n\u00E0o \u0111\u1EB7t l\u1ECBch</td></tr>';
                             return;
                         }
 
@@ -811,21 +811,21 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
                     })
                     .catch(error => {
                         const tbody = document.getElementById('appointmentsTableBody');
-                        const msg = error && error.message ? error.message : 'Lỗi khi tải dữ liệu';
+                        const msg = error && error.message ? error.message : 'L\u1ED7i khi t\u1EA3i d\u1EEF li\u1EC7u';
                         tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger py-3"><i class="bi bi-exclamation-circle me-2"></i>' + escapeHtmlForSchedule(msg) + '</td></tr>';
                     });
             }, false);
             
             function getStatusBadge(status) {
                 const statusMap = {
-                    'Waiting': '<span class="badge text-bg-warning"><i class="bi bi-calendar-check me-1"></i>Đã đặt lịch</span>',
-                    'Checked_In': '<span class="badge text-bg-primary"><i class="bi bi-person-check me-1"></i>Đã check-in</span>',
-                    'In_Progress': '<span class="badge text-bg-info"><i class="bi bi-play-circle me-1"></i>Đang khám</span>',
-                    'Completed': '<span class="badge text-bg-success"><i class="bi bi-check-circle me-1"></i>Hoàn tất</span>',
-                    'Absent': '<span class="badge text-bg-secondary"><i class="bi bi-x-circle me-1"></i>Không có mặt</span>',
-                    'Cancelled': '<span class="badge text-bg-danger"><i class="bi bi-trash me-1"></i>Đã hủy</span>'
+                    'Waiting': '<span class="badge text-bg-warning"><i class="bi bi-calendar-check me-1"></i>\u0110\u00E3 \u0111\u1EB7t l\u1ECBch</span>',
+                    'Checked_In': '<span class="badge text-bg-primary"><i class="bi bi-person-check me-1"></i>\u0110\u00E3 check-in</span>',
+                    'In_Progress': '<span class="badge text-bg-info"><i class="bi bi-play-circle me-1"></i>\u0110ang kh\u00E1m</span>',
+                    'Completed': '<span class="badge text-bg-success"><i class="bi bi-check-circle me-1"></i>Ho\u00E0n t\u1EA5t</span>',
+                    'Absent': '<span class="badge text-bg-secondary"><i class="bi bi-x-circle me-1"></i>Kh\u00F4ng c\u00F3 m\u1EB7t</span>',
+                    'Cancelled': '<span class="badge text-bg-danger"><i class="bi bi-trash me-1"></i>\u0110\u00E3 h\u1EE7y</span>'
                 };
-                return statusMap[status] || '<span class="badge text-bg-secondary">' + (status || 'Không xác định') + '</span>';
+                return statusMap[status] || '<span class="badge text-bg-secondary">' + (status || 'Kh\u00F4ng x\u00E1c \u0111\u1ECBnh') + '</span>';
             }
 
             function calculateDefaultOnlineQuota(maxPatients) {
@@ -841,30 +841,30 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
 
             function getOnlineQuotaBadge(onlineBooked, onlineQuota) {
                 if (onlineBooked > onlineQuota) {
-                    return '<span class="badge text-bg-danger mt-1">Vượt quota online</span>';
+                    return '<span class="badge text-bg-danger mt-1">V\u01B0\u1EE3t quota online</span>';
                 }
                 if (onlineBooked >= onlineQuota) {
-                    return '<span class="badge text-bg-warning mt-1">Hết slot online</span>';
+                    return '<span class="badge text-bg-warning mt-1">H\u1EBFt slot online</span>';
                 }
-                return '<span class="badge text-bg-success mt-1">Còn slot online</span>';
+                return '<span class="badge text-bg-success mt-1">C\u00F2n slot online</span>';
             }
 
             function getBookingSourceBadge(source) {
                 const normalized = (source || '').toString().trim();
                 const sourceMap = {
                     'Online': '<span class="badge text-bg-success"><i class="bi bi-globe2 me-1"></i>Online</span>',
-                    'Receptionist': '<span class="badge text-bg-primary"><i class="bi bi-person-badge me-1"></i>Lễ tân</span>',
+                    'Receptionist': '<span class="badge text-bg-primary"><i class="bi bi-person-badge me-1"></i>L\u1EC5 t\u00E2n</span>',
                     'Admin': '<span class="badge text-bg-dark"><i class="bi bi-shield-lock me-1"></i>Admin</span>',
                     'Walk_In': '<span class="badge text-bg-warning text-dark"><i class="bi bi-door-open me-1"></i>Walk-in</span>',
-                    'Emergency_Routing': '<span class="badge text-bg-danger"><i class="bi bi-lightning-charge me-1"></i>Điều phối</span>'
+                    'Emergency_Routing': '<span class="badge text-bg-danger"><i class="bi bi-lightning-charge me-1"></i>\u0110i\u1EC1u ph\u1ED1i</span>'
                 };
                 if (!normalized) {
-                    return '<span class="badge text-bg-secondary">Không rõ</span>';
+                    return '<span class="badge text-bg-secondary">Kh\u00F4ng r\u00F5</span>';
                 }
                 return sourceMap[normalized] || '<span class="badge text-bg-secondary">' + escapeHtmlForSchedule(normalized) + '</span>';
             }
             
-            // Hàm escapeHtml để tránh XSS
+            // H\u00E0m escapeHtml \u0111\u1EC3 tr\u00E1nh XSS
             function escapeHtmlForSchedule(text) {
                 if (!text) return '';
                 const div = document.createElement('div');

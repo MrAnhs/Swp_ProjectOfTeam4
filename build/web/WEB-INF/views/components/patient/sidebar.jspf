@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %>
 <aside class="sidebar-modern">
     <div class="sidebar-header">
         <a href="${pageContext.request.contextPath}/patient/dashboard" class="brand-dashboard">
@@ -45,7 +46,7 @@
         <a href="${pageContext.request.contextPath}/patient/ai-chat"
            class="nav-item-dash${activePatientPage eq 'ai-chat' ? ' active' : ''}">
             <i class="bi bi-chat-dots"></i>
-            <span class="nav-text" data-i18n="aiChat">Chat AI</span>
+            <span class="nav-text" >Chat AI</span>
         </a>
         <a href="${pageContext.request.contextPath}/patient/profile"
            class="nav-item-dash${activePatientPage eq 'profile' ? ' active' : ''}">
@@ -57,7 +58,7 @@
     <div class="sidebar-footer">
         <a href="${pageContext.request.contextPath}/login.jsp" class="btn-logout">
             <i class="bi bi-box-arrow-left"></i>
-            <span class="nav-text" data-i18n="logout">Đăng xuất</span>
+            <span class="nav-text" >Đăng xuất</span>
         </a>
     </div>
 </aside>

@@ -105,18 +105,17 @@ public class UserDAO {
     }
 
     /**
-     * Validate login using Account table
-     * For patients: also fetch patient_id and additional info from Patient table
+     * Validate login using Account table.
+     * The role is resolved from the Account record, so the login form does not need a role selector.
+     * For patients/doctors: also fetch role-specific profile details.
      */
-    public User validateLogin(String email, String password, String role) {
-        // Step 1: Check Account table
+    public User validateLogin(String email, String password) {
         String sqlAccount = "SELECT account_id, full_name, email, role, password_hash, status "
-                + "FROM Account WHERE LOWER(email) = LOWER(?) AND LOWER(role) = LOWER(?)";
+                + "FROM Account WHERE LOWER(email) = LOWER(?)";
         
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sqlAccount)) {
             statement.setString(1, email);
-            statement.setString(2, role);
             
             try (ResultSet rs = statement.executeQuery()) {
                 if (rs.next()) {
@@ -125,26 +124,22 @@ public class UserDAO {
                     
                     // Check if account is active (allow NULL as active for existing accounts)
                     if (status != null && !"Active".equalsIgnoreCase(status)) {
-                        return null; // Account locked or banned
+                        return null;
                     }
                     
                     if (PasswordUtil.matches(password, storedHash)) {
                         int accountId = rs.getInt("account_id");
-                        String fullName = rs.getString("full_name");
                         String userRole = rs.getString("role");
                         
                         User user = new User();
                         user.setId(accountId);
-                        user.setFullName(fullName);
-                        user.setEmail(email);
+                        user.setFullName(rs.getString("full_name"));
+                        user.setEmail(rs.getString("email"));
                         user.setRole(userRole);
                         
-                        // For patients, fetch additional info from Patient table
                         if ("Patient".equalsIgnoreCase(userRole)) {
                             loadPatientDetails(connection, user, accountId);
-                        }
-                        // For doctors, fetch additional info from Doctor table
-                        else if ("Doctor".equalsIgnoreCase(userRole)) {
+                        } else if ("Doctor".equalsIgnoreCase(userRole)) {
                             loadDoctorDetails(connection, user, accountId);
                         }
                         
@@ -157,8 +152,11 @@ public class UserDAO {
         }
         return null;
     }
-    
-    private void loadPatientDetails(Connection connection, User user, int accountId) throws SQLException {
+
+    public User validateLogin(String email, String password, String role) {
+        return validateLogin(email, password);
+    }
+private void loadPatientDetails(Connection connection, User user, int accountId) throws SQLException {
         String sql = "SELECT patient_id, phone, address, date_of_birth, gender FROM Patient WHERE account_id = ?";
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setInt(1, accountId);

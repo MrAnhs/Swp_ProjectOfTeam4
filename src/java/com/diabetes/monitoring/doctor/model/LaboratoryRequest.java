@@ -104,6 +104,8 @@ public class LaboratoryRequest {
     public void setTg(Double tg) { this.tg = tg; }
     public Double getHdl() { return hdl; }
     public void setHdl(Double hdl) { this.hdl = hdl; }
+    public Double getLdl() { return ldl; }
+    public void setLdl(Double ldl) { this.ldl = ldl; }
     public Double getIdl() { return ldl; }
     public void setIdl(Double ldl) { this.ldl = ldl; }
     public Double getVldl() { return vldl; }

@@ -26,8 +26,8 @@
             <div id="invoiceList" class="record-list loading-state">Đang tải hóa đơn...</div>
         </section>
     </main>
-    <script src="${pageContext.request.contextPath}/assets/js/core/app-config.js"></script>
-    <script src="${pageContext.request.contextPath}/assets/js/core/api-client.js"></script>
-    <script src="${pageContext.request.contextPath}/assets/js/pages/patient/invoice-list.js"></script>
+    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/app-config.js?v=20260709-fontfix2"></script>
+    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/api-client.js?v=20260709-fontfix2"></script>
+    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/patient/invoice-list.js?v=20260709-fontfix2"></script>
 </body>
 </html>

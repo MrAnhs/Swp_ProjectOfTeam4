@@ -322,7 +322,7 @@
     window.AdminConfig.revenueSeries = ${empty revenueJson ? '[]' : revenueJson};
     window.AdminConfig.visitSeries = ${empty visitJson ? '[]' : visitJson};
 </script>
-<script src="${pageContext.request.contextPath}/assets/js/pages/admin/reports.js"></script>
+<script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/admin/reports.js?v=20260709-fontfix2"></script>
 </body>
 </html>
 

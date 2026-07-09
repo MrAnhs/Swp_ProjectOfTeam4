@@ -5,19 +5,19 @@
 
     function statusLabel(status) {
         const map = {
-            Waiting: 'Chờ khám',
-            Checked_In: 'Đã check-in',
-            In_Progress: 'Đang khám',
-            Completed: 'Hoàn tất',
-            Absent: 'Vắng mặt',
-            Cancelled: 'Đã hủy'
+            Waiting: 'Ch\u1EDD kh\u00E1m',
+            Checked_In: '\u0110\u00E3 check-in',
+            In_Progress: '\u0110ang kh\u00E1m',
+            Completed: 'Ho\u00E0n t\u1EA5t',
+            Absent: 'V\u1EAFng m\u1EB7t',
+            Cancelled: '\u0110\u00E3 h\u1EE7y'
         };
-        return map[status] || status || 'Không xác định';
+        return map[status] || status || 'Kh\u00F4ng x\u00E1c \u0111\u1ECBnh';
     }
 
     function render(items) {
         if (!items || items.length === 0) {
-            list.innerHTML = '<div class="empty-state">Không có bệnh nhân trong hàng đợi phù hợp.</div>';
+            list.innerHTML = '<div class="empty-state">Kh\u00F4ng c\u00F3 b\u1EC7nh nh\u00E2n trong h\u00E0ng \u0111\u1EE3i ph\u00F9 h\u1EE3p.</div>';
             return;
         }
         list.innerHTML = items.map(function (item) {
@@ -25,7 +25,7 @@
                 ? '<button class="btn btn-sm btn-primary queue-check-in" data-appointment-id="' + utils.escapeHtml(item.appointmentId) + '">Check-in</button>'
                 : '';
             return '<div class="queue-row">'
-                + '<div><div class="fw-bold">Số ' + utils.escapeHtml(item.queueNumber) + ' - ' + utils.escapeHtml(item.patientName) + '</div>'
+                + '<div><div class="fw-bold">S\u1ED1 ' + utils.escapeHtml(item.queueNumber) + ' - ' + utils.escapeHtml(item.patientName) + '</div>'
                 + '<div class="muted-text">' + utils.escapeHtml(item.phone) + ' | ' + utils.escapeHtml(item.doctorName) + ' | ' + utils.escapeHtml(item.appointmentTime) + '</div></div>'
                 + '<div class="d-flex align-items-center gap-2">'
                 + '<span class="badge text-bg-info">' + utils.escapeHtml(statusLabel(item.status)) + '</span>'
@@ -36,7 +36,7 @@
     }
 
     async function loadQueue() {
-        list.innerHTML = '<div class="empty-state">Đang tải hàng đợi...</div>';
+        list.innerHTML = '<div class="empty-state">\u0110ang t\u1EA3i h\u00E0ng \u0111\u1EE3i...</div>';
         try {
             const status = statusFilter.value;
             const url = utils.apiBase() + '/queue' + (status ? '?status=' + encodeURIComponent(status) : '');
@@ -66,7 +66,7 @@
         const button = event.target.closest('.queue-check-in');
         if (!button) return;
         button.disabled = true;
-        button.textContent = 'Đang check-in...';
+        button.textContent = '\u0110ang check-in...';
         try {
             await checkIn(button.dataset.appointmentId);
         } catch (error) {

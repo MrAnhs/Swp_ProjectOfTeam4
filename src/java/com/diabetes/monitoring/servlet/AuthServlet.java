@@ -18,8 +18,7 @@ public class AuthServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String email = request.getParameter("email");
         String password = request.getParameter("password");
-        String role = request.getParameter("role");
-        User user = userDAO.validateLogin(email, password, role);
+        User user = userDAO.validateLogin(email, password);
         if (user != null) {
             HttpSession session = request.getSession();
             session.setAttribute("currentUser", user);
@@ -31,14 +30,21 @@ public class AuthServlet extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/receptionist/dashboard");
             } else if ("Doctor".equalsIgnoreCase(user.getRole())) {
                 response.sendRedirect(request.getContextPath() + "/doctor/dashboard");
-            } else if ("doctor_lab".equalsIgnoreCase(user.getRole())) {
+            } else if (isDoctorLabRole(user.getRole())) {
                 response.sendRedirect(request.getContextPath() + "/doctor-lab/dashboard");
             } else {
                 response.sendRedirect(request.getContextPath() + "/index.jsp");
             }
         } else {
-            request.setAttribute("loginError", "Invalid credentials. Please try again.");
+            request.setAttribute("loginError", "Email hoặc mật khẩu không đúng, hoặc tài khoản đã bị khóa.");
             request.getRequestDispatcher("login.jsp").forward(request, response);
         }
     }
-}
+
+    private boolean isDoctorLabRole(String role) {
+        if (role == null) {
+            return false;
+        }
+        String normalized = role.trim().replace("-", "_").replace(" ", "_");
+        return "doctor_lab".equalsIgnoreCase(normalized);
+    }}

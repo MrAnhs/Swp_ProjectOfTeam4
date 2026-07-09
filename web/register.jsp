@@ -130,6 +130,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="${pageContext.request.contextPath}/assets/js/pages/public/register.js"></script>
+    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/public/register.js?v=20260709-fontfix2"></script>
 </body>
 </html>

@@ -26,11 +26,18 @@ public class DoctorLabAuthorizationFilter implements Filter {
             return;
         }
 
-        if (!"doctor_lab".equalsIgnoreCase(currentUser.getRole())) {
+        if (!isDoctorLabRole(currentUser.getRole())) {
             httpResponse.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
 
         chain.doFilter(request, response);
     }
-}
+
+    private boolean isDoctorLabRole(String role) {
+        if (role == null) {
+            return false;
+        }
+        String normalized = role.trim().replace("-", "_").replace(" ", "_");
+        return "doctor_lab".equalsIgnoreCase(normalized);
+    }}

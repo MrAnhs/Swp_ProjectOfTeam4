@@ -56,7 +56,7 @@
         const time = document.createElement("strong");
         time.textContent = schedule.timeSlot;
         const availability = document.createElement("small");
-        availability.textContent = `Còn ${schedule.availableSlots} chỗ`;
+        availability.textContent = `C\u00F2n ${schedule.availableSlots} ch\u1ED7`;
 
         input.addEventListener("change", () => {
             setWorkflowStep(3);
@@ -115,9 +115,9 @@
         avatar.innerHTML = '<i class="bi bi-person-fill"></i>';
         const info = document.createElement("div");
         const name = document.createElement("h3");
-        name.textContent = doctor.fullName || "Bác sĩ";
+        name.textContent = doctor.fullName || "B\u00E1c s\u0129";
         const department = document.createElement("p");
-        department.textContent = `Chuyên khoa: ${doctor.department || "Chưa cập nhật"}`;
+        department.textContent = `Chuy\u00EAn khoa: ${doctor.department || "Ch\u01B0a c\u1EADp nh\u1EADt"}`;
         info.append(name, department);
         identity.append(avatar, info);
 
@@ -134,9 +134,9 @@
         const heading = document.createElement("div");
         heading.className = "doctor-schedule-heading";
         const headingTitle = document.createElement("strong");
-        headingTitle.textContent = "Giờ khám còn trống";
+        headingTitle.textContent = "Gi\u1EDD kh\u00E1m c\u00F2n tr\u1ED1ng";
         const headingHint = document.createElement("span");
-        headingHint.textContent = "Chọn một khung giờ để đặt lịch";
+        headingHint.textContent = "Ch\u1ECDn m\u1ED9t khung gi\u1EDD \u0111\u1EC3 \u0111\u1EB7t l\u1ECBch";
         heading.append(headingTitle, headingHint);
         scheduleArea.append(heading);
 
@@ -148,12 +148,12 @@
         );
         if (morningSchedules.length) {
             scheduleArea.append(createScheduleGroup(
-                "Buổi sáng", "bi bi-sun", doctor, morningSchedules
+                "Bu\u1ED5i s\u00E1ng", "bi bi-sun", doctor, morningSchedules
             ));
         }
         if (afternoonSchedules.length) {
             scheduleArea.append(createScheduleGroup(
-                "Buổi chiều", "bi bi-sunset", doctor, afternoonSchedules
+                "Bu\u1ED5i chi\u1EC1u", "bi bi-sunset", doctor, afternoonSchedules
             ));
         }
 
@@ -166,7 +166,7 @@
         const bookButton = document.createElement("button");
         bookButton.type = "button";
         bookButton.className = "btn-page-primary doctor-book-button";
-        bookButton.innerHTML = 'Xác nhận đặt lịch <i class="bi bi-arrow-right"></i>';
+        bookButton.innerHTML = 'X\u00E1c nh\u1EADn \u0111\u1EB7t l\u1ECBch <i class="bi bi-arrow-right"></i>';
         bookButton.addEventListener("click", () => {
             bookAppointment(doctor, card, cardMessage, bookButton);
         });
@@ -181,20 +181,20 @@
         doctorList.className = "doctor-booking-list";
         doctorCount.innerHTML = '<i class="bi bi-people"></i>';
         const countText = document.createElement("span");
-        countText.textContent = `Tìm thấy ${data.doctorCount} bác sĩ phù hợp`;
+        countText.textContent = `T\u00ECm th\u1EA5y ${data.doctorCount} b\u00E1c s\u0129 ph\u00F9 h\u1EE3p`;
         doctorCount.append(countText);
         filterDescription.textContent =
-            `Lịch còn trống ngày ${formatDate(data.date)} theo bộ lọc đã chọn.`;
+            `L\u1ECBch c\u00F2n tr\u1ED1ng ng\u00E0y ${formatDate(data.date)} theo b\u1ED9 l\u1ECDc \u0111\u00E3 ch\u1ECDn.`;
 
         if (!data.doctors.length) {
             const empty = document.createElement("div");
             empty.className = "booking-empty-state";
             empty.innerHTML = '<i class="bi bi-calendar-x"></i>';
             const title = document.createElement("strong");
-            title.textContent = "Không tìm thấy lịch khám phù hợp";
+            title.textContent = "Kh\u00F4ng t\u00ECm th\u1EA5y l\u1ECBch kh\u00E1m ph\u00F9 h\u1EE3p";
             const description = document.createElement("p");
             description.textContent =
-                "Bạn hãy thử chọn ngày khác, đổi buổi khám hoặc xóa tên bác sĩ.";
+                "B\u1EA1n h\u00E3y th\u1EED ch\u1ECDn ng\u00E0y kh\u00E1c, \u0111\u1ED5i bu\u1ED5i kh\u00E1m ho\u1EB7c x\u00F3a t\u00EAn b\u00E1c s\u0129.";
             empty.append(title, description);
             doctorList.append(empty);
             return;
@@ -209,9 +209,9 @@
         const requestSequence = ++doctorRequestSequence;
         setWorkflowStep(2);
         doctorList.className = "doctor-booking-list loading-state";
-        doctorList.textContent = "Đang tải các bác sĩ có lịch trống...";
-        doctorCount.textContent = "Đang tải";
-        filterDescription.textContent = "Đang kiểm tra lịch khám...";
+        doctorList.textContent = "\u0110ang t\u1EA3i c\u00E1c b\u00E1c s\u0129 c\u00F3 l\u1ECBch tr\u1ED1ng...";
+        doctorCount.textContent = "\u0110ang t\u1EA3i";
+        filterDescription.textContent = "\u0110ang ki\u1EC3m tra l\u1ECBch kh\u00E1m...";
 
         const query = new URLSearchParams({
             date: dateInput.value,
@@ -233,8 +233,8 @@
                 return;
             }
             doctorList.className = "doctor-booking-list loading-state";
-            doctorList.textContent = `Không thể tải lịch khám: ${error.message}`;
-            doctorCount.textContent = "Không thể tải dữ liệu";
+            doctorList.textContent = `Kh\u00F4ng th\u1EC3 t\u1EA3i l\u1ECBch kh\u00E1m: ${error.message}`;
+            doctorCount.textContent = "Kh\u00F4ng th\u1EC3 t\u1EA3i d\u1EEF li\u1EC7u";
         }
     }
 
@@ -245,14 +245,14 @@
         if (!selectedSchedule) {
             cardMessage.hidden = false;
             cardMessage.className = "doctor-card-message error";
-            cardMessage.textContent = "Vui lòng chọn một giờ khám trước khi đặt lịch.";
+            cardMessage.textContent = "Vui l\u00F2ng ch\u1ECDn m\u1ED9t gi\u1EDD kh\u00E1m tr\u01B0\u1EDBc khi \u0111\u1EB7t l\u1ECBch.";
             return;
         }
 
         cardMessage.hidden = true;
         cardMessage.textContent = "";
         bookButton.disabled = true;
-        bookButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang đặt lịch...';
+        bookButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> \u0110ang \u0111\u1EB7t l\u1ECBch...';
 
         const body = new URLSearchParams({
             doctorId: doctor.doctorId,
@@ -268,7 +268,7 @@
             cardMessage.className = "doctor-card-message error";
             cardMessage.textContent = error.message;
             bookButton.disabled = false;
-            bookButton.innerHTML = 'Xác nhận đặt lịch <i class="bi bi-arrow-right"></i>';
+            bookButton.innerHTML = 'X\u00E1c nh\u1EADn \u0111\u1EB7t l\u1ECBch <i class="bi bi-arrow-right"></i>';
         }
     }
 
@@ -277,19 +277,19 @@
         resultPanel.hidden = false;
 
         const title = document.createElement("h2");
-        title.textContent = "Đặt lịch thành công";
+        title.textContent = "\u0110\u1EB7t l\u1ECBch th\u00E0nh c\u00F4ng";
         const description = document.createElement("p");
-        description.textContent = "Lịch hẹn đã được tạo và đang ở trạng thái chờ khám.";
+        description.textContent = "L\u1ECBch h\u1EB9n \u0111\u00E3 \u0111\u01B0\u1EE3c t\u1EA1o v\u00E0 \u0111ang \u1EDF tr\u1EA1ng th\u00E1i ch\u1EDD kh\u00E1m.";
 
         const grid = document.createElement("div");
         grid.className = "booking-result-grid";
         [
-            ["Mã lịch hẹn", `#${data.appointmentId}`],
-            ["Bác sĩ", data.doctorName],
-            ["Chuyên khoa", data.department || "Chưa cập nhật"],
-            ["Ngày giờ", data.appointmentTime.replace("T", " ")],
-            ["Ca khám", data.timeSlot],
-            ["Số thứ tự", data.queueNumber]
+            ["M\u00E3 l\u1ECBch h\u1EB9n", `#${data.appointmentId}`],
+            ["B\u00E1c s\u0129", data.doctorName],
+            ["Chuy\u00EAn khoa", data.department || "Ch\u01B0a c\u1EADp nh\u1EADt"],
+            ["Ng\u00E0y gi\u1EDD", data.appointmentTime.replace("T", " ")],
+            ["Ca kh\u00E1m", data.timeSlot],
+            ["S\u1ED1 th\u1EE9 t\u1EF1", data.queueNumber]
         ].forEach(([label, value]) => {
             const item = document.createElement("div");
             const name = document.createElement("span");
@@ -305,14 +305,14 @@
         detailLink.href = ApiClient.buildUrl(
             `/patient/appointments/detail?id=${data.appointmentId}`
         );
-        detailLink.innerHTML = '<i class="bi bi-eye"></i> Xem lịch hẹn';
+        detailLink.innerHTML = '<i class="bi bi-eye"></i> Xem l\u1ECBch h\u1EB9n';
 
         const chatLink = document.createElement("a");
         chatLink.className = "btn-page-secondary";
         chatLink.href = ApiClient.buildUrl(
             `/patient/ai-chat?appointmentId=${data.appointmentId}`
         );
-        chatLink.innerHTML = '<i class="bi bi-chat-dots"></i> Trao đổi với AI';
+        chatLink.innerHTML = '<i class="bi bi-chat-dots"></i> Trao \u0111\u1ED5i v\u1EDBi AI';
 
         const actions = document.createElement("div");
         actions.className = "form-actions appointment-actions";

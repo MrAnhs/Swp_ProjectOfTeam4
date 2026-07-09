@@ -256,6 +256,6 @@
             </div>
         </div>
     </footer>
-    <script src="${pageContext.request.contextPath}/assets/js/pages/public/home.js"></script>
+    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/public/home.js?v=20260709-fontfix2"></script>
 </body>
 </html>

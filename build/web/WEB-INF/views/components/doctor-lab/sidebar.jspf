@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %>
 <aside class="lab-sidebar">
     <div class="lab-brand">
         <span class="lab-brand-icon"><i class="bi bi-droplet-half"></i></span>
