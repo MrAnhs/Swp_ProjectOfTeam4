@@ -21,7 +21,7 @@ import java.sql.SQLException;
 public class SubmitHealthRecordServlet extends HttpServlet {
 
     private static final String HARD_LIMIT_MESSAGE =
-            "GiÃ¡ trá»‹ nÃ y náº±m ngoÃ i pháº¡m vi sinh lÃ½ cá»§a con ngÆ°á»i, vui lÃ²ng kiá»ƒm tra láº¡i.";
+            "Giá trị này nằm ngoài phạm vi sinh lý của con người, vui lòng kiểm tra lại.";
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -91,7 +91,7 @@ public class SubmitHealthRecordServlet extends HttpServlet {
             conn.setAutoCommit(false); // Start transaction
             
             // Insert into Healthy_Record first
-            String sql = "INSERT INTO Healthy_Record (urea, cr, hba1c, chol, tg, hdl, idl, vldl, bmi, patient_id, weight, height, other_information, status, created_at) " +
+            String sql = "INSERT INTO Healthy_Record (urea, cr, hba1c, chol, tg, hdl, ldl, vldl, bmi, patient_id, weight, height, other_information, status, created_at) " +
                          "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', GETDATE())";
 
             int healthRecordId = -1;
@@ -122,10 +122,10 @@ public class SubmitHealthRecordServlet extends HttpServlet {
                 }
             }
 
-            // Link existing AI_Summary record where health_record_id IS NULL to the new healthRecordId
+            // Link existing AI_Conversation record where health_record_id IS NULL to the new healthRecordId
             boolean updatedActiveSummary = false;
             if (healthRecordId > 0) {
-                String updateSummarySql = "UPDATE AI_Summary SET health_record_id = ?, created_at = GETDATE() " +
+                String updateSummarySql = "UPDATE AI_Conversation SET health_record_id = ?, created_at = GETDATE() " +
                                          "WHERE patient_id = ? AND health_record_id IS NULL";
                 try (PreparedStatement updateStmt = conn.prepareStatement(updateSummarySql)) {
                     updateStmt.setInt(1, healthRecordId);
@@ -138,9 +138,9 @@ public class SubmitHealthRecordServlet extends HttpServlet {
             }
 
             // If no active AI chat summary was linked, but symptoms are provided in the submission,
-            // we can create a record in AI_Summary with only the symptoms summary and no chat history.
+            // we can create a record in AI_Conversation with only the symptoms summary and no chat history.
             if (healthRecordId > 0 && !updatedActiveSummary && symptoms != null && !symptoms.trim().isEmpty()) {
-                String insertSummarySql = "INSERT INTO AI_Summary (patient_id, health_record_id, chat_history, ai_summary, created_at) " +
+                String insertSummarySql = "INSERT INTO AI_Conversation (patient_id, health_record_id, chat_history, AI_Conversation, created_at) " +
                                          "VALUES (?, ?, NULL, ?, GETDATE())";
                 try (PreparedStatement insertStmt = conn.prepareStatement(insertSummarySql)) {
                     insertStmt.setInt(1, patientId);
@@ -157,7 +157,7 @@ public class SubmitHealthRecordServlet extends HttpServlet {
 
             if (healthRecordId > 0) {
                 try (PrintWriter out = response.getWriter()) {
-                    out.print("{\"success\":true,\"message\":\"Há»“ sÆ¡ sá»©c khá»e Ä‘Ã£ Ä‘Æ°á»£c lÆ°u thÃ nh cÃ´ng!\",\"healthRecordId\":" + healthRecordId + "}");
+                    out.print("{\"success\":true,\"message\":\"Hồ sơ sức khỏe đã được lưu thành công!\",\"healthRecordId\":" + healthRecordId + "}");
                 }
             } else {
                 response.setStatus(500);
@@ -229,7 +229,7 @@ public class SubmitHealthRecordServlet extends HttpServlet {
             BigDecimal ldl, BigDecimal weight, BigDecimal height) {
         String invalidNumber = firstInvalidNumber(
                 new String[]{"Urea", "Creatinine", "HbA1c", "Cholesterol", "Triglycerides",
-                    "HDL", "LDL", "VLDL", "CÃ¢n náº·ng", "Chiá»u cao"},
+                    "HDL", "LDL", "VLDL", "Cân nặng", "Chiều cao"},
                 new String[]{ureaRaw, creatinineRaw, hba1cRaw, cholesterolRaw, tgRaw,
                     hdlRaw, ldlRaw, vldlRaw, weightRaw, heightRaw});
         if (invalidNumber != null) {
@@ -244,10 +244,10 @@ public class SubmitHealthRecordServlet extends HttpServlet {
         if (outsideInclusive(hdl, "0.1", "5")) return "HDL: " + HARD_LIMIT_MESSAGE;
         if (outsideInclusive(ldl, "0.1", "15")) return "LDL: " + HARD_LIMIT_MESSAGE;
         if (outsideExclusiveMin(weight, BigDecimal.ZERO, new BigDecimal("800"))) {
-            return "CÃ¢n náº·ng: " + HARD_LIMIT_MESSAGE;
+            return "Cân nặng: " + HARD_LIMIT_MESSAGE;
         }
         if (outsideExclusiveMin(height, BigDecimal.ZERO, new BigDecimal("300"))) {
-            return "Chiá»u cao: " + HARD_LIMIT_MESSAGE;
+            return "Chiều cao: " + HARD_LIMIT_MESSAGE;
         }
         return null;
     }
@@ -256,7 +256,7 @@ public class SubmitHealthRecordServlet extends HttpServlet {
         for (int i = 0; i < values.length; i++) {
             String value = values[i];
             if (value != null && !value.trim().isEmpty() && parseDecimal(value) == null) {
-                return labels[i] + ": GiÃ¡ trá»‹ pháº£i lÃ  má»™t sá»‘ há»£p lá»‡.";
+                return labels[i] + ": Giá trị phải là một số hợp lệ.";
             }
         }
         return null;

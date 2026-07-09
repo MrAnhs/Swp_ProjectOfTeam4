@@ -55,9 +55,9 @@ public class GetAISummaryServlet extends HttpServlet {
             return;
         }
 
-        // Query AI_Summary table for this patient's AI summaries
-        String sql = "SELECT summary_id, health_record_id, chat_history, ai_summary, created_at " +
-                "FROM AI_Summary " +
+        // Query AI_Conversation table for this patient's AI summaries
+        String sql = "SELECT conversation_id, health_record_id, chat_history, AI_Conversation, created_at " +
+                "FROM AI_Conversation " +
                 "WHERE patient_id = ? AND health_record_id = ? " +
                 "ORDER BY created_at DESC";
 
@@ -71,9 +71,9 @@ public class GetAISummaryServlet extends HttpServlet {
 
             while (rs.next()) {
                 Map<String, String> item = new HashMap<>();
-                item.put("summaryId", String.valueOf(rs.getInt("summary_id")));
+                item.put("conversationId", String.valueOf(rs.getInt("conversation_id")));
                 item.put("chatHistory", rs.getString("chat_history"));
-                item.put("aiSummary", rs.getString("ai_summary"));
+                item.put("aiSummary", rs.getString("AI_Conversation"));
                 item.put("createdAt", rs.getString("created_at"));
                 summaries.add(item);
             }
@@ -92,7 +92,7 @@ public class GetAISummaryServlet extends HttpServlet {
             Map<String, String> s = summaries.get(i);
             if (i > 0) json.append(",");
             json.append("{");
-            json.append("\"summaryId\":").append(s.get("summaryId")).append(",");
+            json.append("\"conversationId\":").append(s.get("conversationId")).append(",");
             json.append("\"chatHistory\":\"").append(escapeJson(s.get("chatHistory"))).append("\",");
             json.append("\"aiSummary\":\"").append(escapeJson(s.get("aiSummary"))).append("\",");
             json.append("\"createdAt\":\"").append(escapeJson(s.get("createdAt"))).append("\"");

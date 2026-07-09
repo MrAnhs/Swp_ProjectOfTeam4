@@ -1,3 +1,0 @@
-com.diabetes.monitoring.admin.analytics.AdminAnalyticsService
-com.diabetes.monitoring.admin.analytics.AdminReportService
-com.diabetes.monitoring.admin.analytics.AdminDashboardService

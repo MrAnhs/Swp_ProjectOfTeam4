@@ -32,16 +32,16 @@ public class AISummaryServlet extends HttpServlet {
             return;
         }
 
-        String summaryId = request.getParameter("id");
-        if (summaryId == null || summaryId.trim().isEmpty()) {
+        String conversationId = request.getParameter("id");
+        if (conversationId == null || conversationId.trim().isEmpty()) {
             response.setStatus(400);
             response.getWriter().print("{\"error\":\"Missing summary ID\"}");
             return;
         }
 
-        int summaryIdValue;
+        int conversationIdValue;
         try {
-            summaryIdValue = Integer.parseInt(summaryId);
+            conversationIdValue = Integer.parseInt(conversationId);
         } catch (NumberFormatException e) {
             response.setStatus(400);
             response.getWriter().print("{\"error\":\"Invalid summary ID\"}");
@@ -52,19 +52,19 @@ public class AISummaryServlet extends HttpServlet {
         List<Map<String, Object>> messages = new ArrayList<>();
 
         // Only return a summary owned by the patient account in the session.
-        String sql = "SELECT c.summary_id, c.patient_id, c.chat_history, c.created_at " +
-                "FROM AI_Summary c " +
+        String sql = "SELECT c.conversation_id, c.patient_id, c.chat_history, c.created_at " +
+                "FROM AI_Conversation c " +
                 "INNER JOIN Patient p ON c.patient_id = p.patient_id " +
-                "WHERE c.summary_id = ? AND p.account_id = ?";
+                "WHERE c.conversation_id = ? AND p.account_id = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, summaryIdValue);
+            stmt.setInt(1, conversationIdValue);
             stmt.setInt(2, currentUser.getId());
             ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
-                result.put("summaryId", rs.getInt("summary_id"));
+                result.put("conversationId", rs.getInt("conversation_id"));
                 result.put("patientId", rs.getInt("patient_id"));
                 result.put("analysisTime", rs.getString("created_at"));
 
@@ -90,7 +90,7 @@ public class AISummaryServlet extends HttpServlet {
         // Manual JSON building
         try (PrintWriter out = response.getWriter()) {
             StringBuilder json = new StringBuilder();
-            json.append("{\"summaryId\":").append(result.get("summaryId")).append(",");
+            json.append("{\"conversationId\":").append(result.get("conversationId")).append(",");
             json.append("\"patientId\":").append(result.get("patientId")).append(",");
             json.append("\"analysisTime\":\"").append(escJson((String)result.get("analysisTime"))).append("\",");
             json.append("\"messages\":[");

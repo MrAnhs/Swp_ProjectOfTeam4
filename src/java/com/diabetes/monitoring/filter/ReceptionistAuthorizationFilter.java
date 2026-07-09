@@ -28,7 +28,7 @@ public class ReceptionistAuthorizationFilter implements Filter {
 
         if (!"Receptionist".equalsIgnoreCase(currentUser.getRole())) {
             if (isJsonRequest(httpRequest)) {
-                writeJsonError(httpResponse, HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền truy cập.");
+                writeJsonError(httpResponse, HttpServletResponse.SC_FORBIDDEN, "Access denied");
             } else {
                 httpResponse.sendError(HttpServletResponse.SC_FORBIDDEN);
             }

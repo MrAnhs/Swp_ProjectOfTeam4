@@ -46,10 +46,10 @@ public class PatientPageServlet extends HttpServlet {
                 String history = (String) session.getAttribute("chatHistory_" + patientId);
                 int turnCount = 0;
                 if (history != null) {
-                    int index = 0;
-                    while ((index = history.indexOf("Patient:", index)) != -1) {
+                    int idx = 0;
+                    while ((idx = history.indexOf("Patient:", idx)) != -1) {
                         turnCount++;
-                        index += "Patient:".length();
+                        idx += "Patient:".length();
                     }
                 }
                 request.setAttribute("reachedLimit", turnCount >= 10);
@@ -76,15 +76,6 @@ public class PatientPageServlet extends HttpServlet {
         if ("/patient/appointments/detail".equals(servletPath)) {
             return "appointment-detail.jsp";
         }
-        if ("/patient/health-records/new".equals(servletPath)) {
-            return "health-record-form.jsp";
-        }
-        if ("/patient/health-records".equals(servletPath)) {
-            return "health-record-list.jsp";
-        }
-        if ("/patient/health-records/detail".equals(servletPath)) {
-            return "health-record-detail.jsp";
-        }
         if ("/patient/invoices".equals(servletPath)) {
             return "invoice-list.jsp";
         }
@@ -97,6 +88,15 @@ public class PatientPageServlet extends HttpServlet {
         if ("/patient/history/detail".equals(servletPath)) {
             return "visit-detail.jsp";
         }
+        if ("/patient/health-records/new".equals(servletPath)) {
+            return "health-record-form.jsp";
+        }
+        if ("/patient/health-records".equals(servletPath)) {
+            return "health-record-list.jsp";
+        }
+        if ("/patient/health-records/detail".equals(servletPath)) {
+            return "health-record-detail.jsp";
+        }
         if ("/patient/profile".equals(servletPath)) {
             return "profile.jsp";
         }
@@ -104,9 +104,7 @@ public class PatientPageServlet extends HttpServlet {
     }
 
     private Integer findPatientId(User user) {
-        if (user == null || user.getEmail() == null) {
-            return null;
-        }
+        if (user == null || user.getEmail() == null) return null;
         String sql = "SELECT patient_id FROM Patient WHERE email = ?";
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {

@@ -18,26 +18,26 @@
     ].join("-");
 
     dob.max = today;
-    phoneFeedback.textContent = "Enter a valid Vietnamese mobile number, for example 0912345678 or +84912345678.";
+    phoneFeedback.textContent = "Vui l\u00F2ng nh\u1EADp s\u1ED1 \u0111i\u1EC7n tho\u1EA1i Vi\u1EC7t Nam h\u1EE3p l\u1EC7, v\u00ED d\u1EE5 0912345678 ho\u1EB7c +84912345678.";
 
     function validatePasswordConfirmation() {
         if (confirmPassword.value && password.value !== confirmPassword.value) {
-            confirmPassword.setCustomValidity("Mật khẩu xác nhận không khớp");
-            confirmFeedback.textContent = "Mật khẩu xác nhận không khớp.";
+            confirmPassword.setCustomValidity("M\u1EADt kh\u1EA9u x\u00E1c nh\u1EADn kh\u00F4ng kh\u1EDBp");
+            confirmFeedback.textContent = "M\u1EADt kh\u1EA9u x\u00E1c nh\u1EADn kh\u00F4ng kh\u1EDBp.";
             return;
         }
         confirmPassword.setCustomValidity("");
-        confirmFeedback.textContent = "Confirm your password.";
+        confirmFeedback.textContent = "Vui l\u00F2ng x\u00E1c nh\u1EADn m\u1EADt kh\u1EA9u.";
     }
 
     function validateDob() {
         if (dob.value && (dob.value < dob.min || dob.value > today)) {
-            dob.setCustomValidity("Invalid date of birth");
-            dobFeedback.textContent = "Date of birth must be between 01/01/1900 and today.";
+            dob.setCustomValidity("Ng\u00E0y sinh kh\u00F4ng h\u1EE3p l\u1EC7");
+            dobFeedback.textContent = "Ng\u00E0y sinh ph\u1EA3i n\u1EB1m trong kho\u1EA3ng t\u1EEB 01/01/1900 \u0111\u1EBFn h\u00F4m nay.";
             return;
         }
         dob.setCustomValidity("");
-        dobFeedback.textContent = "Enter a valid date of birth that is not in the future.";
+        dobFeedback.textContent = "Ng\u00E0y sinh ph\u1EA3i h\u1EE3p l\u1EC7 v\u00E0 kh\u00F4ng \u0111\u01B0\u1EE3c v\u01B0\u1EE3t qu\u00E1 ng\u00E0y hi\u1EC7n t\u1EA1i.";
     }
 
     function normalizePhone(value) {
@@ -50,7 +50,7 @@
     function validatePhone() {
         const cleaned = phone.value.trim().replace(/[\s.\-()]/g, "");
         if (phone.value && !phonePattern.test(cleaned)) {
-            phone.setCustomValidity("Invalid Vietnamese phone number");
+            phone.setCustomValidity("S\u1ED1 \u0111i\u1EC7n tho\u1EA1i Vi\u1EC7t Nam kh\u00F4ng h\u1EE3p l\u1EC7");
             return;
         }
         phone.setCustomValidity("");

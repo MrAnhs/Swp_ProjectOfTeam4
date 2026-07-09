@@ -173,7 +173,7 @@
     <div class="row g-4">
         <div class="col-lg-6">
             <div class="card h-100">
-                <div class="card-header fw-semibold">Doanh thu (SUM(final_amount), Invoice.status = 'Paid')</div>
+                <div class="card-header fw-semibold">Doanh thu đã thanh toán</div>
                 <div class="card-body">
                     <div class="report-chart-panel">
                         <canvas id="revenueChart"></canvas>
@@ -199,7 +199,7 @@
 
         <div class="col-lg-6">
             <div class="card h-100">
-                <div class="card-header fw-semibold">Lượt khám hoàn tất (COUNT(appointment_id), Appointment.status = 'Completed')</div>
+                <div class="card-header fw-semibold">Lượt khám hoàn tất</div>
                 <div class="card-body">
                     <div class="report-chart-panel">
                         <canvas id="visitChart"></canvas>
@@ -322,9 +322,8 @@
     window.AdminConfig.revenueSeries = ${empty revenueJson ? '[]' : revenueJson};
     window.AdminConfig.visitSeries = ${empty visitJson ? '[]' : visitJson};
 </script>
-<script src="${pageContext.request.contextPath}/assets/js/pages/admin/reports.js"></script>
+<script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/admin/reports.js?v=20260709-fontfix2"></script>
 </body>
 </html>
-
 
 

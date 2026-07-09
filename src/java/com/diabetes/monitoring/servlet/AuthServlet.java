@@ -29,16 +29,22 @@ public class AuthServlet extends HttpServlet {
             } else if ("Receptionist".equalsIgnoreCase(user.getRole())) {
                 response.sendRedirect(request.getContextPath() + "/receptionist/dashboard");
             } else if ("Doctor".equalsIgnoreCase(user.getRole())) {
-                response.sendRedirect(request.getContextPath() + "/DashboardServlet");
-            } else if ("doctor_lab".equalsIgnoreCase(user.getRole())
-                    || "Laboratory".equalsIgnoreCase(user.getRole())) {
+                response.sendRedirect(request.getContextPath() + "/doctor/dashboard");
+            } else if (isDoctorLabRole(user.getRole())) {
                 response.sendRedirect(request.getContextPath() + "/doctor-lab/dashboard");
             } else {
                 response.sendRedirect(request.getContextPath() + "/index.jsp");
             }
         } else {
-            request.setAttribute("loginError", "Email hoặc mật khẩu không đúng. Vui lòng thử lại.");
+            request.setAttribute("loginError", "Email hoặc mật khẩu không đúng, hoặc tài khoản đã bị khóa.");
             request.getRequestDispatcher("login.jsp").forward(request, response);
         }
     }
-}
+
+    private boolean isDoctorLabRole(String role) {
+        if (role == null) {
+            return false;
+        }
+        String normalized = role.trim().replace("-", "_").replace(" ", "_");
+        return "doctor_lab".equalsIgnoreCase(normalized);
+    }}

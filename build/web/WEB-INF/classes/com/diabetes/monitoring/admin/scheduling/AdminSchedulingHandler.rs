@@ -1,3 +1,0 @@
-com.diabetes.monitoring.admin.scheduling.AdminScheduleHandler
-com.diabetes.monitoring.admin.scheduling.AdminAiSchedulingHandler
-com.diabetes.monitoring.admin.scheduling.AdminSchedulingHandler
