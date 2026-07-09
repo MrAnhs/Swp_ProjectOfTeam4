@@ -20,7 +20,7 @@
 
     <main class="main-content-dash">
         <header class="chat-page-header">
-            <div><span>Trợ lý sức khỏe</span><h1>Chat với AI</h1><p>Trao đổi triệu chứng và thông tin sức khỏe để hỗ trợ bác sĩ trong quá trình khám.</p></div>
+            <div><span>Trợ lý sức khỏe</span><h1>Chat với AI</h1><p>Trao đổi triệu chứng và thu thập dữ liệu để tạo hồ sơ sức khỏe.</p></div>
             <strong><i class="bi bi-circle-fill"></i> AI đang hoạt động</strong>
         </header>
 
@@ -34,36 +34,50 @@
                             <div class="message-time">Vừa xong</div>
                         </div>
                     </div>
+                    <c:if test="${reachedLimit}">
+                        <div class="message incoming">
+                            <div class="message-avatar ai"><i class="bi bi-robot"></i></div>
+                            <div class="message-content">
+                                <div class="message-bubble text-danger fw-bold">Bạn đã đạt giới hạn 10 lượt trao đổi tin nhắn với Trợ lý AI trong phiên này. Vui lòng bấm "Tạo hồ sơ từ cuộc trò chuyện" ở bên phải để gửi thông tin cho bác sĩ.</div>
+                                <div class="message-time">Vừa xong</div>
+                            </div>
+                        </div>
+                    </c:if>
                 </div>
                 <div class="chat-input-area">
                     <form class="chat-form" id="chatForm">
-                        <input class="chat-input" id="chatInput" placeholder="Nhập tin nhắn..." autocomplete="off" required>
-                        <button type="submit" class="btn-send"><i class="bi bi-send-fill"></i> Gửi</button>
+                        <input class="chat-input" id="chatInput" placeholder="${reachedLimit ? 'Đã đạt giới hạn tin nhắn. Vui lòng tạo hồ sơ.' : 'Nhập tin nhắn...'}" autocomplete="off" required ${reachedLimit ? 'disabled' : ''}>
+                        <button type="submit" class="btn-send" ${reachedLimit ? 'disabled' : ''}><i class="bi bi-send-fill"></i> Gửi</button>
                     </form>
-                    <button type="button" class="btn-page-secondary finish-chat-button"
-                            id="finishChatButton" hidden>
-                        <i class="bi bi-check-circle"></i> Kết thúc và tạo tóm tắt
-                    </button>
                 </div>
             </section>
 
             <aside class="info-panel">
                 <div class="panel-card">
-                    <h2><i class="bi bi-info-circle"></i> Mục đích cuộc trò chuyện</h2>
-                    <p class="chat-guidance">
-                        Hãy mô tả triệu chứng, thời điểm xuất hiện, mức độ và tiền sử liên quan.
-                        Nội dung quan trọng sẽ được tổng hợp để bác sĩ phụ trách tham khảo.
-                    </p>
-                    <p class="chat-warning">
-                        Chat AI không thay thế chẩn đoán hoặc chỉ định chính thức của bác sĩ.
-                    </p>
+                    <h2><i class="bi bi-heart-pulse"></i> Dữ liệu AI đã thu thập</h2>
+                    <div class="mini-health-form">
+                        <label>Urea<input type="number" id="chatUrea" readonly placeholder="-"></label>
+                        <label>Creatinine<input type="number" id="chatCr" readonly placeholder="-"></label>
+                        <label>HbA1c<input type="number" id="chatHba1c" readonly placeholder="-"></label>
+                        <label>Cholesterol<input type="number" id="chatChol" readonly placeholder="-"></label>
+                        <label>Triglycerides<input type="number" id="chatTg" readonly placeholder="-"></label>
+                        <label>HDL<input type="number" id="chatHdl" readonly placeholder="-"></label>
+                        <label>LDL<input type="number" id="chatLdl" readonly placeholder="-"></label>
+                        <label>VLDL<input type="number" id="chatVldl" readonly placeholder="-"></label>
+                        <label>Cân nặng<input type="number" id="chatWeight" readonly placeholder="-"></label>
+                        <label>Chiều cao<input type="number" id="chatHeight" readonly placeholder="-"></label>
+                        <label class="full-width">Triệu chứng<textarea id="chatSymptoms" readonly rows="3" placeholder="-"></textarea></label>
+                    </div>
+                    <button type="button" class="btn-submit-health" onclick="submitHealthRecordFromChat()">
+                        <i class="bi bi-check-circle"></i> Tạo hồ sơ từ cuộc trò chuyện
+                    </button>
                 </div>
             </aside>
         </div>
     </main>
 
-    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/app-config.js?v=20260709-fontfix2"></script>
-    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/api-client.js?v=20260709-fontfix2"></script>
-    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/patient/ai-chat.js?v=20260709-fontfix2"></script>
+    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/app-config.js?v=20260709-fontfix4"></script>
+    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/api-client.js?v=20260709-fontfix4"></script>
+    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/patient/ai-chat.js?v=20260709-fontfix4"></script>
 </body>
 </html>

@@ -6,10 +6,12 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.List;
 
 public class GeminiIntegration {
-    private static final String API_KEY = "AQ.Ab8RN6LBZk1OJ65vNszcRVYid2WnPJqS12CPIuq8h-sQe4Nrhw"; 
-    private static final String API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + API_KEY;
+    private static final String API_URL_BASE =
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=";
+    private static int activeKeyIndex = 0;
 
     private static final String SYSTEM_PROMPT = 
         "Bạn là một bác sĩ AI chuyên theo dõi và hỗ trợ bệnh nhân tiểu đường. "
@@ -25,18 +27,38 @@ public class GeminiIntegration {
   + "PHONG CÁCH TRÒ CHUYỆN:\n"
   + "- Trò chuyện tự nhiên như bác sĩ thật.\n"
   + "- Luôn thể hiện sự quan tâm và động viên.\n"
-  + "- Không trả lời quá ngắn.\n"
-  + "- Luôn kết thúc bằng một câu hỏi quan tâm bệnh nhân.\n\n"
+  + "- Trả lời đầy đủ nhưng súc tích, tránh lặp lại toàn bộ thông tin bệnh nhân vừa cung cấp.\n"
+  + "- Luôn kết thúc bằng một câu hỏi quan tâm bệnh nhân.\n"
+  + "- BẮT BUỘC KHÔNG hỏi bệnh nhân có lo lắng gì về việc đi khám không (tránh hỏi lạc đề). Khi khuyên bệnh nhân đi khám, hãy hỏi xem họ còn câu hỏi nào khác muốn đặt ra không.\n\n"
 
   + "CÁC TRIỆU CHỨNG TIỂU ĐƯỜNG CẦN QUAN TÂM:\n"
-  + "- Khát nước nhiều\n"
-  + "- Đi tiểu nhiều\n"
-  + "- Mệt mỏi\n"
-  + "- Sụt cân bất thường\n"
-  + "- Chóng mặt\n"
-  + "- Tê tay chân\n"
-  + "- Vết thương lâu lành\n"
-  + "- Mờ mắt\n\n"
+  + "1. Khát nước nhiều hơn bình thường.\n"
+  + "2. Đi tiểu nhiều lần, đặc biệt vào ban đêm.\n"
+  + "3. Cảm giác mệt mỏi kéo dài hoặc thiếu năng lượng.\n"
+  + "4. Nhìn mờ hoặc thị lực giảm tạm thời.\n"
+  + "5. Ăn nhiều nhưng vẫn nhanh đói.\n"
+  + "6. Sụt cân bất thường dù không ăn kiêng.\n"
+  + "7. Vết thương lâu lành hoặc dễ bị nhiễm trùng.\n"
+  + "8. Tê bì hoặc cảm giác châm chích ở bàn tay, bàn chân.\n"
+  + "9. Da khô, ngứa hoặc dễ bị nhiễm nấm tái phát.\n"
+  + "10. Chóng mặt hoặc cảm giác cơ thể suy nhược.\n\n"
+
+  + "KHI HỎI VỀ TRIỆU CHỨNG:\n"
+  + "- Hỏi kỹ triệu chứng bắt đầu từ khi nào, xuất hiện thường xuyên không, mức độ nặng nhẹ ra sao.\n"
+  + "- Hỏi triệu chứng xảy ra vào thời điểm nào trong ngày, có liên quan đến ăn uống, vận động hoặc dùng thuốc không.\n"
+  + "- Nếu bệnh nhân có nhiều triệu chứng cùng lúc, hãy tóm tắt lại và hỏi thêm 1-2 câu quan trọng nhất thay vì hỏi quá nhiều một lần.\n\n"
+
+  + "LUỒNG HỘI THOẠI BẮT BUỘC:\n"
+  + "1. Khi bắt đầu hoặc khi chưa rõ thông tin xét nghiệm, trước tiên phải hỏi bệnh nhân: \"Bạn đã từng xét nghiệm đường huyết hoặc HbA1c chưa?\"\n"
+  + "2. Sau khi bệnh nhân đã trả lời câu hỏi xét nghiệm (dù đã xét nghiệm hay chưa), tiếp tục hỏi về tiền sử bệnh lý. BẮT BUỘC trong câu hỏi tiền sử phải hỏi về tiền sử của bản thân bệnh nhân trước, sau đó mới hỏi đến tiền sử của gia đình (bố mẹ, anh chị em ruột) trong cùng câu đó. Ví dụ: 'Bản thân bạn hay gia đình đã từng mắc tiểu đường chưa?'. Nếu có, hãy tổng hợp thông tin tiền sử này vào phần triệu chứng (symptoms) trong healthData.\n"
+  + "3. Nếu bệnh nhân trả lời CHƯA xét nghiệm:\n"
+  + "   - Không yêu cầu nhập các chỉ số xét nghiệm.\n"
+  + "   - Tiếp tục hỏi kỹ các triệu chứng hiện tại theo danh sách triệu chứng ở trên.\n"
+  + "   - Khi đã khai thác đủ thông tin (triệu chứng và tiền sử bệnh lý), bắt buộc phải khuyên bệnh nhân nên đi khám bác sĩ hoặc đến cơ sở y tế gần nhất và hỏi xem họ còn câu hỏi nào khác cho bác sĩ không.\n"
+  + "4. Nếu bệnh nhân trả lời ĐÃ xét nghiệm:\n"
+  + "   - Hỏi các chỉ số cần thiết để nộp hồ sơ: đường huyết lúc đói hoặc sau ăn, HbA1c, urea, creatinine, cholesterol, triglyceride, HDL, LDL, VLDL, cân nặng, chiều cao và triệu chứng hiện tại.\n"
+  + "   - Nếu bệnh nhân chưa nhớ hết chỉ số, hãy hỏi từng nhóm nhỏ, không hỏi quá nhiều một lần.\n"
+  + "   - Khi đã khai thác đủ thông tin (bao gồm chỉ số xét nghiệm, triệu chứng và tiền sử), bắt buộc phải khuyên bệnh nhân nên đi khám bác sĩ hoặc đến cơ sở y tế gần nhất và hỏi xem họ còn câu hỏi nào khác cho bác sĩ không.\n\n"
 
   + "NHIỆM VỤ DỮ LIỆU:\n"
   + "1. Thu thập CHÍNH XÁC các chỉ số số từ tin nhắn bệnh nhân:\n"
@@ -82,14 +104,14 @@ public class GeminiIntegration {
 
   + "5. Nếu bệnh nhân chưa có chỉ số xét nghiệm, hãy hỏi kỹ triệu chứng hiện tại.\n\n"
 
-  + "5. Nếu đường huyết quá cao hoặc có dấu hiệu nguy hiểm:\n"
+  + "6. Nếu đường huyết quá cao hoặc có dấu hiệu nguy hiểm:\n"
   + "- khó thở\n"
   + "- đau ngực\n"
   + "- ngất\n"
   + "- lơ mơ\n"
   + "thì khuyên bệnh nhân đến bệnh viện ngay.\n\n"
 
-  + "6. Luôn ưu tiên tư vấn:\n"
+  + "7. Luôn ưu tiên tư vấn:\n"
   + "- kiểm soát đường huyết\n"
   + "- chế độ ăn cho người tiểu đường\n"
   + "- vận động nhẹ\n"
@@ -117,29 +139,29 @@ public class GeminiIntegration {
   + "  }\n"
   + "}";
     public String getChatResponse(String userPrompt) {
-        if (API_KEY.equals("YOUR_GEMINI_API_KEY")) {
+        List<String> apiKeys = getConfiguredApiKeys();
+        if (apiKeys.isEmpty()) {
             return "{\"reply\": \"AI service is not configured.\", \"healthData\": {\"urea\":0,\"cr\":0,\"hba1c\":0,\"chol\":0,\"tg\":0,\"hdl\":0,\"ldl\":0,\"vldl\":0,\"weight\":0,\"height\":0,\"bmi\":0,\"symptoms\":\"\"}}";
         }
 
-        int maxRetries = 3;
-        int retryDelayMs = 4000; // Tăng thời gian chờ lên 4 giây
+        HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
+        String jsonRequest = "{"
+            + "\"contents\": [{\"parts\": [{\"text\": \"" + escapeJson(SYSTEM_PROMPT + "\nUser: " + userPrompt) + "\"}]}], "
+            + "\"generationConfig\": {"
+            + "  \"temperature\": 0.7, "
+            + "  \"topP\": 0.95, "
+            + "  \"maxOutputTokens\": 2048, "
+            + "  \"responseMimeType\": \"application/json\""
+            + "}"
+            + "}";
 
-        for (int i = 0; i < maxRetries; i++) {
+        int startIndex = getActiveKeyIndex(apiKeys.size());
+        for (int attempt = 0; attempt < apiKeys.size(); attempt++) {
+            int keyIndex = (startIndex + attempt) % apiKeys.size();
+            String apiKey = apiKeys.get(keyIndex);
             try {
-                HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
-                
-                String jsonRequest = "{"
-                    + "\"contents\": [{\"parts\": [{\"text\": \"" + escapeJson(SYSTEM_PROMPT + "\nUser: " + userPrompt) + "\"}]}], "
-                    + "\"generationConfig\": {"
-                    + "  \"temperature\": 0.7, "
-                    + "  \"topP\": 0.95, "
-                    + "  \"maxOutputTokens\": 1024, "
-                    + "  \"responseMimeType\": \"application/json\""
-                    + "}"
-                    + "}";
-
                 HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(API_URL))
+                    .uri(URI.create(API_URL_BASE + apiKey))
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(jsonRequest, StandardCharsets.UTF_8))
                     .timeout(Duration.ofSeconds(30))
@@ -154,25 +176,109 @@ public class GeminiIntegration {
                     String extracted = extractJson(rawResult);
                     
                     if (extracted.startsWith("{") && extracted.endsWith("}")) {
+                        setActiveKeyIndex(keyIndex);
                         return extracted;
                     }
+                    setActiveKeyIndex(keyIndex);
                     return "{\"reply\": \"" + escapeJson(rawResult) + "\", \"healthData\": {\"hba1c\":0, \"bmi\":0, \"tg\":0, \"hdl\":0, \"symptoms\":\"\"}}";
-                } else if (response.statusCode() == 429) {
-                    // Chờ lâu hơn ở mỗi lần thử lại
-                    Thread.sleep(retryDelayMs * (i + 1));
-                    continue; // Thêm continue để thử lại
+                } else if (shouldSwitchKey(response.statusCode())) {
+                    System.err.println("Gemini key " + (keyIndex + 1) + " failed with status "
+                            + response.statusCode() + ". Switching to next key.");
+                    setActiveKeyIndex((keyIndex + 1) % apiKeys.size());
+                    continue;
                 } else {
                     String errorBody = response.body();
                     System.err.println("Gemini Error (" + response.statusCode() + "): " + errorBody);
                     return "{\"reply\": \"Lỗi dịch vụ AI (Status " + response.statusCode() + "). Vui lòng thử lại.\", \"healthData\": {\"hba1c\":0, \"bmi\":0, \"tg\":0, \"hdl\":0, \"symptoms\":\"\"}}";
                 }
             } catch (Exception e) {
-                if (i == maxRetries - 1) {
+                if (attempt == apiKeys.size() - 1) {
                     return "{\"reply\": \"Lỗi kết nối: " + e.getMessage() + "\", \"healthData\": {\"hba1c\":0, \"bmi\":0, \"tg\":0, \"hdl\":0, \"symptoms\":\"\"}}";
                 }
+                setActiveKeyIndex((keyIndex + 1) % apiKeys.size());
             }
         }
-        return "{\"reply\": \"Hạn mức miễn phí đã hết. Vui lòng đợi 30 giây để Google cấp lại quyền truy cập cho Key này.\", \"healthData\": {\"hba1c\":0, \"bmi\":0, \"tg\":0, \"hdl\":0, \"symptoms\":\"\"}}";
+        return "{\"reply\": \"Tất cả API key hiện đang hết hạn mức hoặc không khả dụng. Vui lòng thử lại sau.\", \"healthData\": {\"hba1c\":0, \"bmi\":0, \"tg\":0, \"hdl\":0, \"symptoms\":\"\"}}";
+    }
+
+    public String getSummaryResponse(String chatHistory) {
+        List<String> apiKeys = getConfiguredApiKeys();
+        if (apiKeys.isEmpty()) {
+            return "Không thể kết nối dịch vụ AI để tạo tóm tắt.";
+        }
+
+        HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
+        String prompt = "Dưới đây là lịch sử cuộc trò chuyện giữa bệnh nhân tiểu đường và bác sĩ AI. " +
+                        "Hãy tóm tắt ngắn gọn các ý quan trọng nhất (như triệu chứng nổi bật, chỉ số bất thường, " +
+                        "và các lời khuyên ăn uống/vận động quan trọng) dưới dạng các gạch đầu dòng ngắn gọn bằng tiếng Việt:\n\n" +
+                        chatHistory;
+        String jsonRequest = "{"
+            + "\"contents\": [{\"parts\": [{\"text\": \"" + escapeJson(prompt) + "\"}]}], "
+            + "\"generationConfig\": {"
+            + "  \"temperature\": 0.3, "
+            + "  \"maxOutputTokens\": 1024"
+            + "}"
+            + "}";
+
+        int startIndex = getActiveKeyIndex(apiKeys.size());
+        for (int attempt = 0; attempt < apiKeys.size(); attempt++) {
+            int keyIndex = (startIndex + attempt) % apiKeys.size();
+            String apiKey = apiKeys.get(keyIndex);
+            try {
+                HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(API_URL_BASE + apiKey))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonRequest, StandardCharsets.UTF_8))
+                    .timeout(Duration.ofSeconds(30))
+                    .build();
+
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+                if (response.statusCode() == 200) {
+                    String responseBody = response.body();
+                    String rawResult = parseGeminiResponse(responseBody);
+                    setActiveKeyIndex(keyIndex);
+                    return rawResult;
+                } else if (shouldSwitchKey(response.statusCode())) {
+                    setActiveKeyIndex((keyIndex + 1) % apiKeys.size());
+                    continue;
+                } else {
+                    return "Không thể tạo tóm tắt AI (Status " + response.statusCode() + ").";
+                }
+            } catch (Exception e) {
+                if (attempt == apiKeys.size() - 1) {
+                    return "Lỗi kết nối tóm tắt AI: " + e.getMessage();
+                }
+                setActiveKeyIndex((keyIndex + 1) % apiKeys.size());
+            }
+        }
+        return "Tất cả API key hiện tại không khả dụng để tạo tóm tắt.";
+    }
+
+    private List<String> getConfiguredApiKeys() {
+        return GeminiConfigUtil.getRecommendationApiKeys();
+    }
+
+    private synchronized int getActiveKeyIndex(int keyCount) {
+        if (keyCount <= 0) return 0;
+        if (activeKeyIndex < 0 || activeKeyIndex >= keyCount) {
+            activeKeyIndex = 0;
+        }
+        return activeKeyIndex;
+    }
+
+    private synchronized void setActiveKeyIndex(int keyIndex) {
+        activeKeyIndex = Math.max(0, keyIndex);
+    }
+
+    private boolean shouldSwitchKey(int statusCode) {
+        return statusCode == 401
+                || statusCode == 403
+                || statusCode == 429
+                || statusCode == 500
+                || statusCode == 502
+                || statusCode == 503
+                || statusCode == 504;
     }
 
     private String extractJson(String text) {

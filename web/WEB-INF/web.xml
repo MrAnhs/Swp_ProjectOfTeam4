@@ -36,6 +36,9 @@
         <url-pattern>/ai-chat</url-pattern>
         <url-pattern>/update-profile</url-pattern>
         <url-pattern>/ai-conversation</url-pattern>
+        <url-pattern>/ai-summary</url-pattern>
+        <url-pattern>/get-ai-summary</url-pattern>
+        <url-pattern>/submit-health-record</url-pattern>
     </filter-mapping>
 
     <filter>
@@ -48,6 +51,9 @@
         <url-pattern>/ai-chat</url-pattern>
         <url-pattern>/update-profile</url-pattern>
         <url-pattern>/ai-conversation</url-pattern>
+        <url-pattern>/ai-summary</url-pattern>
+        <url-pattern>/get-ai-summary</url-pattern>
+        <url-pattern>/submit-health-record</url-pattern>
     </filter-mapping>
 
     <filter>
@@ -408,6 +414,36 @@
 
         <url-pattern>/ai-conversation</url-pattern>
 
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>AISummaryServlet</servlet-name>
+        <servlet-class>com.diabetes.monitoring.servlet.AISummaryServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>AISummaryServlet</servlet-name>
+        <url-pattern>/ai-summary</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>GetAISummaryServlet</servlet-name>
+        <servlet-class>com.diabetes.monitoring.servlet.GetAISummaryServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>GetAISummaryServlet</servlet-name>
+        <url-pattern>/get-ai-summary</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>SubmitHealthRecordServlet</servlet-name>
+        <servlet-class>com.diabetes.monitoring.servlet.SubmitHealthRecordServlet</servlet-class>
+        <multipart-config>
+            <max-request-size>1048576</max-request-size>
+        </multipart-config>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>SubmitHealthRecordServlet</servlet-name>
+        <url-pattern>/submit-health-record</url-pattern>
     </servlet-mapping>
 
 
