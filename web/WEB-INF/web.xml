@@ -347,7 +347,7 @@
 
     <servlet>
         <servlet-name>DoctorLabServlet</servlet-name>
-        <servlet-class>com.diabetes.monitoring.doctorlab.DoctorLabServlet</servlet-class>
+        <servlet-class>com.diabetes.monitoring.servlet.DoctorLabServlet</servlet-class>
     </servlet>
     <servlet-mapping>
         <servlet-name>DoctorLabServlet</servlet-name>

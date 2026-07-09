@@ -1,3 +1,0 @@
-com.diabetes.monitoring.admin.patientflow.AdminPatientFlowService
-com.diabetes.monitoring.admin.patientflow.AdminAppointmentWorkflowService
-com.diabetes.monitoring.admin.patientflow.AdminEmergencyRoutingService
