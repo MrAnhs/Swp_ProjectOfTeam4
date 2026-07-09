@@ -1,0 +1,317 @@
+/* Thiết lập Font chữ mặc định chuẩn App hiện đại */
+body {
+    font-family: 'Inter', sans-serif;
+    color: #333333;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Định nghĩa màu thương hiệu Vinmec Custom */
+.text-vinmec {
+    color: #2dbbbc !important;
+}
+
+/* Định dạng nút bấm phong cách Vinmec bo tròn mềm mại */
+.btn-vinmec {
+    background-color: #2dbbbc !important;
+    border: 1px solid #2dbbbc !important;
+    border-radius: 30px !important; /* Bo tròn hoàn toàn giống nút Vinmec mẫu */
+    padding: 10px 26px !important;
+    transition: all 0.25s ease-in-out !important;
+}
+
+.btn-vinmec:hover {
+    background-color: #239495 !important;
+    border-color: #239495 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(35, 148, 149, 0.25);
+}
+
+/* Định dạng nút Outline */
+.btn-outline-vinmec {
+    color: #2dbbbc !important;
+    border: 2px solid #2dbbbc !important;
+    border-radius: 30px !important;
+    padding: 9px 26px !important;
+    background-color: transparent !important;
+    font-weight: 600 !important;
+    transition: all 0.25s ease-in-out !important;
+}
+
+.btn-outline-vinmec:hover {
+    background-color: #2dbbbc !important;
+    color: white !important;
+    transform: translateY(-2px);
+}
+
+/* Định dạng vòng tròn chứa Icon (Feature Cards) */
+.icon-circle-vinmec {
+    width: 55px;
+    height: 55px;
+    background-color: rgba(45, 187, 188, 0.1);
+    color: #2dbbbc;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+/* Thiết kế khung thẻ tính năng (Feature Cards) đổ bóng cao cấp */
+.feature-card {
+    background-color: #ffffff;
+    border-radius: 16px !important;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.03);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* Hiệu ứng nổi lên khi di chuột vào các khối tính năng */
+.transition-hover:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 30px rgba(45, 187, 188, 0.09) !important;
+    background-gradient: linear-gradient(135deg, #ffffff 0%, #fafffe 100%);
+}
+
+/* Khoảng cách tăng cường chữ viết chuyên nghiệp */
+.tracking-wider {
+    letter-spacing: 0.08em;
+}
+
+/* Tinh chỉnh dải Header */
+.hero-header {
+    border-bottom: 1px solid #edf5f3;
+}
+/* Khung Card bao ngoài form đăng nhập */
+.login-card {
+    width: 100%;
+    max-width: 460px;
+    border-radius: 16px !important;
+}
+
+/* Định dạng các cụm Input lồng Icon bo tròn giống hệt Vinmec */
+.custom-input-group {
+    border: 1px solid #ced4da;
+    border-radius: 10px !important;
+    overflow: hidden;
+    transition: all 0.2s ease-in-out;
+}
+
+/* Hiệu ứng đổi màu viền khi người dùng click vào ô nhập liệu */
+.custom-input-group:focus-within {
+    border-color: #2dbbbc !important;
+    box-shadow: 0 0 0 0.2rem rgba(45, 187, 188, 0.15) !important;
+}
+
+.custom-input-group .input-group-text {
+    border: none;
+    padding-left: 15px;
+    padding-right: 12px;
+    font-size: 1.1rem;
+}
+
+.custom-input-group .form-control,
+.custom-input-group .form-select {
+    border: none;
+    padding-top: 11px;
+    padding-bottom: 11px;
+    font-size: 0.95rem;
+}
+
+/* Custom độ rộng và khoảng cách nút bấm */
+.py-2-5 {
+    padding-top: 11px !important;
+    padding-bottom: 11px !important;
+}
+
+/* Hiệu ứng đổi màu chữ khi di chuột vào link */
+.link-hover-vinmec:hover {
+    color: #2dbbbc !important;
+}
+
+/* Màu checkbox đồng bộ */
+.checkbox-vinmec:checked {
+    background-color: #2dbbbc !important;
+    border-color: #2dbbbc !important;
+}
+
+/* ===== DASHBOARD STYLES ===== */
+.dashboard-wrapper {
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar {
+    width: 260px;
+    min-height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    border-right: 1px solid #e9ecef;
+    z-index: 1000;
+}
+
+.sidebar-brand {
+    border-bottom: 1px solid #e9ecef;
+}
+
+.sidebar .nav-link {
+    color: #6c757d;
+    padding: 12px 16px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.sidebar .nav-link:hover,
+.sidebar .nav-link.active {
+    background-color: rgba(45, 187, 188, 0.1);
+    color: #2dbbbc;
+}
+
+.main-content {
+    margin-left: 260px;
+    flex: 1;
+    min-height: 100vh;
+}
+
+.stats-card {
+    border: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
+}
+
+.health-chart {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.chart-grid {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-around;
+    height: 150px;
+    gap: 8px;
+}
+
+.chart-bar {
+    flex: 1;
+    background: linear-gradient(to top, #2dbbbc, #5dd3d4);
+    border-radius: 8px 8px 0 0;
+    min-width: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 8px;
+    color: white;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+}
+
+.chart-bar:hover {
+    opacity: 0.8;
+    transform: scaleY(1.02);
+}
+
+.summary-pill {
+    border-left: 4px solid #2dbbbc;
+}
+
+.table th {
+    font-weight: 600;
+    color: #495057;
+}
+
+.badge.bg-warning {
+    background-color: #ffc107 !important;
+}
+
+.badge.bg-success {
+    background-color: #28a745 !important;
+}
+
+.text-primary {
+    color: #2dbbbc !important;
+}
+
+.bg-primary {
+    background-color: #2dbbbc !important;
+}
+
+.bg-primary.bg-opacity-10 {
+    background-color: rgba(45, 187, 188, 0.1) !important;
+}
+
+.btn-primary {
+    background-color: #2dbbbc !important;
+    border-color: #2dbbbc !important;
+}
+
+.btn-primary:hover {
+    background-color: #239495 !important;
+    border-color: #239495 !important;
+}
+
+.btn-outline-primary {
+    color: #2dbbbc !important;
+    border-color: #2dbbbc !important;
+}
+
+.btn-outline-primary:hover {
+    background-color: #2dbbbc !important;
+    color: white !important;
+}
+
+/* Chat styles */
+.chat-window {
+    min-height: 300px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.chat-message {
+    margin-bottom: 16px;
+    display: flex;
+}
+
+.chat-message.incoming {
+    justify-content: flex-start;
+}
+
+.chat-message.outgoing {
+    justify-content: flex-end;
+}
+
+.chat-bubble {
+    max-width: 70%;
+    padding: 12px 16px;
+    border-radius: 16px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.chat-message.incoming .chat-bubble {
+    background-color: white;
+    border: 1px solid #e9ecef;
+    color: #333;
+}
+
+.chat-message.outgoing .chat-bubble {
+    background-color: #2dbbbc;
+    color: white;
+}
+
+.summary-card {
+    border: 1px solid #e9ecef;
+    transition: all 0.2s ease;
+}
+
+.summary-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}

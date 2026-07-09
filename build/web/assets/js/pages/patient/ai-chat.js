@@ -1,0 +1,178 @@
+(function () {
+    const chatWindow = document.getElementById("chatWindow");
+    const chatForm = document.getElementById("chatForm");
+    const chatInput = document.getElementById("chatInput");
+    const finishButton = document.getElementById("finishChatButton");
+    const endpoint = ApiClient.buildUrl("/ai-chat");
+    const appointmentId = Number(new URLSearchParams(window.location.search).get("appointmentId"));
+    let conversationId = null;
+
+    function addMessage(text, type) {
+        const message = document.createElement("div");
+        message.className = `message ${type}`;
+
+        const avatar = document.createElement("div");
+        avatar.className = `message-avatar ${type === "incoming" ? "ai" : "user"}`;
+        if (type === "incoming") {
+            const icon = document.createElement("i");
+            icon.className = "bi bi-robot";
+            avatar.append(icon);
+        } else {
+            avatar.textContent = "U";
+        }
+
+        const content = document.createElement("div");
+        content.className = "message-content";
+
+        const bubble = document.createElement("div");
+        bubble.className = "message-bubble";
+        bubble.textContent = text;
+
+        const time = document.createElement("div");
+        time.className = "message-time";
+        time.textContent = "Vừa xong";
+
+        content.append(bubble, time);
+        message.append(avatar, content);
+        chatWindow.append(message);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    function showTypingIndicator() {
+        const indicator = document.createElement("div");
+        indicator.className = "message incoming";
+        indicator.id = "typingIndicator";
+        indicator.innerHTML = `
+            <div class="message-avatar ai"><i class="bi bi-robot"></i></div>
+            <div class="message-content">
+                <div class="typing-indicator">
+                    <div class="typing-dots"><span></span><span></span><span></span></div>
+                </div>
+            </div>
+        `;
+        chatWindow.append(indicator);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    function removeTypingIndicator() {
+        document.getElementById("typingIndicator")?.remove();
+    }
+
+    function extractReply(responseText) {
+        const data = JSON.parse(responseText.trim());
+        if (typeof data.reply !== "string") {
+            throw new Error("Phản hồi AI không đúng cấu trúc.");
+        }
+
+        const nestedReply = data.reply.trim();
+        if (!nestedReply.startsWith("{")) {
+            return data.reply;
+        }
+
+        try {
+            const nestedData = JSON.parse(nestedReply);
+            return nestedData.reply || data.reply;
+        } catch (error) {
+            return data.reply;
+        }
+    }
+
+    async function loadAppointmentConversation() {
+        if (!Number.isInteger(appointmentId) || appointmentId <= 0) {
+            return;
+        }
+
+        finishButton.hidden = false;
+        try {
+            const appointmentData = await ApiClient.get(
+                    `/patient/api/appointments?id=${appointmentId}`);
+            conversationId = appointmentData.appointment.conversationId;
+            if (!conversationId) {
+                return;
+            }
+
+            const conversation = await ApiClient.get(
+                    `/ai-conversation?id=${conversationId}`);
+            if (!conversation.messages?.length) {
+                return;
+            }
+
+            chatWindow.replaceChildren();
+            conversation.messages.forEach((message) => {
+                addMessage(message.message, message.sender === "user" ? "outgoing" : "incoming");
+            });
+            if (conversation.summary) {
+                addMessage(`Tóm tắt đã lưu: ${conversation.summary}`, "incoming");
+            }
+        } catch (error) {
+            console.error("Unable to load appointment conversation:", error);
+            addMessage("Không thể tải lại lịch sử trò chuyện của lịch hẹn.", "incoming");
+        }
+    }
+
+    chatForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const message = chatInput.value.trim();
+        if (!message) return;
+
+        addMessage(message, "outgoing");
+        chatInput.value = "";
+        chatInput.disabled = true;
+        showTypingIndicator();
+
+        try {
+            const response = await fetch(endpoint, {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({
+                    message,
+                    ...(Number.isInteger(appointmentId) && appointmentId > 0
+                        ? { appointmentId: String(appointmentId) } : {})
+                }).toString()
+            });
+
+            const responseText = await response.text();
+            if (!response.ok) {
+                throw new Error(`Máy chủ trả về lỗi HTTP ${response.status}.`);
+            }
+
+            const data = JSON.parse(responseText.trim());
+            conversationId = data.conversationId || conversationId;
+            addMessage(data.reply || extractReply(responseText), "incoming");
+        } catch (error) {
+            console.error("Chat error:", error);
+            addMessage("Không thể nhận phản hồi từ AI. Vui lòng thử lại.", "incoming");
+        } finally {
+            removeTypingIndicator();
+            chatInput.disabled = false;
+            chatInput.focus();
+        }
+    });
+
+    finishButton.addEventListener("click", async () => {
+        if (!Number.isInteger(appointmentId) || appointmentId <= 0) {
+            return;
+        }
+
+        finishButton.disabled = true;
+        chatInput.disabled = true;
+        showTypingIndicator();
+        try {
+            const data = await ApiClient.postForm("/ai-chat", new URLSearchParams({
+                action: "finish",
+                appointmentId: String(appointmentId)
+            }));
+            addMessage(`Tóm tắt cho bác sĩ: ${data.summary}`, "incoming");
+            finishButton.textContent = "Đã tạo tóm tắt";
+        } catch (error) {
+            addMessage(`Không thể tạo tóm tắt: ${error.message}`, "incoming");
+            finishButton.disabled = false;
+        } finally {
+            removeTypingIndicator();
+            chatInput.disabled = false;
+        }
+    });
+
+    loadAppointmentConversation();
+})();

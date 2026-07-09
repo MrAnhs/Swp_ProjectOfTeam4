@@ -1,0 +1,218 @@
+<style>
+    .shared-admin-sidebar-wrap {
+        width: 100%;
+    }
+
+    .shared-admin-sidebar {
+        width: 296px;
+        max-width: 100%;
+        background: #f1f5fa;
+        border-right: 1px solid #e4ebf3;
+        color: #334155;
+    }
+
+    .shared-admin-sidebar .offcanvas-header {
+        border-bottom: none;
+        padding: 0.8rem 1rem 0;
+    }
+
+    .shared-admin-sidebar .offcanvas-body {
+        display: flex;
+        flex-direction: column;
+        padding: 0.9rem 0.9rem 1rem;
+        overflow-y: auto;
+    }
+
+    .shared-admin-sidebar .admin-sidebar-profile {
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+        background: #fff;
+        border: 1px solid #d7e1ec;
+        border-radius: 14px;
+        padding: 0.85rem 0.8rem;
+        margin-bottom: 1rem;
+    }
+
+    .shared-admin-sidebar .admin-sidebar-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 999px;
+        background: #d9efe8;
+        color: #158367;
+        font-weight: 800;
+        font-size: 1.25rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .shared-admin-sidebar .admin-sidebar-name {
+        margin: 0;
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: #17243a;
+    }
+
+    .shared-admin-sidebar .admin-sidebar-role {
+        margin: 0;
+        color: #7b8aa2;
+        font-size: 0.8rem;
+    }
+
+    .shared-admin-sidebar .menu-group-title {
+        font-size: 0.96rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #7386a3;
+        margin: 1rem 0 0.55rem;
+        padding: 0 0.35rem;
+    }
+
+    .shared-admin-sidebar .menu-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        width: 100%;
+        padding: 0.82rem 0.85rem;
+        margin-bottom: 0.35rem;
+        border-radius: 12px;
+        border: 1px solid transparent;
+        background: transparent;
+        color: #2f425b;
+        text-decoration: none;
+        transition: all 0.18s ease;
+    }
+
+    .shared-admin-sidebar .menu-item:hover {
+        background: #e9f4f0;
+        border-color: #cfe7df;
+        color: #186b53;
+    }
+
+    .shared-admin-sidebar .menu-item.active {
+        background: #ddece8;
+        border-color: #aad8ca;
+        color: #0f7c5f;
+    }
+
+    .shared-admin-sidebar .menu-item .menu-icon {
+        width: 20px;
+        text-align: center;
+        color: #18906f;
+        font-size: 1rem;
+    }
+
+    .shared-admin-sidebar .menu-item .menu-text {
+        flex: 1;
+        font-weight: 700;
+        font-size: 1.03rem;
+    }
+
+    .shared-admin-sidebar .menu-item .menu-arrow {
+        font-size: 0.72rem;
+        color: #8ca0b8;
+    }
+
+    .shared-admin-sidebar .admin-sidebar-logout-wrap {
+        margin-top: 1rem;
+        padding-top: 0.85rem;
+        border-top: 1px dashed #d4dee8;
+    }
+
+    .shared-admin-sidebar .admin-sidebar-logout {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        padding: 0.74rem 0.7rem;
+        border-radius: 12px;
+        border: 1px solid #f2c9c9;
+        background: #fff5f5;
+        color: #c53030;
+        text-decoration: none;
+        font-weight: 700;
+    }
+
+    .shared-admin-sidebar .admin-sidebar-logout:hover {
+        background: #ffe9e9;
+        color: #a82222;
+    }
+</style>
+
+<div class="admin-menu-launch d-lg-none shared-admin-sidebar-wrap" aria-label="M&#7903; menu qu&#7843;n tr&#7883;">
+    <button class="admin-hamburger-trigger" type="button" data-bs-toggle="offcanvas" data-bs-target="#adminDarkMenu" aria-controls="adminDarkMenu" aria-label="M&#7903; menu">
+        <i class="fa-solid fa-bars"></i>
+    </button>
+    <span class="admin-hamburger-label">Menu qu&#7843;n tr&#7883;</span>
+</div>
+
+<div class="offcanvas-lg offcanvas-start admin-dark-menu shared-admin-sidebar" tabindex="-1" id="adminDarkMenu" aria-labelledby="adminDarkMenuLabel">
+    <div class="offcanvas-header">
+        <div>
+            <div class="admin-dark-menu-brand" id="adminDarkMenuLabel">
+                <span class="brand-icon"><i class="fa-solid fa-heart-pulse"></i></span>
+                <span>HIS.ONE - S-COMS</span>
+            </div>
+            <div class="admin-dark-menu-subtitle">&#272;i&#7873;u h&#224;nh ph&#242;ng kh&#225;m</div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#adminDarkMenu" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body py-2">
+        <div class="admin-sidebar-stack">
+        <div class="admin-sidebar-profile">
+            <span class="admin-sidebar-avatar">A</span>
+            <div>
+                <p class="admin-sidebar-name"><c:out value="${sessionScope.currentUser.fullName}" default="Qu&#7843;n tr&#7883; vi&#234;n" /></p>
+                <p class="admin-sidebar-role">H&#7879; th&#7889;ng qu&#7843;n tr&#7883;</p>
+            </div>
+        </div>
+
+        <div class="menu-group-title">B&#224;n l&#224;m vi&#7879;c</div>
+        <a class="menu-item ${currentAction == 'dashboard' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin">
+            <i class="fa-solid fa-chart-pie menu-icon"></i>
+            <span class="menu-text">T&#7893;ng quan</span>
+            <i class="fa-solid fa-angle-right menu-arrow"></i>
+        </a>
+
+        <div class="menu-group-title">Qu&#7843;n tr&#7883;</div>
+        <a class="menu-item ${currentAction == 'listUsers' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin?action=listUsers">
+            <i class="fa-solid fa-user-group menu-icon"></i>
+            <span class="menu-text">Qu&#7843;n l&#253; t&#224;i kho&#7843;n</span>
+            <i class="fa-solid fa-angle-right menu-arrow"></i>
+        </a>
+        <a class="menu-item ${currentAction == 'manageServices' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin?action=manageServices">
+            <i class="fa-solid fa-notes-medical menu-icon"></i>
+            <span class="menu-text">Qu&#7843;n l&#253; danh m&#7909;c y t&#7871;</span>
+            <i class="fa-solid fa-angle-right menu-arrow"></i>
+        </a>
+        <a class="menu-item ${(currentAction == 'schedule' or currentAction == 'manageSchedules') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin?action=schedule">
+            <i class="fa-solid fa-calendar-check menu-icon"></i>
+            <span class="menu-text">Qu&#7843;n l&#253; l&#7883;ch tr&#7921;c</span>
+            <i class="fa-solid fa-angle-right menu-arrow"></i>
+        </a>
+
+        <div class="menu-group-title">B&#225;o c&#225;o v&#224; &#272;i&#7873;u ph&#7889;i</div>
+        <a class="menu-item ${currentAction == 'reports' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin?action=reports">
+            <i class="fa-solid fa-chart-line menu-icon"></i>
+            <span class="menu-text">B&#225;o c&#225;o doanh thu/l&#432;&#7907;t kh&#225;m</span>
+            <i class="fa-solid fa-angle-right menu-arrow"></i>
+        </a>
+        <a class="menu-item ${(currentAction == 'exception' or currentAction == 'viewHealthRecords') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin?action=exception">
+            <i class="fa-solid fa-shuffle menu-icon"></i>
+            <span class="menu-text">&#272;i&#7873;u ph&#7889;i kh&#7849;n c&#7845;p</span>
+            <i class="fa-solid fa-angle-right menu-arrow"></i>
+        </a>
+
+        <div class="admin-sidebar-logout-wrap">
+            <a class="admin-sidebar-logout" href="${pageContext.request.contextPath}/logout">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>&#272;&#259;ng xu&#7845;t</span>
+            </a>
+        </div>
+        </div>
+    </div>
+</div>
