@@ -32,7 +32,7 @@ public class DoctorLabServlet extends HttpServlet {
             return;
         }
 
-        if (!"doctor_lab".equals(currentUser.getRole())) {
+        if (!isDoctorLabRole(currentUser.getRole())) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access Denied: Only lab doctors allowed.");
             return;
         }
@@ -216,7 +216,7 @@ public class DoctorLabServlet extends HttpServlet {
             return;
         }
 
-        if (!"doctor_lab".equals(currentUser.getRole())) {
+        if (!isDoctorLabRole(currentUser.getRole())) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access Denied");
             return;
         }
@@ -559,5 +559,13 @@ public class DoctorLabServlet extends HttpServlet {
     private String formatDecimal(BigDecimal val) {
         if (val == null) return "0";
         return val.stripTrailingZeros().toPlainString();
+    }
+
+    private boolean isDoctorLabRole(String role) {
+        if (role == null) {
+            return false;
+        }
+        String normalized = role.trim().replace("-", "_").replace(" ", "_");
+        return "doctor_lab".equalsIgnoreCase(normalized);
     }
 }
