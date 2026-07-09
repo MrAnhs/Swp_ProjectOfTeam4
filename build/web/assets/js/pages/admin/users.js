@@ -12,20 +12,20 @@
         let pendingConfirmForm = null;
 
         const departmentTextMap = {
-            Endocrinology: 'Nội tiết - Tiểu đường',
-            Cardiology: 'Tim mạch',
-            Nephrology: 'Thận học',
-            General: 'Tổng quát'
+            Endocrinology: 'N\u1ED9i ti\u1EBFt - Ti\u1EC3u \u0111\u01B0\u1EDDng',
+            Cardiology: 'Tim m\u1EA1ch',
+            Nephrology: 'Th\u1EADn h\u1ECDc',
+            General: 'T\u1ED5ng qu\u00E1t'
         };
 
         function roleText(role) {
             const roleTextMap = {
-                Patient: 'Bệnh nhân',
-                Doctor: 'Bác sĩ',
-                Receptionist: 'Lễ tân',
-                Admin: 'Quản trị viên'
+                Patient: 'B\u1EC7nh nh\u00E2n',
+                Doctor: 'B\u00E1c s\u0129',
+                Receptionist: 'L\u1EC5 t\u00E2n',
+                Admin: 'Qu\u1EA3n tr\u1ECB vi\u00EAn'
             };
-            return roleTextMap[role] || role || 'Không xác định';
+            return roleTextMap[role] || role || 'Kh\u00F4ng x\u00E1c \u0111\u1ECBnh';
         }
 
         const viewFields = {
@@ -54,7 +54,7 @@
         };
 
         function setRoleDisplay(role) {
-            fields.roleInfo.textContent = 'Vai trò: ' + roleText(role);
+            fields.roleInfo.textContent = 'Vai tr\u00F2: ' + roleText(role);
 
             const isPatient = role === 'Patient';
             const isDoctor = role === 'Doctor';
@@ -70,7 +70,7 @@
             const isPatient = role === 'Patient';
             const isDoctor = role === 'Doctor';
 
-            viewFields.roleInfo.textContent = 'Vai trò: ' + roleText(role);
+            viewFields.roleInfo.textContent = 'Vai tr\u00F2: ' + roleText(role);
             viewFields.fullName.textContent = item.fullName || '-';
             viewFields.email.textContent = item.email || '-';
             viewFields.phone.textContent = item.phone || '-';
@@ -90,7 +90,7 @@
             }
             const payload = await response.json();
             if (!payload.success || !payload.item) {
-                throw new Error(payload.message || 'Không tải được hồ sơ');
+                throw new Error(payload.message || 'Kh\u00F4ng t\u1EA3i \u0111\u01B0\u1EE3c h\u1ED3 s\u01A1');
             }
 
             return payload.item;
@@ -124,7 +124,7 @@
                     return;
                 }
                 openEditModal(accountId).catch(function (err) {
-                    alert('Không thể tải hồ sơ tài khoản. ' + err.message);
+                    alert('Kh\u00F4ng th\u1EC3 t\u1EA3i h\u1ED3 s\u01A1 t\u00E0i kho\u1EA3n. ' + err.message);
                 });
                 return;
             }
@@ -143,7 +143,7 @@
             }
 
             openViewModal(accountId).catch(function (err) {
-                alert('Không thể tải thông tin tài khoản. ' + err.message);
+                alert('Kh\u00F4ng th\u1EC3 t\u1EA3i th\u00F4ng tin t\u00E0i kho\u1EA3n. ' + err.message);
             });
         });
 
@@ -163,20 +163,20 @@
                 const submitLabel = submitBtn ? submitBtn.textContent.trim() : '';
                 const row = form.closest('tr.account-row');
                 const nameCell = row ? row.querySelector('td:nth-child(2)') : null;
-                const accountName = nameCell ? nameCell.textContent.trim() : 'tài khoản này';
+                const accountName = nameCell ? nameCell.textContent.trim() : 't\u00E0i kho\u1EA3n n\u00E0y';
 
-                let title = 'Xác nhận thao tác';
-                let message = form.getAttribute('data-confirm-message') || 'Bạn có chắc muốn tiếp tục?';
+                let title = 'X\u00E1c nh\u1EADn thao t\u00E1c';
+                let message = form.getAttribute('data-confirm-message') || 'B\u1EA1n c\u00F3 ch\u1EAFc mu\u1ED1n ti\u1EBFp t\u1EE5c?';
 
                 if (actionValue === 'deleteAccount') {
-                    title = 'Xác nhận xóa';
-                    message = 'Bạn có chắc muốn xóa tài khoản "' + accountName + '"? Hành động không thể hoàn tác.';
-                } else if (actionValue === 'lockAccount' && submitLabel === 'Vô hiệu hóa') {
-                    title = 'Xác nhận vô hiệu hóa';
-                    message = 'Bạn có chắc muốn vô hiệu hóa tài khoản bác sĩ "' + accountName + '"?';
+                    title = 'X\u00E1c nh\u1EADn x\u00F3a';
+                    message = 'B\u1EA1n c\u00F3 ch\u1EAFc mu\u1ED1n x\u00F3a t\u00E0i kho\u1EA3n "' + accountName + '"? H\u00E0nh \u0111\u1ED9ng kh\u00F4ng th\u1EC3 ho\u00E0n t\u00E1c.';
+                } else if (actionValue === 'lockAccount' && submitLabel === 'V\u00F4 hi\u1EC7u h\u00F3a') {
+                    title = 'X\u00E1c nh\u1EADn v\u00F4 hi\u1EC7u h\u00F3a';
+                    message = 'B\u1EA1n c\u00F3 ch\u1EAFc mu\u1ED1n v\u00F4 hi\u1EC7u h\u00F3a t\u00E0i kho\u1EA3n b\u00E1c s\u0129 "' + accountName + '"?';
                 } else if (actionValue === 'lockAccount') {
-                    title = 'Xác nhận khóa';
-                    message = 'Bạn có chắc muốn khóa tài khoản "' + accountName + '"?';
+                    title = 'X\u00E1c nh\u1EADn kh\u00F3a';
+                    message = 'B\u1EA1n c\u00F3 ch\u1EAFc mu\u1ED1n kh\u00F3a t\u00E0i kho\u1EA3n "' + accountName + '"?';
                 }
 
                 actionConfirmTitle.textContent = title;

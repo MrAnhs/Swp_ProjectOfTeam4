@@ -30,7 +30,7 @@
 
         const time = document.createElement("div");
         time.className = "message-time";
-        time.textContent = "Vừa xong";
+        time.textContent = "V\u1EEBa xong";
 
         content.append(bubble, time);
         message.append(avatar, content);
@@ -61,7 +61,7 @@
     function extractReply(responseText) {
         const data = JSON.parse(responseText.trim());
         if (typeof data.reply !== "string") {
-            throw new Error("Phản hồi AI không đúng cấu trúc.");
+            throw new Error("Ph\u1EA3n h\u1ED3i AI kh\u00F4ng \u0111\u00FAng c\u1EA5u tr\u00FAc.");
         }
 
         const nestedReply = data.reply.trim();
@@ -102,11 +102,11 @@
                 addMessage(message.message, message.sender === "user" ? "outgoing" : "incoming");
             });
             if (conversation.summary) {
-                addMessage(`Tóm tắt đã lưu: ${conversation.summary}`, "incoming");
+                addMessage(`T\u00F3m t\u1EAFt \u0111\u00E3 l\u01B0u: ${conversation.summary}`, "incoming");
             }
         } catch (error) {
             console.error("Unable to load appointment conversation:", error);
-            addMessage("Không thể tải lại lịch sử trò chuyện của lịch hẹn.", "incoming");
+            addMessage("Kh\u00F4ng th\u1EC3 t\u1EA3i l\u1EA1i l\u1ECBch s\u1EED tr\u00F2 chuy\u1EC7n c\u1EE7a l\u1ECBch h\u1EB9n.", "incoming");
         }
     }
 
@@ -134,7 +134,7 @@
 
             const responseText = await response.text();
             if (!response.ok) {
-                throw new Error(`Máy chủ trả về lỗi HTTP ${response.status}.`);
+                throw new Error(`M\u00E1y ch\u1EE7 tr\u1EA3 v\u1EC1 l\u1ED7i HTTP ${response.status}.`);
             }
 
             const data = JSON.parse(responseText.trim());
@@ -142,7 +142,7 @@
             addMessage(data.reply || extractReply(responseText), "incoming");
         } catch (error) {
             console.error("Chat error:", error);
-            addMessage("Không thể nhận phản hồi từ AI. Vui lòng thử lại.", "incoming");
+            addMessage("Kh\u00F4ng th\u1EC3 nh\u1EADn ph\u1EA3n h\u1ED3i t\u1EEB AI. Vui l\u00F2ng th\u1EED l\u1EA1i.", "incoming");
         } finally {
             removeTypingIndicator();
             chatInput.disabled = false;
@@ -163,10 +163,10 @@
                 action: "finish",
                 appointmentId: String(appointmentId)
             }));
-            addMessage(`Tóm tắt cho bác sĩ: ${data.summary}`, "incoming");
-            finishButton.textContent = "Đã tạo tóm tắt";
+            addMessage(`T\u00F3m t\u1EAFt cho b\u00E1c s\u0129: ${data.summary}`, "incoming");
+            finishButton.textContent = "\u0110\u00E3 t\u1EA1o t\u00F3m t\u1EAFt";
         } catch (error) {
-            addMessage(`Không thể tạo tóm tắt: ${error.message}`, "incoming");
+            addMessage(`Kh\u00F4ng th\u1EC3 t\u1EA1o t\u00F3m t\u1EAFt: ${error.message}`, "incoming");
             finishButton.disabled = false;
         } finally {
             removeTypingIndicator();

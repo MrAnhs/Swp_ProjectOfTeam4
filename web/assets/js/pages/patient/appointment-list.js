@@ -5,7 +5,7 @@
     let appointments = [];
 
     function formatDateTime(value) {
-        if (!value) return "Chưa cập nhật";
+        if (!value) return "Ch\u01B0a c\u1EADp nh\u1EADt";
         const date = new Date(value);
         return Number.isNaN(date.getTime())
             ? value.replace("T", " ")
@@ -24,7 +24,7 @@
 
         list.replaceChildren();
         if (!visible.length) {
-            list.textContent = "Không tìm thấy lịch hẹn phù hợp.";
+            list.textContent = "Kh\u00F4ng t\u00ECm th\u1EA5y l\u1ECBch h\u1EB9n ph\u00F9 h\u1EE3p.";
             return;
         }
 
@@ -34,13 +34,13 @@
 
             const info = document.createElement("div");
             const title = document.createElement("h3");
-            title.textContent = `Lịch hẹn #${appointment.appointmentId}`;
+            title.textContent = `L\u1ECBch h\u1EB9n #${appointment.appointmentId}`;
             const doctor = document.createElement("p");
-            doctor.textContent = `${appointment.doctorName} - ${appointment.department || "Chưa cập nhật chuyên khoa"}`;
+            doctor.textContent = `${appointment.doctorName} - ${appointment.department || "Ch\u01B0a c\u1EADp nh\u1EADt chuy\u00EAn khoa"}`;
             const time = document.createElement("p");
-            time.textContent = `Thời gian: ${formatDateTime(appointment.appointmentTime)} | Ca: ${appointment.timeSlot}`;
+            time.textContent = `Th\u1EDDi gian: ${formatDateTime(appointment.appointmentTime)} | Ca: ${appointment.timeSlot}`;
             const queue = document.createElement("p");
-            queue.textContent = `Số thứ tự: ${appointment.queueNumber}`;
+            queue.textContent = `S\u1ED1 th\u1EE9 t\u1EF1: ${appointment.queueNumber}`;
 
             const statusMeta = PatientAppointmentStatus.get(appointment.status);
             const badge = document.createElement("span");
@@ -51,7 +51,7 @@
             link.className = "btn-page-secondary";
             link.href = ApiClient.buildUrl(
                     `/patient/appointments/detail?id=${appointment.appointmentId}`);
-            link.textContent = "Xem chi tiết";
+            link.textContent = "Xem chi ti\u1EBFt";
 
             info.append(title, doctor, time, queue, badge);
             item.append(info, link);
@@ -68,6 +68,6 @@
             render();
         })
         .catch((error) => {
-            list.textContent = `Không thể tải lịch hẹn: ${error.message}`;
+            list.textContent = `Kh\u00F4ng th\u1EC3 t\u1EA3i l\u1ECBch h\u1EB9n: ${error.message}`;
         });
 })();

@@ -95,8 +95,8 @@
         <section id="bookingResult" class="page-card booking-result" hidden></section>
     </main>
 
-    <script src="${pageContext.request.contextPath}/assets/js/core/app-config.js"></script>
-    <script src="${pageContext.request.contextPath}/assets/js/core/api-client.js"></script>
-    <script src="${pageContext.request.contextPath}/assets/js/pages/patient/appointment-booking.js"></script>
+    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/app-config.js?v=20260709-fontfix2"></script>
+    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/api-client.js?v=20260709-fontfix2"></script>
+    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/patient/appointment-booking.js?v=20260709-fontfix2"></script>
 </body>
 </html>

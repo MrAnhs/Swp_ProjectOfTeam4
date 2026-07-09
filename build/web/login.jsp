@@ -22,7 +22,7 @@
                     <div class="card-body p-4 p-md-5">
                         <div class="text-center mb-4">
                             <h2 class="fw-bold text-dark mb-2">Đăng nhập hệ thống</h2>
-                            <p class="text-secondary small">Đăng nhập để sử dụng các chức năng theo vai trò của bạn.</p>
+                            <p class="text-secondary small">Hệ thống sẽ tự nhận diện vai trò tài khoản và chuyển đến đúng khu vực làm việc.</p>
                         </div>
                         <c:if test="${not empty loginError}">
                             <div class="alert alert-danger" role="alert">
@@ -54,22 +54,7 @@
                                 </div>
                             </div>
                             
-                            <div class="mb-3">
-                                <label for="role" class="form-label text-secondary fw-semibold small">Vai trò đăng nhập</label>
-                                <div class="input-group custom-input-group">
-                                    <span class="input-group-text bg-white border-end-0 text-secondary">
-                                        <i class="bi bi-person-badge-fill"></i>
-                                    </span>
-                                    <select class="form-select border-start-0 ps-0 shadow-none text-secondary" id="role" name="role" required>
-                                        <option value="Patient">Bệnh nhân</option>
-                                        <option value="Doctor">Bác sĩ</option>
-                                        <option value="doctor_lab">Bác sĩ phòng xét nghiệm</option>
-                                        <option value="Receptionist">Lễ tân</option>
-                                        <option value="Admin">Quản trị viên</option>
-                                    </select>
-                                </div>
-                            </div>
-                            
+
                             <div class="d-flex justify-content-end align-items-center mb-4 pt-1">
                                 <a href="#" class="text-decoration-none text-secondary small link-hover-vinmec">Quên mật khẩu?</a>
                             </div>
@@ -88,6 +73,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="${pageContext.request.contextPath}/assets/js/pages/public/login.js"></script>
+    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/public/login.js?v=20260709-fontfix2"></script>
 </body>
 </html>

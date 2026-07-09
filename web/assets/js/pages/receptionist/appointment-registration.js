@@ -17,7 +17,7 @@
     async function loadDoctors() {
         try {
             const data = await utils.requestJson(utils.apiBase() + '/doctors');
-            doctorSelect.innerHTML = '<option value="">Chọn bác sĩ</option>';
+            doctorSelect.innerHTML = '<option value="">Ch\u1ECDn b\u00E1c s\u0129</option>';
             (data.doctors || []).forEach(function (doctor) {
                 const option = document.createElement('option');
                 option.value = doctor.doctorId;
@@ -31,22 +31,22 @@
 
     async function loadSchedules() {
         const doctorId = doctorSelect.value;
-        scheduleSelect.innerHTML = '<option value="">Đang tải ca khám...</option>';
+        scheduleSelect.innerHTML = '<option value="">\u0110ang t\u1EA3i ca kh\u00E1m...</option>';
         if (!doctorId) {
-            scheduleSelect.innerHTML = '<option value="">Chọn bác sĩ trước</option>';
+            scheduleSelect.innerHTML = '<option value="">Ch\u1ECDn b\u00E1c s\u0129 tr\u01B0\u1EDBc</option>';
             return;
         }
         try {
             const data = await utils.requestJson(utils.apiBase() + '/schedules?doctorId=' + encodeURIComponent(doctorId));
-            scheduleSelect.innerHTML = '<option value="">Chọn ca khám</option>';
+            scheduleSelect.innerHTML = '<option value="">Ch\u1ECDn ca kh\u00E1m</option>';
             (data.slots || []).forEach(function (slot) {
                 const option = document.createElement('option');
                 option.value = slot.scheduleId;
-                option.textContent = slot.label + ' - còn ' + slot.available + ' chỗ';
+                option.textContent = slot.label + ' - c\u00F2n ' + slot.available + ' ch\u1ED7';
                 scheduleSelect.appendChild(option);
             });
             if (!data.slots || data.slots.length === 0) {
-                scheduleSelect.innerHTML = '<option value="">Bác sĩ chưa có ca trống</option>';
+                scheduleSelect.innerHTML = '<option value="">B\u00E1c s\u0129 ch\u01B0a c\u00F3 ca tr\u1ED1ng</option>';
             }
         } catch (error) {
             scheduleSelect.innerHTML = '<option value="">' + error.message + '</option>';
@@ -57,12 +57,12 @@
         event.preventDefault();
         const phone = document.getElementById('registerPatientPhone').value.trim();
         if (!validVietnamesePhone(phone)) {
-            showResult('Số điện thoại Việt Nam không hợp lệ.', 'danger');
+            showResult('S\u1ED1 \u0111i\u1EC7n tho\u1EA1i Vi\u1EC7t Nam kh\u00F4ng h\u1EE3p l\u1EC7.', 'danger');
             return;
         }
         const dob = document.getElementById('registerPatientDob').value;
         if (dob && (new Date(dob + 'T00:00:00') > new Date())) {
-            showResult('Ngày sinh không được lớn hơn ngày hiện tại.', 'danger');
+            showResult('Ng\u00E0y sinh kh\u00F4ng \u0111\u01B0\u1EE3c l\u1EDBn h\u01A1n ng\u00E0y hi\u1EC7n t\u1EA1i.', 'danger');
             return;
         }
 
@@ -78,15 +78,15 @@
                 body: body.toString()
             });
             showResult(
-                '<h3 class="h5">Đăng ký khám thành công</h3>'
-                + '<p class="mb-1">Mã bệnh nhân: <strong>' + utils.escapeHtml(data.patientId) + '</strong></p>'
-                + '<p class="mb-1">Thời gian khám: <strong>' + utils.escapeHtml(data.appointmentTime) + '</strong></p>'
-                + '<p class="mb-0">Số thứ tự: <strong>Số ' + utils.escapeHtml(data.queueNumber) + '</strong></p>',
+                '<h3 class="h5">\u0110\u0103ng k\u00FD kh\u00E1m th\u00E0nh c\u00F4ng</h3>'
+                + '<p class="mb-1">M\u00E3 b\u1EC7nh nh\u00E2n: <strong>' + utils.escapeHtml(data.patientId) + '</strong></p>'
+                + '<p class="mb-1">Th\u1EDDi gian kh\u00E1m: <strong>' + utils.escapeHtml(data.appointmentTime) + '</strong></p>'
+                + '<p class="mb-0">S\u1ED1 th\u1EE9 t\u1EF1: <strong>S\u1ED1 ' + utils.escapeHtml(data.queueNumber) + '</strong></p>',
                 'success'
             );
             form.reset();
             loadDoctors();
-            scheduleSelect.innerHTML = '<option value="">Chọn bác sĩ trước</option>';
+            scheduleSelect.innerHTML = '<option value="">Ch\u1ECDn b\u00E1c s\u0129 tr\u01B0\u1EDBc</option>';
         } catch (error) {
             showResult(error.message, 'danger');
         }
@@ -97,7 +97,7 @@
     document.getElementById('resetRegistrationBtn').addEventListener('click', function () {
         form.reset();
         result.className = 'result-card mt-4 d-none';
-        scheduleSelect.innerHTML = '<option value="">Chọn bác sĩ trước</option>';
+        scheduleSelect.innerHTML = '<option value="">Ch\u1ECDn b\u00E1c s\u0129 tr\u01B0\u1EDBc</option>';
     });
     document.addEventListener('DOMContentLoaded', loadDoctors);
 })();

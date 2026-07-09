@@ -202,7 +202,7 @@
     window.AdminConfig.adminEndpoint = '${pageContext.request.contextPath}/admin';
     window.AdminConfig.loginUrl = '${pageContext.request.contextPath}/login.jsp';
 </script>
-<script src="${pageContext.request.contextPath}/assets/js/pages/admin/services.js"></script>
+<script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/admin/services.js?v=20260709-fontfix2"></script>
 </body>
 </html>
 

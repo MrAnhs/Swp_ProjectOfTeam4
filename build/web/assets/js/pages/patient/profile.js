@@ -34,15 +34,15 @@
         dobInput.setCustomValidity("");
 
         if (!emailInput.validity.valid) {
-            emailInput.setCustomValidity("Email không đúng định dạng.");
+            emailInput.setCustomValidity("Email kh\u00F4ng \u0111\u00FAng \u0111\u1ECBnh d\u1EA1ng.");
         }
 
         if (!dobInput.value || dobInput.value < dobInput.min || dobInput.value > today) {
-            dobInput.setCustomValidity("Ngày sinh phải hợp lệ, từ 01/01/1900 đến ngày hiện tại.");
+            dobInput.setCustomValidity("Ng\u00E0y sinh ph\u1EA3i h\u1EE3p l\u1EC7, t\u1EEB 01/01/1900 \u0111\u1EBFn ng\u00E0y hi\u1EC7n t\u1EA1i.");
         }
 
         if (!phonePattern.test(phoneInput.value.trim().replace(/[\s.\-()]/g, ""))) {
-            phoneInput.setCustomValidity("Số điện thoại phải là số di động Việt Nam hợp lệ, ví dụ 0912345678 hoặc +84912345678.");
+            phoneInput.setCustomValidity("S\u1ED1 \u0111i\u1EC7n tho\u1EA1i ph\u1EA3i l\u00E0 s\u1ED1 di \u0111\u1ED9ng Vi\u1EC7t Nam h\u1EE3p l\u1EC7, v\u00ED d\u1EE5 0912345678 ho\u1EB7c +84912345678.");
         } else {
             phoneInput.value = normalizedPhone;
         }
@@ -67,8 +67,8 @@
 
         try {
             const result = await ApiClient.postForm("/update-profile", new URLSearchParams(new FormData(form)));
-            if (!result.success) throw new Error(result.error || "Không thể lưu thông tin");
-            showMessage("success", "Đã lưu thông tin cá nhân.");
+            if (!result.success) throw new Error(result.error || "Kh\u00F4ng th\u1EC3 l\u01B0u th\u00F4ng tin");
+            showMessage("success", "\u0110\u00E3 l\u01B0u th\u00F4ng tin c\u00E1 nh\u00E2n.");
         } catch (error) {
             showMessage("error", error.message);
         }

@@ -738,7 +738,7 @@
     window.AdminConfig.todayRevenueByServiceData = ${empty todayRevenueByServiceJson ? '[]' : todayRevenueByServiceJson};
     window.AdminConfig.todayStatusDistributionData = ${empty todayStatusDistributionJson ? '[]' : todayStatusDistributionJson};
 </script>
-<script src="${pageContext.request.contextPath}/assets/js/pages/admin/dashboard.js"></script>
+<script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/admin/dashboard.js?v=20260709-fontfix2"></script>
 
         <%--
         ==================== Servlet + DAO mẫu để cấp dữ liệu động cho Dashboard ====================

@@ -20,9 +20,9 @@
         <header class="page-header"><div><p class="page-eyebrow">Bệnh án</p><h1>Lịch sử khám</h1><p>Mỗi mục tương ứng một lần khám; kết quả chỉ hiển thị khi bác sĩ cho phép.</p></div></header>
         <section class="page-card"><div id="visitList" class="record-list loading-state">Đang tải lịch sử khám...</div></section>
     </main>
-    <script src="${pageContext.request.contextPath}/assets/js/core/app-config.js"></script>
-    <script src="${pageContext.request.contextPath}/assets/js/core/api-client.js"></script>
-    <script src="${pageContext.request.contextPath}/assets/js/pages/patient/appointment-status.js"></script>
-    <script src="${pageContext.request.contextPath}/assets/js/pages/patient/visit-history.js"></script>
+    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/app-config.js?v=20260709-fontfix2"></script>
+    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/api-client.js?v=20260709-fontfix2"></script>
+    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/patient/appointment-status.js?v=20260709-fontfix2"></script>
+    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/patient/visit-history.js?v=20260709-fontfix2"></script>
 </body>
 </html>

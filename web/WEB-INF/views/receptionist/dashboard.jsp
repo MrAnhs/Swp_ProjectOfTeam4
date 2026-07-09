@@ -73,7 +73,7 @@
         apiBase: '${pageContext.request.contextPath}/receptionist/api'
     };
 </script>
-<script src="${pageContext.request.contextPath}/assets/js/pages/receptionist/receptionist-utils.js"></script>
-<script src="${pageContext.request.contextPath}/assets/js/pages/receptionist/dashboard.js"></script>
+<script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/receptionist/receptionist-utils.js?v=20260709-fontfix2"></script>
+<script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/receptionist/dashboard.js?v=20260709-fontfix2"></script>
 </body>
 </html>
