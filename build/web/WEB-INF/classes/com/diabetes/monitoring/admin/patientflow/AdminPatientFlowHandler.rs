@@ -1,3 +1,0 @@
-com.diabetes.monitoring.admin.patientflow.AdminEmergencyRoutingHandler
-com.diabetes.monitoring.admin.patientflow.AdminPatientFlowHandler
-com.diabetes.monitoring.admin.patientflow.AdminAppointmentHandler

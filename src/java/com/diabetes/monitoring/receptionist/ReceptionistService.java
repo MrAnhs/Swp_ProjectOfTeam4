@@ -14,9 +14,17 @@ public class ReceptionistService {
     private static final Set<String> QUEUE_STATUSES = Set.of("Waiting", "Checked_In", "In_Progress");
     private final ReceptionistDAO dao = new ReceptionistDAO();
 
-    public Map<String, Object> searchPatient(String phone)
+    public Map<String, Object> searchPatient(String keyword)
             throws SQLException, ReceptionistException {
-        String normalizedPhone = normalizePhone(phone);
+        String normalizedKeyword = trim(keyword);
+        if (!normalizedKeyword.matches("^(0|\\+84)[35789]\\d{8}$")) {
+            Map<String, Object> patientByName = dao.findPatientByName(normalizedKeyword);
+            if (patientByName == null) {
+                throw new ReceptionistException("Khong tim thay benh nhan phu hop.");
+            }
+            return patientByName;
+        }
+        String normalizedPhone = normalizePhone(normalizedKeyword);
         if (!isVietnamesePhone(normalizedPhone)) {
             throw new ReceptionistException("Số điện thoại Việt Nam không hợp lệ.");
         }
@@ -39,6 +47,27 @@ public class ReceptionistService {
         return dao.findAvailableSchedules(doctorId);
     }
 
+    public Map<String, Object> createPatient(Map<String, String> params)
+            throws SQLException, ReceptionistException {
+        ReceptionistRegistrationRequest request = new ReceptionistRegistrationRequest();
+        request.patientName = require(params, "patientName", "Vui lòng nhập họ tên bệnh nhân.");
+        request.phone = normalizePhone(require(params, "patientPhone", "Vui lòng nhập số điện thoại."));
+        if (!isVietnamesePhone(request.phone)) {
+            throw new ReceptionistException("Số điện thoại Việt Nam không hợp lệ.");
+        }
+        request.email = require(params, "patientEmail", "Email is required to create a patient account.");
+        if (!request.email.isEmpty() && !request.email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
+            throw new ReceptionistException("Email không hợp lệ.");
+        }
+        request.dateOfBirth = parseDate(require(params, "patientDob", "Vui lòng nhập ngày sinh."));
+        if (request.dateOfBirth.isAfter(LocalDate.now()) || request.dateOfBirth.getYear() < 1900) {
+            throw new ReceptionistException("Ngày sinh phải nằm trong khoảng từ năm 1900 đến hiện tại.");
+        }
+        request.gender = normalizeGender(params.get("patientGender"));
+        request.address = trim(params.get("patientAddress"));
+        return dao.createPatient(request);
+    }
+
     public Map<String, Object> registerAppointment(Map<String, String> params)
             throws SQLException, ReceptionistException {
         ReceptionistRegistrationRequest request = new ReceptionistRegistrationRequest();
@@ -59,6 +88,7 @@ public class ReceptionistService {
         request.address = trim(params.get("patientAddress"));
         request.doctorId = parsePositiveInt(params.get("doctorId"), "Bác sĩ không hợp lệ.");
         request.scheduleId = parsePositiveInt(params.get("scheduleId"), "Ca khám không hợp lệ.");
+        request.revisitAppointmentId = parseOptionalPositiveInt(params.get("revisitAppointmentId"));
         request.note = trim(params.get("note"));
         return dao.registerAppointment(request);
     }
@@ -67,10 +97,10 @@ public class ReceptionistService {
         return dao.getInvoiceStats();
     }
 
-    public List<Map<String, Object>> getInvoices(String status)
+    public List<Map<String, Object>> getInvoices(String status, String invoiceType)
             throws SQLException, ReceptionistException {
         String normalized = "Paid".equalsIgnoreCase(status) ? "Paid" : "Pending";
-        return dao.findInvoicesByStatus(normalized);
+        return dao.findInvoicesByStatus(normalized, invoiceType);
     }
 
     public int payInvoice(String keyword, String paymentMethod, int receptionistAccountId)
@@ -98,6 +128,44 @@ public class ReceptionistService {
         }
     }
 
+    public Map<String, Object> getAppointmentPreview(String appointmentId)
+            throws SQLException, ReceptionistException {
+        int parsedId = parsePositiveInt(appointmentId, "Lịch hẹn không hợp lệ.");
+        Map<String, Object> preview = dao.findAppointmentPreview(parsedId);
+        if (preview == null) {
+            throw new ReceptionistException("Không tìm thấy lịch hẹn.");
+        }
+        return preview;
+    }
+
+    public List<Map<String, Object>> getAppointmentCalendar(String fromDate, String toDate)
+            throws SQLException, ReceptionistException {
+        LocalDate start = parseDate(fromDate);
+        LocalDate end = parseDate(toDate);
+        if (end.isBefore(start)) {
+            throw new ReceptionistException("Khoảng thời gian không hợp lệ.");
+        }
+        return dao.findAppointmentsForCalendar(start, end);
+    }
+
+    public void reassignAppointment(String appointmentId, String doctorId, String scheduleId)
+            throws SQLException, ReceptionistException {
+        int parsedAppointmentId = parsePositiveInt(appointmentId, "Lịch hẹn không hợp lệ.");
+        int parsedDoctorId = parsePositiveInt(doctorId, "Bác sĩ không hợp lệ.");
+        int parsedScheduleId = parsePositiveInt(scheduleId, "Ca khám không hợp lệ.");
+        if (!dao.reassignAppointment(parsedAppointmentId, parsedDoctorId, parsedScheduleId)) {
+            throw new ReceptionistException("Không thể đổi bác sĩ/ca cho lịch hẹn này.");
+        }
+    }
+
+    public void cancelAppointment(String appointmentId)
+            throws SQLException, ReceptionistException {
+        int parsedId = parsePositiveInt(appointmentId, "Lịch hẹn không hợp lệ.");
+        if (!dao.cancelAppointment(parsedId)) {
+            throw new ReceptionistException("Không thể hủy lịch hẹn này.");
+        }
+    }
+
     private String require(Map<String, String> params, String key, String message)
             throws ReceptionistException {
         String value = trim(params.get(key));
@@ -116,6 +184,15 @@ public class ReceptionistService {
         } catch (NumberFormatException ignored) {
         }
         throw new ReceptionistException(message);
+    }
+
+    private int parseOptionalPositiveInt(String value) {
+        try {
+            int parsed = Integer.parseInt(trim(value));
+            return parsed > 0 ? parsed : 0;
+        } catch (NumberFormatException ignored) {
+            return 0;
+        }
     }
 
     private LocalDate parseDate(String value) throws ReceptionistException {

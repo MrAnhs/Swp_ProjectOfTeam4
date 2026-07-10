@@ -21,6 +21,16 @@
         <p class="page-subtitle">Tạo bệnh nhân nếu chưa có, chọn bác sĩ và ca khám còn chỗ.</p>
 
         <section class="panel-card mt-4">
+            <div class="row g-2 align-items-end mb-4 pb-4 border-bottom">
+                <div class="col-md-8">
+                    <label class="form-label fw-semibold" for="patientLookupKeyword">Tìm bệnh nhân có sẵn</label>
+                    <input id="patientLookupKeyword" class="form-control" placeholder="Nhập số điện thoại hoặc họ tên chính xác">
+                </div>
+                <div class="col-md-4">
+                    <button id="patientLookupBtn" class="btn btn-outline-primary w-100" type="button"><i class="bi bi-search me-1"></i>Tìm và điền thông tin</button>
+                </div>
+                <div class="col-12"><small class="text-muted">Bệnh nhân mới tạo từ màn hình Đăng ký bệnh nhân sẽ được điền tự động.</small></div>
+            </div>
             <form id="appointmentRegistrationForm" class="row g-3">
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">Họ tên bệnh nhân</label>
@@ -50,7 +60,18 @@
                     <label class="form-label fw-semibold">Địa chỉ</label>
                     <input id="registerPatientAddress" name="patientAddress" class="form-control">
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Loại đăng ký</label>
+                    <select id="registerVisitType" name="visitType" class="form-select">
+                        <option value="New">Khám mới</option>
+                        <option value="Revisit">Tái khám</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Mã lịch hẹn cũ (nếu tái khám)</label>
+                    <input id="registerRevisitAppointmentId" name="revisitAppointmentId" class="form-control" placeholder="Ví dụ: 12">
+                </div>
+                <div class="col-md-4">
                     <label class="form-label fw-semibold">Bác sĩ</label>
                     <select id="registerDoctor" name="doctorId" class="form-select" required>
                         <option value="">Đang tải danh sách bác sĩ...</option>
@@ -85,6 +106,6 @@
     };
 </script>
 <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/receptionist/receptionist-utils.js?v=20260709-fontfix2"></script>
-<script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/receptionist/appointment-registration.js?v=20260709-fontfix2"></script>
+<script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/receptionist/appointment-registration.js?v=20260710-encodingfix"></script>
 </body>
 </html>

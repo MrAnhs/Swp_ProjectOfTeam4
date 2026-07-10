@@ -1,12 +1,17 @@
 package com.diabetes.monitoring.servlet;
 
 import com.diabetes.monitoring.model.User;
+import com.diabetes.monitoring.util.DatabaseConnection;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class PatientPageServlet extends HttpServlet {
 
@@ -28,10 +33,28 @@ public class PatientPageServlet extends HttpServlet {
             return;
         }
 
-        String view = resolveView(request.getServletPath());
+        String servletPath = request.getServletPath();
+        String view = resolveView(servletPath);
         if (view == null) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
             return;
+        }
+
+        if ("/patient/ai-chat".equals(servletPath)) {
+            Integer patientId = findPatientId(currentUser);
+            if (patientId != null) {
+                String history = (String) session.getAttribute("chatHistory_" + patientId);
+                int turnCount = 0;
+                if (history != null) {
+                    int idx = 0;
+                    while ((idx = history.indexOf("Patient:", idx)) != -1) {
+                        turnCount++;
+                        idx += "Patient:".length();
+                    }
+                }
+                request.setAttribute("reachedLimit", turnCount >= 10);
+                request.setAttribute("turnCount", turnCount);
+            }
         }
 
         request.getRequestDispatcher(PATIENT_VIEW_ROOT + view).forward(request, response);
@@ -65,8 +88,34 @@ public class PatientPageServlet extends HttpServlet {
         if ("/patient/history/detail".equals(servletPath)) {
             return "visit-detail.jsp";
         }
+        if ("/patient/health-records/new".equals(servletPath)) {
+            return "health-record-form.jsp";
+        }
+        if ("/patient/health-records".equals(servletPath)) {
+            return "health-record-list.jsp";
+        }
+        if ("/patient/health-records/detail".equals(servletPath)) {
+            return "health-record-detail.jsp";
+        }
         if ("/patient/profile".equals(servletPath)) {
             return "profile.jsp";
+        }
+        return null;
+    }
+
+    private Integer findPatientId(User user) {
+        if (user == null || user.getEmail() == null) return null;
+        String sql = "SELECT patient_id FROM Patient WHERE email = ?";
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, user.getEmail());
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getInt("patient_id");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
         return null;
     }

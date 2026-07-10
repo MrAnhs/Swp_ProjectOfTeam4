@@ -50,6 +50,12 @@ class AdminAccountHandler {
         String role = request.getParameter("role");
         String normalizedEmail = email == null ? "" : email.trim();
 
+        if (fullName == null || fullName.isBlank() || normalizedEmail.isBlank() || password == null || password.isBlank()) {
+            request.getSession().setAttribute("errorMessage", "Vui lòng nhập đầy đủ họ tên, email và mật khẩu");
+            response.sendRedirect(request.getContextPath() + "/admin?action=listUsers");
+            return;
+        }
+
         if (accountService.isAccountEmailExists(normalizedEmail)) {
             request.getSession().setAttribute("errorMessage", "Email đã tồn tại, không thể tạo tài khoản trùng");
             response.sendRedirect(request.getContextPath() + "/admin?action=listUsers");
@@ -97,6 +103,12 @@ class AdminAccountHandler {
         String phone = request.getParameter("phone");
         String address = request.getParameter("address");
         String department = request.getParameter("department");
+
+        if (accountId <= 0 || fullName == null || fullName.isBlank() || email == null || email.isBlank()) {
+            request.getSession().setAttribute("errorMessage", "Vui lòng nhập đầy đủ họ tên và email hợp lệ");
+            response.sendRedirect(request.getContextPath() + "/admin?action=listUsers");
+            return;
+        }
 
         boolean ok = accountId > 0 && accountService.updateAccountProfileByRole(accountId, fullName, email, phone, address, department);
         request.getSession().setAttribute(ok ? "successMessage" : "errorMessage",
@@ -179,6 +191,12 @@ class AdminMedicalServiceHandler {
         String status = request.getParameter("status");
         BigDecimal price = parseBigDecimal(request.getParameter("price"));
 
+        if (serviceName == null || serviceName.isBlank() || price == null || price.compareTo(BigDecimal.ZERO) <= 0) {
+            request.getSession().setAttribute("errorMessage", "Tên dịch vụ và đơn giá phải hợp lệ");
+            response.sendRedirect(request.getContextPath() + "/admin?action=manageServices");
+            return;
+        }
+
         boolean ok = medicalServiceService.createService(serviceName, price, serviceType, status);
         request.getSession().setAttribute(ok ? "successMessage" : "errorMessage",
                 ok ? "Đã thêm dịch vụ y tế" : "Không thể thêm dịch vụ y tế");
@@ -190,6 +208,12 @@ class AdminMedicalServiceHandler {
         String serviceType = request.getParameter("serviceType");
         String status = request.getParameter("status");
         BigDecimal price = parseBigDecimal(request.getParameter("price"));
+
+        if (serviceId <= 0 || serviceName == null || serviceName.isBlank() || price == null || price.compareTo(BigDecimal.ZERO) <= 0) {
+            request.getSession().setAttribute("errorMessage", "Dữ liệu dịch vụ không hợp lệ");
+            response.sendRedirect(request.getContextPath() + "/admin?action=manageServices");
+            return;
+        }
 
         boolean ok = serviceId > 0 && medicalServiceService.updateService(serviceId, serviceName, price, serviceType, status);
         request.getSession().setAttribute(ok ? "successMessage" : "errorMessage",
