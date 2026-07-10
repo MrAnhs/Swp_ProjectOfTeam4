@@ -214,6 +214,10 @@
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>ReceptionistPageServlet</servlet-name>
+        <url-pattern>/receptionist/patients/register</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ReceptionistPageServlet</servlet-name>
         <url-pattern>/receptionist/appointments/new</url-pattern>
     </servlet-mapping>
     <servlet-mapping>

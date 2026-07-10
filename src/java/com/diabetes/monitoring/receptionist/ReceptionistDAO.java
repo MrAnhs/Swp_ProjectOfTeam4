@@ -1,7 +1,7 @@
 package com.diabetes.monitoring.receptionist;
 
 import com.diabetes.monitoring.util.DatabaseConnection;
-import java.math.BigDecimal;
+import com.diabetes.monitoring.util.PasswordUtil;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public class ReceptionistDAO {
 
@@ -47,6 +48,79 @@ public class ReceptionistDAO {
             result.put("historyCount", countAppointments(connection, patientId));
             result.put("nextAppointment", findLatestAppointment(connection, patientId));
             return result;
+        }
+    }
+
+    public Map<String, Object> findAppointmentPreview(int appointmentId) throws SQLException {
+        String sql = "SELECT TOP 1 a.appointment_id, a.patient_id, a.doctor_id, a.schedule_id, a.appointment_time, "
+                + "a.booking_type, a.queue_number, a.status, p.full_name, p.phone, p.email, p.address, "
+                + "p.date_of_birth, p.gender, d.full_name AS doctor_name, d.department "
+                + "FROM Appointment a "
+                + "INNER JOIN Patient p ON p.patient_id = a.patient_id "
+                + "LEFT JOIN Doctor d ON d.doctor_id = a.doctor_id "
+                + "WHERE a.appointment_id = ?";
+        try (Connection connection = openConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, appointmentId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next() ? mapAppointmentPreview(resultSet) : null;
+            }
+        }
+    }
+
+    public Map<String, Object> findPatientByName(String fullName) throws SQLException {
+        try (Connection connection = openConnection()) {
+            Map<String, Object> patient = null;
+            String patientSql = "SELECT TOP 1 patient_id, full_name, phone, email, address, date_of_birth, gender "
+                    + "FROM Patient WHERE LOWER(full_name) = LOWER(?) ORDER BY patient_id DESC";
+            try (PreparedStatement statement = connection.prepareStatement(patientSql)) {
+                statement.setString(1, fullName);
+                try (ResultSet resultSet = statement.executeQuery()) {
+                    if (resultSet.next()) {
+                        patient = mapPatient(resultSet);
+                    }
+                }
+            }
+            if (patient == null) {
+                return null;
+            }
+            int patientId = (Integer) patient.get("patientId");
+            Map<String, Object> result = new HashMap<>();
+            result.put("patient", patient);
+            result.put("historyCount", countAppointments(connection, patientId));
+            result.put("nextAppointment", findLatestAppointment(connection, patientId));
+            return result;
+        }
+    }
+
+    public List<Map<String, Object>> findAppointmentsForCalendar(LocalDate fromDate, LocalDate toDate) throws SQLException {
+        String sql = "SELECT a.appointment_id, a.appointment_time, a.status, a.queue_number, a.booking_type, "
+                + "p.full_name AS patient_name, p.phone, d.full_name AS doctor_name "
+                + "FROM Appointment a "
+                + "INNER JOIN Patient p ON p.patient_id = a.patient_id "
+                + "LEFT JOIN Doctor d ON d.doctor_id = a.doctor_id "
+                + "WHERE CAST(a.appointment_time AS date) BETWEEN ? AND ? "
+                + "ORDER BY a.appointment_time, a.queue_number";
+        try (Connection connection = openConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setDate(1, Date.valueOf(fromDate));
+            statement.setDate(2, Date.valueOf(toDate));
+            try (ResultSet resultSet = statement.executeQuery()) {
+                List<Map<String, Object>> appointments = new ArrayList<>();
+                while (resultSet.next()) {
+                    Map<String, Object> item = new HashMap<>();
+                    item.put("appointmentId", resultSet.getInt("appointment_id"));
+                    item.put("appointmentTime", toDisplayDateTime(resultSet.getTimestamp("appointment_time")));
+                    item.put("status", resultSet.getString("status"));
+                    item.put("queueNumber", resultSet.getInt("queue_number"));
+                    item.put("bookingType", resultSet.getString("booking_type"));
+                    item.put("patientName", resultSet.getString("patient_name"));
+                    item.put("phone", resultSet.getString("phone"));
+                    item.put("doctorName", resultSet.getString("doctor_name"));
+                    appointments.add(item);
+                }
+                return appointments;
+            }
         }
     }
 
@@ -103,6 +177,42 @@ public class ReceptionistDAO {
         }
     }
 
+    public Map<String, Object> createPatient(ReceptionistRegistrationRequest request)
+            throws SQLException, ReceptionistException {
+        Connection connection = null;
+        try {
+            connection = openConnection();
+            connection.setAutoCommit(false);
+            Integer patientId = findPatientIdByPhone(connection, request.phone);
+            Integer accountId = null;
+            String temporaryPassword = null;
+            if (patientId == null) {
+                temporaryPassword = UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+                accountId = insertPatientAccount(connection, request, temporaryPassword);
+                patientId = insertPatient(connection, request, accountId);
+            } else {
+                updatePatient(connection, patientId, request);
+            }
+            connection.commit();
+            Map<String, Object> result = new HashMap<>();
+            result.put("patientId", patientId);
+            result.put("fullName", request.patientName);
+            result.put("phone", request.phone);
+            result.put("email", request.email);
+            result.put("dateOfBirth", request.dateOfBirth.toString());
+            result.put("gender", request.gender);
+            result.put("address", request.address);
+            result.put("accountId", accountId);
+            result.put("temporaryPassword", temporaryPassword);
+            return result;
+        } catch (SQLException e) {
+            rollback(connection);
+            throw e;
+        } finally {
+            close(connection);
+        }
+    }
+
     public Map<String, Object> registerAppointment(ReceptionistRegistrationRequest request)
             throws SQLException, ReceptionistException {
         Connection connection = null;
@@ -133,8 +243,9 @@ public class ReceptionistDAO {
             int booked = (Integer) schedule.get("booked");
             int maxPatients = (Integer) schedule.get("maxPatients");
             int queueNumber = nextQueueNumber(connection, request.scheduleId);
+            String bookingType = request.revisitAppointmentId > 0 ? "Revisit" : "At_Counter";
             int appointmentId = insertAppointment(connection, patientId, request.doctorId,
-                    request.scheduleId, appointmentTime, queueNumber);
+                    request.scheduleId, appointmentTime, queueNumber, bookingType);
 
             if (booked + 1 >= maxPatients) {
                 markScheduleFull(connection, request.scheduleId);
@@ -173,13 +284,24 @@ public class ReceptionistDAO {
         }
     }
 
-    public List<Map<String, Object>> findInvoicesByStatus(String status) throws SQLException {
-        String sql = "SELECT TOP 20 i.invoice_id, i.patient_id, p.full_name, p.phone, "
-                + "i.final_amount, i.status, i.created_at "
+    public List<Map<String, Object>> findInvoicesByStatus(String status, String invoiceType) throws SQLException {
+        StringBuilder sql = new StringBuilder(
+                "SELECT TOP 20 i.invoice_id, i.patient_id, p.full_name, p.phone, "
+                + "i.final_amount, i.status, i.created_at, "
+                + "CASE WHEN EXISTS (SELECT 1 FROM Invoice_Detail id2 "
+                + "INNER JOIN Medical_Service ms2 ON ms2.service_id = id2.service_id "
+                + "WHERE id2.invoice_id = i.invoice_id AND ms2.service_type = 'Examination') "
+                + "THEN 'Examination' ELSE 'Service' END AS invoice_type "
                 + "FROM Invoice i LEFT JOIN Patient p ON i.patient_id = p.patient_id "
-                + "WHERE i.status = ? ORDER BY i.created_at DESC, i.invoice_id DESC";
+                + "WHERE i.status = ? ");
+        if ("Examination".equalsIgnoreCase(invoiceType)) {
+            sql.append("AND EXISTS (SELECT 1 FROM Invoice_Detail id2 INNER JOIN Medical_Service ms2 ON ms2.service_id = id2.service_id WHERE id2.invoice_id = i.invoice_id AND ms2.service_type = 'Examination') ");
+        } else if ("Service".equalsIgnoreCase(invoiceType)) {
+            sql.append("AND NOT EXISTS (SELECT 1 FROM Invoice_Detail id2 INNER JOIN Medical_Service ms2 ON ms2.service_id = id2.service_id WHERE id2.invoice_id = i.invoice_id AND ms2.service_type = 'Examination') ");
+        }
+        sql.append("ORDER BY i.created_at DESC, i.invoice_id DESC");
         try (Connection connection = openConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
+             PreparedStatement statement = connection.prepareStatement(sql.toString())) {
             statement.setString(1, status);
             try (ResultSet resultSet = statement.executeQuery()) {
                 List<Map<String, Object>> invoices = new ArrayList<>();
@@ -191,6 +313,7 @@ public class ReceptionistDAO {
                     invoice.put("phone", resultSet.getString("phone"));
                     invoice.put("finalAmount", resultSet.getBigDecimal("final_amount"));
                     invoice.put("status", resultSet.getString("status"));
+                    invoice.put("invoiceType", resultSet.getString("invoice_type"));
                     invoice.put("createdAt", toDisplayDateTime(resultSet.getTimestamp("created_at")));
                     invoices.add(invoice);
                 }
@@ -275,6 +398,48 @@ public class ReceptionistDAO {
         }
     }
 
+    public boolean reassignAppointment(int appointmentId, int doctorId, int scheduleId) throws SQLException {
+        Connection connection = null;
+        try {
+            connection = openConnection();
+            connection.setAutoCommit(false);
+            Map<String, Object> schedule = loadScheduleInfo(connection, scheduleId, doctorId);
+            if (schedule == null) {
+                throw new SQLException("Ca khám không hợp lệ.");
+            }
+            LocalDate workDate = ((Date) schedule.get("workDate")).toLocalDate();
+            String timeSlot = (String) schedule.get("timeSlot");
+            LocalDateTime appointmentTime = LocalDateTime.of(workDate, parseStartTime(timeSlot));
+            String sql = "UPDATE Appointment SET doctor_id = ?, schedule_id = ?, appointment_time = ?, status = 'Waiting' "
+                    + "WHERE appointment_id = ? AND status IN ('Waiting', 'Checked_In')";
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setInt(1, doctorId);
+                statement.setInt(2, scheduleId);
+                statement.setTimestamp(3, Timestamp.valueOf(appointmentTime));
+                statement.setInt(4, appointmentId);
+                if (statement.executeUpdate() == 0) {
+                    throw new SQLException("Không thể đổi bác sĩ/ca cho lịch hẹn này.");
+                }
+            }
+            connection.commit();
+            return true;
+        } catch (SQLException e) {
+            rollback(connection);
+            throw e;
+        } finally {
+            close(connection);
+        }
+    }
+
+    public boolean cancelAppointment(int appointmentId) throws SQLException {
+        String sql = "UPDATE Appointment SET status = 'Cancelled' WHERE appointment_id = ? AND status IN ('Waiting', 'Checked_In')";
+        try (Connection connection = openConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, appointmentId);
+            return statement.executeUpdate() > 0;
+        }
+    }
+
     private Map<String, Object> mapPatient(ResultSet resultSet) throws SQLException {
         Map<String, Object> patient = new HashMap<>();
         patient.put("patientId", resultSet.getInt("patient_id"));
@@ -334,8 +499,13 @@ public class ReceptionistDAO {
 
     private int insertPatient(Connection connection, ReceptionistRegistrationRequest request)
             throws SQLException {
+        return insertPatient(connection, request, null);
+    }
+
+    private int insertPatient(Connection connection, ReceptionistRegistrationRequest request, Integer accountId)
+            throws SQLException {
         String sql = "INSERT INTO Patient (full_name, date_of_birth, gender, phone, email, address, account_id) "
-                + "VALUES (?, ?, ?, ?, ?, ?, NULL)";
+                + "VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             statement.setString(1, request.patientName);
             statement.setDate(2, Date.valueOf(request.dateOfBirth));
@@ -343,6 +513,11 @@ public class ReceptionistDAO {
             statement.setString(4, request.phone);
             statement.setString(5, emptyToNull(request.email));
             statement.setString(6, request.address);
+            if (accountId == null) {
+                statement.setNull(7, java.sql.Types.INTEGER);
+            } else {
+                statement.setInt(7, accountId);
+            }
             statement.executeUpdate();
             try (ResultSet keys = statement.getGeneratedKeys()) {
                 if (keys.next()) {
@@ -351,6 +526,22 @@ public class ReceptionistDAO {
             }
         }
         throw new SQLException("Unable to create patient");
+    }
+
+    private int insertPatientAccount(Connection connection, ReceptionistRegistrationRequest request, String temporaryPassword)
+            throws SQLException {
+        String sql = "INSERT INTO Account (full_name, password_hash, email, role, created_at, status) "
+                + "VALUES (?, ?, ?, 'Patient', GETDATE(), 'Active')";
+        try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            statement.setString(1, request.patientName);
+            statement.setString(2, PasswordUtil.hashPassword(temporaryPassword));
+            statement.setString(3, request.email);
+            statement.executeUpdate();
+            try (ResultSet keys = statement.getGeneratedKeys()) {
+                if (keys.next()) return keys.getInt(1);
+            }
+        }
+        throw new SQLException("Unable to create patient account");
     }
 
     private void updatePatient(Connection connection, int patientId, ReceptionistRegistrationRequest request)
@@ -365,6 +556,24 @@ public class ReceptionistDAO {
             statement.setString(5, request.address);
             statement.setInt(6, patientId);
             statement.executeUpdate();
+        }
+    }
+
+    private Map<String, Object> loadScheduleInfo(Connection connection, int scheduleId, int doctorId) throws SQLException {
+        String sql = "SELECT ds.work_date, ds.time_slot FROM Doctor_Schedule ds "
+                + "WHERE ds.schedule_id = ? AND ds.doctor_id = ? AND ds.status = 'Available'";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, scheduleId);
+            statement.setInt(2, doctorId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (!resultSet.next()) {
+                    return null;
+                }
+                Map<String, Object> schedule = new HashMap<>();
+                schedule.put("workDate", resultSet.getDate("work_date"));
+                schedule.put("timeSlot", resultSet.getString("time_slot"));
+                return schedule;
+            }
         }
     }
 
@@ -407,21 +616,23 @@ public class ReceptionistDAO {
     }
 
     private int insertAppointment(Connection connection, int patientId, int doctorId, int scheduleId,
-            LocalDateTime appointmentTime, int queueNumber) throws SQLException {
+            LocalDateTime appointmentTime, int queueNumber, String bookingType) throws SQLException {
         boolean hasBookingSource = hasColumn(connection, "Appointment", "booking_source");
+        String effectiveBookingType = bookingType == null || bookingType.isBlank() ? "At_Counter" : bookingType;
         String sql = hasBookingSource
                 ? "INSERT INTO Appointment (patient_id, doctor_id, schedule_id, conversation_id, "
                 + "appointment_time, booking_type, booking_source, queue_number, status, created_at) "
-                + "VALUES (?, ?, ?, NULL, ?, 'At_Counter', 'Receptionist', ?, 'Waiting', GETDATE())"
+                + "VALUES (?, ?, ?, NULL, ?, ?, 'Receptionist', ?, 'Waiting', GETDATE())"
                 : "INSERT INTO Appointment (patient_id, doctor_id, schedule_id, conversation_id, "
                 + "appointment_time, booking_type, queue_number, status, created_at) "
-                + "VALUES (?, ?, ?, NULL, ?, 'At_Counter', ?, 'Waiting', GETDATE())";
+                + "VALUES (?, ?, ?, NULL, ?, ?, ?, 'Waiting', GETDATE())";
         try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             statement.setInt(1, patientId);
             statement.setInt(2, doctorId);
             statement.setInt(3, scheduleId);
             statement.setTimestamp(4, Timestamp.valueOf(appointmentTime));
-            statement.setInt(5, queueNumber);
+            statement.setString(5, effectiveBookingType);
+            statement.setInt(6, queueNumber);
             statement.executeUpdate();
             try (ResultSet keys = statement.getGeneratedKeys()) {
                 if (keys.next()) {
@@ -484,6 +695,28 @@ public class ReceptionistDAO {
         return LocalTime.parse(timeSlot.substring(0, 5));
     }
 
+    private Map<String, Object> mapAppointmentPreview(ResultSet resultSet) throws SQLException {
+        Map<String, Object> appointment = new HashMap<>();
+        appointment.put("appointmentId", resultSet.getInt("appointment_id"));
+        appointment.put("patientId", resultSet.getInt("patient_id"));
+        appointment.put("doctorId", resultSet.getInt("doctor_id"));
+        appointment.put("scheduleId", resultSet.getInt("schedule_id"));
+        appointment.put("appointmentTime", toDisplayDateTime(resultSet.getTimestamp("appointment_time")));
+        appointment.put("bookingType", resultSet.getString("booking_type"));
+        appointment.put("queueNumber", resultSet.getInt("queue_number"));
+        appointment.put("status", resultSet.getString("status"));
+        appointment.put("patientName", resultSet.getString("full_name"));
+        appointment.put("phone", resultSet.getString("phone"));
+        appointment.put("email", resultSet.getString("email"));
+        appointment.put("address", resultSet.getString("address"));
+        Date dob = resultSet.getDate("date_of_birth");
+        appointment.put("dateOfBirth", dob == null ? "" : dob.toString());
+        appointment.put("gender", resultSet.getString("gender"));
+        appointment.put("doctorName", resultSet.getString("doctor_name"));
+        appointment.put("department", resultSet.getString("department"));
+        return appointment;
+    }
+
     private String formatScheduleLabel(Date workDate, String timeSlot) {
         return (workDate == null ? "" : workDate.toString()) + " " + (timeSlot == null ? "" : timeSlot);
     }
@@ -523,6 +756,7 @@ public class ReceptionistDAO {
         public String address;
         public int doctorId;
         public int scheduleId;
+        public int revisitAppointmentId;
         public String note;
     }
 

@@ -25,6 +25,9 @@
         <a class="nav-link ${currentPage == 'patient-search' ? 'active' : ''}" href="${pageContext.request.contextPath}/receptionist/patients/search">
             <i class="bi bi-search"></i><span>Tìm bệnh nhân</span>
         </a>
+        <a class="nav-link ${currentPage == 'patient-register' ? 'active' : ''}" href="${pageContext.request.contextPath}/receptionist/patients/register">
+            <i class="bi bi-person-plus"></i><span>Đăng ký bệnh nhân</span>
+        </a>
         <a class="nav-link ${currentPage == 'appointment' ? 'active' : ''}" href="${pageContext.request.contextPath}/receptionist/appointments/new">
             <i class="bi bi-calendar2-plus"></i><span>Đăng ký khám</span>
         </a>
