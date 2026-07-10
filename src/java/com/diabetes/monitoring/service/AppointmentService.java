@@ -44,7 +44,7 @@ public class AppointmentService {
             }
 
             int queueNumber = nextQueueNumber(connection, scheduleId);
-            int appointmentId = insertAppointment(connection, patientId, doctorId, scheduleId,
+            int appointmentId = insertAppointment(connection, patientId, scheduleId,
                     appointmentTime, queueNumber);
 
             if (bookedPatients + 1 >= schedule.maxPatients) {
@@ -90,7 +90,7 @@ public class AppointmentService {
             }
 
             int queueNumber = nextQueueNumber(connection, schedule.scheduleId);
-            int appointmentId = insertAppointment(connection, patientId, schedule.doctorId,
+            int appointmentId = insertAppointment(connection, patientId,
                     schedule.scheduleId, appointmentTime, queueNumber);
 
             if (bookedPatients + 1 >= schedule.maxPatients) {
@@ -250,18 +250,22 @@ public class AppointmentService {
         }
     }
 
-    private int insertAppointment(Connection connection, int patientId, int doctorId, int scheduleId,
+    private int insertAppointment(Connection connection, int patientId, int scheduleId,
             LocalDateTime appointmentTime, int queueNumber) throws SQLException {
-        String sql = "INSERT INTO Appointment (patient_id, doctor_id, schedule_id, conversation_id, "
+        boolean hasConversationId = hasColumn(connection, "Appointment", "conversation_id");
+        String sql = hasConversationId
+                ? "INSERT INTO Appointment (patient_id, schedule_id, conversation_id, "
                 + "appointment_time, booking_type, queue_number, status, created_at) "
-                + "VALUES (?, ?, ?, NULL, ?, 'Online', ?, 'Waiting', GETDATE())";
+                + "VALUES (?, ?, NULL, ?, 'Online', ?, 'Waiting', GETDATE())"
+                : "INSERT INTO Appointment (patient_id, schedule_id, "
+                + "appointment_time, booking_type, queue_number, status, created_at) "
+                + "VALUES (?, ?, ?, 'Online', ?, 'Waiting', GETDATE())";
         try (PreparedStatement statement = connection.prepareStatement(sql,
                 Statement.RETURN_GENERATED_KEYS)) {
             statement.setInt(1, patientId);
-            statement.setInt(2, doctorId);
-            statement.setInt(3, scheduleId);
-            statement.setTimestamp(4, Timestamp.valueOf(appointmentTime));
-            statement.setInt(5, queueNumber);
+            statement.setInt(2, scheduleId);
+            statement.setTimestamp(3, Timestamp.valueOf(appointmentTime));
+            statement.setInt(4, queueNumber);
             statement.executeUpdate();
             try (ResultSet keys = statement.getGeneratedKeys()) {
                 if (keys.next()) {
@@ -270,6 +274,19 @@ public class AppointmentService {
             }
         }
         throw new SQLException("Unable to retrieve generated appointment ID");
+    }
+
+    private boolean hasColumn(Connection connection, String tableName, String columnName)
+            throws SQLException {
+        String sql = "SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS "
+                + "WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME = ? AND COLUMN_NAME = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, tableName);
+            statement.setString(2, columnName);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next();
+            }
+        }
     }
 
     private void markScheduleFull(Connection connection, int scheduleId) throws SQLException {

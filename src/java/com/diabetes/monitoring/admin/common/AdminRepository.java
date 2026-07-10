@@ -162,38 +162,14 @@ public class AdminRepository {
                 + "FORMAT(a.appointment_time, 'HH:mm') AS appointment_time, a.status "
                 + "FROM Appointment a "
                 + "JOIN Patient p ON a.patient_id = p.patient_id "
-                + "WHERE a.doctor_id = ? "
-            + "AND LOWER(a.status) IN ('checked_in', 'in_progress', 'in-progress') "
+                + "JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
+                + "WHERE ds.doctor_id = ? "
+                + "AND LOWER(a.status) IN ('checked_in', 'in_progress', 'in-progress') "
                 + "AND CAST(a.appointment_time AS DATE) = CAST(GETDATE() AS DATE) "
                 + "ORDER BY a.appointment_time ASC, a.appointment_id ASC";
 
-        try (Connection connection = DatabaseConnection.getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setInt(1, doctorId);
-            try (ResultSet rs = statement.executeQuery()) {
-                while (rs.next()) {
-                    Map<String, Object> row = new HashMap<>();
-                    row.put("appointmentId", rs.getInt("appointment_id"));
-                    row.put("patientName", rs.getString("full_name"));
-                    row.put("appointmentTime", rs.getString("appointment_time"));
-                    row.put("status", rs.getString("status"));
-                    rows.add(row);
-                }
-            }
-            return rows;
-        } catch (SQLException e) {
-            LOGGER.log(Level.WARNING, "Primary queue-detail query failed; fallback to Account join", e);
-        }
-
-        String fallbackSql = "SELECT a.appointment_id, acc.full_name, "
-                + "FORMAT(a.appointment_time, 'HH:mm') AS appointment_time, a.status "
-                + "FROM Appointment a "
-                + "JOIN Account acc ON a.patient_id = acc.account_id "
-                + "WHERE a.doctor_id = ? "
-            + "AND LOWER(a.status) IN ('checked_in', 'in_progress', 'in-progress') "
-                + "AND CAST(a.appointment_time AS DATE) = CAST(GETDATE() AS DATE) "
-                + "ORDER BY a.appointment_time ASC, a.appointment_id ASC";
-
-        try (Connection connection = DatabaseConnection.getConnection(); PreparedStatement statement = connection.prepareStatement(fallbackSql)) {
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, doctorId);
             try (ResultSet rs = statement.executeQuery()) {
                 while (rs.next()) {
@@ -208,187 +184,8 @@ public class AdminRepository {
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Failed to load queue detail for doctorId=" + doctorId, e);
         }
-
         return rows;
     }
-
-    // Đếm số lượt khám thực sự đã diễn ra trong hôm nay.
-    public int getTodayTotalVisits() {
-        return executeCount("SELECT COUNT(*) FROM Appointment WHERE LOWER(status) = 'completed' AND CAST(appointment_time AS DATE) = CAST(GETDATE() AS DATE) AND appointment_time <= GETDATE()");
-    }
-
-    // Chuẩn hóa dữ liệu cũ: nếu lịch hẹn ở tương lai nhưng status completed thì kéo về Waiting.
-    public int normalizeFutureCompletedAppointments() {
-        String sql = "UPDATE Appointment "
-                + "SET status = 'Waiting' "
-                + "WHERE LOWER(status) = 'completed' "
-                + "AND appointment_time > GETDATE()";
-
-        try (Connection connection = DatabaseConnection.getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
-            int updated = statement.executeUpdate();
-            if (updated > 0) {
-                LOGGER.log(Level.INFO, "Normalized future completed appointments to Waiting: {0}", updated);
-            }
-            return updated;
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Failed to normalize future completed appointments", e);
-            return 0;
-        }
-    }
-
-    /**
-     * Marks late Waiting appointments as Absent after the schedule cutoff time.
-     */
-    public int markLateWaitingAppointmentsAsNoShow() {
-        String sql = "UPDATE a SET a.status = 'Absent' "
-            + "FROM Appointment a "
-            + "LEFT JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
-            + "WHERE LOWER(a.status) = 'waiting' "
-            + "AND CAST(a.appointment_time AS DATE) = CAST(GETDATE() AS DATE) "
-            + "AND ("
-            + "    (ds.schedule_id IS NOT NULL AND TRY_CONVERT(time, LEFT(LTRIM(RTRIM(SUBSTRING(ds.time_slot, CHARINDEX('-', ds.time_slot) + 1, 20))), 5)) IS NOT NULL "
-            + "        AND DATEADD(MINUTE, -30, DATEADD(DAY, DATEDIFF(DAY, 0, GETDATE()), CAST(TRY_CONVERT(time, LEFT(LTRIM(RTRIM(SUBSTRING(ds.time_slot, CHARINDEX('-', ds.time_slot) + 1, 20))), 5)) AS datetime))) <= GETDATE()) "
-            + " OR (ds.schedule_id IS NULL AND DATEADD(MINUTE, 30, a.appointment_time) <= GETDATE())"
-            + ")";
-
-        try (Connection connection = DatabaseConnection.getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
-            int updated = statement.executeUpdate();
-            if (updated > 0) {
-                LOGGER.log(Level.INFO, "Auto-marked late waiting appointments as Absent: {0}", updated);
-            }
-            return updated;
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Failed to mark late waiting appointments as Absent", e);
-            return 0;
-        }
-    }
-
-    // Demo: tự động đẩy workflow Appointment theo mốc thời gian để mô phỏng lễ tân/bác sĩ.
-    public int autoAdvanceAppointmentWorkflowDemo() {
-        int totalUpdated = 0;
-
-        try (Connection connection = DatabaseConnection.getConnection()) {
-            // Step 0: Chuẩn hóa dữ liệu cũ từ In-Progress -> In_Progress để đồng bộ dashboard
-            String normalizeSql = "UPDATE Appointment "
-                    + "SET status = 'In_Progress' "
-                    + "WHERE LOWER(status) = 'in-progress'";
-            try (PreparedStatement normalizeStmt = connection.prepareStatement(normalizeSql)) {
-                int normalized = normalizeStmt.executeUpdate();
-                totalUpdated += normalized;
-                if (normalized > 0) {
-                    LOGGER.log(Level.INFO, "[DEMO] Normalized in-progress -> In_Progress: {0} appointments", normalized);
-                }
-            }
-
-                // Step 1: Waiting -> Checked_In khi đến giờ hẹn.
-            String waitingToCheckedInSql = "UPDATE Appointment "
-                    + "SET status = 'Checked_In' "
-                    + "WHERE LOWER(status) = 'waiting' "
-                    + "AND appointment_time <= GETDATE()";
-            try (PreparedStatement stmt = connection.prepareStatement(waitingToCheckedInSql)) {
-                int updated = stmt.executeUpdate();
-                totalUpdated += updated;
-                if (updated > 0) {
-                    LOGGER.log(Level.INFO, "[DEMO] Auto-transitioned Waiting -> Checked_In: {0} appointments", updated);
-                }
-            }
-
-                // Step 2: Checked_In -> In_Progress sau 30 phút.
-            String checkedInToInProgressSql = "UPDATE Appointment "
-                    + "SET status = 'In_Progress' "
-                    + "WHERE LOWER(status) = 'checked_in' "
-                    + "AND DATEADD(MINUTE, 30, appointment_time) <= GETDATE()";
-            try (PreparedStatement stmt = connection.prepareStatement(checkedInToInProgressSql)) {
-                int updated = stmt.executeUpdate();
-                totalUpdated += updated;
-                if (updated > 0) {
-                    LOGGER.log(Level.INFO, "[DEMO] Auto-transitioned Checked_In -> In_Progress: {0} appointments", updated);
-                }
-            }
-
-                // Step 3: In_Progress -> Completed sau 1 giờ.
-            String inProgressToCompletedSql = "UPDATE Appointment "
-                    + "SET status = 'Completed' "
-                    + "WHERE LOWER(status) = 'in_progress' "
-                    + "AND DATEADD(HOUR, 1, appointment_time) <= GETDATE()";
-            try (PreparedStatement stmt = connection.prepareStatement(inProgressToCompletedSql)) {
-                int updated = stmt.executeUpdate();
-                totalUpdated += updated;
-                if (updated > 0) {
-                    LOGGER.log(Level.INFO, "[DEMO] Auto-transitioned In_Progress -> Completed: {0} appointments", updated);
-                }
-            }
-
-            if (totalUpdated > 0) {
-                LOGGER.log(Level.INFO, "[DEMO] Total auto-transitioned appointments: {0}", totalUpdated);
-            }
-            return totalUpdated;
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "[DEMO] Failed to auto-transition appointment statuses", e);
-            return 0;
-        }
-    }
-
-    // Wrapper tương thích với các chỗ gọi cũ.
-    public int autoTransitionAppointmentStatuses() {
-        return autoAdvanceAppointmentWorkflowDemo();
-    }
-
-    /**
-     * Moves an appointment from Waiting to Checked_In.
-     */
-    public boolean checkInAppointment(int appointmentId) {
-        return updateAppointmentStatus(appointmentId, "Checked_In", "Waiting");
-    }
-
-    /**
-     * Moves an appointment from Checked_In to In_Progress.
-     */
-    public boolean startAppointment(int appointmentId) {
-        return updateAppointmentStatus(appointmentId, "In_Progress", "Checked_In");
-    }
-
-    /**
-     * Moves an appointment from In_Progress to Completed.
-     */
-    public boolean completeAppointment(int appointmentId) {
-        return updateAppointmentStatus(appointmentId, "Completed", "In_Progress", "In-Progress");
-    }
-
-    // Cập nhật trạng thái lịch hẹn với ràng buộc trạng thái đầu vào cho phép.
-    private boolean updateAppointmentStatus(int appointmentId, String newStatus, String... allowedCurrentStatuses) {
-        if (appointmentId <= 0 || newStatus == null || newStatus.trim().isEmpty()) {
-            return false;
-        }
-
-        StringBuilder sql = new StringBuilder("UPDATE Appointment SET status = ? WHERE appointment_id = ?");
-        if (allowedCurrentStatuses != null && allowedCurrentStatuses.length > 0) {
-            sql.append(" AND LOWER(status) IN (");
-            for (int i = 0; i < allowedCurrentStatuses.length; i++) {
-                if (i > 0) {
-                    sql.append(", ");
-                }
-                sql.append("?");
-            }
-            sql.append(")");
-        }
-
-        try (Connection connection = DatabaseConnection.getConnection(); PreparedStatement statement = connection.prepareStatement(sql.toString())) {
-            int index = 1;
-            statement.setString(index++, newStatus);
-            statement.setInt(index++, appointmentId);
-            if (allowedCurrentStatuses != null && allowedCurrentStatuses.length > 0) {
-                for (String allowedStatus : allowedCurrentStatuses) {
-                    statement.setString(index++, allowedStatus == null ? null : allowedStatus.toLowerCase(Locale.ROOT).replace('-', '_'));
-                }
-            }
-            return statement.executeUpdate() > 0;
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Failed to update appointment status for appointmentId=" + appointmentId + " to " + newStatus, e);
-            return false;
-        }
-    }
-
     // Đếm số bệnh nhân đang chờ khám trong ngày hôm nay.
     public int getTodayWaitingPatients() {
         markLateWaitingAppointmentsAsNoShow();
@@ -409,7 +206,8 @@ public class AdminRepository {
                 + "FROM Appointment a "
                 + "LEFT JOIN Patient p ON p.patient_id = a.patient_id "
                 + "LEFT JOIN Account acc ON acc.account_id = a.patient_id "
-                + "LEFT JOIN Doctor d ON d.doctor_id = a.doctor_id "
+                + "LEFT JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
+                + "LEFT JOIN Doctor d ON d.doctor_id = ds.doctor_id "
                 + "WHERE CAST(a.appointment_time AS DATE) = CAST(GETDATE() AS DATE) "
                 + "AND LOWER(a.status) = 'completed' "
                 + "AND a.appointment_time <= GETDATE() "
@@ -440,7 +238,7 @@ public class AdminRepository {
         List<Map<String, Object>> rows = new ArrayList<>();
         String sql = "SELECT a.appointment_id, "
                 + "COALESCE(p.full_name, acc.full_name, N'Chưa xác định') AS patient_name, "
-                + "COALESCE(d.department, dsd.department, N'Chưa xác định') AS department, "
+                + "COALESCE(d.department, N'Chưa xác định') AS department, "
                 + "FORMAT(a.appointment_time, 'HH:mm') AS appointment_time, "
                 + "a.status, "
                 + "CASE WHEN DATEDIFF(MINUTE, a.appointment_time, GETDATE()) < 0 THEN 0 "
@@ -448,7 +246,8 @@ public class AdminRepository {
                 + "FROM Appointment a "
                 + "LEFT JOIN Patient p ON p.patient_id = a.patient_id "
                 + "LEFT JOIN Account acc ON acc.account_id = a.patient_id "
-                + "LEFT JOIN Doctor d ON d.doctor_id = a.doctor_id "
+                + "LEFT JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
+                + "LEFT JOIN Doctor d ON d.doctor_id = ds.doctor_id "
                 + "LEFT JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
                 + "LEFT JOIN Doctor dsd ON dsd.doctor_id = ds.doctor_id "
                 + "WHERE LOWER(a.status) = 'checked_in' "
@@ -1111,12 +910,11 @@ public class AdminRepository {
         String sql = "SELECT TOP (?) "
                 + "ap.appointment_id, "
                 + "p.full_name AS patient_name, "
-                + "COALESCE(d_direct.full_name, d_schedule.full_name, N'Chưa phân công') AS doctor_name, "
+                + "COALESCE(d_schedule.full_name, N'Chưa phân công') AS doctor_name, "
                 + "FORMAT(ap.appointment_time, 'HH:mm') AS appointment_time_label, "
                 + "FORMAT(ap.appointment_time, 'yyyy-MM-dd') AS appointment_date "
                 + "FROM Appointment ap "
                 + "JOIN Patient p ON p.patient_id = ap.patient_id "
-                + "LEFT JOIN Doctor d_direct ON d_direct.doctor_id = ap.doctor_id "
                 + "LEFT JOIN Doctor_Schedule ds ON ds.schedule_id = ap.schedule_id "
                 + "LEFT JOIN Doctor d_schedule ON d_schedule.doctor_id = ds.doctor_id "
                 + "WHERE LOWER(ap.status) = 'completed' "
@@ -2984,13 +2782,12 @@ public class AdminRepository {
 
         String appointmentSql = "SELECT ap.appointment_id, "
                 + "p.full_name AS patient_name, "
-                + "COALESCE(d_direct.full_name, d_schedule.full_name, N'Chưa phân bác sĩ') AS doctor_name, "
+                + "COALESCE(d_schedule.full_name, N'Chưa phân bác sĩ') AS doctor_name, "
                 + "COALESCE(ds.time_slot, FORMAT(ap.appointment_time, 'HH:mm')) AS time_slot, "
                 + "ap.status AS appointment_status, "
                 + "FORMAT(ap.appointment_time, 'yyyy-MM-dd') AS appointment_date "
                 + "FROM Appointment ap "
                 + "JOIN Patient p ON p.patient_id = ap.patient_id "
-                + "LEFT JOIN Doctor d_direct ON d_direct.doctor_id = ap.doctor_id "
                 + "LEFT JOIN Doctor_Schedule ds ON ds.schedule_id = ap.schedule_id "
                 + "LEFT JOIN Doctor d_schedule ON d_schedule.doctor_id = ds.doctor_id "
             + "WHERE LOWER(ap.status) IN ('completed', 'absent') AND " + periodFilter + " "
@@ -3170,6 +2967,97 @@ public class AdminRepository {
         return 0;
     }
 
+    // Cập nhật các lịch hẹn đã quá giờ nhưng vẫn đang chờ thành vắng mặt.
+    public int markLateWaitingAppointmentsAsNoShow() {
+        String sql = "UPDATE Appointment "
+                + "SET status = 'Absent' "
+                + "WHERE LOWER(status) = 'waiting' "
+                + "AND appointment_time < GETDATE()";
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            return statement.executeUpdate();
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to mark late waiting appointments as absent", e);
+            return 0;
+        }
+    }
+
+    // Đưa các lịch hẹn tương lai bị gắn nhầm Completed về Waiting để không làm sai báo cáo.
+    public void normalizeFutureCompletedAppointments() {
+        String sql = "UPDATE Appointment "
+                + "SET status = 'Waiting' "
+                + "WHERE LOWER(status) = 'completed' "
+                + "AND appointment_time > GETDATE()";
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to normalize future completed appointments", e);
+        }
+    }
+
+    // Demo tự chuyển luồng lịch hẹn theo thời gian; giữ logic bảo thủ để không tự hoàn tất hồ sơ.
+    public void autoAdvanceAppointmentWorkflowDemo() {
+        markLateWaitingAppointmentsAsNoShow();
+        String sql = "UPDATE Appointment "
+                + "SET status = 'Checked_In' "
+                + "WHERE LOWER(status) = 'waiting' "
+                + "AND CAST(appointment_time AS DATE) = CAST(GETDATE() AS DATE) "
+                + "AND appointment_time <= GETDATE()";
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to auto advance appointment workflow", e);
+        }
+    }
+
+    // Lễ tân/admin xác nhận bệnh nhân đã đến quầy.
+    public boolean checkInAppointment(int appointmentId) {
+        String sql = "UPDATE Appointment "
+                + "SET status = 'Checked_In' "
+                + "WHERE appointment_id = ? "
+                + "AND LOWER(status) = 'waiting' "
+                + "AND CAST(appointment_time AS DATE) = CAST(GETDATE() AS DATE)";
+        return executeAppointmentStatusUpdate(sql, appointmentId);
+    }
+
+    // Bác sĩ/admin bắt đầu lượt khám.
+    public boolean startAppointment(int appointmentId) {
+        String sql = "UPDATE Appointment "
+                + "SET status = 'In_Progress' "
+                + "WHERE appointment_id = ? "
+                + "AND LOWER(status) IN ('checked_in', 'waiting')";
+        return executeAppointmentStatusUpdate(sql, appointmentId);
+    }
+
+    // Hoàn tất lượt khám.
+    public boolean completeAppointment(int appointmentId) {
+        String sql = "UPDATE Appointment "
+                + "SET status = 'Completed' "
+                + "WHERE appointment_id = ? "
+                + "AND LOWER(status) IN ('checked_in', 'in_progress', 'in-progress')";
+        return executeAppointmentStatusUpdate(sql, appointmentId);
+    }
+
+    // Đếm toàn bộ lượt khám trong hôm nay, không chỉ các lượt đã hoàn thành.
+    public int getTodayTotalVisits() {
+        markLateWaitingAppointmentsAsNoShow();
+        return executeCount("SELECT COUNT(*) FROM Appointment "
+                + "WHERE CAST(appointment_time AS DATE) = CAST(GETDATE() AS DATE) "
+                + "AND LOWER(status) IN ('waiting', 'checked_in', 'in_progress', 'in-progress', 'completed')");
+    }
+
+    private boolean executeAppointmentStatusUpdate(String sql, int appointmentId) {
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, appointmentId);
+            return statement.executeUpdate() > 0;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to update appointment status, appointmentId=" + appointmentId, e);
+            return false;
+        }
+    }
     // Chạy query decimal đơn giản và trả về giá trị tiền tệ.
     private BigDecimal executeBigDecimal(String sql) {
         try (Connection connection = DatabaseConnection.getConnection(); PreparedStatement statement = connection.prepareStatement(sql); ResultSet rs = statement.executeQuery()) {
@@ -3640,6 +3528,7 @@ public class AdminRepository {
         }
     }
 }
+
 
 
 

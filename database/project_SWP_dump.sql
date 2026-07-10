@@ -175,9 +175,7 @@ GO
 CREATE TABLE [dbo].[Appointment](
 	[appointment_id] [int] IDENTITY(1,1) NOT NULL,
 	[patient_id] [int] NOT NULL,
-	[doctor_id] [int] NOT NULL,
 	[schedule_id] [int] NOT NULL,
-	[conversation_id] [int] NULL,
 	[appointment_time] [datetime] NOT NULL,
 	[booking_type] [varchar](20) NOT NULL,
 	[queue_number] [int] NOT NULL,
@@ -401,13 +399,6 @@ CREATE UNIQUE NONCLUSTERED INDEX [UX_Account_Email] ON [dbo].[Account]
 	[email] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 GO
-/****** Object:  Index [IX_Appointment_DoctorTime]    Script Date: 6/18/2026 23:26:40 ******/
-CREATE NONCLUSTERED INDEX [IX_Appointment_DoctorTime] ON [dbo].[Appointment]
-(
-	[doctor_id] ASC,
-	[appointment_time] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
-GO
 /****** Object:  Index [IX_Appointment_Patient]    Script Date: 6/18/2026 23:26:40 ******/
 CREATE NONCLUSTERED INDEX [IX_Appointment_Patient] ON [dbo].[Appointment]
 (
@@ -542,16 +533,6 @@ REFERENCES [dbo].[Patient] ([patient_id])
 ON DELETE CASCADE
 GO
 ALTER TABLE [dbo].[AI_Conversation] CHECK CONSTRAINT [fk_patient_ai_patient]
-GO
-ALTER TABLE [dbo].[Appointment]  WITH CHECK ADD  CONSTRAINT [FK_Appointment_Conversation] FOREIGN KEY([conversation_id])
-REFERENCES [dbo].[AI_Conversation] ([conversation_id])
-GO
-ALTER TABLE [dbo].[Appointment] CHECK CONSTRAINT [FK_Appointment_Conversation]
-GO
-ALTER TABLE [dbo].[Appointment]  WITH CHECK ADD  CONSTRAINT [FK_Appointment_Doctor] FOREIGN KEY([doctor_id])
-REFERENCES [dbo].[Doctor] ([doctor_id])
-GO
-ALTER TABLE [dbo].[Appointment] CHECK CONSTRAINT [FK_Appointment_Doctor]
 GO
 ALTER TABLE [dbo].[Appointment]  WITH CHECK ADD  CONSTRAINT [FK_Appointment_Patient] FOREIGN KEY([patient_id])
 REFERENCES [dbo].[Patient] ([patient_id])
@@ -781,8 +762,8 @@ VALUES
 -- Dùng để test giao diện Mục "Chưa thanh toán" và nút Thanh toán online
 -- ==========================================
 -- 4.1. Tạo 1 lịch hẹn "giả" trong quá khứ để gắn với hóa đơn
-INSERT INTO Appointment (patient_id, doctor_id, schedule_id, appointment_time, booking_type, queue_number, status, created_at)
-VALUES (@MyPatientID, @Doc1, 1, '2026-06-20 08:00:00', 'Online', 1, 'In_Progress', GETDATE());
+INSERT INTO Appointment (patient_id, schedule_id, appointment_time, booking_type, queue_number, status, created_at)
+VALUES (@MyPatientID, 1, '2026-06-20 08:00:00', 'Online', 1, 'In_Progress', GETDATE());
 DECLARE @MockApptID INT = SCOPE_IDENTITY();
 
 -- 4.2. Tạo hóa đơn trạng thái Pending
@@ -816,8 +797,8 @@ VALUES (@MockRecordID1, @MockLabDetailID, 4.5, 75.0, 5.2, 4.1, 22.5, 'Completed'
 
 -- CASE 2: BÁC SĨ ẨN KẾT QUẢ (result_visibility = 0)
 -- Tạo nhanh 1 lượt khám khác
-INSERT INTO Appointment (patient_id, doctor_id, schedule_id, appointment_time, booking_type, queue_number, status, created_at)
-VALUES (@MyPatientID, @Doc2, 3, '2026-06-21 09:00:00', 'Online', 2, 'Completed', GETDATE());
+INSERT INTO Appointment (patient_id, schedule_id, appointment_time, booking_type, queue_number, status, created_at)
+VALUES (@MyPatientID, 3, '2026-06-21 09:00:00', 'Online', 2, 'Completed', GETDATE());
 DECLARE @MockApptID2 INT = SCOPE_IDENTITY();
 
 INSERT INTO Medical_record (appointment_id, patient_id, doctor_id, final_diagnosis, doctor_note, result_visibility, processed_at)

@@ -2,6 +2,9 @@
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
-        <group/>
+        <group>
+            <file>file:/D:/Ky5/SWP391/Swp_Project_Team4-main/web/WEB-INF/views/doctor/completedRecords.jsp</file>
+            <file>file:/D:/Ky5/SWP391/Swp_Project_Team4-main/web/WEB-INF/views/patient/appointment-booking.jsp</file>
+        </group>
     </open-files>
 </project-private>

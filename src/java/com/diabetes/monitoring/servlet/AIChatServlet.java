@@ -123,42 +123,51 @@ public class AIChatServlet extends HttpServlet {
         }
 
         context.appointmentId = appointmentId;
-        if (appointmentId == null) {
-            String generalConversationSql = "SELECT TOP 1 c.conversation_id "
-                    + "FROM AI_Conversation c "
-                    + "WHERE c.patient_id = ? "
-                    + "AND NOT EXISTS (SELECT 1 FROM Appointment a "
-                    + "WHERE a.conversation_id = c.conversation_id) "
-                    + "ORDER BY c.created_at DESC, c.conversation_id DESC";
-            try (Connection connection = DatabaseConnection.getConnection();
-                 PreparedStatement statement = connection.prepareStatement(generalConversationSql)) {
-                statement.setInt(1, context.patientId);
-                try (ResultSet resultSet = statement.executeQuery()) {
-                    if (resultSet.next()) {
-                        context.conversationId = resultSet.getInt("conversation_id");
+        try (Connection connection = DatabaseConnection.getConnection()) {
+            boolean hasAppointmentConversation = hasColumn(connection, "Appointment", "conversation_id");
+            if (appointmentId == null) {
+                String generalConversationSql = hasAppointmentConversation
+                        ? "SELECT TOP 1 c.conversation_id "
+                        + "FROM AI_Conversation c "
+                        + "WHERE c.patient_id = ? "
+                        + "AND NOT EXISTS (SELECT 1 FROM Appointment a "
+                        + "WHERE a.conversation_id = c.conversation_id) "
+                        + "ORDER BY c.created_at DESC, c.conversation_id DESC"
+                        : "SELECT TOP 1 c.conversation_id "
+                        + "FROM AI_Conversation c "
+                        + "WHERE c.patient_id = ? "
+                        + "ORDER BY c.created_at DESC, c.conversation_id DESC";
+                try (PreparedStatement statement = connection.prepareStatement(generalConversationSql)) {
+                    statement.setInt(1, context.patientId);
+                    try (ResultSet resultSet = statement.executeQuery()) {
+                        if (resultSet.next()) {
+                            context.conversationId = resultSet.getInt("conversation_id");
+                        }
                     }
                 }
+                return context;
             }
-            return context;
-        }
 
-        String appointmentSql = "SELECT a.conversation_id, d.full_name "
-                + "FROM Appointment a "
-                + "INNER JOIN Patient p ON p.patient_id = a.patient_id "
-                + "INNER JOIN Doctor d ON d.doctor_id = a.doctor_id "
-                + "WHERE a.appointment_id = ? AND p.account_id = ? AND a.status <> 'Cancelled'";
-        try (Connection connection = DatabaseConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(appointmentSql)) {
-            statement.setInt(1, appointmentId);
-            statement.setInt(2, accountId);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                if (!resultSet.next()) {
-                    throw new ChatAccessException(HttpServletResponse.SC_NOT_FOUND,
-                            "Không tìm thấy lịch hẹn hoặc lịch đã bị hủy.");
+            String appointmentSql = "SELECT "
+                    + (hasAppointmentConversation ? "a.conversation_id" : "CAST(NULL AS int) AS conversation_id")
+                    + ", d.full_name "
+                    + "FROM Appointment a "
+                    + "INNER JOIN Patient p ON p.patient_id = a.patient_id "
+                    + "INNER JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
+                    + "INNER JOIN Doctor d ON d.doctor_id = ds.doctor_id "
+                    + "WHERE a.appointment_id = ? AND p.account_id = ? AND a.status <> 'Cancelled'";
+            try (PreparedStatement statement = connection.prepareStatement(appointmentSql)) {
+                statement.setInt(1, appointmentId);
+                statement.setInt(2, accountId);
+                try (ResultSet resultSet = statement.executeQuery()) {
+                    if (!resultSet.next()) {
+                        throw new ChatAccessException(HttpServletResponse.SC_NOT_FOUND,
+                                "Không tìm thấy lịch hẹn hoặc lịch đã bị hủy.");
+                    }
+                    int conversationId = resultSet.getInt("conversation_id");
+                    context.conversationId = resultSet.wasNull() ? null : conversationId;
+                    context.doctorName = resultSet.getString("full_name");
                 }
-                int conversationId = resultSet.getInt("conversation_id");
-                context.conversationId = resultSet.wasNull() ? null : conversationId;
-                context.doctorName = resultSet.getString("full_name");
             }
         }
         return context;
@@ -218,7 +227,7 @@ public class AIChatServlet extends HttpServlet {
                 }
             }
 
-            if (context.appointmentId != null) {
+            if (context.appointmentId != null && hasColumn(connection, "Appointment", "conversation_id")) {
                 String appointmentSql = "UPDATE Appointment SET conversation_id = ? "
                         + "WHERE appointment_id = ? AND patient_id = ? AND conversation_id IS NULL";
                 try (PreparedStatement statement = connection.prepareStatement(appointmentSql)) {
@@ -254,6 +263,18 @@ public class AIChatServlet extends HttpServlet {
         }
     }
 
+    private boolean hasColumn(Connection connection, String tableName, String columnName)
+            throws SQLException {
+        String sql = "SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS "
+                + "WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME = ? AND COLUMN_NAME = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, tableName);
+            statement.setString(2, columnName);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next();
+            }
+        }
+    }
     private Integer parseOptionalPositiveId(String value) {
         if (value == null || value.isBlank()) {
             return null;

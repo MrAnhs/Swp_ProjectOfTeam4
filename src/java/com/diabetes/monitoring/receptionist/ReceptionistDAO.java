@@ -133,8 +133,7 @@ public class ReceptionistDAO {
             int booked = (Integer) schedule.get("booked");
             int maxPatients = (Integer) schedule.get("maxPatients");
             int queueNumber = nextQueueNumber(connection, request.scheduleId);
-            int appointmentId = insertAppointment(connection, patientId, request.doctorId,
-                    request.scheduleId, appointmentTime, queueNumber);
+            int appointmentId = insertAppointment(connection, patientId, request.scheduleId, appointmentTime, queueNumber);
 
             if (booked + 1 >= maxPatients) {
                 markScheduleFull(connection, request.scheduleId);
@@ -236,7 +235,8 @@ public class ReceptionistDAO {
                 + "p.full_name AS patient_name, p.phone, d.full_name AS doctor_name "
                 + "FROM Appointment a "
                 + "INNER JOIN Patient p ON p.patient_id = a.patient_id "
-                + "LEFT JOIN Doctor d ON d.doctor_id = a.doctor_id "
+                + "LEFT JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
+                + "LEFT JOIN Doctor d ON d.doctor_id = ds.doctor_id "
                 + "WHERE CAST(a.appointment_time AS date) = CAST(GETDATE() AS date) "
                 + (status == null || status.isBlank() ? "" : "AND a.status = ? ")
                 + "ORDER BY a.appointment_time, a.queue_number";
@@ -303,7 +303,8 @@ public class ReceptionistDAO {
             throws SQLException {
         String sql = "SELECT TOP 1 a.appointment_time, a.booking_type, a.status, "
                 + "a.queue_number, d.full_name AS doctor_name "
-                + "FROM Appointment a LEFT JOIN Doctor d ON a.doctor_id = d.doctor_id "
+                + "FROM Appointment a LEFT JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
+                + "LEFT JOIN Doctor d ON d.doctor_id = ds.doctor_id "
                 + "WHERE a.patient_id = ? ORDER BY a.appointment_time DESC";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, patientId);
@@ -406,22 +407,26 @@ public class ReceptionistDAO {
         }
     }
 
-    private int insertAppointment(Connection connection, int patientId, int doctorId, int scheduleId,
+    private int insertAppointment(Connection connection, int patientId, int scheduleId,
             LocalDateTime appointmentTime, int queueNumber) throws SQLException {
         boolean hasBookingSource = hasColumn(connection, "Appointment", "booking_source");
-        String sql = hasBookingSource
-                ? "INSERT INTO Appointment (patient_id, doctor_id, schedule_id, conversation_id, "
-                + "appointment_time, booking_type, booking_source, queue_number, status, created_at) "
-                + "VALUES (?, ?, ?, NULL, ?, 'At_Counter', 'Receptionist', ?, 'Waiting', GETDATE())"
-                : "INSERT INTO Appointment (patient_id, doctor_id, schedule_id, conversation_id, "
-                + "appointment_time, booking_type, queue_number, status, created_at) "
-                + "VALUES (?, ?, ?, NULL, ?, 'At_Counter', ?, 'Waiting', GETDATE())";
+        boolean hasConversationId = hasColumn(connection, "Appointment", "conversation_id");
+        String columns = hasConversationId
+                ? "patient_id, schedule_id, conversation_id, appointment_time, booking_type, "
+                : "patient_id, schedule_id, appointment_time, booking_type, ";
+        String values = hasConversationId ? "?, ?, NULL, ?, 'At_Counter', " : "?, ?, ?, 'At_Counter', ";
+        if (hasBookingSource) {
+            columns += "booking_source, ";
+            values += "'Receptionist', ";
+        }
+        String sql = "INSERT INTO Appointment (" + columns
+                + "queue_number, status, created_at) VALUES (" + values
+                + "?, 'Waiting', GETDATE())";
         try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             statement.setInt(1, patientId);
-            statement.setInt(2, doctorId);
-            statement.setInt(3, scheduleId);
-            statement.setTimestamp(4, Timestamp.valueOf(appointmentTime));
-            statement.setInt(5, queueNumber);
+            statement.setInt(2, scheduleId);
+            statement.setTimestamp(3, Timestamp.valueOf(appointmentTime));
+            statement.setInt(4, queueNumber);
             statement.executeUpdate();
             try (ResultSet keys = statement.getGeneratedKeys()) {
                 if (keys.next()) {

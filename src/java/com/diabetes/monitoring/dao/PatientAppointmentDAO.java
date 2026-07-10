@@ -12,14 +12,14 @@ import java.util.List;
 
 public class PatientAppointmentDAO {
     private static final String BASE_SELECT =
-            "SELECT a.appointment_id, a.doctor_id, a.schedule_id, a.conversation_id, "
+            "SELECT a.appointment_id, ds.doctor_id AS doctor_id, a.schedule_id, CAST(NULL AS int) AS conversation_id, "
             + "a.appointment_time, a.booking_type, a.queue_number, a.status, a.created_at, "
             + "d.full_name AS doctor_name, d.department, d.phone AS doctor_phone, "
             + "d.email AS doctor_email, ds.time_slot "
             + "FROM Appointment a "
             + "INNER JOIN Patient p ON p.patient_id = a.patient_id "
-            + "INNER JOIN Doctor d ON d.doctor_id = a.doctor_id "
-            + "INNER JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id ";
+            + "INNER JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
+            + "INNER JOIN Doctor d ON d.doctor_id = ds.doctor_id ";
 
     public List<AppointmentInfo> findByPatientAccountId(int accountId) throws SQLException {
         String sql = BASE_SELECT
