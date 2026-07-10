@@ -89,10 +89,7 @@ public class AppointmentDAO {
                 + "ISNULL(MAX(queue_number), 0) + 1 AS next_queue "
                 + "FROM Appointment WITH (UPDLOCK, HOLDLOCK) "
                 + "WHERE schedule_id = ? AND status <> 'Cancelled'";
-        String insertSql = "INSERT INTO Appointment "
-                + "(patient_id, doctor_id, schedule_id, conversation_id, appointment_time, "
-                + "booking_type, queue_number, status, created_at) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, 'Waiting', GETDATE())";
+        String insertSql;
         String fullSql = "UPDATE Doctor_Schedule SET status = 'Full' WHERE schedule_id = ?";
         String duplicateSql = "SELECT COUNT(*) FROM Appointment "
                 + "WHERE patient_id = ? AND schedule_id = ? AND status <> 'Cancelled'";
@@ -151,20 +148,36 @@ public class AppointmentDAO {
                     throw new SQLException("Khung gio da du so luong benh nhan");
                 }
 
+                                boolean hasConversationId = hasColumn(conn, "Appointment", "conversation_id");
+                insertSql = hasConversationId
+                        ? "INSERT INTO Appointment "
+                        + "(patient_id, schedule_id, conversation_id, appointment_time, "
+                        + "booking_type, queue_number, status, created_at) "
+                        + "VALUES (?, ?, ?, ?, ?, ?, 'Waiting', GETDATE())"
+                        : "INSERT INTO Appointment "
+                        + "(patient_id, schedule_id, appointment_time, "
+                        + "booking_type, queue_number, status, created_at) "
+                        + "VALUES (?, ?, ?, ?, ?, 'Waiting', GETDATE())";
+
                 int appointmentId;
                 try (PreparedStatement ps = conn.prepareStatement(
                         insertSql, Statement.RETURN_GENERATED_KEYS)) {
                     ps.setInt(1, patientId);
-                    ps.setInt(2, doctorId);
-                    ps.setInt(3, scheduleId);
-                    if (conversationId == null) {
-                        ps.setNull(4, java.sql.Types.INTEGER);
+                    ps.setInt(2, scheduleId);
+                    if (hasConversationId) {
+                        if (conversationId == null) {
+                            ps.setNull(3, java.sql.Types.INTEGER);
+                        } else {
+                            ps.setInt(3, conversationId);
+                        }
+                        ps.setTimestamp(4, appointmentTime);
+                        ps.setString(5, bookingType);
+                        ps.setInt(6, queueNumber);
                     } else {
-                        ps.setInt(4, conversationId);
+                        ps.setTimestamp(3, appointmentTime);
+                        ps.setString(4, bookingType);
+                        ps.setInt(5, queueNumber);
                     }
-                    ps.setTimestamp(5, appointmentTime);
-                    ps.setString(6, bookingType);
-                    ps.setInt(7, queueNumber);
                     ps.executeUpdate();
                     try (ResultSet rs = ps.getGeneratedKeys()) {
                         if (!rs.next()) {
@@ -194,11 +207,12 @@ public class AppointmentDAO {
 
     public List<Appointment> getAppointmentsByDoctor(int doctorId, Date workDate) {
         List<Appointment> appointments = new ArrayList<>();
-        String sql = "SELECT a.*, p.full_name AS patient_name, d.full_name AS doctor_name "
+        String sql = "SELECT CAST(NULL AS int) AS conversation_id, a.*, ds.doctor_id AS doctor_id, p.full_name AS patient_name, d.full_name AS doctor_name "
                 + "FROM Appointment a "
                 + "JOIN Patient p ON a.patient_id = p.patient_id "
-                + "JOIN Doctor d ON a.doctor_id = d.doctor_id "
-                + "WHERE a.doctor_id = ? AND CAST(a.appointment_time AS DATE) = ? "
+                + "JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
+                + "JOIN Doctor d ON d.doctor_id = ds.doctor_id "
+                + "WHERE ds.doctor_id = ? AND CAST(a.appointment_time AS DATE) = ? "
                 + "ORDER BY a.queue_number";
 
         try (Connection conn = DatabaseConnection.getConnection();
@@ -218,12 +232,13 @@ public class AppointmentDAO {
 
     public List<Appointment> getWaitingAppointmentsByDoctor(int doctorId) {
         List<Appointment> appointments = new ArrayList<>();
-        String sql = "SELECT a.*, p.full_name AS patient_name, "
+        String sql = "SELECT CAST(NULL AS int) AS conversation_id, a.*, p.full_name AS patient_name, "
                 + "d.full_name AS doctor_name "
                 + "FROM Appointment a "
                 + "JOIN Patient p ON p.patient_id = a.patient_id "
-                + "JOIN Doctor d ON d.doctor_id = a.doctor_id "
-                + "WHERE a.doctor_id = ? AND a.status = 'Waiting' "
+                + "JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
+                + "JOIN Doctor d ON d.doctor_id = ds.doctor_id "
+                + "WHERE ds.doctor_id = ? AND a.status = 'Waiting' "
                 + "ORDER BY a.appointment_time ASC, a.queue_number ASC";
 
         try (Connection conn = DatabaseConnection.getConnection();
@@ -242,10 +257,11 @@ public class AppointmentDAO {
 
     public List<Appointment> getAppointmentsByPatient(int patientId) {
         List<Appointment> appointments = new ArrayList<>();
-        String sql = "SELECT a.*, p.full_name AS patient_name, d.full_name AS doctor_name "
+        String sql = "SELECT CAST(NULL AS int) AS conversation_id, a.*, ds.doctor_id AS doctor_id, p.full_name AS patient_name, d.full_name AS doctor_name "
                 + "FROM Appointment a "
                 + "JOIN Patient p ON a.patient_id = p.patient_id "
-                + "JOIN Doctor d ON a.doctor_id = d.doctor_id "
+                + "JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
+                + "JOIN Doctor d ON d.doctor_id = ds.doctor_id "
                 + "WHERE a.patient_id = ? "
                 + "ORDER BY a.appointment_time DESC";
 
@@ -265,10 +281,11 @@ public class AppointmentDAO {
 
     public List<Appointment> getAppointmentsByDate(Date workDate) {
         List<Appointment> appointments = new ArrayList<>();
-        String sql = "SELECT a.*, p.full_name AS patient_name, d.full_name AS doctor_name "
+        String sql = "SELECT CAST(NULL AS int) AS conversation_id, a.*, ds.doctor_id AS doctor_id, p.full_name AS patient_name, d.full_name AS doctor_name "
                 + "FROM Appointment a "
                 + "JOIN Patient p ON a.patient_id = p.patient_id "
-                + "JOIN Doctor d ON a.doctor_id = d.doctor_id "
+                + "JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
+                + "JOIN Doctor d ON d.doctor_id = ds.doctor_id "
                 + "WHERE CAST(a.appointment_time AS DATE) = ? "
                 + "ORDER BY d.full_name, a.queue_number";
 
@@ -311,8 +328,10 @@ public class AppointmentDAO {
     }
 
     public boolean updateAppointmentStatus(int appointmentId, int doctorId, String status) {
-        String sql = "UPDATE Appointment SET status = ? "
-                + "WHERE appointment_id = ? AND doctor_id = ?";
+        String sql = "UPDATE a SET a.status = ? "
+                + "FROM Appointment a "
+                + "INNER JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
+                + "WHERE a.appointment_id = ? AND ds.doctor_id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, status);
@@ -325,6 +344,18 @@ public class AppointmentDAO {
         return false;
     }
 
+    private boolean hasColumn(Connection connection, String tableName, String columnName)
+            throws SQLException {
+        String sql = "SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS "
+                + "WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME = ? AND COLUMN_NAME = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, tableName);
+            statement.setString(2, columnName);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next();
+            }
+        }
+    }
     private Appointment mapAppointment(ResultSet rs) throws SQLException {
         Appointment appointment = new Appointment();
         appointment.setAppointmentId(rs.getInt("appointment_id"));
