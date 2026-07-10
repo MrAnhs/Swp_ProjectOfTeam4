@@ -44,6 +44,9 @@ public class ReceptionistPageServlet extends HttpServlet {
         if ("/receptionist/patients/search".equals(servletPath)) {
             return "patient-search.jsp";
         }
+        if ("/receptionist/patients/register".equals(servletPath)) {
+            return "patient-registration.jsp";
+        }
         if ("/receptionist/appointments/new".equals(servletPath)) {
             return "appointment-registration.jsp";
         }

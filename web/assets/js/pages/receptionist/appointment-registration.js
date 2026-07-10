@@ -4,6 +4,8 @@
     const doctorSelect = document.getElementById('registerDoctor');
     const scheduleSelect = document.getElementById('registerScheduleSlot');
     const result = document.getElementById('registrationResult');
+    const lookupInput = document.getElementById('patientLookupKeyword');
+    const lookupButton = document.getElementById('patientLookupBtn');
 
     function showResult(html, type) {
         result.className = 'result-card mt-4 alert alert-' + (type || 'info');
@@ -12,6 +14,62 @@
 
     function validVietnamesePhone(phone) {
         return /^(0|\+84)(3|5|7|8|9)\d{8}$/.test(phone);
+    }
+
+    function prefillFromQuery() {
+        const params = new URLSearchParams(window.location.search);
+        const values = {
+            patientName: params.get('patientName'),
+            patientPhone: params.get('patientPhone'),
+            patientEmail: params.get('patientEmail'),
+            patientDob: params.get('patientDob'),
+            patientGender: params.get('patientGender'),
+            patientAddress: params.get('patientAddress')
+        };
+        let hasValue = false;
+        Object.entries(values).forEach(function (entry) {
+            const input = document.getElementById(entry[0] === 'patientName' ? 'registerPatientName' : entry[0] === 'patientPhone' ? 'registerPatientPhone' : entry[0] === 'patientEmail' ? 'registerPatientEmail' : entry[0] === 'patientDob' ? 'registerPatientDob' : entry[0] === 'patientGender' ? 'registerPatientGender' : 'registerPatientAddress');
+            if (input && entry[1]) {
+                input.value = entry[1];
+                hasValue = true;
+            }
+        });
+        if (hasValue) {
+            showResult('\u0110\u00e3 t\u1ef1 \u0111\u1ed9ng \u0111i\u1ec1n th\u00f4ng tin b\u1ec7nh nh\u00e2n m\u1edbi. Vui l\u00f2ng ch\u1ecdn b\u00e1c s\u0129 v\u00e0 ca kh\u00e1m \u0111\u1ec3 ho\u00e0n t\u1ea5t.', 'info');
+        }
+    }
+
+    function fillPatient(patient) {
+        const values = {
+            registerPatientName: patient.fullName,
+            registerPatientPhone: patient.phone,
+            registerPatientEmail: patient.email,
+            registerPatientDob: patient.dateOfBirth,
+            registerPatientGender: patient.gender,
+            registerPatientAddress: patient.address
+        };
+        Object.entries(values).forEach(function (entry) {
+            const input = document.getElementById(entry[0]);
+            if (input && entry[1] != null) input.value = entry[1];
+        });
+    }
+
+    async function lookupPatient() {
+        const keyword = lookupInput.value.trim();
+        if (!keyword) {
+            showResult('Vui l\u00f2ng nh\u1eadp s\u1ed1 \u0111i\u1ec7n tho\u1ea1i ho\u1eb7c h\u1ecd t\u00ean b\u1ec7nh nh\u00e2n.', 'danger');
+            return;
+        }
+        lookupButton.disabled = true;
+        try {
+            const data = await utils.requestJson(utils.apiBase() + '/patients/search?keyword=' + encodeURIComponent(keyword));
+            fillPatient(data.patient || {});
+            showResult('\u0110\u00e3 t\u00ecm th\u1ea5y v\u00e0 \u0111i\u1ec1n th\u00f4ng tin b\u1ec7nh nh\u00e2n. Vui l\u00f2ng ch\u1ecdn b\u00e1c s\u0129 v\u00e0 ca kh\u00e1m.', 'info');
+        } catch (error) {
+            showResult(utils.escapeHtml(error.message), 'danger');
+        } finally {
+            lookupButton.disabled = false;
+        }
     }
 
     async function loadDoctors() {
@@ -56,6 +114,12 @@
     async function submitForm(event) {
         event.preventDefault();
         const phone = document.getElementById('registerPatientPhone').value.trim();
+        const revisitAppointmentId = document.getElementById('registerRevisitAppointmentId').value.trim();
+        const visitType = document.getElementById('registerVisitType').value;
+        if (visitType === 'Revisit' && !revisitAppointmentId) {
+            showResult('Vui lòng nhập mã lịch hẹn cũ cho trường hợp tái khám.', 'danger');
+            return;
+        }
         if (!validVietnamesePhone(phone)) {
             showResult('S\u1ED1 \u0111i\u1EC7n tho\u1EA1i Vi\u1EC7t Nam kh\u00F4ng h\u1EE3p l\u1EC7.', 'danger');
             return;
@@ -67,6 +131,9 @@
         }
 
         const body = new URLSearchParams(new FormData(form));
+        if (visitType === 'Revisit') {
+            body.set('revisitAppointmentId', revisitAppointmentId);
+        }
         try {
             const data = await utils.requestJson(utils.apiBase() + '/appointments', {
                 method: 'POST',
@@ -94,10 +161,20 @@
 
     doctorSelect.addEventListener('change', loadSchedules);
     form.addEventListener('submit', submitForm);
+    document.addEventListener('DOMContentLoaded', function () {
+        prefillFromQuery();
+        loadDoctors();
+    });
+    lookupButton.addEventListener('click', lookupPatient);
+    lookupInput.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            lookupPatient();
+        }
+    });
     document.getElementById('resetRegistrationBtn').addEventListener('click', function () {
         form.reset();
         result.className = 'result-card mt-4 d-none';
         scheduleSelect.innerHTML = '<option value="">Ch\u1ECDn b\u00E1c s\u0129 tr\u01B0\u1EDBc</option>';
     });
-    document.addEventListener('DOMContentLoaded', loadDoctors);
 })();
