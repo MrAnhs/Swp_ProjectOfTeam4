@@ -10,11 +10,16 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 
 public class PatientAppointmentServlet extends HttpServlet {
+    private static final long BOOKING_INTERVAL_MILLIS = 60_000L;
+    private static final String LAST_SUCCESSFUL_BOOKING =
+            PatientAppointmentServlet.class.getName() + ".lastSuccessfulBooking";
+
     private final AppointmentService appointmentService = new AppointmentService();
     private final PatientAppointmentDAO appointmentDAO = new PatientAppointmentDAO();
 
@@ -63,17 +68,32 @@ public class PatientAppointmentServlet extends HttpServlet {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 
-        User currentUser = (User) request.getSession().getAttribute("currentUser");
+        HttpSession session = request.getSession();
+        User currentUser = (User) session.getAttribute("currentUser");
         if (currentUser == null) {
             writeError(response, HttpServletResponse.SC_UNAUTHORIZED, "Bạn chưa đăng nhập.");
             return;
         }
+
+        synchronized (session) {
+            Long lastSuccessfulBooking = (Long) session.getAttribute(LAST_SUCCESSFUL_BOOKING);
+            if (lastSuccessfulBooking != null) {
+                long elapsed = System.currentTimeMillis() - lastSuccessfulBooking;
+                if (elapsed < BOOKING_INTERVAL_MILLIS) {
+                    long seconds = (BOOKING_INTERVAL_MILLIS - elapsed + 999L) / 1000L;
+                    writeError(response, 429,
+                            "Bạn vừa đặt lịch thành công. Vui lòng thử lại sau "
+                            + seconds + " giây.");
+                    return;
+                }
+            }
 
         try {
             int doctorId = parsePositiveInt(request.getParameter("doctorId"));
             int scheduleId = parsePositiveInt(request.getParameter("scheduleId"));
             AppointmentBookingResult result = appointmentService.bookByDoctor(
                     currentUser.getId(), doctorId, scheduleId);
+            session.setAttribute(LAST_SUCCESSFUL_BOOKING, System.currentTimeMillis());
             response.setStatus(HttpServletResponse.SC_CREATED);
             response.getWriter().print(toJson(result));
         } catch (IllegalArgumentException | NullPointerException e) {
@@ -85,6 +105,7 @@ public class PatientAppointmentServlet extends HttpServlet {
             e.printStackTrace();
             writeError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     "Không thể tạo lịch hẹn. Vui lòng thử lại.");
+        }
         }
     }
 

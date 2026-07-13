@@ -39,9 +39,7 @@ public class AppointmentService {
                 throw new AppointmentBookingException("Ca khám đã đủ số lượng bệnh nhân.");
             }
 
-            if (hasDuplicateAppointment(connection, patientId, scheduleId, appointmentTime)) {
-                throw new AppointmentBookingException("Bạn đã có lịch hẹn trong ca khám này.");
-            }
+            validatePatientBookingRules(connection, patientId, schedule, appointmentTime);
 
             int queueNumber = nextQueueNumber(connection, scheduleId);
             int appointmentId = insertAppointment(connection, patientId, scheduleId,
@@ -85,9 +83,7 @@ public class AppointmentService {
                 throw new AppointmentBookingException("Ca khám đã đủ số lượng bệnh nhân.");
             }
 
-            if (hasDuplicateAppointment(connection, patientId, schedule.scheduleId, appointmentTime)) {
-                throw new AppointmentBookingException("Bạn đã có lịch hẹn trong ca khám này.");
-            }
+            validatePatientBookingRules(connection, patientId, schedule, appointmentTime);
 
             int queueNumber = nextQueueNumber(connection, schedule.scheduleId);
             int appointmentId = insertAppointment(connection, patientId,
@@ -223,17 +219,44 @@ public class AppointmentService {
         }
     }
 
-    private boolean hasDuplicateAppointment(Connection connection, int patientId, int scheduleId,
-            LocalDateTime appointmentTime) throws SQLException {
-        String sql = "SELECT 1 FROM Appointment "
-                + "WHERE patient_id = ? AND status <> 'Cancelled' "
-                + "AND (schedule_id = ? OR appointment_time = ?)";
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+    private void validatePatientBookingRules(Connection connection, int patientId,
+            ScheduleSelection schedule, LocalDateTime appointmentTime)
+            throws SQLException, AppointmentBookingException {
+        String departmentSql = "SELECT 1 FROM Appointment a WITH (UPDLOCK, HOLDLOCK) "
+                + "INNER JOIN Doctor_Schedule existing_schedule "
+                + "ON existing_schedule.schedule_id = a.schedule_id "
+                + "INNER JOIN Doctor existing_doctor "
+                + "ON existing_doctor.doctor_id = existing_schedule.doctor_id "
+                + "WHERE a.patient_id = ? "
+                + "AND a.status IN ('Waiting', 'Checked_In', 'In_Progress') "
+                + "AND existing_schedule.work_date = ? "
+                + "AND ((existing_doctor.department = ?) "
+                + "OR (existing_doctor.department IS NULL AND ? IS NULL))";
+        try (PreparedStatement statement = connection.prepareStatement(departmentSql)) {
             statement.setInt(1, patientId);
-            statement.setInt(2, scheduleId);
-            statement.setTimestamp(3, Timestamp.valueOf(appointmentTime));
+            statement.setDate(2, java.sql.Date.valueOf(schedule.workDate));
+            statement.setString(3, schedule.department);
+            statement.setString(4, schedule.department);
             try (ResultSet resultSet = statement.executeQuery()) {
-                return resultSet.next();
+                if (resultSet.next()) {
+                    throw new AppointmentBookingException(
+                            "Bạn đã có lịch hẹn chưa hoàn tất ở chuyên khoa này trong ngày đã chọn.");
+                }
+            }
+        }
+
+        String timeSlotSql = "SELECT 1 FROM Appointment WITH (UPDLOCK, HOLDLOCK) "
+                + "WHERE patient_id = ? "
+                + "AND status IN ('Waiting', 'Checked_In', 'In_Progress') "
+                + "AND appointment_time = ?";
+        try (PreparedStatement statement = connection.prepareStatement(timeSlotSql)) {
+            statement.setInt(1, patientId);
+            statement.setTimestamp(2, Timestamp.valueOf(appointmentTime));
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    throw new AppointmentBookingException(
+                            "Bạn đã có một lịch hẹn khác trùng ca khám này.");
+                }
             }
         }
     }
