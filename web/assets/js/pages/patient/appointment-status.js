@@ -1,7 +1,7 @@
 (function (window) {
     const STATUS_META = {
         Waiting: { label: "Ch\u1EDD kh\u00E1m", className: "waiting" },
-        In_Progress: { label: "\u0110ang kh\u00E1m", className: "in-progress" },
+        In_Progress: { label: "\u0110ang x\u1EED l\u00FD", className: "waiting" },
         Completed: { label: "\u0110\u00E3 ho\u00E0n th\u00E0nh", className: "completed" },
         Cancelled: { label: "\u0110\u00E3 h\u1EE7y", className: "cancelled" },
         Absent: { label: "V\u1EAFng m\u1EB7t", className: "absent" }

@@ -16,6 +16,14 @@
         title.textContent = `L\u1EA7n kh\u00E1m #${visit.appointmentId}`;
         meta.textContent = `${visit.doctorName} - ${visit.department || "Ch\u01B0a c\u1EADp nh\u1EADt chuy\u00EAn khoa"}`;
         detail.replaceChildren(); detail.className = "";
+        if (visit.appointmentStatus === "Absent" || visit.appointmentStatus === "Cancelled") {
+            const status = PatientAppointmentStatus.get(visit.appointmentStatus);
+            const message = document.createElement("div");
+            message.className = "result-pending";
+            message.innerHTML = `<h2>${status.label}</h2><p>Lịch hẹn này không phát sinh kết quả khám.</p>`;
+            detail.append(message);
+            return;
+        }
         if (!visit.resultVisible) {
             const pending = document.createElement("div");
             pending.className = "result-pending";

@@ -19,8 +19,14 @@
         const time = document.createElement("p");
         time.textContent = `Th\u1EDDi gian: ${visit.appointmentTime.replace("T", " ")}`;
         const status = document.createElement("span");
-        status.className = `status-pill ${visit.resultVisible ? "completed" : "waiting"}`;
-        status.textContent = visit.resultVisible ? "\u0110\u00E3 c\u00F3 k\u1EBFt qu\u1EA3" : "\u0110ang x\u1EED l\u00FD";
+        const statusMeta = visit.appointmentStatus === "Absent"
+            || visit.appointmentStatus === "Cancelled"
+            ? PatientAppointmentStatus.get(visit.appointmentStatus)
+            : visit.resultVisible
+                ? { label: "\u0110\u00E3 c\u00F3 k\u1EBFt qu\u1EA3", className: "completed" }
+                : { label: "\u0110ang x\u1EED l\u00FD", className: "waiting" };
+        status.className = `status-pill ${statusMeta.className}`;
+        status.textContent = statusMeta.label;
         const link = document.createElement("a");
         link.className = "btn-page-secondary";
         link.href = ApiClient.buildUrl(`/patient/history/detail?id=${visit.appointmentId}`);
