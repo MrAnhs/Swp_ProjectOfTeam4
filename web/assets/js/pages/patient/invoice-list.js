@@ -2,6 +2,7 @@
     const list = document.getElementById("invoiceList");
     const filter = document.getElementById("invoiceStatusFilter");
     const search = document.getElementById("invoiceSearch");
+    const dateFilter = document.getElementById("invoiceDateFilter");
     let invoices = [];
     const money = new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" });
 
@@ -39,7 +40,17 @@
     }
     filter.addEventListener("change", render);
     search.addEventListener("input", render);
-    ApiClient.get("/patient/api/invoices")
-        .then((data) => { invoices = data.invoices || []; render(); })
-        .catch((error) => { list.textContent = `Kh\u00F4ng th\u1EC3 t\u1EA3i h\u00F3a \u0111\u01A1n: ${error.message}`; });
+    dateFilter.addEventListener("change", loadInvoices);
+
+    function loadInvoices() {
+        const query = dateFilter.value
+            ? `?searchDate=${encodeURIComponent(dateFilter.value)}` : "";
+        list.classList.add("loading-state");
+        ApiClient.get(`/patient/api/invoices${query}`)
+            .then((data) => { invoices = data.invoices || []; render(); })
+            .catch((error) => { list.textContent = `Kh\u00F4ng th\u1EC3 t\u1EA3i h\u00F3a \u0111\u01A1n: ${error.message}`; })
+            .finally(() => list.classList.remove("loading-state"));
+    }
+
+    loadInvoices();
 })();

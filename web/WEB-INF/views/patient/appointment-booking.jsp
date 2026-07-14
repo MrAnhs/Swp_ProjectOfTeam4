@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="app-context-path" content="${pageContext.request.contextPath}">
-    <title>Đặt lịch khám - DiabetesCare</title>
+    <title>&#272;&#7863;t l&#7883;ch kh&#225;m - DiabetesCare</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -21,53 +21,61 @@
     <main class="main-content-dash">
         <header class="page-header">
             <div>
-                <p class="page-eyebrow">Lịch khám</p>
-                <h1>Đặt lịch khám</h1>
-                <p>Tìm bác sĩ có lịch trống và chọn giờ khám phù hợp với bạn.</p>
+                <p class="page-eyebrow">L&#7883;ch kh&#225;m</p>
+                <h1>&#272;&#7863;t l&#7883;ch kh&#225;m</h1>
+                <p>Ch&#7885;n khoa, ng&#224;y kh&#225;m, bu&#7893;i kh&#225;m v&#224; b&#225;c s&#297; ph&#249; h&#7907;p v&#7899;i nhu c&#7847;u c&#7911;a b&#7841;n.</p>
             </div>
         </header>
 
         <section class="page-card booking-page-card">
             <div class="booking-workflow-header">
                 <div>
-                    <span class="booking-workflow-label">ĐẶT LỊCH TRỰC TUYẾN</span>
-                    <h2>Chọn lịch khám của bạn</h2>
-                    <p>Chỉ những bác sĩ và giờ khám còn chỗ mới được hiển thị.</p>
+                    <span class="booking-workflow-label">&#272;&#7862;T L&#7882;CH TR&#7920;C TUY&#7870;N</span>
+                    <h2>Ch&#7885;n l&#7883;ch kh&#225;m c&#7911;a b&#7841;n</h2>
+                    <p>H&#7879; th&#7889;ng ch&#7881; hi&#7875;n th&#7883; b&#225;c s&#297; c&#243; ca kh&#225;m c&#242;n ch&#7895; trong khoa &#273;&#227; ch&#7885;n.</p>
                 </div>
-                <ol class="booking-steps" aria-label="Các bước đặt lịch">
-                    <li id="bookingStepDate" class="active"><span>1</span> Chọn ngày</li>
-                    <li id="bookingStepTime"><span>2</span> Chọn giờ</li>
-                    <li id="bookingStepConfirm"><span>3</span> Xác nhận</li>
+                <ol class="booking-steps" aria-label="C&#225;c b&#432;&#7899;c &#273;&#7863;t l&#7883;ch">
+                    <li id="bookingStepDate" class="active"><span>1</span> Ch&#7885;n khoa/ng&#224;y</li>
+                    <li id="bookingStepTime"><span>2</span> Ch&#7885;n gi&#7901;</li>
+                    <li id="bookingStepConfirm"><span>3</span> X&#225;c nh&#7853;n</li>
                 </ol>
             </div>
 
             <div id="appointmentBookingForm" class="record-form booking-form">
                 <div>
-                    <section class="booking-filter-panel" aria-label="Bộ lọc lịch khám">
+                    <section class="booking-filter-panel" aria-label="B&#7897; l&#7885;c l&#7883;ch kh&#225;m">
                         <label class="booking-filter-field">
-                            <span>Ngày khám</span>
+                            <span>Khoa kh&#225;m</span>
+                            <span class="booking-filter-control">
+                                <i class="bi bi-hospital"></i>
+                                <select id="bookingDepartment" required>
+                                    <option value="">&#272;ang t&#7843;i khoa kh&#225;m...</option>
+                                </select>
+                            </span>
+                        </label>
+                        <label class="booking-filter-field">
+                            <span>Ng&#224;y kh&#225;m</span>
                             <span class="booking-filter-control">
                                 <i class="bi bi-calendar3"></i>
                                 <input id="bookingDate" type="date" required>
                             </span>
                         </label>
                         <label class="booking-filter-field">
-                            <span>Buổi khám</span>
+                            <span>Bu&#7893;i kh&#225;m</span>
                             <span class="booking-filter-control">
                                 <i class="bi bi-clock"></i>
                                 <select id="bookingSession">
-                                    <option value="all">Tất cả các buổi</option>
-                                    <option value="morning">Buổi sáng</option>
-                                    <option value="afternoon">Buổi chiều</option>
+                                    <option value="all">T&#7845;t c&#7843; c&#225;c bu&#7893;i</option>
+                                    <option value="morning">Bu&#7893;i s&#225;ng</option>
+                                    <option value="afternoon">Bu&#7893;i chi&#7873;u</option>
                                 </select>
                             </span>
                         </label>
                         <label class="booking-filter-field booking-filter-field--search">
-                            <span>Tìm theo tên bác sĩ</span>
+                            <span>T&#236;m theo t&#234;n b&#225;c s&#297;</span>
                             <span class="booking-filter-control">
                                 <i class="bi bi-search"></i>
-                                <input id="bookingDoctorName" type="search"
-                                       placeholder="Nhập tên bác sĩ..." autocomplete="off">
+                                <input id="bookingDoctorName" type="search" placeholder="Nh&#7853;p t&#234;n b&#225;c s&#297;..." autocomplete="off">
                             </span>
                         </label>
                     </section>
@@ -75,17 +83,17 @@
                     <section class="doctor-results">
                         <div class="doctor-results__summary">
                             <div>
-                                <h2>Bác sĩ có lịch phù hợp</h2>
-                                <p id="bookingFilterDescription">Đang kiểm tra lịch khám...</p>
+                                <h2>B&#225;c s&#297; c&#243; l&#7883;ch ph&#249; h&#7907;p</h2>
+                                <p id="bookingFilterDescription">Vui l&#242;ng ch&#7885;n khoa kh&#225;m &#273;&#7875; b&#7855;t &#273;&#7847;u l&#7885;c l&#7883;ch.</p>
                             </div>
                             <span id="bookingDoctorCount" class="doctor-count">
-                                <i class="bi bi-people"></i>
-                                Đang tải
+                                <i class="bi bi-hospital"></i>
+                                Ch&#432;a ch&#7885;n khoa
                             </span>
                         </div>
 
                         <div id="bookingDoctorList" class="doctor-booking-list loading-state">
-                            Đang tải danh sách bác sĩ...
+                            Vui l&#242;ng ch&#7885;n khoa kh&#225;m tr&#432;&#7899;c &#273;&#7875; h&#7879; th&#7889;ng t&#236;m l&#7883;ch ph&#249; h&#7907;p.
                         </div>
                     </section>
                 </div>
@@ -95,8 +103,8 @@
         <section id="bookingResult" class="page-card booking-result" hidden></section>
     </main>
 
-    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/app-config.js?v=20260709-fontfix2"></script>
-    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/api-client.js?v=20260709-fontfix2"></script>
-    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/patient/appointment-booking.js?v=20260709-fontfix2"></script>
+    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/app-config.js?v=20260710-patient-fontfix-all2"></script>
+    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/api-client.js?v=20260710-patient-fontfix-all2"></script>
+    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/patient/appointment-booking.js?v=20260710-patient-fontfix-all2"></script>
 </body>
 </html>

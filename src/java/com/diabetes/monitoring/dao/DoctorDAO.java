@@ -1,8 +1,8 @@
 package com.diabetes.monitoring.dao;
 
+import com.diabetes.monitoring.model.AvailabilitySlot;
 import com.diabetes.monitoring.model.DoctorInfo;
 import com.diabetes.monitoring.model.DoctorScheduleInfo;
-import com.diabetes.monitoring.model.AvailabilitySlot;
 import com.diabetes.monitoring.util.DatabaseConnection;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -21,7 +21,6 @@ public class DoctorDAO {
                 + "WHERE a.role = 'Doctor' AND a.status = 'Active' "
                 + "ORDER BY d.full_name";
         List<DoctorInfo> doctors = new ArrayList<>();
-
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql);
              ResultSet resultSet = statement.executeQuery()) {
@@ -32,8 +31,26 @@ public class DoctorDAO {
         return doctors;
     }
 
+    public List<String> findActiveDepartments() throws SQLException {
+        String sql = "SELECT DISTINCT LTRIM(RTRIM(d.department)) AS department "
+                + "FROM Doctor d "
+                + "INNER JOIN Account a ON a.account_id = d.account_id "
+                + "WHERE a.role = 'Doctor' AND a.status = 'Active' "
+                + "AND d.department IS NOT NULL AND LTRIM(RTRIM(d.department)) <> '' "
+                + "ORDER BY department";
+        List<String> departments = new ArrayList<>();
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+            while (resultSet.next()) {
+                departments.add(resultSet.getString("department"));
+            }
+        }
+        return departments;
+    }
+
     public List<DoctorInfo> findAvailableDoctors(LocalDate workDate, String session,
-            String doctorName) throws SQLException {
+            String doctorName, String department) throws SQLException {
         StringBuilder sql = new StringBuilder(
                 "SELECT DISTINCT d.doctor_id, d.full_name, d.phone, d.email, d.department "
                 + "FROM Doctor d "
@@ -47,6 +64,9 @@ public class DoctorDAO {
                 + "AND (ds.work_date > CAST(GETDATE() AS date) "
                 + "OR TRY_CONVERT(time, LEFT(ds.time_slot, 5)) > CAST(GETDATE() AS time)) ");
         appendSessionFilter(sql, session);
+        if (department != null && !department.isBlank()) {
+            sql.append("AND LTRIM(RTRIM(d.department)) = ? ");
+        }
         if (doctorName != null && !doctorName.isBlank()) {
             sql.append("AND d.full_name LIKE ? ");
         }
@@ -57,6 +77,9 @@ public class DoctorDAO {
              PreparedStatement statement = connection.prepareStatement(sql.toString())) {
             int parameterIndex = 1;
             statement.setDate(parameterIndex++, java.sql.Date.valueOf(workDate));
+            if (department != null && !department.isBlank()) {
+                statement.setString(parameterIndex++, department.trim());
+            }
             if (doctorName != null && !doctorName.isBlank()) {
                 statement.setString(parameterIndex, "%" + doctorName.trim() + "%");
             }
@@ -74,7 +97,6 @@ public class DoctorDAO {
                 + "FROM Doctor d "
                 + "INNER JOIN Account a ON a.account_id = d.account_id "
                 + "WHERE d.doctor_id = ? AND a.role = 'Doctor' AND a.status = 'Active'";
-
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, doctorId);
@@ -86,29 +108,24 @@ public class DoctorDAO {
 
     public List<DoctorScheduleInfo> findAvailableSchedules(int doctorId) throws SQLException {
         String sql = "SELECT ds.schedule_id, ds.work_date, ds.time_slot, ds.max_patients, ds.status, "
+                + "ds.room_id, r.room_name, r.location AS room_location, "
                 + "SUM(CASE WHEN a.status IN ('Waiting', 'In_Progress') THEN 1 ELSE 0 END) AS booked_patients "
                 + "FROM Doctor_Schedule ds "
                 + "LEFT JOIN Appointment a ON a.schedule_id = ds.schedule_id "
+                + "LEFT JOIN Room r ON r.room_id = ds.room_id "
                 + "WHERE ds.doctor_id = ? AND ds.work_date >= CAST(GETDATE() AS date) "
                 + "AND ds.status = 'Available' "
-                + "GROUP BY ds.schedule_id, ds.work_date, ds.time_slot, ds.max_patients, ds.status "
+                + "GROUP BY ds.schedule_id, ds.work_date, ds.time_slot, ds.max_patients, ds.status, "
+                + "ds.room_id, r.room_name, r.location "
                 + "HAVING SUM(CASE WHEN a.status IN ('Waiting', 'In_Progress') THEN 1 ELSE 0 END) < ds.max_patients "
                 + "ORDER BY ds.work_date, ds.time_slot";
         List<DoctorScheduleInfo> schedules = new ArrayList<>();
-
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, doctorId);
             try (ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
-                    DoctorScheduleInfo schedule = new DoctorScheduleInfo();
-                    schedule.setScheduleId(resultSet.getInt("schedule_id"));
-                    schedule.setWorkDate(resultSet.getDate("work_date").toLocalDate());
-                    schedule.setTimeSlot(resultSet.getString("time_slot"));
-                    schedule.setMaxPatients(resultSet.getInt("max_patients"));
-                    schedule.setBookedPatients(resultSet.getInt("booked_patients"));
-                    schedule.setStatus(resultSet.getString("status"));
-                    schedules.add(schedule);
+                    schedules.add(mapSchedule(resultSet));
                 }
             }
         }
@@ -119,15 +136,17 @@ public class DoctorDAO {
             String session) throws SQLException {
         StringBuilder sql = new StringBuilder(
                 "SELECT ds.schedule_id, ds.work_date, ds.time_slot, ds.max_patients, ds.status, "
+                + "ds.room_id, r.room_name, r.location AS room_location, "
                 + "SUM(CASE WHEN ap.status <> 'Cancelled' THEN 1 ELSE 0 END) AS booked_patients "
                 + "FROM Doctor_Schedule ds "
                 + "LEFT JOIN Appointment ap ON ap.schedule_id = ds.schedule_id "
+                + "LEFT JOIN Room r ON r.room_id = ds.room_id "
                 + "WHERE ds.doctor_id = ? AND ds.work_date = ? AND ds.status = 'Available' "
                 + "AND (ds.work_date > CAST(GETDATE() AS date) "
                 + "OR TRY_CONVERT(time, LEFT(ds.time_slot, 5)) > CAST(GETDATE() AS time)) ");
         appendSessionFilter(sql, session);
         sql.append("GROUP BY ds.schedule_id, ds.work_date, ds.time_slot, "
-                + "ds.max_patients, ds.status "
+                + "ds.max_patients, ds.status, ds.room_id, r.room_name, r.location "
                 + "HAVING SUM(CASE WHEN ap.status <> 'Cancelled' THEN 1 ELSE 0 END) < ds.max_patients "
                 + "ORDER BY TRY_CONVERT(time, LEFT(ds.time_slot, 5))");
 
@@ -160,7 +179,6 @@ public class DoctorDAO {
                 + "GROUP BY ds.work_date, ds.time_slot "
                 + "ORDER BY ds.work_date, ds.time_slot";
         List<AvailabilitySlot> slots = new ArrayList<>();
-
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql);
              ResultSet resultSet = statement.executeQuery()) {
@@ -194,6 +212,10 @@ public class DoctorDAO {
         schedule.setMaxPatients(resultSet.getInt("max_patients"));
         schedule.setBookedPatients(resultSet.getInt("booked_patients"));
         schedule.setStatus(resultSet.getString("status"));
+        int roomId = resultSet.getInt("room_id");
+        schedule.setRoomId(resultSet.wasNull() ? null : roomId);
+        schedule.setRoomName(resultSet.getString("room_name"));
+        schedule.setRoomLocation(resultSet.getString("room_location"));
         return schedule;
     }
 

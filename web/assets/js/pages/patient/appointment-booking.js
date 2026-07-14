@@ -1,4 +1,5 @@
 (function () {
+    const departmentSelect = document.getElementById("bookingDepartment");
     const dateInput = document.getElementById("bookingDate");
     const sessionSelect = document.getElementById("bookingSession");
     const doctorNameInput = document.getElementById("bookingDoctorName");
@@ -15,10 +16,7 @@
 
     function todayValue() {
         const today = new Date();
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, "0");
-        const day = String(today.getDate()).padStart(2, "0");
-        return `${year}-${month}-${day}`;
+        return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
     }
 
     function formatDate(dateValue, includeWeekday = false) {
@@ -29,6 +27,14 @@
             month: "2-digit",
             year: "numeric"
         }).format(date);
+    }
+
+    function roomLabel(schedule) {
+        return schedule.roomName || "Ch\u01b0a ph\u00e2n ph\u00f2ng";
+    }
+
+    function roomLocation(schedule) {
+        return schedule.roomLocation || "Ch\u01b0a c\u1eadp nh\u1eadt v\u1ecb tr\u00ed";
     }
 
     function setWorkflowStep(step) {
@@ -44,6 +50,14 @@
         return Number.isFinite(hour) && hour < 12;
     }
 
+    function showDepartmentPrompt() {
+        doctorList.className = "doctor-booking-list loading-state";
+        doctorList.textContent = "Vui l\u00f2ng ch\u1ecdn khoa kh\u00e1m tr\u01b0\u1edbc \u0111\u1ec3 h\u1ec7 th\u1ed1ng l\u1ecdc b\u00e1c s\u0129 v\u00e0 ca kh\u00e1m ph\u00f9 h\u1ee3p.";
+        doctorCount.innerHTML = '<i class="bi bi-hospital"></i><span>Ch\u01b0a ch\u1ecdn khoa</span>';
+        filterDescription.textContent = "Sau khi ch\u1ecdn khoa, h\u1ec7 th\u1ed1ng s\u1ebd l\u1ecdc l\u1ecbch theo ng\u00e0y, bu\u1ed5i kh\u00e1m v\u00e0 t\u00ean b\u00e1c s\u0129.";
+        setWorkflowStep(1);
+    }
+
     function createScheduleButton(doctor, schedule) {
         const label = document.createElement("label");
         label.className = "doctor-time-slot";
@@ -55,8 +69,17 @@
 
         const time = document.createElement("strong");
         time.textContent = schedule.timeSlot;
+
         const availability = document.createElement("small");
-        availability.textContent = `C\u00F2n ${schedule.availableSlots} ch\u1ED7`;
+        availability.textContent = `C\u00f2n ${schedule.availableSlots} ch\u1ed7`;
+
+        const room = document.createElement("small");
+        room.className = "doctor-time-room";
+        room.textContent = `Ph\u00f2ng: ${roomLabel(schedule)}`;
+
+        const location = document.createElement("small");
+        location.className = "doctor-time-location";
+        location.textContent = roomLocation(schedule);
 
         input.addEventListener("change", () => {
             setWorkflowStep(3);
@@ -64,18 +87,15 @@
                 slot.classList.toggle("active", slot.contains(input));
             });
             document.querySelectorAll(".doctor-booking-card").forEach((card) => {
-                card.classList.toggle(
-                    "active",
-                    String(card.dataset.doctorId) === String(doctor.doctorId)
-                );
+                card.classList.toggle("active", String(card.dataset.doctorId) === String(doctor.doctorId));
             });
-            document.querySelectorAll(".doctor-card-message").forEach((cardMessage) => {
-                cardMessage.hidden = true;
-                cardMessage.textContent = "";
+            document.querySelectorAll(".doctor-card-message").forEach((message) => {
+                message.hidden = true;
+                message.textContent = "";
             });
         });
 
-        label.append(input, time, availability);
+        label.append(input, time, availability, room, location);
         return label;
     }
 
@@ -92,9 +112,7 @@
 
         const slots = document.createElement("div");
         slots.className = "doctor-time-slots";
-        schedules.forEach((schedule) => {
-            slots.append(createScheduleButton(doctor, schedule));
-        });
+        schedules.forEach((schedule) => slots.append(createScheduleButton(doctor, schedule)));
 
         group.append(heading, slots);
         return group;
@@ -110,14 +128,16 @@
 
         const identity = document.createElement("div");
         identity.className = "doctor-booking-card__identity";
+
         const avatar = document.createElement("span");
         avatar.className = "doctor-avatar doctor-avatar--outline";
         avatar.innerHTML = '<i class="bi bi-person-fill"></i>';
+
         const info = document.createElement("div");
         const name = document.createElement("h3");
-        name.textContent = doctor.fullName || "B\u00E1c s\u0129";
+        name.textContent = doctor.fullName || "B\u00e1c s\u0129";
         const department = document.createElement("p");
-        department.textContent = `Chuy\u00EAn khoa: ${doctor.department || "Ch\u01B0a c\u1EADp nh\u1EADt"}`;
+        department.textContent = `Chuy\u00ean khoa: ${doctor.department || "Ch\u01b0a c\u1eadp nh\u1eadt"}`;
         info.append(name, department);
         identity.append(avatar, info);
 
@@ -131,30 +151,23 @@
 
         const scheduleArea = document.createElement("div");
         scheduleArea.className = "doctor-booking-card__schedules";
+
         const heading = document.createElement("div");
         heading.className = "doctor-schedule-heading";
         const headingTitle = document.createElement("strong");
-        headingTitle.textContent = "Gi\u1EDD kh\u00E1m c\u00F2n tr\u1ED1ng";
+        headingTitle.textContent = "Gi\u1edd kh\u00e1m c\u00f2n tr\u1ed1ng";
         const headingHint = document.createElement("span");
-        headingHint.textContent = "Ch\u1ECDn m\u1ED9t khung gi\u1EDD \u0111\u1EC3 \u0111\u1EB7t l\u1ECBch";
+        headingHint.textContent = "Ch\u1ecdn m\u1ed9t khung gi\u1edd \u0111\u1ec3 \u0111\u1eb7t l\u1ecbch";
         heading.append(headingTitle, headingHint);
         scheduleArea.append(heading);
 
-        const morningSchedules = doctor.schedules.filter(
-            (schedule) => isMorning(schedule.timeSlot)
-        );
-        const afternoonSchedules = doctor.schedules.filter(
-            (schedule) => !isMorning(schedule.timeSlot)
-        );
+        const morningSchedules = doctor.schedules.filter((schedule) => isMorning(schedule.timeSlot));
+        const afternoonSchedules = doctor.schedules.filter((schedule) => !isMorning(schedule.timeSlot));
         if (morningSchedules.length) {
-            scheduleArea.append(createScheduleGroup(
-                "Bu\u1ED5i s\u00E1ng", "bi bi-sun", doctor, morningSchedules
-            ));
+            scheduleArea.append(createScheduleGroup("Bu\u1ed5i s\u00e1ng", "bi bi-sun", doctor, morningSchedules));
         }
         if (afternoonSchedules.length) {
-            scheduleArea.append(createScheduleGroup(
-                "Bu\u1ED5i chi\u1EC1u", "bi bi-sunset", doctor, afternoonSchedules
-            ));
+            scheduleArea.append(createScheduleGroup("Bu\u1ed5i chi\u1ec1u", "bi bi-sunset", doctor, afternoonSchedules));
         }
 
         const footer = document.createElement("div");
@@ -166,10 +179,8 @@
         const bookButton = document.createElement("button");
         bookButton.type = "button";
         bookButton.className = "btn-page-primary doctor-book-button";
-        bookButton.innerHTML = 'X\u00E1c nh\u1EADn \u0111\u1EB7t l\u1ECBch <i class="bi bi-arrow-right"></i>';
-        bookButton.addEventListener("click", () => {
-            bookAppointment(doctor, card, cardMessage, bookButton);
-        });
+        bookButton.innerHTML = 'X\u00e1c nh\u1eadn \u0111\u1eb7t l\u1ecbch <i class="bi bi-arrow-right"></i>';
+        bookButton.addEventListener("click", () => bookAppointment(doctor, card, cardMessage, bookButton));
 
         footer.append(cardMessage, bookButton);
         card.append(header, scheduleArea, footer);
@@ -181,39 +192,63 @@
         doctorList.className = "doctor-booking-list";
         doctorCount.innerHTML = '<i class="bi bi-people"></i>';
         const countText = document.createElement("span");
-        countText.textContent = `T\u00ECm th\u1EA5y ${data.doctorCount} b\u00E1c s\u0129 ph\u00F9 h\u1EE3p`;
+        countText.textContent = `T\u00ecm th\u1ea5y ${data.doctorCount} b\u00e1c s\u0129 ph\u00f9 h\u1ee3p`;
         doctorCount.append(countText);
-        filterDescription.textContent =
-            `L\u1ECBch c\u00F2n tr\u1ED1ng ng\u00E0y ${formatDate(data.date)} theo b\u1ED9 l\u1ECDc \u0111\u00E3 ch\u1ECDn.`;
+        filterDescription.textContent = `Khoa ${data.department}, l\u1ecbch c\u00f2n tr\u1ed1ng ng\u00e0y ${formatDate(data.date)} theo b\u1ed9 l\u1ecdc \u0111\u00e3 ch\u1ecdn.`;
 
         if (!data.doctors.length) {
             const empty = document.createElement("div");
             empty.className = "booking-empty-state";
             empty.innerHTML = '<i class="bi bi-calendar-x"></i>';
             const title = document.createElement("strong");
-            title.textContent = "Kh\u00F4ng t\u00ECm th\u1EA5y l\u1ECBch kh\u00E1m ph\u00F9 h\u1EE3p";
+            title.textContent = "Kh\u00f4ng t\u00ecm th\u1ea5y l\u1ecbch kh\u00e1m ph\u00f9 h\u1ee3p";
             const description = document.createElement("p");
-            description.textContent =
-                "B\u1EA1n h\u00E3y th\u1EED ch\u1ECDn ng\u00E0y kh\u00E1c, \u0111\u1ED5i bu\u1ED5i kh\u00E1m ho\u1EB7c x\u00F3a t\u00EAn b\u00E1c s\u0129.";
+            description.textContent = "B\u1ea1n h\u00e3y th\u1eed ch\u1ecdn ng\u00e0y kh\u00e1c, \u0111\u1ed5i bu\u1ed5i kh\u00e1m ho\u1eb7c x\u00f3a t\u00ean b\u00e1c s\u0129.";
             empty.append(title, description);
             doctorList.append(empty);
             return;
         }
 
-        data.doctors.forEach((doctor) => {
-            doctorList.append(createDoctorCard(doctor, data.date));
-        });
+        data.doctors.forEach((doctor) => doctorList.append(createDoctorCard(doctor, data.date)));
+    }
+
+    async function loadDepartments() {
+        departmentSelect.disabled = true;
+        try {
+            const data = await ApiClient.get("/patient/api/doctors?mode=departments");
+            departmentSelect.replaceChildren();
+            const placeholder = document.createElement("option");
+            placeholder.value = "";
+            placeholder.textContent = "Ch\u1ecdn khoa kh\u00e1m";
+            departmentSelect.append(placeholder);
+            (data.departments || []).forEach((department) => {
+                const option = document.createElement("option");
+                option.value = department;
+                option.textContent = department;
+                departmentSelect.append(option);
+            });
+        } catch (error) {
+            doctorList.textContent = `Kh\u00f4ng th\u1ec3 t\u1ea3i danh s\u00e1ch khoa: ${error.message}`;
+        } finally {
+            departmentSelect.disabled = false;
+        }
     }
 
     async function loadDoctors() {
+        if (!departmentSelect.value) {
+            showDepartmentPrompt();
+            return;
+        }
+
         const requestSequence = ++doctorRequestSequence;
         setWorkflowStep(2);
         doctorList.className = "doctor-booking-list loading-state";
-        doctorList.textContent = "\u0110ang t\u1EA3i c\u00E1c b\u00E1c s\u0129 c\u00F3 l\u1ECBch tr\u1ED1ng...";
-        doctorCount.textContent = "\u0110ang t\u1EA3i";
-        filterDescription.textContent = "\u0110ang ki\u1EC3m tra l\u1ECBch kh\u00E1m...";
+        doctorList.textContent = "\u0110ang t\u1ea3i c\u00e1c b\u00e1c s\u0129 c\u00f3 l\u1ecbch tr\u1ed1ng...";
+        doctorCount.textContent = "\u0110ang t\u1ea3i";
+        filterDescription.textContent = "\u0110ang ki\u1ec3m tra l\u1ecbch kh\u00e1m...";
 
         const query = new URLSearchParams({
+            department: departmentSelect.value,
             date: dateInput.value,
             session: sessionSelect.value
         });
@@ -224,35 +259,29 @@
 
         try {
             const data = await ApiClient.get(`/patient/api/doctors?${query}`);
-            if (requestSequence !== doctorRequestSequence) {
-                return;
-            }
+            if (requestSequence !== doctorRequestSequence) return;
             renderDoctors(data);
         } catch (error) {
-            if (requestSequence !== doctorRequestSequence) {
-                return;
-            }
+            if (requestSequence !== doctorRequestSequence) return;
             doctorList.className = "doctor-booking-list loading-state";
-            doctorList.textContent = `Kh\u00F4ng th\u1EC3 t\u1EA3i l\u1ECBch kh\u00E1m: ${error.message}`;
-            doctorCount.textContent = "Kh\u00F4ng th\u1EC3 t\u1EA3i d\u1EEF li\u1EC7u";
+            doctorList.textContent = `Kh\u00f4ng th\u1ec3 t\u1ea3i l\u1ecbch kh\u00e1m: ${error.message}`;
+            doctorCount.textContent = "Kh\u00f4ng th\u1ec3 t\u1ea3i d\u1eef li\u1ec7u";
         }
     }
 
     async function bookAppointment(doctor, card, cardMessage, bookButton) {
-        const selectedSchedule = card.querySelector(
-            'input[name="scheduleId"]:checked'
-        );
+        const selectedSchedule = card.querySelector('input[name="scheduleId"]:checked');
         if (!selectedSchedule) {
             cardMessage.hidden = false;
             cardMessage.className = "doctor-card-message error";
-            cardMessage.textContent = "Vui l\u00F2ng ch\u1ECDn m\u1ED9t gi\u1EDD kh\u00E1m tr\u01B0\u1EDBc khi \u0111\u1EB7t l\u1ECBch.";
+            cardMessage.textContent = "Vui l\u00f2ng ch\u1ecdn m\u1ed9t gi\u1edd kh\u00e1m tr\u01b0\u1edbc khi \u0111\u1eb7t l\u1ecbch.";
             return;
         }
 
         cardMessage.hidden = true;
         cardMessage.textContent = "";
         bookButton.disabled = true;
-        bookButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> \u0110ang \u0111\u1EB7t l\u1ECBch...';
+        bookButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> \u0110ang \u0111\u1eb7t l\u1ecbch...';
 
         const body = new URLSearchParams({
             doctorId: doctor.doctorId,
@@ -268,28 +297,28 @@
             cardMessage.className = "doctor-card-message error";
             cardMessage.textContent = error.message;
             bookButton.disabled = false;
-            bookButton.innerHTML = 'X\u00E1c nh\u1EADn \u0111\u1EB7t l\u1ECBch <i class="bi bi-arrow-right"></i>';
+            bookButton.innerHTML = 'X\u00e1c nh\u1eadn \u0111\u1eb7t l\u1ecbch <i class="bi bi-arrow-right"></i>';
         }
     }
 
     function renderBookingResult(data) {
         resultPanel.replaceChildren();
         resultPanel.hidden = false;
-
         const title = document.createElement("h2");
-        title.textContent = "\u0110\u1EB7t l\u1ECBch th\u00E0nh c\u00F4ng";
+        title.textContent = "\u0110\u1eb7t l\u1ecbch th\u00e0nh c\u00f4ng";
         const description = document.createElement("p");
-        description.textContent = "L\u1ECBch h\u1EB9n \u0111\u00E3 \u0111\u01B0\u1EE3c t\u1EA1o v\u00E0 \u0111ang \u1EDF tr\u1EA1ng th\u00E1i ch\u1EDD kh\u00E1m.";
-
+        description.textContent = "L\u1ecbch h\u1eb9n \u0111\u00e3 \u0111\u01b0\u1ee3c t\u1ea1o v\u00e0 \u0111ang \u1edf tr\u1ea1ng th\u00e1i ch\u1edd kh\u00e1m.";
         const grid = document.createElement("div");
         grid.className = "booking-result-grid";
         [
-            ["M\u00E3 l\u1ECBch h\u1EB9n", `#${data.appointmentId}`],
-            ["B\u00E1c s\u0129", data.doctorName],
-            ["Chuy\u00EAn khoa", data.department || "Ch\u01B0a c\u1EADp nh\u1EADt"],
-            ["Ng\u00E0y gi\u1EDD", data.appointmentTime.replace("T", " ")],
-            ["Ca kh\u00E1m", data.timeSlot],
-            ["S\u1ED1 th\u1EE9 t\u1EF1", data.queueNumber]
+            ["M\u00e3 l\u1ecbch h\u1eb9n", `#${data.appointmentId}`],
+            ["B\u00e1c s\u0129", data.doctorName],
+            ["Chuy\u00ean khoa", data.department || "Ch\u01b0a c\u1eadp nh\u1eadt"],
+            ["Ng\u00e0y gi\u1edd", data.appointmentTime.replace("T", " ")],
+            ["Ca kh\u00e1m", data.timeSlot],
+            ["Ph\u00f2ng kh\u00e1m", data.roomName || "Ch\u01b0a ph\u00e2n ph\u00f2ng"],
+            ["V\u1ecb tr\u00ed", data.roomLocation || "Ch\u01b0a c\u1eadp nh\u1eadt"],
+            ["S\u1ed1 th\u1ee9 t\u1ef1", data.queueNumber]
         ].forEach(([label, value]) => {
             const item = document.createElement("div");
             const name = document.createElement("span");
@@ -302,18 +331,12 @@
 
         const detailLink = document.createElement("a");
         detailLink.className = "btn-page-primary";
-        detailLink.href = ApiClient.buildUrl(
-            `/patient/appointments/detail?id=${data.appointmentId}`
-        );
-        detailLink.innerHTML = '<i class="bi bi-eye"></i> Xem l\u1ECBch h\u1EB9n';
-
+        detailLink.href = ApiClient.buildUrl(`/patient/appointments/detail?id=${data.appointmentId}`);
+        detailLink.innerHTML = '<i class="bi bi-eye"></i> Xem l\u1ecbch h\u1eb9n';
         const chatLink = document.createElement("a");
         chatLink.className = "btn-page-secondary";
-        chatLink.href = ApiClient.buildUrl(
-            `/patient/ai-chat?appointmentId=${data.appointmentId}`
-        );
-        chatLink.innerHTML = '<i class="bi bi-chat-dots"></i> Trao \u0111\u1ED5i v\u1EDBi AI';
-
+        chatLink.href = ApiClient.buildUrl(`/patient/ai-chat?appointmentId=${data.appointmentId}`);
+        chatLink.innerHTML = '<i class="bi bi-chat-dots"></i> Trao \u0111\u1ed5i v\u1edbi AI';
         const actions = document.createElement("div");
         actions.className = "form-actions appointment-actions";
         actions.append(detailLink, chatLink);
@@ -322,6 +345,7 @@
         resultPanel.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
+    departmentSelect.addEventListener("change", loadDoctors);
     dateInput.addEventListener("change", loadDoctors);
     sessionSelect.addEventListener("change", loadDoctors);
     doctorNameInput.addEventListener("input", () => {
@@ -333,5 +357,6 @@
     dateInput.min = today;
     dateInput.value = today;
     sessionSelect.value = "all";
-    loadDoctors();
+    showDepartmentPrompt();
+    loadDepartments();
 })();
