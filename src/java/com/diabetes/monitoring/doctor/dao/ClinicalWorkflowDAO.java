@@ -14,8 +14,10 @@ import java.sql.Types;
 public class ClinicalWorkflowDAO {
 
     public int createMedicalRecordForAppointment(int appointmentId) throws SQLException {
-        String appointmentSql = "SELECT patient_id, doctor_id, status "
-                + "FROM Appointment WITH (UPDLOCK, HOLDLOCK) WHERE appointment_id = ?";
+        String appointmentSql = "SELECT a.patient_id, ds.doctor_id, a.status "
+                + "FROM Appointment a WITH (UPDLOCK, HOLDLOCK) "
+                + "INNER JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
+                + "WHERE a.appointment_id = ?";
         String existingSql = "SELECT record_id FROM Medical_record WHERE appointment_id = ?";
         String insertSql = "INSERT INTO Medical_record "
                 + "(appointment_id, patient_id, doctor_id, final_diagnosis, doctor_note, "

@@ -424,9 +424,10 @@ public class HealthRecordDAO {
 
     public int acceptAppointment(int appointmentId, int doctorId)
             throws SQLException {
-        String appointmentSql = "SELECT patient_id, status "
-                + "FROM Appointment WITH (UPDLOCK, HOLDLOCK) "
-                + "WHERE appointment_id = ? AND doctor_id = ?";
+        String appointmentSql = "SELECT a.patient_id, a.status "
+                + "FROM Appointment a WITH (UPDLOCK, HOLDLOCK) "
+                + "INNER JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
+                + "WHERE a.appointment_id = ? AND ds.doctor_id = ?";
         String medicalSql = "SELECT record_id, health_record_id "
                 + "FROM Medical_record WHERE appointment_id = ?";
         String insertMedicalSql = "INSERT INTO Medical_record "
@@ -440,9 +441,11 @@ public class HealthRecordDAO {
                 + "VALUES (?, ?, ?, 'Accepted', 0, GETDATE())";
         String linkMedicalSql = "UPDATE Medical_record SET health_record_id = ? "
                 + "WHERE record_id = ?";
-        String acceptSql = "UPDATE Appointment SET status = 'In_Progress' "
-                + "WHERE appointment_id = ? AND doctor_id = ? "
-                + "AND status = 'Waiting'";
+        String acceptSql = "UPDATE a SET a.status = 'In_Progress' "
+                + "FROM Appointment a "
+                + "INNER JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
+                + "WHERE a.appointment_id = ? AND ds.doctor_id = ? "
+                + "AND a.status = 'Waiting'";
 
         try (Connection conn = DatabaseConnection.getConnection()) {
             conn.setAutoCommit(false);
@@ -1666,7 +1669,8 @@ public class HealthRecordDAO {
         String appointmentStatusSql = "UPDATE a SET a.status = 'Completed' "
                 + "FROM Appointment a "
                 + "JOIN Medical_record mr ON mr.appointment_id = a.appointment_id "
-                + "WHERE mr.health_record_id = ? AND a.doctor_id = ? "
+                + "INNER JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
+                + "WHERE mr.health_record_id = ? AND ds.doctor_id = ? "
                 + "AND a.status = 'In_Progress'";
 
         try (Connection conn = DatabaseConnection.getConnection()) {
