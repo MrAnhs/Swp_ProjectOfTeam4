@@ -221,11 +221,12 @@ function getStandardShift(dbTimeSlot) {
 
 function renderScheduleGrid() {
     const mondayStr = document.getElementById("weekSelect").value;
+    if (!mondayStr) return;
     const mondayDate = parseLocalDate(mondayStr);
     
     // Update headers with actual dates
     const headerRow = document.getElementById("headerRow");
-    headerRow.innerHTML = `<th class="grid-header-cell" style="width: 140px; background-color: #0d5f49 !important;">Khung giờ</th>`;
+    headerRow.innerHTML = '<th class="grid-header-cell" style="width: 140px; background-color: #0d5f49 !important;">Khung giờ</th>';
     
     const weekDates = [];
     const dayNames = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
@@ -236,10 +237,10 @@ function renderScheduleGrid() {
         weekDates.push(current);
         
         const dateStr = formatDateShort(current);
-        headerRow.innerHTML += `<th class="grid-header-cell" style="min-width: 130px;">
-            <div>\${dayNames[i]}</div>
-            <div class="fw-normal text-xs opacity-75 mt-0.5">\${dateStr}</div>
-        </th>`;
+        headerRow.innerHTML += '<th class="grid-header-cell" style="min-width: 130px;">' +
+            '<div>' + dayNames[i] + '</div>' +
+            '<div class="fw-normal text-xs opacity-75 mt-0.5">' + dateStr + '</div>' +
+        '</th>';
     }
     
     // Filter schedules for this week
@@ -263,11 +264,11 @@ function renderScheduleGrid() {
     tbody.innerHTML = "";
     
     timeSlots.forEach((slot, index) => {
-        let rowHtml = `<tr>
-            <td class="fw-semibold text-nowrap bg-light text-center py-4" style="width: 140px;">
-                <div class="small text-secondary mb-1">Ca \${index + 1}</div>
-                <span class="badge bg-success bg-opacity-10 text-success slot-badge border border-success border-opacity-10">\${slot}</span>
-            </td>`;
+        let rowHtml = '<tr>' +
+            '<td class="fw-semibold text-nowrap bg-light text-center py-4" style="width: 140px;">' +
+                '<div class="small text-secondary mb-1">Ca ' + (index + 1) + '</div>' +
+                '<span class="badge bg-success bg-opacity-10 text-success slot-badge border border-success border-opacity-10">' + slot + '</span>' +
+            '</td>';
         
         for (let i = 0; i < 7; i++) {
             const dateObj = weekDates[i];
@@ -279,8 +280,8 @@ function renderScheduleGrid() {
             });
             
             if (matchedSchedules.length > 0) {
-                let cellHtml = `<td class="p-2 align-top" style="background-color: #fafdfc;">
-                    <div class="d-flex flex-column gap-2">`;
+                let cellHtml = '<td class="p-2 align-top" style="background-color: #fafdfc;">' +
+                    '<div class="d-flex flex-column gap-2">';
                 
                 matchedSchedules.forEach(matched => {
                     let badgeClass = "bg-success-subtle text-success border border-success-subtle";
@@ -293,26 +294,26 @@ function renderScheduleGrid() {
                         statusText = "Đã qua";
                     }
                     
-                    cellHtml += `<div class="schedule-cell-card p-2 text-start w-100 shadow-xs">
-                        <div class="fw-bold text-success mb-0.5" style="font-size: 0.82rem;">\${matched.roomName || 'Phòng khám'}</div>
-                        <div class="text-secondary small mb-1" style="font-size: 0.7rem;">
-                            <span class="fw-semibold text-dark me-1"><i class="bi bi-clock me-0.5"></i>\${matched.timeSlot}</span>
-                            <span>(\${matched.roomId || '-'})</span>
-                        </div>
-                        <div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-top-style: dashed !important; border-top-color: #eee !important;">
-                            <span class="badge \${badgeClass} text-xs py-0.5 px-1">\${statusText}</span>
-                            <span class="fw-semibold text-secondary text-xs"><i class="bi bi-people me-1"></i>\${matched.bookedPatients}/\${matched.maxPatients}</span>
-                        </div>
-                    </div>`;
+                    cellHtml += '<div class="schedule-cell-card p-2 text-start w-100 shadow-xs">' +
+                        '<div class="fw-bold text-success mb-0.5" style="font-size: 0.82rem;">' + (matched.roomName || 'Phòng khám') + '</div>' +
+                        '<div class="text-secondary small mb-1" style="font-size: 0.7rem;">' +
+                            '<span class="fw-semibold text-dark me-1"><i class="bi bi-clock me-0.5"></i>' + matched.timeSlot + '</span>' +
+                            '<span>(' + (matched.roomId || '-') + ')</span>' +
+                        '</div>' +
+                        '<div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-top-style: dashed !important; border-top-color: #eee !important;">' +
+                            '<span class="badge ' + badgeClass + ' text-xs py-0.5 px-1">' + statusText + '</span>' +
+                            '<span class="fw-semibold text-secondary text-xs"><i class="bi bi-people me-1"></i>' + matched.bookedPatients + '/' + matched.maxPatients + '</span>' +
+                        '</div>' +
+                    '</div>';
                 });
                 
-                cellHtml += `</div></td>`;
+                cellHtml += '</div></td>';
                 rowHtml += cellHtml;
             } else {
-                rowHtml += `<td class="text-center text-secondary opacity-25 py-4">-</td>`;
+                rowHtml += '<td class="text-center text-secondary opacity-25 py-4">-</td>';
             }
         }
-        rowHtml += `</tr>`;
+        rowHtml += '</tr>';
         tbody.innerHTML += rowHtml;
     });
 }
