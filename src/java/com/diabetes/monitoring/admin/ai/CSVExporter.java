@@ -136,68 +136,65 @@ public class CSVExporter {
             return false;
         }
 
-        boolean isNewFile = !file.exists();
-        boolean needsNewline = false;
-        if (file.exists() && file.length() > 0) {
-            try (java.io.RandomAccessFile raf = new java.io.RandomAccessFile(file, "r")) {
-                raf.seek(file.length() - 1);
-                byte lastByte = raf.readByte();
-                if (lastByte != '\n' && lastByte != '\r') {
-                    needsNewline = true;
-                }
-            } catch (IOException ignored) {}
-        }
-
-        try (FileWriter fw = new FileWriter(file, true);
-             BufferedWriter bw = new BufferedWriter(fw);
-             PrintWriter pw = new PrintWriter(bw)) {
-
-            if (needsNewline) {
-                pw.println();
-            }
-            if (isNewFile) {
-                pw.println("ID,No_Pation,Gender,AGE,Urea,Cr,HbA1c,Chol,TG,HDL,LDL,VLDL,BMI,CLASS");
-            }
-            for (String[] r : rowsToWrite) {
-                String line = String.join(",", r);
-                pw.println(line);
-            }
-
-            // Mirror to alternate path if exists
+        // Write to primary path
+        boolean primarySuccess = writeCsvWithoutDuplicates(file, rowsToWrite);
+        
+        // Mirror to alternate path if primary succeeded
+        if (primarySuccess) {
             String altPath = "d:/ky5/Github_SWP391/Diabetes_AI/dataset/update/doctor_feedback.csv";
             if (!path.replace('\\', '/').equalsIgnoreCase(altPath)) {
                 File altFile = new File(altPath);
                 if (altFile.getParentFile().exists()) {
-                    boolean isNewAlt = !altFile.exists();
-                    boolean needsNewlineAlt = false;
-                    if (altFile.exists() && altFile.length() > 0) {
-                        try (java.io.RandomAccessFile raf = new java.io.RandomAccessFile(altFile, "r")) {
-                            raf.seek(altFile.length() - 1);
-                            byte lastByte = raf.readByte();
-                            if (lastByte != '\n' && lastByte != '\r') {
-                                needsNewlineAlt = true;
-                            }
-                        } catch (IOException ignored) {}
-                    }
-                    try (FileWriter afw = new FileWriter(altFile, true);
-                         BufferedWriter abw = new BufferedWriter(afw);
-                         PrintWriter apw = new PrintWriter(abw)) {
-                        if (needsNewlineAlt) {
-                            apw.println();
-                        }
-                        if (isNewAlt) {
-                            apw.println("ID,No_Pation,Gender,AGE,Urea,Cr,HbA1c,Chol,TG,HDL,LDL,VLDL,BMI,CLASS");
-                        }
-                        for (String[] r : rowsToWrite) {
-                            apw.println(String.join(",", r));
-                        }
-                    }
+                    writeCsvWithoutDuplicates(altFile, rowsToWrite);
                 }
             }
+        }
 
+        return primarySuccess;
+    }
+
+    private static boolean writeCsvWithoutDuplicates(File file, List<String[]> newRows) {
+        java.util.Map<String, String> existingRows = new java.util.LinkedHashMap<>();
+        String header = "ID,No_Pation,Gender,AGE,Urea,Cr,HbA1c,Chol,TG,HDL,LDL,VLDL,BMI,CLASS";
+        
+        if (file.exists() && file.length() > 0) {
+            try (java.io.BufferedReader br = new java.io.BufferedReader(new java.io.FileReader(file))) {
+                String fileHeader = br.readLine();
+                if (fileHeader != null && !fileHeader.trim().isEmpty()) {
+                    header = fileHeader.trim();
+                }
+                String line;
+                while ((line = br.readLine()) != null) {
+                    if (line.trim().isEmpty()) continue;
+                    String[] cols = line.split(",");
+                    if (cols.length > 0) {
+                        existingRows.put(cols[0].trim(), line.trim());
+                    }
+                }
+            } catch (IOException e) {
+                LOGGER.log(Level.WARNING, "Error reading existing CSV to prevent duplicates: " + file.getAbsolutePath(), e);
+            }
+        }
+
+        // Override or put new records
+        for (String[] r : newRows) {
+            String id = r[0];
+            String line = String.join(",", r);
+            existingRows.put(id, line);
+        }
+
+        // Write back
+        try (FileWriter fw = new FileWriter(file, false); // Overwrite entirely
+             BufferedWriter bw = new BufferedWriter(fw);
+             PrintWriter pw = new PrintWriter(bw)) {
+             
+            pw.println(header);
+            for (String line : existingRows.values()) {
+                pw.println(line);
+            }
             return true;
         } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "IO error writing to CSV file at: " + path, e);
+            LOGGER.log(Level.SEVERE, "IO error writing to CSV file: " + file.getAbsolutePath(), e);
             return false;
         }
     }
