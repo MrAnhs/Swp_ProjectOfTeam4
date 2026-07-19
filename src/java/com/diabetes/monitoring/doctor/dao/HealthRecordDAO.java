@@ -339,7 +339,7 @@ public class HealthRecordDAO {
                 + "urea = ?, cr = ?, hba1c = ?, chol = ?, tg = ?, hdl = ?, "
                 + "ldl = ?, vldl = ?, bmi = ? "
                 + "WHERE health_record_id = ? AND doctor_id = ? "
-                + "AND status IN ('AI_Processed', 'Editing', 'Completed')";
+                + "AND status IN ('Accepted', 'AI_Processed', 'Editing', 'Completed')";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -1496,7 +1496,7 @@ public class HealthRecordDAO {
         item.setChol(nullableDouble(rs, "chol"));
         item.setTg(nullableDouble(rs, "tg"));
         item.setHdl(nullableDouble(rs, "hdl"));
-        item.setIdl(nullableDouble(rs, "ldl"));
+        item.setLdl(nullableDouble(rs, "ldl"));
         item.setVldl(nullableDouble(rs, "vldl"));
         item.setBmi(nullableDouble(rs, "bmi"));
         item.setWeight(nullableDouble(rs, "weight"));
