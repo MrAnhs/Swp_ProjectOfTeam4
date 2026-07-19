@@ -71,6 +71,8 @@ public class VnPayController extends HttpServlet {
             String contextPath = request.getContextPath();
             String baseUrl = scheme + "://" + serverName + ":" + serverPort + contextPath;
             String vnp_ReturnUrl = baseUrl + "/patient/vnpay-return";
+            // Đường dẫn IPN chạy ngầm qua proxy Ngrok
+            String vnp_IpnUrl = "https://each-vocalist-untaken.ngrok-free.dev/SWP_Project/vnpay-ipn";
 
             // Định dạng thời gian GMT+7
             SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
@@ -105,7 +107,7 @@ public class VnPayController extends HttpServlet {
                 String fieldValue = vnp_Params.get(fieldName);
                 query.append(URLEncoder.encode(fieldName, StandardCharsets.UTF_8.toString()))
                      .append("=")
-                     .append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8.toString()).replace("+", "%20"));
+                     .append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8.toString()));
                 if (itr.hasNext()) {
                     query.append("&");
                 }

@@ -127,7 +127,7 @@
                             
 
                             <div class="d-flex justify-content-end align-items-center mb-4 pt-1">
-                                <a href="#" class="text-decoration-none text-white-50 small hover-arrow">Quên mật khẩu?</a>
+                                <a href="${pageContext.request.contextPath}/forgot-password/" class="text-decoration-none text-white-50 small hover-arrow">Quên mật khẩu?</a>
                             </div>
                             
                             <button type="submit" class="btn btn-vinmec w-100 fw-bold text-white shadow-sm">Đăng nhập</button>

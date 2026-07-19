@@ -124,7 +124,7 @@
         
         <div class="result-card">
             <c:choose>
-                <c:when var="success" test="${isSuccess}">
+                <c:when test="${isSuccess}">
                     <div class="result-header success">
                         <div class="result-icon"><i class="bi bi-check-circle-fill"></i></div>
                         <h2>Thanh toán thành công!</h2>

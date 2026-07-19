@@ -54,15 +54,7 @@ public class VnPayReturnServlet extends HttpServlet {
 
         boolean isSuccess = isSignatureValid && "00".equals(responseCode);
 
-        if (isSuccess && invoiceId > 0) {
-            try {
-                // Cập nhật hóa đơn trong cơ sở dữ liệu nếu thanh toán thành công
-                // Phương thức payInvoiceOnline tự kiểm tra trạng thái cũ, đảm bảo không chạy thừa
-                invoiceDAO.payInvoiceOnline(invoiceId, "VNPay");
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
+        // Giao diện Return chỉ hiển thị kết quả, việc cập nhật CSDL được thực hiện an toàn qua kênh IPN chạy ngầm.
 
         // Đẩy thông tin giao dịch sang JSP
         request.setAttribute("isSignatureValid", isSignatureValid);

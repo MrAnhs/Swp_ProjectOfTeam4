@@ -53,10 +53,8 @@ public class VnPayConfig {
         while (itr.hasNext()) {
             String fieldName = itr.next();
             String fieldValue = fields.get(fieldName);
-            sb.append(fieldName).append("=");
             try {
-                // Space to %20 instead of + is required for VNPay standard verification
-                sb.append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8.toString()).replace("+", "%20"));
+                sb.append(fieldName).append("=").append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8.toString()));
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
