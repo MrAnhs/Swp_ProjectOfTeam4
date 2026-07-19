@@ -80,7 +80,7 @@ public class AdminDashboardRepository {
     public int getPatientsInProgressCount() {
         return executeCount(
                 "SELECT COUNT(*) FROM Appointment "
-                + "WHERE LOWER(status) = 'in progress' "
+                + "WHERE LOWER(status) = 'in_progress' "
                 + "AND CAST(appointment_time AS DATE) = CAST(GETDATE() AS DATE)");
     }
 
@@ -660,7 +660,7 @@ public class AdminDashboardRepository {
                     items.add(m);
                 }
             } else if ("waiting".equals(type) || "inProgress".equals(type)) {
-                String statusVal = "waiting".equals(type) ? "waiting" : "in progress";
+                String statusVal = "waiting".equals(type) ? "waiting" : "in_progress";
                 String sql = "SELECT ap.appointment_id, pat.full_name AS patient_name, "
                            + "doc.full_name AS doctor_name, r.room_name, "
                            + "COALESCE(ds.time_slot, FORMAT(ap.appointment_time, 'HH:mm')) AS time_slot "
