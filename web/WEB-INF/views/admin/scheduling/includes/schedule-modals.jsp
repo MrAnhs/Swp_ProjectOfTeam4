@@ -461,7 +461,6 @@
                                             <input type="hidden" id="aiEndTime" value="17:30">
                                             <input type="hidden" id="aiSlotDuration" value="240">
                                         </div>
-                                        </div>
 
                                         <div class="col-12 mt-3">
                                             <label class="form-label">Ngày áp dụng trong tuần</label>
