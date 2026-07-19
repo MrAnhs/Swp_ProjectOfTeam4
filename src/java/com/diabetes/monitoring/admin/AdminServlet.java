@@ -4,6 +4,7 @@ import com.diabetes.monitoring.admin.analytics.AdminAnalyticsHandler;
 import com.diabetes.monitoring.admin.management.AdminManagementHandler;
 import com.diabetes.monitoring.admin.patientflow.AdminPatientFlowHandler;
 import com.diabetes.monitoring.admin.scheduling.AdminSchedulingHandler;
+import com.diabetes.monitoring.admin.ai.AdminAIHandler;
 import com.diabetes.monitoring.model.User;
 import com.diabetes.monitoring.util.CsrfUtil;
 
@@ -24,17 +25,19 @@ public class AdminServlet extends HttpServlet {
     private final AdminManagementHandler managementHandler = new AdminManagementHandler();
     private final AdminSchedulingHandler schedulingHandler = new AdminSchedulingHandler();
     private final AdminPatientFlowHandler patientFlowHandler = new AdminPatientFlowHandler();
+    private final AdminAIHandler aiHandler = new AdminAIHandler();
 
     /**
      * Handles read-only Admin requests and forwards them to matching handlers.
      *
-     * @param request current HTTP request
+     * @param request  current HTTP request
      * @param response current HTTP response
      * @throws ServletException when a JSP forward or servlet operation fails
-     * @throws IOException when writing or redirecting the response fails
+     * @throws IOException      when writing or redirecting the response fails
      */
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
         if (!ensureAdminAccess(request, response)) {
             return;
         }
@@ -50,12 +53,33 @@ public class AdminServlet extends HttpServlet {
             analyticsHandler.loadReports(request, response);
             return;
         }
-        if ("getReportDetail".equals(action)) {
-            analyticsHandler.loadReportDetailByPeriod(request, response);
+        if ("getReportDetail".equals(action) || "getInvoiceItems".equals(action)) {
+            response.setContentType("application/json;charset=UTF-8");
+            try (java.io.PrintWriter out = response.getWriter()) {
+                out.print(
+                        "{\"success\":false,\"message\":\"Chức năng báo cáo cũ đã được tích hợp vào Dashboard mới.\"}");
+            }
             return;
         }
-        if ("getInvoiceItems".equals(action)) {
-            analyticsHandler.loadInvoiceItems(request, response);
+
+        if ("ai-management".equals(action)
+                || "ai-dashboard".equals(action)
+                || "ai-dataset".equals(action)
+                || "ai-training".equals(action)
+                || "ai-model".equals(action)) {
+            aiHandler.loadManagementPage(request, response);
+            return;
+        }
+        if ("ai-dataset-detail-json".equals(action)) {
+            aiHandler.getDatasetDetailJson(request, response);
+            return;
+        }
+        if ("ai-dataset-global-info-json".equals(action)) {
+            aiHandler.getGlobalPendingCountsJson(request, response);
+            return;
+        }
+        if ("ai-training-progress".equals(action)) {
+            aiHandler.getTrainingProgress(request, response);
             return;
         }
 
@@ -147,13 +171,14 @@ public class AdminServlet extends HttpServlet {
     /**
      * Handles mutating Admin requests after validating Admin access and CSRF token.
      *
-     * @param request current HTTP request
+     * @param request  current HTTP request
      * @param response current HTTP response
      * @throws ServletException when a downstream servlet operation fails
-     * @throws IOException when writing or redirecting the response fails
+     * @throws IOException      when writing or redirecting the response fails
      */
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
         if (!ensureAdminAccess(request, response)) {
             return;
         }
@@ -166,6 +191,23 @@ public class AdminServlet extends HttpServlet {
 
         if ("getTransferCandidates".equals(action)) {
             schedulingHandler.loadTransferCandidates(request, response);
+            return;
+        }
+
+        if ("ai-dataset-confirm".equals(action)) {
+            aiHandler.confirmDatasetDecision(request, response);
+            return;
+        }
+        if ("ai-dataset-confirm-bulk".equals(action)) {
+            aiHandler.confirmDatasetDecisionBulk(request, response);
+            return;
+        }
+        if ("ai-dataset-confirm-global".equals(action)) {
+            aiHandler.confirmDatasetDecisionGlobal(request, response);
+            return;
+        }
+        if ("ai-start-training".equals(action)) {
+            aiHandler.startTraining(request, response);
             return;
         }
 
@@ -191,6 +233,10 @@ public class AdminServlet extends HttpServlet {
         }
         if ("updateAccountProfile".equals(action)) {
             managementHandler.updateAccountProfile(request, response);
+            return;
+        }
+        if ("updateAccountPassword".equals(action)) {
+            managementHandler.updateAccountPassword(request, response);
             return;
         }
         if ("ajaxToggleAccountStatus".equals(action)) {
@@ -259,6 +305,16 @@ public class AdminServlet extends HttpServlet {
             return;
         }
 
+        if ("aiSaveProposedSchedules".equals(action)) {
+            schedulingHandler.aiSaveProposedSchedules(request, response);
+            return;
+        }
+
+        if ("ai-staff-schedule".equals(action)) {
+            schedulingHandler.aiStaffSchedule(request, response);
+            return;
+        }
+
         request.getSession().setAttribute("errorMessage", "Hành động không hợp lệ");
         response.sendRedirect(request.getContextPath() + "/admin");
     }
@@ -266,7 +322,7 @@ public class AdminServlet extends HttpServlet {
     /**
      * Verifies that the current session belongs to an Admin user.
      *
-     * @param request current HTTP request
+     * @param request  current HTTP request
      * @param response current HTTP response
      * @return {@code true} when the current user is allowed to access Admin pages
      * @throws IOException when sending a redirect or JSON error response fails
@@ -292,7 +348,7 @@ public class AdminServlet extends HttpServlet {
     /**
      * Sends a consistent error response for invalid CSRF tokens.
      *
-     * @param request current HTTP request
+     * @param request  current HTTP request
      * @param response current HTTP response
      * @throws IOException when writing or redirecting the response fails
      */

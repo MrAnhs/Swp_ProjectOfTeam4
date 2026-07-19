@@ -98,20 +98,30 @@ class AdminDashboardHandler {
         request.setAttribute("totalServices", totalServices);
         request.setAttribute("sumPaidRevenue", totalRevenuePaid);
         request.setAttribute("completedAppointments", completedAppointments);
-        request.setAttribute("todayQueueStatus", todayQueueStatus);
-        request.setAttribute("todayShiftsList", todayShiftsList);
-        request.setAttribute("todayShiftsCount", todayShiftsList.size());
-        request.setAttribute("totalWaitingToday", totalWaitingToday);
-        request.setAttribute("totalVisitsToday", totalVisitsToday);
-        request.setAttribute("waitingPatientsToday", waitingPatientsToday);
-        request.setAttribute("availableBedsToday", availableBedsToday);
-        request.setAttribute("todayAppointments", totalVisitsToday);
-        request.setAttribute("waitingPatients", waitingPatientsToday);
-        request.setAttribute("availableBeds", availableBedsToday);
-        request.setAttribute("todayPatientFlowJson", AdminJsonUtil.toJsonSimpleRows(todayPatientFlow));
-        request.setAttribute("todayRevenueByServiceJson", AdminJsonUtil.toJsonSimpleRows(todayRevenueByService));
-        request.setAttribute("todayStatusDistributionJson", AdminJsonUtil.toJsonSimpleRows(todayStatusDistribution));
-        request.getRequestDispatcher("/WEB-INF/views/admin/dashboard.jsp").forward(request, response);
+        request.setAttribute("todayPatientsCount", todayPatientsCount);
+        request.setAttribute("todayAppointmentsCount", todayAppointmentsCount);
+        request.setAttribute("sumRevenueToday", sumRevenueToday);
+        request.setAttribute("completedAppointmentsToday", completedAppointmentsToday);
+
+        request.setAttribute("patientsWaiting", patientsWaiting);
+        request.setAttribute("patientsInProgress", patientsInProgress);
+        request.setAttribute("activeRooms", activeRooms);
+
+        request.setAttribute("appointmentStatusSummary", dashboardService.getAppointmentStatusSummary());
+        request.setAttribute("roomQueueSummary", dashboardService.getRoomQueueSummary());
+
+        request.setAttribute("activeAccounts",
+                dashboardService.getCountActiveAccounts());
+        request.setAttribute("lockedAccounts",
+                dashboardService.getCountLockedAccounts());
+        request.setAttribute("todayScheduleCounts",
+                dashboardService.getTodayScheduleCounts());
+        request.setAttribute("scheduleStatusSummary",
+                dashboardService.getScheduleStatusSummary());
+        request.setAttribute("recentAdminActivities",
+                dashboardService.getRecentAdminActivities(10));
+        request.getRequestDispatcher("/WEB-INF/views/admin/dashboard/dashboard.jsp")
+                .forward(request, response);
     }
 
     /**

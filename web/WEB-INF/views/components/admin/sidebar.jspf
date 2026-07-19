@@ -208,6 +208,13 @@
             <i class="fa-solid fa-angle-right menu-arrow"></i>
         </a>
 
+        <div class="menu-group-title">Trí tuệ nhân tạo AI</div>
+        <a class="menu-item ${currentAction == 'ai-management' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin?action=ai-management">
+            <i class="fa-solid fa-brain menu-icon"></i>
+            <span class="menu-text">AI Model Management</span>
+            <i class="fa-solid fa-angle-right menu-arrow"></i>
+        </a>
+
         <div class="admin-sidebar-logout-wrap">
             <a class="admin-sidebar-logout" href="${pageContext.request.contextPath}/logout">
                 <i class="fa-solid fa-right-from-bracket"></i>
