@@ -27,7 +27,7 @@ public class AIDatasetRepository {
     public int getApprovedDatasetCount() {
         String sql = "SELECT COUNT(*) FROM Medical_record mr " +
                      "INNER JOIN AI_Dataset ad ON mr.record_id = ad.record_id " +
-                     "WHERE ad.decision_status = 'Approved'";
+                     "WHERE ad.decision_status IN ('Approved', 'Exported')";
         return executeCount(sql);
     }
 
