@@ -15,8 +15,8 @@
             <small>${sessionScope.currentUser.email}</small>
         </div>
     </div>
-
     <nav class="lab-nav">
+        <%@ include file="/WEB-INF/views/components/notification-bell.jspf" %>
         <a class="active" href="${pageContext.request.contextPath}/doctor-lab/dashboard">
             <i class="bi bi-grid-1x2"></i> Tổng quan xét nghiệm
         </a>

@@ -17,10 +17,13 @@
             <span class="settings-brand-icon">+</span><strong>DiabetesCare</strong>
         </a>
         <div class="settings-user">
-            <span class="settings-avatar"><c:out value="${sessionScope.currentUser.fullName.substring(0, 1)}" default="U" /></span>
-            <span><strong><c:out value="${sessionScope.currentUser.fullName}" default="Người dùng" /></strong><small>Cài đặt tài khoản</small></span>
+            <span class="settings-avatar"><c:out value="${fn:substring(sessionScope.currentUser.fullName, 0, 1)}" default="U" /></span>
+            <span>
+                <strong><c:out value="${sessionScope.currentUser.fullName}" default="Người dùng" /></strong>
+                <small>Cài đặt tài khoản</small>
+            </span>
         </div>
-        <a class="settings-back" href="javascript:history.back()">← Quay lại</a>
+        <a class="settings-back" href="javascript:history.back()">&larr; Quay lại</a>
     </aside>
 
     <main class="settings-main">
@@ -37,8 +40,8 @@
 
         <section class="settings-panel" data-panel="personal">
             <div class="settings-panel-heading">
-                <div><span class="settings-icon">◉</span><h2>Thông tin cá nhân</h2></div>
-                <button type="button" class="settings-action" data-edit="personal">✎ Chỉnh sửa</button>
+                <div><span class="settings-icon">&#9673;</span><h2>Thông tin cá nhân</h2></div>
+                <button type="button" class="settings-action" data-edit="personal">&#9998; Chỉnh sửa</button>
             </div>
             <form id="personalForm" class="settings-form" novalidate>
                 <div class="settings-grid">
@@ -58,35 +61,58 @@
                 <c:if test="${settingsRole eq 'receptionist'}">
                     <div class="settings-readonly"><span>Vị trí quầy</span><strong data-field="deskLocation">Chưa cập nhật</strong></div>
                 </c:if>
-                <div class="settings-form-actions" data-edit-actions="personal" hidden style="display:none"><button type="button" class="settings-secondary" data-cancel="personal">Hủy</button><button class="settings-primary" type="submit">Lưu thông tin</button></div>
+                <div class="settings-form-actions" data-edit-actions="personal" hidden>
+                    <button type="button" class="settings-secondary" data-cancel="personal">Hủy</button>
+                    <button class="settings-primary" type="submit">Lưu thông tin</button>
+                </div>
             </form>
         </section>
 
         <section class="settings-panel" data-panel="account" hidden>
-            <div class="settings-panel-heading"><div><span class="settings-icon">↪</span><h2>Thông tin tài khoản</h2></div></div>
+            <div class="settings-panel-heading"><div><span class="settings-icon">&#8618;</span><h2>Thông tin tài khoản</h2></div></div>
             <div class="settings-grid account-grid">
                 <div class="settings-value"><span>Email</span><strong data-field="email">Chưa cập nhật</strong></div>
                 <div class="settings-value"><span>Số điện thoại</span><strong data-field="accountPhone">Chưa cập nhật</strong><small>Có thể thay đổi tại mục Thông tin cá nhân.</small></div>
                 <div class="settings-value"><span>Phương thức đăng nhập</span><strong>Email và mật khẩu</strong></div>
                 <div class="settings-value"><span>Ngày tạo tài khoản</span><strong data-field="createdAt">Chưa cập nhật</strong></div>
             </div>
-            <div class="settings-account-actions"><button type="button" class="settings-primary" data-action="email">Đổi email</button><button type="button" class="settings-secondary" data-action="password">Đổi mật khẩu</button></div>
+            <div class="settings-account-actions">
+                <button type="button" class="settings-primary" data-action="email">Đổi email</button>
+                <button type="button" class="settings-secondary" data-action="password">Đổi mật khẩu</button>
+            </div>
             <p class="settings-message" id="settingsMessage" hidden></p>
         </section>
         <p class="settings-message" id="personalMessage" hidden></p>
     </main>
+
     <dialog id="accountDialog" class="settings-dialog">
         <form method="dialog" id="accountDialogForm">
-            <button class="dialog-close" value="cancel" aria-label="Đóng">×</button>
+            <button class="dialog-close" value="cancel" aria-label="Đóng">&times;</button>
             <h2 id="dialogTitle">Cập nhật tài khoản</h2>
-            <div id="emailFields" hidden><label>Email mới<input id="newEmail" type="email"></label><label>Mật khẩu hiện tại<input id="emailPassword" type="password"></label></div>
-            <div id="passwordFields" hidden><label>Mật khẩu hiện tại<input id="currentPassword" type="password"></label><label>Mật khẩu mới<input id="newPassword" type="password" minlength="8"></label><label>Xác nhận mật khẩu mới<input id="passwordConfirmation" type="password" minlength="8"></label></div>
+            <div id="emailFields" hidden>
+                <p class="dialog-help">Mã xác thực sẽ được gửi đến địa chỉ email mới.</p>
+                <label>Email mới<input id="newEmail" type="email" autocomplete="email"></label>
+                <label>Mật khẩu hiện tại<input id="emailPassword" type="password" autocomplete="current-password"></label>
+            </div>
+            <div id="emailOtpFields" hidden>
+                <p class="dialog-help">Nhập mã gồm 6 chữ số đã gửi đến <strong id="emailOtpTarget"></strong>. Mã có hiệu lực trong 5 phút.</p>
+                <label>Mã xác thực<input id="emailOtp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="000000"></label>
+                <div class="otp-actions">
+                    <button type="button" class="settings-link" id="resendEmailOtp" disabled>Gửi lại mã</button>
+                    <span id="emailOtpCountdown" aria-live="polite"></span>
+                </div>
+            </div>
+            <div id="passwordFields" hidden>
+                <label>Mật khẩu hiện tại<input id="currentPassword" type="password" autocomplete="current-password"></label>
+                <label>Mật khẩu mới<input id="newPassword" type="password" minlength="8" autocomplete="new-password"></label>
+                <label>Xác nhận mật khẩu mới<input id="passwordConfirmation" type="password" minlength="8" autocomplete="new-password"></label>
+            </div>
             <p class="settings-message" id="dialogMessage" hidden></p>
             <button class="settings-primary" id="dialogSubmit" value="default" type="submit">Lưu thay đổi</button>
         </form>
     </dialog>
     <script src="${pageContext.request.contextPath}/assets/js/core/app-config.js"></script>
     <script src="${pageContext.request.contextPath}/assets/js/core/api-client.js"></script>
-    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/settings/settings.js?v=20260714-profile5"></script>
+    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/settings/settings.js?v=20260715-email-otp1"></script>
 </body>
 </html>

@@ -16,7 +16,6 @@
             <small>${sessionScope.currentUser.email}</small>
         </div>
     </div>
-
     <nav class="sidebar-nav">
         <a href="${pageContext.request.contextPath}/patient/dashboard"
            class="nav-item-dash${activePatientPage eq 'dashboard' ? ' active' : ''}">
@@ -47,6 +46,12 @@
            class="nav-item-dash${activePatientPage eq 'ai-chat' ? ' active' : ''}">
             <i class="bi bi-chat-dots"></i>
             <span class="nav-text" >Chat AI</span>
+        </a>
+        <a href="${pageContext.request.contextPath}/patient/notifications"
+           class="nav-item-dash${activePatientPage eq 'notifications' ? ' active' : ''}">
+            <i class="bi bi-bell"></i>
+            <span class="nav-text">Th&#244;ng b&#225;o</span>
+            <span class="sidebar-notification-badge${empty unreadNotificationCount or unreadNotificationCount == 0 ? ' is-hidden' : ''}">${empty unreadNotificationCount ? 0 : unreadNotificationCount}</span>
         </a>
         <a href="${pageContext.request.contextPath}/settings"
            class="nav-item-dash${activePatientPage eq 'settings' ? ' active' : ''}">

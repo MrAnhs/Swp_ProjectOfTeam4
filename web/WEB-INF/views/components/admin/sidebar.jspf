@@ -171,8 +171,8 @@
                 <p class="admin-sidebar-role">H&#7879; th&#7889;ng qu&#7843;n tr&#7883;</p>
             </div>
         </div>
-
         <div class="menu-group-title">B&#224;n l&#224;m vi&#7879;c</div>
+        <%@ include file="/WEB-INF/views/components/notification-bell.jspf" %>
         <a class="menu-item ${currentAction == 'dashboard' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin">
             <i class="fa-solid fa-chart-pie menu-icon"></i>
             <span class="menu-text">T&#7893;ng quan</span>

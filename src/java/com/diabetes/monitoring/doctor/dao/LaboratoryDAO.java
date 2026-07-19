@@ -1,6 +1,7 @@
 package com.diabetes.monitoring.doctor.dao;
 
 import com.diabetes.monitoring.doctor.model.LaboratoryRequest;
+import com.diabetes.monitoring.notification.NotificationService;
 import com.diabetes.monitoring.util.DatabaseConnection;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -11,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LaboratoryDAO {
+    private final NotificationService notificationService = new NotificationService();
 
     public List<LaboratoryRequest> getRequests(String status) {
         List<LaboratoryRequest> requests = new ArrayList<>();
@@ -94,6 +96,8 @@ public class LaboratoryDAO {
                 + "('AI_Processed','Editing','Completed') "
                 + "THEN status ELSE 'Accepted' END, synced_at = GETDATE() "
                 + "WHERE health_record_id = ?";
+        String updateOrderSql = "UPDATE Lab_Order SET status = 'Completed' "
+                + "WHERE order_id = CONCAT('LAB-', ?)";
 
         try (Connection conn = DatabaseConnection.getConnection()) {
             conn.setAutoCommit(false);
@@ -140,6 +144,12 @@ public class LaboratoryDAO {
                         throw new SQLException("Không thể đồng bộ chỉ số vào hồ sơ sức khỏe");
                     }
                 }
+                try (PreparedStatement ps = conn.prepareStatement(updateOrderSql)) {
+                    ps.setInt(1, result.getLaboratoryRequestId());
+                    ps.executeUpdate();
+                }
+                notificationService.notifyLaboratoryCompleted(
+                        conn, result.getLaboratoryRequestId());
                 conn.commit();
                 return true;
             } catch (SQLException e) {
