@@ -328,55 +328,30 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
                                                           };
 
                                                           function buildCustomShiftTemplate() {
-                                                              const startTimeInput = document.getElementById('aiStartTime');
-                                                              const endTimeInput = document.getElementById('aiEndTime');
-                                                              const slotDurationInput = document.getElementById('aiSlotDuration');
                                                               const deptList = document.getElementById('aiDepartmentList');
                                                               
-                                                              if (!startTimeInput || !endTimeInput || !slotDurationInput || !deptList) {
+                                                              if (!deptList) {
                                                                   return [];
                                                               }
                                                               
-                                                              const startTime = startTimeInput.value;
-                                                              const endTime = endTimeInput.value;
-                                                              const slotMinutes = parseInt(slotDurationInput.value);
-                                                              
-                                                              if (!startTime || !endTime || isNaN(slotMinutes)) {
-                                                                  return [];
-                                                              }
+                                                              const selectedShifts = Array.from(document.querySelectorAll('.ai-shift-select:checked'))
+                                                                  .map(cb => cb.value);
                                                               
                                                               const departments = Array.from(deptList.querySelectorAll('.badge'))
                                                                   .map(badge => badge.getAttribute('data-dept'))
                                                                   .filter(dept => dept);
                                                               
-                                                              if (departments.length === 0) {
+                                                              if (selectedShifts.length === 0 || departments.length === 0) {
                                                                   return [];
                                                               }
                                                               
                                                               const slots = [];
                                                               try {
-                                                                  const [startHour, startMin] = startTime.split(':').map(Number);
-                                                                  const [endHour, endMin] = endTime.split(':').map(Number);
-                                                                  
-                                                                  let currentMinutes = startHour * 60 + startMin;
-                                                                  const endMinutes = endHour * 60 + endMin;
-                                                                  let deptIndex = 0;
-                                                                  
-                                                                  while (currentMinutes + slotMinutes <= endMinutes) {
-                                                                      const slotStart = Math.floor(currentMinutes / 60);
-                                                                      const slotStartMin = currentMinutes % 60;
-                                                                      const slotEnd = Math.floor((currentMinutes + slotMinutes) / 60);
-                                                                      const slotEndMin = (currentMinutes + slotMinutes) % 60;
-                                                                      
-                                                                      const timeSlot = String(slotStart).padStart(2, '0') + ':' + String(slotStartMin).padStart(2, '0')
-                                                                          + '-' + String(slotEnd).padStart(2, '0') + ':' + String(slotEndMin).padStart(2, '0');
-                                                                      
-                                                                      const dept = departments[deptIndex % departments.length];
-                                                                      slots.push(timeSlot + '|' + dept);
-                                                                      
-                                                                      currentMinutes += slotMinutes;
-                                                                      deptIndex++;
-                                                                  }
+                                                                  selectedShifts.forEach(shiftTime => {
+                                                                      departments.forEach(dept => {
+                                                                          slots.push(shiftTime + '|' + dept);
+                                                                      });
+                                                                  });
                                                               } catch (e) {
                                                                   console.error('Error building custom shift template:', e);
                                                               }
@@ -728,11 +703,8 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
         });
     }
 
-    [startTimeInput, endTimeInput, slotDurationInput].forEach(element => {
-        if (element) {
-            element.addEventListener('change', updateTemplatePreview);
-            element.addEventListener('input', updateTemplatePreview);
-        }
+    document.querySelectorAll('.ai-shift-select').forEach(cb => {
+        cb.addEventListener('change', updateTemplatePreview);
     });
     document.querySelectorAll('input[name="selectedWeekdays"]').forEach(cb => {
         cb.addEventListener('change', updateAiMaxSchedules);

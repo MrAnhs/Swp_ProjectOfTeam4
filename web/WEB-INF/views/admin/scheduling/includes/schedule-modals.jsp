@@ -434,30 +434,33 @@
                                             <input type="date" class="form-control form-control-sm" name="endDate" id="aiEndDate" required>
                                         </div>
                                         
-                                        <div class="col-12">
-                                            <div class="ai-section-label" style="font-size: 0.82rem; font-weight: 700; color: #5b2fb0; border-bottom: 2px solid #e9d5ff; padding-bottom: 0.35rem; margin-bottom: 0.75rem; margin-top: 1rem;">
-                                                THỜI GIAN CA TRỰC CƠ BẢN
+                                        <div class="col-12 mt-2">
+                                            <label class="form-label d-block fw-bold mb-2">Chọn các ca trực áp dụng</label>
+                                            <div class="d-flex flex-wrap gap-4 py-2 px-3 bg-light rounded border border-light-subtle">
+                                                <div class="form-check">
+                                                    <input class="form-check-input ai-shift-select" type="checkbox" id="aiShiftMorning" value="07:30-11:30" checked>
+                                                    <label class="form-check-label fw-semibold text-dark" for="aiShiftMorning">
+                                                        Ca Sáng (07:30 - 11:30)
+                                                    </label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input ai-shift-select" type="checkbox" id="aiShiftAfternoon" value="13:30-17:30" checked>
+                                                    <label class="form-check-label fw-semibold text-dark" for="aiShiftAfternoon">
+                                                        Ca Chiều (13:30 - 17:30)
+                                                    </label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input ai-shift-select" type="checkbox" id="aiShiftFullDay" value="07:30-17:00">
+                                                    <label class="form-check-label fw-semibold text-dark" for="aiShiftFullDay">
+                                                        Cả Ngày (07:30 - 17:00)
+                                                    </label>
+                                                </div>
                                             </div>
+                                            <%-- Hidden fields to avoid JS errors for legacy variables --%>
+                                            <input type="hidden" id="aiStartTime" value="07:30">
+                                            <input type="hidden" id="aiEndTime" value="17:30">
+                                            <input type="hidden" id="aiSlotDuration" value="240">
                                         </div>
-                                        <div class="col-md-4">
-                                            <label class="form-label">Giờ bắt đầu</label>
-                                            <input type="time" class="form-control form-control-sm" id="aiStartTime" value="07:00" required>
-                                            <span class="small text-muted">Định dạng 24 giờ (07:00)</span>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label class="form-label">Giờ kết thúc</label>
-                                            <input type="time" class="form-control form-control-sm" id="aiEndTime" value="17:00" required>
-                                            <span class="small text-muted">Định dạng 24 giờ (17:00)</span>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label class="form-label">Mỗi ca trực (phút)</label>
-                                            <select class="form-select form-select-sm" id="aiSlotDuration" required>
-                                                <option value="30">30 phút</option>
-                                                <option value="60" selected>60 phút</option>
-                                                <option value="90">90 phút</option>
-                                                <option value="120">120 phút</option>
-                                                <option value="180">180 phút</option>
-                                            </select>
                                         </div>
 
                                         <div class="col-12 mt-3">
