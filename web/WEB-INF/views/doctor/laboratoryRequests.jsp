@@ -21,6 +21,7 @@
         <a href="${pageContext.request.contextPath}/doctor/examinations"><i class="bi bi-clipboard2-pulse-fill"></i> Khám chi tiết</a>
         <a href="${pageContext.request.contextPath}/doctor/completed-records"><i class="bi bi-archive"></i> Đã hoàn thành</a>
         <a href="${pageContext.request.contextPath}/doctor/patients/search"><i class="bi bi-search"></i> Tra cứu</a>
+        <a href="${pageContext.request.contextPath}/doctor/schedule"><i class="bi bi-calendar3"></i> Lịch trực</a>
         <a href="${pageContext.request.contextPath}/settings"><i class="bi bi-gear"></i> Cài đặt</a>
         <a class="text-danger mt-lg-4" href="${pageContext.request.contextPath}/logout"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a>
     </nav>
@@ -62,7 +63,13 @@
                             <tr>
                                 <td class="fw-bold">#${lab.invoiceId}</td>
                                 <td>#${lab.healthRecordId}</td>
-                                <td><strong>${lab.testTypeDisplay}</strong><br><small class="doctor-muted">${lab.requestNote}</small></td>
+                                <td>
+                                    <strong>${lab.testTypeDisplay}</strong>
+                                    <c:if test="${not empty lab.labDoctorName}">
+                                        <br><small class="text-primary fw-semibold">BS thực hiện: ${lab.labDoctorName} (${lab.labName})</small>
+                                    </c:if>
+                                    <br><small class="doctor-muted">${lab.requestNote}</small>
+                                </td>
                                 <td class="fw-semibold"><fmt:formatNumber value="${lab.testPrice}" type="number" groupingUsed="true"/> VNĐ</td>
                                 <td>
                                     <span class="doctor-badge ${lab.invoiceStatus == 'Paid' ? 'badge-completed' : 'badge-requested'}">

@@ -48,23 +48,6 @@
             createDetailItem("M\u00e3 ca kh\u00e1m", String(appointment.scheduleId))
         );
 
-        detail.append(badge, grid);
-
-        if (appointment.laboratoryRooms) {
-            const labNotice = document.createElement("section");
-            labNotice.className = "appointment-lab-notice";
-            const labTitle = document.createElement("h3");
-            labTitle.innerHTML = '<i class="bi bi-droplet-half"></i> Th\u00f4ng tin x\u00e9t nghi\u1ec7m';
-            const labGrid = document.createElement("div");
-            labGrid.className = "appointment-detail-grid";
-            labGrid.append(
-                createDetailItem("Ph\u00f2ng x\u00e9t nghi\u1ec7m", appointment.laboratoryRooms),
-                createDetailItem("V\u1ecb tr\u00ed c\u1ea7n \u0111\u1ebfn", appointment.laboratoryRoomLocations)
-            );
-            labNotice.append(labTitle, labGrid);
-            detail.append(labNotice);
-        }
-
         const actions = document.createElement("div");
         actions.className = "form-actions appointment-actions";
         const chatLink = document.createElement("a");
@@ -72,41 +55,7 @@
         chatLink.href = ApiClient.buildUrl(`/patient/ai-chat?appointmentId=${appointment.appointmentId}`);
         chatLink.innerHTML = '<i class="bi bi-chat-dots"></i> Trao \u0111\u1ed5i v\u1edbi AI';
         actions.append(chatLink);
-
-        if (appointment.status === "Waiting") {
-            const cancelBtn = document.createElement("button");
-            cancelBtn.type = "button";
-            cancelBtn.className = "btn-page-danger";
-            cancelBtn.innerHTML = '<i class="bi bi-x-circle"></i> H\u1ee7y l\u1ecbch h\u1eb9n';
-            cancelBtn.addEventListener("click", () => {
-                const now = new Date();
-                const apptTime = new Date(appointment.appointmentTime);
-                const diffHours = (apptTime - now) / (1000 * 60 * 60);
-
-                if (diffHours < 24) {
-                    alert("L\u1ecbch h\u1eb9n c\u00f2n \u00edt h\u01a1n 24 gi\u1edd tr\u01b0\u1edbc gi\u1edd kh\u00e1m. Vui l\u00f2ng li\u00ea\u006e h\u1ec7 Hotline b\u1ec7nh vi\u1ec7n (1900 xxxx) \u0111\u1ec3 \u0111\u01b0\u1ee3c h\u1ed7 tr\u1ee3 h\u1ee7y l\u1ecbch.");
-                } else {
-                    if (confirm("B\u1ea1n c\u00f3 ch\u1eafc ch\u1eafn mu\u1ed1n h\u1ee7y l\u1ecbch h\u1eb9n n\u00e0y kh\u00f4ng?")) {
-                        cancelBtn.disabled = true;
-                        ApiClient.postForm("/patient/api/appointments", new URLSearchParams({
-                            action: "cancel",
-                            id: appointment.appointmentId
-                        }))
-                        .then(() => {
-                            alert("\u0110\u00e3 h\u1ee7y l\u1ecbch h\u1eb9n th\u00e0nh c\u00f4ng.");
-                            window.location.reload();
-                        })
-                        .catch((error) => {
-                            alert(error.message || "Kh\u00f4ng th\u1ec3 h\u1ee7y l\u1ecbch h\u1eb9n. Vui l\u00f2ng th\u1eed l\u1ea1i.");
-                            cancelBtn.disabled = false;
-                        });
-                    }
-                }
-            });
-            actions.append(cancelBtn);
-        }
-
-        detail.append(actions);
+        detail.append(badge, grid, actions);
     }
 
     if (!Number.isInteger(appointmentId) || appointmentId <= 0) {

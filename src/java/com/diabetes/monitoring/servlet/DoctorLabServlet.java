@@ -53,16 +53,33 @@ public class DoctorLabServlet extends HttpServlet {
         java.util.Set<Integer> completedPatientIds = new java.util.HashSet<>();
 
         try (Connection conn = DatabaseConnection.getConnection()) {
-            String sqlPatients = "SELECT p.patient_id, p.full_name, p.email, p.phone, p.date_of_birth, p.gender, p.address, " +
-                    "       id.invoice_detail_id AS waiting_id, " +
-                    "       id.lab_status AS waitlist_status, " +
-                    "       ms.service_name AS lab_room, " +
-                    "       COALESCE((SELECT COUNT(*) FROM Healthy_Record WHERE patient_id = p.patient_id), 0) as record_count " +
+            int currentLabId = 0;
+            String sqlLab = "SELECT lab_id FROM Doctor_Lab WHERE account_id = ?";
+            try (PreparedStatement stmt = conn.prepareStatement(sqlLab)) {
+                stmt.setInt(1, currentUser.getId());
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        currentLabId = rs.getInt("lab_id");
+                    }
+                }
+            }
+            request.setAttribute("currentLabId", currentLabId);
+
+            String sqlPatients = "WITH RecordCounts AS (" +
+                    "    SELECT patient_id, COUNT(*) as cnt " +
+                    "    FROM Healthy_Record " +
+                    "    GROUP BY patient_id" +
+                    ") " +
+                    "SELECT p.patient_id, p.full_name, p.email, p.phone, p.date_of_birth, p.gender, p.address, " +
+                    "       COALESCE(rc.cnt, 0) as record_count, " +
+                    "       lw.status as waitlist_status, " +
+                    "       lw.waiting_id, " +
+                    "       lw.lab_room, " +
+                    "       lw.lab_id " +
                     "FROM Patient p " +
-                    "JOIN Invoice i ON p.patient_id = i.patient_id " +
-                    "JOIN Invoice_Detail id ON i.invoice_id = id.invoice_id AND id.lab_status IS NOT NULL AND id.service_id IN (1, 2, 3, 4, 5) " +
-                    "JOIN Medical_Service ms ON ms.service_id = id.service_id " +
-                    "ORDER BY p.full_name ASC, id.invoice_detail_id DESC";
+                    "LEFT JOIN Lab_Waiting_List lw ON p.patient_id = lw.patient_id " +
+                    "LEFT JOIN RecordCounts rc ON p.patient_id = rc.patient_id " +
+                    "ORDER BY p.full_name, lw.created_at DESC";
             try (PreparedStatement stmt = conn.prepareStatement(sqlPatients);
                  ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
@@ -80,69 +97,46 @@ public class DoctorLabServlet extends HttpServlet {
                     String waitlistStatus = rs.getString("waitlist_status");
                     int waitingId = rs.getInt("waiting_id");
                     String labRoom = rs.getString("lab_room");
+                    int patientLabId = rs.getInt("lab_id");
                     
-                    if ("Requested".equalsIgnoreCase(waitlistStatus) || "Waiting_Payment".equalsIgnoreCase(waitlistStatus)) {
-                        waitlistStatus = "waiting";
-                    } else if ("Processing".equalsIgnoreCase(waitlistStatus)) {
-                        waitlistStatus = "testing";
-                    } else if ("Completed".equalsIgnoreCase(waitlistStatus)) {
-                        waitlistStatus = "completed";
-                    } else {
-                        waitlistStatus = "";
-                    }
-
-                    if (labRoom != null) {
-                        String lower = labRoom.toLowerCase();
-                        if (lower.contains("đường huyết")) {
-                            labRoom = "phòng xét nghiệm máu - đường huyết";
-                        } else if (lower.contains("nước tiểu")) {
-                            labRoom = "phòng xét nghiệm nước tiểu";
-                        } else if (lower.contains("gan")) {
-                            labRoom = "phòng xét nghiệm máu - chức năng gan";
-                        } else if (lower.contains("thận")) {
-                            labRoom = "phòng xét nghiệm máu - chức năng thận";
-                        } else if (lower.contains("mỡ máu")) {
-                            labRoom = "phòng xét nghiệm máu - mỡ máu";
-                        } else {
-                            labRoom = lower;
-                        }
-                    }
-
                     p.put("recordCount", String.valueOf(recordCount));
-                    p.put("waitlistStatus", waitlistStatus);
+                    p.put("waitlistStatus", waitlistStatus != null ? waitlistStatus : "");
                     p.put("waitingId", waitingId > 0 ? String.valueOf(waitingId) : "");
                     p.put("labRoom", labRoom != null ? labRoom : "");
+                    p.put("labId", rs.wasNull() ? "" : String.valueOf(patientLabId));
                     
-                    uniquePatientIds.add(pId);
+                    boolean isAssignedToOther = patientLabId > 0 && patientLabId != currentLabId;
+                    if (!isAssignedToOther) {
+                        uniquePatientIds.add(pId);
 
-                    boolean isCompleted = "completed".equals(waitlistStatus) || ((waitlistStatus == null || waitlistStatus.isEmpty()) && recordCount > 0);
-                    if (isCompleted || recordCount > 0) {
-                        completedPatientIds.add(pId);
-                    }
-
-                    if ("waiting".equals(waitlistStatus) || "testing".equals(waitlistStatus)) {
-                        waitingCount++;
-                        // Also populate waitingPatients list for backward compatibility if needed
-                        Map<String, String> wp = new HashMap<>(p);
-                        wp.put("waitingId", String.valueOf(waitingId));
-                        wp.put("createdAt", ""); // not strictly needed for merged but keep it clean
-                        waitingPatients.add(wp);
-                    }
-
-                    if (labRoom != null) {
-                        String rL = labRoom.toLowerCase();
-                        if (rL.contains("máu")) {
-                            bloodTestCount++;
-                        } else if (rL.contains("thận")) {
-                            kidneyTestCount++;
-                        } else if (rL.contains("gan")) {
-                            liverTestCount++;
-                        } else if (rL.contains("nước tiểu")) {
-                            urineTestCount++;
+                        boolean isCompleted = "completed".equals(waitlistStatus) || ((waitlistStatus == null || waitlistStatus.isEmpty()) && recordCount > 0);
+                        if (isCompleted || recordCount > 0) {
+                            completedPatientIds.add(pId);
                         }
+
+                        if ("waiting".equals(waitlistStatus) || "testing".equals(waitlistStatus)) {
+                            waitingCount++;
+                            // Also populate waitingPatients list for backward compatibility if needed
+                            Map<String, String> wp = new HashMap<>(p);
+                            wp.put("waitingId", String.valueOf(waitingId));
+                            wp.put("createdAt", ""); // not strictly needed for merged but keep it clean
+                            waitingPatients.add(wp);
+                        }
+
+                        if (labRoom != null) {
+                            String rL = labRoom.toLowerCase();
+                            if (rL.contains("máu")) {
+                                bloodTestCount++;
+                            } else if (rL.contains("thận")) {
+                                kidneyTestCount++;
+                            } else if (rL.contains("gan")) {
+                                liverTestCount++;
+                            } else if (rL.contains("nước tiểu")) {
+                                urineTestCount++;
+                            }
+                        }
+                        patients.add(p);
                     }
-                    
-                    patients.add(p);
                 }
                 totalPatients = uniquePatientIds.size();
                 completedCount = completedPatientIds.size();
@@ -152,33 +146,40 @@ public class DoctorLabServlet extends HttpServlet {
                     "hr.chol, hr.tg, hr.hdl, hr.ldl, hr.vldl, hr.weight, hr.height, hr.bmi, hr.status, hr.created_at, hr.other_information " +
                     "FROM Healthy_Record hr " +
                     "INNER JOIN Patient p ON hr.patient_id = p.patient_id " +
+                    "WHERE EXISTS (" +
+                    "    SELECT 1 FROM Invoice_Detail id" +
+                    "    WHERE id.health_record_id = hr.health_record_id" +
+                    "      AND (id.lab_id = ? OR id.lab_id IS NULL)" +
+                    ")" +
                     "ORDER BY hr.created_at DESC";
-            try (PreparedStatement stmt = conn.prepareStatement(sqlRecords);
-                 ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    Map<String, String> r = new HashMap<>();
-                    r.put("recordId", String.valueOf(rs.getInt("health_record_id")));
-                    r.put("patientId", String.valueOf(rs.getInt("patient_id")));
-                    r.put("patientName", rs.getString("patient_name"));
-                    r.put("urea", formatDecimal(rs.getBigDecimal("urea")));
-                    r.put("cr", formatDecimal(rs.getBigDecimal("cr")));
-                    r.put("hba1c", formatDecimal(rs.getBigDecimal("hba1c")));
-                    r.put("chol", formatDecimal(rs.getBigDecimal("chol")));
-                    r.put("tg", formatDecimal(rs.getBigDecimal("tg")));
-                    r.put("hdl", formatDecimal(rs.getBigDecimal("hdl")));
-                    r.put("ldl", formatDecimal(rs.getBigDecimal("ldl")));
-                    r.put("vldl", formatDecimal(rs.getBigDecimal("vldl")));
-                    r.put("weight", formatDecimal(rs.getBigDecimal("weight")));
-                    r.put("height", formatDecimal(rs.getBigDecimal("height")));
-                    r.put("bmi", formatDecimal(rs.getBigDecimal("bmi")));
-                    r.put("status", rs.getString("status"));
-                    String rawCreatedAt = rs.getString("created_at");
-                    if (rawCreatedAt != null && rawCreatedAt.length() >= 16) {
-                        rawCreatedAt = rawCreatedAt.substring(0, 16);
+            try (PreparedStatement stmt = conn.prepareStatement(sqlRecords)) {
+                stmt.setInt(1, currentLabId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        Map<String, String> r = new HashMap<>();
+                        r.put("recordId", String.valueOf(rs.getInt("health_record_id")));
+                        r.put("patientId", String.valueOf(rs.getInt("patient_id")));
+                        r.put("patientName", rs.getString("patient_name"));
+                        r.put("urea", formatDecimal(rs.getBigDecimal("urea")));
+                        r.put("cr", formatDecimal(rs.getBigDecimal("cr")));
+                        r.put("hba1c", formatDecimal(rs.getBigDecimal("hba1c")));
+                        r.put("chol", formatDecimal(rs.getBigDecimal("chol")));
+                        r.put("tg", formatDecimal(rs.getBigDecimal("tg")));
+                        r.put("hdl", formatDecimal(rs.getBigDecimal("hdl")));
+                        r.put("ldl", formatDecimal(rs.getBigDecimal("ldl")));
+                        r.put("vldl", formatDecimal(rs.getBigDecimal("vldl")));
+                        r.put("weight", formatDecimal(rs.getBigDecimal("weight")));
+                        r.put("height", formatDecimal(rs.getBigDecimal("height")));
+                        r.put("bmi", formatDecimal(rs.getBigDecimal("bmi")));
+                        r.put("status", rs.getString("status"));
+                        String rawCreatedAt = rs.getString("created_at");
+                        if (rawCreatedAt != null && rawCreatedAt.length() >= 16) {
+                            rawCreatedAt = rawCreatedAt.substring(0, 16);
+                        }
+                        r.put("createdAt", rawCreatedAt);
+                        r.put("otherInfo", rs.getString("other_information"));
+                        records.add(r);
                     }
-                    r.put("createdAt", rawCreatedAt);
-                    r.put("otherInfo", rs.getString("other_information"));
-                    records.add(r);
                 }
             }
 
@@ -220,10 +221,9 @@ public class DoctorLabServlet extends HttpServlet {
             request.setAttribute("highHbA1cCount", highHbA1cCount);
             request.setAttribute("normalHbA1cCount", normalHbA1cCount);
             request.setAttribute("totalRecords", records.size());
-
-            // Retrieve lab doctor schedule (No longer query Lab_Schedule table from database)
-            List<Map<String, String>> schedules = new ArrayList<>();
-            request.setAttribute("schedules", schedules);
+            
+            com.diabetes.monitoring.doctor.dao.HealthRecordDAO recordDao = new com.diabetes.monitoring.doctor.dao.HealthRecordDAO();
+            request.setAttribute("labSchedules", recordDao.getLabSchedulesByAccountId(currentUser.getId()));
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -249,6 +249,7 @@ public class DoctorLabServlet extends HttpServlet {
         }
 
         request.setCharacterEncoding("UTF-8");
+
         String action = request.getParameter("action");
         if ("invite".equals(action)) {
             String waitingIdStr = request.getParameter("waitingId");
@@ -259,27 +260,11 @@ public class DoctorLabServlet extends HttpServlet {
             }
             try (Connection conn = DatabaseConnection.getConnection()) {
                 int waitingId = Integer.parseInt(waitingIdStr.trim());
-                String sqlInvite = "UPDATE Invoice_Detail SET lab_status = 'Processing' WHERE invoice_detail_id = ?";
+                String sqlInvite = "UPDATE Lab_Waiting_List SET status = 'testing' WHERE waiting_id = ?";
                 try (PreparedStatement stmt = conn.prepareStatement(sqlInvite)) {
                     stmt.setInt(1, waitingId);
                     stmt.executeUpdate();
                 }
-                
-                // Also update corresponding Lab_Order status to 'Processing'
-                String sqlUpdateLabOrder = "UPDATE lo " +
-                        "SET lo.status = 'Processing' " +
-                        "FROM Lab_Order lo " +
-                        "JOIN Invoice_Detail id ON ( " +
-                        "    (id.appointment_id IS NOT NULL AND lo.appointment_id = id.appointment_id AND lo.service_id = id.service_id) " +
-                        "    OR " +
-                        "    (id.appointment_id IS NULL AND lo.service_id = id.service_id AND lo.patient_id = (SELECT patient_id FROM Invoice WHERE invoice_id = id.invoice_id)) " +
-                        ") " +
-                        "WHERE id.invoice_detail_id = ?";
-                try (PreparedStatement stmtLab = conn.prepareStatement(sqlUpdateLabOrder)) {
-                    stmtLab.setInt(1, waitingId);
-                    stmtLab.executeUpdate();
-                }
-                
                 session.setAttribute("successMsg", "Bệnh nhân đã được mời vào phòng xét nghiệm.");
             } catch (Exception e) {
                 e.printStackTrace();
@@ -300,113 +285,53 @@ public class DoctorLabServlet extends HttpServlet {
             try (Connection conn = DatabaseConnection.getConnection()) {
                 int patientId = Integer.parseInt(patientIdStr.trim());
                 
-                // Map newRoom name to a standard service_id
-                int serviceId = 1; // Default to Blood sugar test
-                BigDecimal price = new BigDecimal("150000.00");
-                if (newRoom.toLowerCase().contains("nước tiểu")) {
-                    serviceId = 2;
-                    price = new BigDecimal("80000.00");
-                } else if (newRoom.toLowerCase().contains("mỡ máu")) {
-                    serviceId = 3;
-                    price = new BigDecimal("300000.00");
-                } else if (newRoom.toLowerCase().contains("gan")) {
-                    serviceId = 4;
-                    price = new BigDecimal("150000.00");
-                } else if (newRoom.toLowerCase().contains("thận")) {
-                    serviceId = 5;
-                    price = new BigDecimal("150000.00");
-                }
-                
-                // Fetch latest paid or unpaid invoice
-                int invoiceId = -1;
-                String sqlInvoice = "SELECT TOP 1 invoice_id FROM Invoice WHERE patient_id = ? ORDER BY created_at DESC";
-                try (PreparedStatement stmtInv = conn.prepareStatement(sqlInvoice)) {
-                    stmtInv.setInt(1, patientId);
-                    try (ResultSet rsInv = stmtInv.executeQuery()) {
-                        if (rsInv.next()) {
-                            invoiceId = rsInv.getInt("invoice_id");
-                        }
-                    }
-                }
-                
-                if (invoiceId == -1) {
-                    session.setAttribute("errorMsg", "Không tìm thấy hóa đơn nào của bệnh nhân để liên kết chỉ định.");
-                    response.sendRedirect(request.getContextPath() + "/doctor-lab/dashboard");
-                    return;
-                }
-                
-                // Fetch latest appointment
-                int appointmentId = 1;
-                String sqlApp = "SELECT TOP 1 appointment_id FROM Appointment WHERE patient_id = ? ORDER BY appointment_time DESC";
-                try (PreparedStatement stmtApp = conn.prepareStatement(sqlApp)) {
-                    stmtApp.setInt(1, patientId);
-                    try (ResultSet rsApp = stmtApp.executeQuery()) {
-                        if (rsApp.next()) {
-                            appointmentId = rsApp.getInt("appointment_id");
-                        }
-                    }
-                }
-
-                // Check if they already have an active entry of this service
-                String sqlCheckRoom = "SELECT COUNT(*) FROM Invoice_Detail WHERE invoice_id = ? AND service_id = ? AND lab_status IN ('Requested', 'Processing')";
+                // Check if they already have a waiting entry in this room
+                String sqlCheckRoom = "SELECT COUNT(*) FROM Lab_Waiting_List WHERE patient_id = ? AND lab_room = ? AND status = 'waiting'";
                 try (PreparedStatement stmtCheck = conn.prepareStatement(sqlCheckRoom)) {
-                    stmtCheck.setInt(1, invoiceId);
-                    stmtCheck.setInt(2, serviceId);
+                    stmtCheck.setInt(1, patientId);
+                    stmtCheck.setString(2, newRoom);
                     try (ResultSet rsCheck = stmtCheck.executeQuery()) {
                         if (rsCheck.next() && rsCheck.getInt(1) > 0) {
-                            session.setAttribute("errorMsg", "Xét nghiệm này đã được chỉ định hoặc đang chờ thực hiện.");
+                            session.setAttribute("errorMsg", "Xét nghiệm này đang trong danh sách chờ thực hiện.");
                             response.sendRedirect(request.getContextPath() + "/doctor-lab/dashboard");
                             return;
                         }
                     }
                 }
-                
-                // Determine room_id
-                String roomId = "R301";
-                if (serviceId == 2) {
-                    roomId = "R302";
-                }
 
-                // Generate new unique order_id (LOXXX)
-                String orderId = "LO010";
-                String sqlMaxOrder = "SELECT TOP 1 order_id FROM Lab_Order ORDER BY order_id DESC";
-                try (PreparedStatement stmtMax = conn.prepareStatement(sqlMaxOrder);
-                     ResultSet rsMax = stmtMax.executeQuery()) {
-                    if (rsMax.next()) {
-                        String maxId = rsMax.getString("order_id");
-                        if (maxId != null && maxId.startsWith("LO")) {
-                            try {
-                                int num = Integer.parseInt(maxId.substring(2)) + 1;
-                                orderId = String.format("LO%03d", num);
-                            } catch (Exception e) {}
+                // Fetch patient details
+                String sqlPatient = "SELECT full_name, date_of_birth, gender, phone, email, address FROM Patient WHERE patient_id = ?";
+                try (PreparedStatement stmtPat = conn.prepareStatement(sqlPatient)) {
+                    stmtPat.setInt(1, patientId);
+                    try (ResultSet rsPat = stmtPat.executeQuery()) {
+                        if (rsPat.next()) {
+                            String fullName = rsPat.getString("full_name");
+                            java.sql.Date dob = rsPat.getDate("date_of_birth");
+                            String gender = rsPat.getString("gender");
+                            String phone = rsPat.getString("phone");
+                            String email = rsPat.getString("email");
+                            String address = rsPat.getString("address");
+
+                            // Insert into Lab_Waiting_List
+                            String sqlInsertWaiting = "INSERT INTO Lab_Waiting_List (patient_id, full_name, date_of_birth, gender, phone, email, address, status, created_at, lab_room) " +
+                                                      "VALUES (?, ?, ?, ?, ?, ?, ?, 'waiting', GETDATE(), ?)";
+                            try (PreparedStatement stmtWait = conn.prepareStatement(sqlInsertWaiting)) {
+                                stmtWait.setInt(1, patientId);
+                                stmtWait.setString(2, fullName);
+                                stmtWait.setDate(3, dob);
+                                stmtWait.setString(4, gender);
+                                stmtWait.setString(5, phone);
+                                stmtWait.setString(6, email);
+                                stmtWait.setString(7, address);
+                                stmtWait.setString(8, newRoom);
+                                stmtWait.executeUpdate();
+                            }
+                            session.setAttribute("successMsg", "Đã chỉ định xét nghiệm mới: " + newRoom);
+                        } else {
+                            session.setAttribute("errorMsg", "Không tìm thấy thông tin bệnh nhân.");
                         }
                     }
                 }
-
-                // Insert into Invoice_Detail
-                String sqlInsertWaiting = "INSERT INTO Invoice_Detail (invoice_id, service_id, appointment_id, quantity, price, doctor_id, lab_status, requested_at) " +
-                                          "VALUES (?, ?, ?, 1, ?, 5, 'Requested', GETDATE())";
-                try (PreparedStatement stmtWait = conn.prepareStatement(sqlInsertWaiting)) {
-                    stmtWait.setInt(1, invoiceId);
-                    stmtWait.setInt(2, serviceId);
-                    stmtWait.setInt(3, appointmentId);
-                    stmtWait.setBigDecimal(4, price);
-                    stmtWait.executeUpdate();
-                }
-
-                // Insert into Lab_Order
-                String sqlInsertLab = "INSERT INTO Lab_Order (order_id, appointment_id, patient_id, room_id, service_id, lab_id, status, created_at) " +
-                                      "VALUES (?, ?, ?, ?, ?, 1, 'Waiting', GETDATE())";
-                try (PreparedStatement stmtLab = conn.prepareStatement(sqlInsertLab)) {
-                    stmtLab.setString(1, orderId);
-                    stmtLab.setInt(2, appointmentId);
-                    stmtLab.setInt(3, patientId);
-                    stmtLab.setString(4, roomId);
-                    stmtLab.setInt(5, serviceId);
-                    stmtLab.executeUpdate();
-                }
-
-                session.setAttribute("successMsg", "Đã chỉ định xét nghiệm mới: " + newRoom);
             } catch (Exception e) {
                 e.printStackTrace();
                 session.setAttribute("errorMsg", "Lỗi khi lưu chỉ định xét nghiệm: " + e.getMessage());
@@ -430,15 +355,11 @@ public class DoctorLabServlet extends HttpServlet {
             BigDecimal urea, cr, hba1c, chol, tg, hdl, ldl, vldl, weight, height, bmi;
             String otherInfo;
 
-             String requestLabRoom = request.getParameter("labRoom");
-             if (requestLabRoom != null && requestLabRoom.trim().isEmpty()) {
-                 requestLabRoom = null;
-             }
-             String currentLabRoom = requestLabRoom;
+             String currentLabRoom = null;
              if (waitingIdStr != null && !waitingIdStr.trim().isEmpty()) {
                  int waitingId = Integer.parseInt(waitingIdStr.trim());
                  try (Connection conn = DatabaseConnection.getConnection()) {
-                     String sqlCheck = "SELECT (SELECT service_name FROM Medical_Service WHERE service_id = id.service_id) as lab_room FROM Invoice_Detail id WHERE invoice_detail_id = ?";
+                     String sqlCheck = "SELECT lab_room FROM Lab_Waiting_List WHERE waiting_id = ?";
                      try (PreparedStatement stmtCheck = conn.prepareStatement(sqlCheck)) {
                          stmtCheck.setInt(1, waitingId);
                          try (ResultSet rsCheck = stmtCheck.executeQuery()) {
@@ -454,15 +375,15 @@ public class DoctorLabServlet extends HttpServlet {
 
              if ("true".equals(isRandomStr)) {
                  java.util.Map<String, BigDecimal> metrics;
-                 if (currentLabRoom != null && (currentLabRoom.toLowerCase().contains("máu") || currentLabRoom.toLowerCase().contains("đường huyết"))) {
+                 if (currentLabRoom != null && (currentLabRoom.equals("phòng xét nghiệm máu - đường huyết") || currentLabRoom.equals("phòng xét nghiệm máu"))) {
                      metrics = com.diabetes.monitoring.util.RandomTestGenerator.generateBloodSugarMetrics();
-                 } else if (currentLabRoom != null && currentLabRoom.toLowerCase().contains("gan")) {
+                 } else if (currentLabRoom != null && currentLabRoom.equals("phòng xét nghiệm máu - chức năng gan")) {
                      metrics = com.diabetes.monitoring.util.RandomTestGenerator.generateLiverMetrics();
-                 } else if (currentLabRoom != null && currentLabRoom.toLowerCase().contains("thận")) {
+                 } else if (currentLabRoom != null && currentLabRoom.equals("phòng xét nghiệm máu - chức năng thận")) {
                      metrics = com.diabetes.monitoring.util.RandomTestGenerator.generateKidneyMetrics();
-                 } else if (currentLabRoom != null && (currentLabRoom.toLowerCase().contains("mỡ máu") || currentLabRoom.toLowerCase().contains("cholesterol"))) {
+                 } else if (currentLabRoom != null && currentLabRoom.equals("phòng xét nghiệm máu - mỡ máu")) {
                      metrics = com.diabetes.monitoring.util.RandomTestGenerator.generateLipidsMetrics();
-                 } else if (currentLabRoom != null && (currentLabRoom.toLowerCase().contains("nước tiểu") || currentLabRoom.toLowerCase().contains("microalbumin"))) {
+                 } else if (currentLabRoom != null && currentLabRoom.equals("phòng xét nghiệm nước tiểu")) {
                      metrics = com.diabetes.monitoring.util.RandomTestGenerator.generateUrineMetrics();
                  } else {
                      metrics = com.diabetes.monitoring.util.RandomTestGenerator.generateRandomMetrics();
@@ -548,47 +469,33 @@ public class DoctorLabServlet extends HttpServlet {
 
                 // 1. Check if patient is already tested in this visit
                 boolean alreadyTested = false;
-                String dbLabRoom = null;
+                currentLabRoom = null;
                 if (waitingIdStr != null && !waitingIdStr.trim().isEmpty()) {
                     int waitingId = Integer.parseInt(waitingIdStr.trim());
-                    String sqlCheck = "SELECT id.lab_status, ms.service_name as lab_room FROM Invoice_Detail id JOIN Medical_Service ms ON ms.service_id = id.service_id WHERE id.invoice_detail_id = ?";
+                    String sqlCheck = "SELECT status, lab_room FROM Lab_Waiting_List WHERE waiting_id = ?";
                     try (PreparedStatement stmtCheck = conn.prepareStatement(sqlCheck)) {
                         stmtCheck.setInt(1, waitingId);
                         try (ResultSet rsCheck = stmtCheck.executeQuery()) {
                             if (rsCheck.next()) {
-                                dbLabRoom = rsCheck.getString("lab_room");
-                                if ("Completed".equalsIgnoreCase(rsCheck.getString("lab_status"))) {
+                                currentLabRoom = rsCheck.getString("lab_room");
+                                if ("completed".equals(rsCheck.getString("status"))) {
                                     alreadyTested = true;
                                 }
                             }
                         }
                     }
                 } else {
-                    String sqlCheckLatest = "SELECT TOP 1 id.lab_status, ms.service_name as lab_room FROM Invoice_Detail id JOIN Invoice i ON i.invoice_id = id.invoice_id JOIN Medical_Service ms ON ms.service_id = id.service_id WHERE i.patient_id = ? ORDER BY id.invoice_detail_id DESC";
+                    String sqlCheckLatest = "SELECT TOP 1 status, lab_room FROM Lab_Waiting_List WHERE patient_id = ? ORDER BY created_at DESC";
                     try (PreparedStatement stmtCheck = conn.prepareStatement(sqlCheckLatest)) {
                         stmtCheck.setInt(1, patientId);
                         try (ResultSet rsCheck = stmtCheck.executeQuery()) {
                             if (rsCheck.next()) {
-                                dbLabRoom = rsCheck.getString("lab_room");
-                                if ("Completed".equalsIgnoreCase(rsCheck.getString("lab_status"))) {
+                                currentLabRoom = rsCheck.getString("lab_room");
+                                if ("completed".equals(rsCheck.getString("status"))) {
                                     alreadyTested = true;
                                 }
                             }
                         }
-                    }
-                }
-
-                if (dbLabRoom != null) {
-                    currentLabRoom = dbLabRoom;
-                }
-
-                if (dbLabRoom == null) {
-                    if (currentLabRoom == null || (!currentLabRoom.toLowerCase().contains("máu") 
-                            && !currentLabRoom.toLowerCase().contains("nước tiểu") && !currentLabRoom.toLowerCase().contains("đường huyết"))) {
-                        conn.rollback();
-                        session.setAttribute("errorMsg", "Xét nghiệm này cần được bác sĩ chỉ định trước!");
-                        response.sendRedirect(request.getContextPath() + "/doctor-lab/dashboard");
-                        return;
                     }
                 }
 
@@ -599,72 +506,122 @@ public class DoctorLabServlet extends HttpServlet {
                     return;
                 }
 
-                if (currentLabRoom != null) {
-                    String lower = currentLabRoom.toLowerCase();
-                    if (lower.contains("đường huyết")) {
-                        otherInfo = "phòng xét nghiệm máu - đường huyết";
-                    } else if (lower.contains("nước tiểu")) {
-                        otherInfo = "phòng xét nghiệm nước tiểu";
-                    } else if (lower.contains("gan")) {
-                        otherInfo = "phòng xét nghiệm máu - chức năng gan";
-                    } else if (lower.contains("thận")) {
-                        otherInfo = "phòng xét nghiệm máu - chức năng thận";
-                    } else if (lower.contains("mỡ máu")) {
-                        otherInfo = "phòng xét nghiệm máu - mỡ máu";
-                    } else {
-                        otherInfo = currentLabRoom;
+
+
+                // Retrieve logged in lab doctor's ID
+                int loggedInLabId = 0;
+                String sqlLabId = "SELECT lab_id FROM Doctor_Lab WHERE account_id = ?";
+                try (PreparedStatement stmt = conn.prepareStatement(sqlLabId)) {
+                    stmt.setInt(1, currentUser.getId());
+                    try (ResultSet rs = stmt.executeQuery()) {
+                        if (rs.next()) {
+                            loggedInLabId = rs.getInt("lab_id");
+                        }
                     }
                 }
 
-                // 2. Insert the Healthy_Record
-                int healthRecordId = -1;
-                String sqlInsert = "INSERT INTO Healthy_Record (urea, cr, hba1c, chol, tg, hdl, ldl, vldl, bmi, patient_id, weight, height, other_information, status, created_at) " +
-                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved', GETDATE())";
-                try (PreparedStatement stmt = conn.prepareStatement(sqlInsert, PreparedStatement.RETURN_GENERATED_KEYS)) {
-                    stmt.setBigDecimal(1, urea);
-                    stmt.setBigDecimal(2, cr);
-                    stmt.setBigDecimal(3, hba1c);
-                    stmt.setBigDecimal(4, chol);
-                    stmt.setBigDecimal(5, tg);
-                    stmt.setBigDecimal(6, hdl);
-                    stmt.setBigDecimal(7, ldl);
-                    stmt.setBigDecimal(8, vldl);
-                    stmt.setBigDecimal(9, bmi);
-                    stmt.setInt(10, patientId);
-                    stmt.setBigDecimal(11, weight);
-                    stmt.setBigDecimal(12, height);
-                    stmt.setString(13, otherInfo);
-                    stmt.executeUpdate();
-                    try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
-                        if (generatedKeys.next()) {
-                            healthRecordId = generatedKeys.getInt(1);
+                // Find a pending Invoice_Detail request
+                int matchingInvoiceDetailId = 0;
+                int matchingHealthRecordId = 0;
+                String findRequestSql = "SELECT TOP 1 id.invoice_detail_id, id.health_record_id "
+                        + "FROM Invoice_Detail id "
+                        + "JOIN Invoice i ON id.invoice_id = i.invoice_id "
+                        + "WHERE i.patient_id = ? AND id.lab_status IN ('Requested', 'Processing') "
+                        + "AND (id.lab_id = ? OR id.lab_id IS NULL) "
+                        + "ORDER BY id.requested_at ASC";
+                try (PreparedStatement stmtFind = conn.prepareStatement(findRequestSql)) {
+                    stmtFind.setInt(1, patientId);
+                    stmtFind.setInt(2, loggedInLabId);
+                    try (ResultSet rsFind = stmtFind.executeQuery()) {
+                        if (rsFind.next()) {
+                            matchingInvoiceDetailId = rsFind.getInt("invoice_detail_id");
+                            matchingHealthRecordId = rsFind.getInt("health_record_id");
                         }
+                    }
+                }
+
+                if (matchingHealthRecordId > 0) {
+                    // Update existing Healthy_Record with the lab results
+                    String sqlUpdateHR = "UPDATE Healthy_Record SET "
+                            + "urea = COALESCE(?, urea), cr = COALESCE(?, cr), "
+                            + "hba1c = COALESCE(?, hba1c), chol = COALESCE(?, chol), "
+                            + "tg = COALESCE(?, tg), hdl = COALESCE(?, hdl), "
+                            + "ldl = COALESCE(?, ldl), vldl = COALESCE(?, vldl), "
+                            + "bmi = COALESCE(?, bmi), "
+                            + "weight = CASE WHEN weight IS NULL OR weight = 0 THEN ? ELSE weight END, "
+                            + "height = CASE WHEN height IS NULL OR height = 0 THEN ? ELSE height END, "
+                            + "status = 'Accepted', synced_at = GETDATE(), "
+                            + "other_information = CASE WHEN other_information IS NULL OR other_information = '' "
+                            + "THEN ? ELSE other_information + '; ' + ? END "
+                            + "WHERE health_record_id = ?";
+                    try (PreparedStatement stmt = conn.prepareStatement(sqlUpdateHR)) {
+                        stmt.setBigDecimal(1, urea);
+                        stmt.setBigDecimal(2, cr);
+                        stmt.setBigDecimal(3, hba1c);
+                        stmt.setBigDecimal(4, chol);
+                        stmt.setBigDecimal(5, tg);
+                        stmt.setBigDecimal(6, hdl);
+                        stmt.setBigDecimal(7, ldl);
+                        stmt.setBigDecimal(8, vldl);
+                        stmt.setBigDecimal(9, bmi);
+                        stmt.setBigDecimal(10, weight);
+                        stmt.setBigDecimal(11, height);
+                        stmt.setString(12, otherInfo);
+                        stmt.setString(13, otherInfo);
+                        stmt.setInt(14, matchingHealthRecordId);
+                        stmt.executeUpdate();
+                    }
+
+                    // Update Invoice_Detail to Completed
+                    String sqlUpdateDetail = "UPDATE Invoice_Detail SET "
+                            + "lab_status = 'Completed', "
+                            + "lab_result = ?, "
+                            + "completed_at = GETDATE() "
+                            + "WHERE invoice_detail_id = ?";
+                    try (PreparedStatement stmt = conn.prepareStatement(sqlUpdateDetail)) {
+                        String resultSummary = String.format(
+                            "HbA1c: %s, Urea: %s, CR: %s, Chol: %s, TG: %s, HDL: %s, LDL: %s",
+                            hba1c != null ? hba1c.toString() : "0",
+                            urea != null ? urea.toString() : "0",
+                            cr != null ? cr.toString() : "0",
+                            chol != null ? chol.toString() : "0",
+                            tg != null ? tg.toString() : "0",
+                            hdl != null ? hdl.toString() : "0",
+                            ldl != null ? ldl.toString() : "0"
+                        );
+                        stmt.setString(1, resultSummary);
+                        stmt.setInt(2, matchingInvoiceDetailId);
+                        stmt.executeUpdate();
+                    }
+                } else {
+                    // Fallback to inserting a new Healthy_Record
+                    String sqlInsert = "INSERT INTO Healthy_Record (urea, cr, hba1c, chol, tg, hdl, ldl, vldl, bmi, patient_id, weight, height, other_information, status, created_at) " +
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved', GETDATE())";
+                    try (PreparedStatement stmt = conn.prepareStatement(sqlInsert)) {
+                        stmt.setBigDecimal(1, urea);
+                        stmt.setBigDecimal(2, cr);
+                        stmt.setBigDecimal(3, hba1c);
+                        stmt.setBigDecimal(4, chol);
+                        stmt.setBigDecimal(5, tg);
+                        stmt.setBigDecimal(6, hdl);
+                        stmt.setBigDecimal(7, ldl);
+                        stmt.setBigDecimal(8, vldl);
+                        stmt.setBigDecimal(9, bmi);
+                        stmt.setInt(10, patientId);
+                        stmt.setBigDecimal(11, weight);
+                        stmt.setBigDecimal(12, height);
+                        stmt.setString(13, otherInfo);
+                        stmt.executeUpdate();
                     }
                 }
 
                 // 3. Update waiting status if needed
                 if (waitingIdStr != null && !waitingIdStr.trim().isEmpty()) {
                     int waitingId = Integer.parseInt(waitingIdStr.trim());
-                    String sqlUpdateWaiting = "UPDATE Invoice_Detail SET lab_status = 'Completed', health_record_id = ?, completed_at = GETDATE() WHERE invoice_detail_id = ?";
+                    String sqlUpdateWaiting = "UPDATE Lab_Waiting_List SET status = 'completed' WHERE waiting_id = ?";
                     try (PreparedStatement stmtUpdate = conn.prepareStatement(sqlUpdateWaiting)) {
-                        stmtUpdate.setInt(1, healthRecordId);
-                        stmtUpdate.setInt(2, waitingId);
+                        stmtUpdate.setInt(1, waitingId);
                         stmtUpdate.executeUpdate();
-                    }
-                    
-                    // Also update corresponding Lab_Order status to 'Completed'
-                    String sqlUpdateLabOrder = "UPDATE lo " +
-                            "SET lo.status = 'Completed' " +
-                            "FROM Lab_Order lo " +
-                            "JOIN Invoice_Detail id ON ( " +
-                            "    (id.appointment_id IS NOT NULL AND lo.appointment_id = id.appointment_id AND lo.service_id = id.service_id) " +
-                            "    OR " +
-                            "    (id.appointment_id IS NULL AND lo.service_id = id.service_id AND lo.patient_id = (SELECT patient_id FROM Invoice WHERE invoice_id = id.invoice_id)) " +
-                            ") " +
-                            "WHERE id.invoice_detail_id = ?";
-                    try (PreparedStatement stmtLab = conn.prepareStatement(sqlUpdateLabOrder)) {
-                        stmtLab.setInt(1, waitingId);
-                        stmtLab.executeUpdate();
                     }
                 }
 

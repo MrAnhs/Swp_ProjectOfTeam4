@@ -247,8 +247,10 @@
             <label>Ph\u01B0\u01A1ng th\u1EE9c thanh to\u00E1n
                 <select name="paymentMethod" required>
                     <option value="">Ch\u1ECDn ph\u01B0\u01A1ng th\u1EE9c</option>
-                    <option value="Cash">Ti\u1EC1n m\u1EB7t (Thanh to\u00E1n t\u1EA1i qu\u1EA7y l\u1EC5 t\u00E2n)</option>
-                    <option value="VNPay">Chuy\u1EC3n kho\u1EA3n tr\u1EF1c tuy\u1EBFn (VNPay)</option>
+                    <option value="Cash">Ti\u1EC1n m\u1EB7t</option>
+                    <option value="Momo">MoMo</option>
+                    <option value="VNPay">VNPay</option>
+                    <option value="Bank_Transfer">Chuy\u1EC3n kho\u1EA3n ng\u00E2n h\u00E0ng</option>
                 </select>
             </label>
             <button class="btn-page-primary" type="submit">G\u1EEDi y\u00EAu c\u1EA7u thanh to\u00E1n</button>
@@ -258,33 +260,17 @@
         form.addEventListener("submit", async (event) => {
             event.preventDefault();
             const message = form.querySelector(".form-message");
-            const selectedMethod = form.paymentMethod.value;
             try {
                 const result = await ApiClient.postForm(
                     "/patient/api/invoices",
                     new URLSearchParams({
                         invoiceId: String(invoice.invoiceId),
-                        paymentMethod: selectedMethod
+                        paymentMethod: form.paymentMethod.value
                     })
                 );
-                if (selectedMethod === "VNPay") {
-                    message.hidden = false;
-                    message.className = "form-message success";
-                    message.textContent = "Đang chuyển hướng sang cổng thanh toán VNPay...";
-                    const contextMeta = document.querySelector('meta[name="app-context-path"]');
-                    const contextPath = contextMeta ? (contextMeta.getAttribute("content") || "") : "";
-                    setTimeout(() => {
-                        window.location.href = contextPath + "/patient/vnpay-payment?invoiceId=" + invoice.invoiceId;
-                    }, 800);
-                } else if (selectedMethod === "Cash") {
-                    message.hidden = false;
-                    message.className = "form-message success";
-                    message.textContent = "Yêu cầu đã được ghi nhận. Vui lòng di chuyển ra quầy lễ tân để thanh toán hóa đơn bằng tiền mặt.";
-                } else {
-                    message.hidden = false;
-                    message.className = "form-message success";
-                    message.textContent = result.message;
-                }
+                message.hidden = false;
+                message.className = "form-message success";
+                message.textContent = result.message;
             } catch (error) {
                 message.hidden = false;
                 message.className = "form-message error";

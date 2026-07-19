@@ -33,8 +33,7 @@ body {
 }
 
 .btn-page-primary,
-.btn-page-secondary,
-.btn-page-danger {
+.btn-page-secondary {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -55,19 +54,6 @@ body {
     background: #fff;
     border-color: var(--color-border);
     color: var(--color-text);
-}
-
-.btn-page-danger {
-    background: #dc3545;
-    color: #fff;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
-
-.btn-page-danger:hover {
-    background: #bd2130;
-    color: #fff;
 }
 
 .shortcut-grid {
@@ -765,32 +751,6 @@ body {
 
 .appointment-actions {
     justify-content: flex-start;
-}
-
-.appointment-lab-notice {
-    margin-top: 1.25rem;
-    padding: 1rem;
-    border: 1px solid #99e2df;
-    border-radius: var(--radius-sm);
-    background: #f0fdfa;
-}
-
-.appointment-lab-notice h3 {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin: 0;
-    color: #0f766e;
-}
-
-.appointment-lab-notice .appointment-detail-item {
-    background: #fff;
-}
-
-.appointment-lab-summary {
-    margin-top: 0.35rem;
-    color: #0f766e;
-    font-weight: 600;
 }
 
 .invoice-document-card {

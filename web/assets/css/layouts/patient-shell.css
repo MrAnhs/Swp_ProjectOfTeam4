@@ -101,8 +101,6 @@ body {
     text-decoration: none;
 }
 
-.nav-item-dash { position: relative; }
-
 .nav-item-dash:hover,
 .nav-item-dash.active {
     background: #e8f7f4;
@@ -119,22 +117,6 @@ body {
     background: #fee2e2;
     color: #b91c1c;
 }
-
-.sidebar-notification-badge {
-    min-width: 22px;
-    height: 22px;
-    margin-left: auto;
-    padding: 0 6px;
-    border-radius: 999px;
-    background: #e5484d;
-    color: #fff;
-    font-size: .72rem;
-    font-weight: 700;
-    line-height: 22px;
-    text-align: center;
-}
-
-.sidebar-notification-badge.is-hidden { display: none; }
 
 .main-content-dash {
     min-height: 100vh;
@@ -157,12 +139,6 @@ body {
     .nav-item-dash,
     .btn-logout {
         justify-content: center;
-    }
-
-    .sidebar-notification-badge {
-        position: absolute;
-        top: 5px;
-        right: 5px;
     }
 
     .main-content-dash {

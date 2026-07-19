@@ -17,8 +17,8 @@
             <div class="profile-role">Nhân viên lễ tân</div>
         </div>
     </div>
+
     <nav class="receptionist-nav">
-        <%@ include file="/WEB-INF/views/components/notification-bell.jspf" %>
         <a class="nav-link ${currentPage == 'dashboard' ? 'active' : ''}" href="${pageContext.request.contextPath}/receptionist/dashboard">
             <i class="bi bi-grid-1x2"></i><span>Tổng quan</span>
         </a>

@@ -30,6 +30,9 @@ public class LaboratoryRequest {
     private Double bmi;
     private Double weight;
     private Double height;
+    private Integer labId;
+    private String labDoctorName;
+    private String labName;
 
     public int getLaboratoryRequestId() { return laboratoryRequestId; }
     public void setLaboratoryRequestId(int laboratoryRequestId) { this.laboratoryRequestId = laboratoryRequestId; }
@@ -116,4 +119,11 @@ public class LaboratoryRequest {
     public void setWeight(Double weight) { this.weight = weight; }
     public Double getHeight() { return height; }
     public void setHeight(Double height) { this.height = height; }
+
+    public Integer getLabId() { return labId; }
+    public void setLabId(Integer labId) { this.labId = labId; }
+    public String getLabDoctorName() { return labDoctorName; }
+    public void setLabDoctorName(String labDoctorName) { this.labDoctorName = labDoctorName; }
+    public String getLabName() { return labName; }
+    public void setLabName(String labName) { this.labName = labName; }
 }

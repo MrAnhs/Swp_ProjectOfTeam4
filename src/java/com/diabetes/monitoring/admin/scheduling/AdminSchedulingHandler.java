@@ -883,10 +883,8 @@ class AdminAiSchedulingHandler {
                 out.print("}");
             }
         } catch (StackOverflowError error) {
-            error.printStackTrace();
             writeAiScheduleError(response, "Dữ liệu Gemini quá lớn để xử lý. Hệ thống đã chặn lỗi và chưa ghi lịch vào database.");
         } catch (RuntimeException error) {
-            error.printStackTrace();
             writeAiScheduleError(response, "Không thể xử lý lịch AI: " + (error.getMessage() == null ? "Lỗi dữ liệu không xác định." : error.getMessage()));
         }
     }

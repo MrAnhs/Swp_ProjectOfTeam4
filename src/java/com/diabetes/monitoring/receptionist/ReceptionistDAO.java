@@ -354,6 +354,78 @@ public class ReceptionistDAO {
                 statement.setInt(1, invoiceId);
                 statement.executeUpdate();
             }
+
+            // Retrieve patient and lab doctor details to insert into Lab_Waiting_List
+            String selectLabRequestSql = "SELECT id.lab_id, i.patient_id, p.full_name, p.date_of_birth, "
+                    + "p.gender, p.phone, p.email, p.address, "
+                    + "COALESCE((SELECT TOP 1 r.room_name FROM Lab_Schedule ls "
+                    + "JOIN Room r ON ls.room_id = r.room_id "
+                    + "WHERE ls.lab_id = id.lab_id AND ls.work_date = CAST(GETDATE() AS date) "
+                    + "AND LOWER(ls.status) = 'scheduled' ORDER BY ls.lab_sched_id DESC), dl.lab_name) AS lab_room_name "
+                    + "FROM Invoice_Detail id "
+                    + "JOIN Invoice i ON id.invoice_id = i.invoice_id "
+                    + "JOIN Patient p ON p.patient_id = i.patient_id "
+                    + "LEFT JOIN Doctor_Lab dl ON dl.lab_id = id.lab_id "
+                    + "WHERE id.invoice_id = ? AND id.lab_status = 'Requested'";
+            
+            try (PreparedStatement selectStmt = connection.prepareStatement(selectLabRequestSql)) {
+                selectStmt.setInt(1, invoiceId);
+                try (ResultSet rs = selectStmt.executeQuery()) {
+                    while (rs.next()) {
+                        int patientId = rs.getInt("patient_id");
+                        int labId = rs.getInt("lab_id");
+                        boolean hasLabId = !rs.wasNull();
+                        String fullName = rs.getString("full_name");
+                        java.sql.Date dob = rs.getDate("date_of_birth");
+                        String gender = rs.getString("gender");
+                        String phone = rs.getString("phone");
+                        String email = rs.getString("email");
+                        String address = rs.getString("address");
+                        String labRoomName = rs.getString("lab_room_name");
+                        if (labRoomName == null) {
+                            labRoomName = "ph\u00f2ng x\u00e9t nghi\u1ec7m m\u00e1u"; // default fallback
+                        }
+
+                        // Check if patient is already waiting in this room
+                        String checkWaitingSql = "SELECT COUNT(*) FROM Lab_Waiting_List "
+                                + "WHERE patient_id = ? AND lab_room = ? AND status = 'waiting'";
+                        boolean isAlreadyWaiting = false;
+                        try (PreparedStatement checkStmt = connection.prepareStatement(checkWaitingSql)) {
+                            checkStmt.setInt(1, patientId);
+                            checkStmt.setString(2, labRoomName);
+                            try (ResultSet checkRs = checkStmt.executeQuery()) {
+                                if (checkRs.next() && checkRs.getInt(1) > 0) {
+                                    isAlreadyWaiting = true;
+                                }
+                            }
+                        }
+
+                        if (!isAlreadyWaiting) {
+                            String insertWaitingSql = "INSERT INTO Lab_Waiting_List "
+                                    + "(patient_id, full_name, date_of_birth, gender, phone, email, address, "
+                                    + "status, created_at, lab_room, lab_id) "
+                                    + "VALUES (?, ?, ?, ?, ?, ?, ?, 'waiting', GETDATE(), ?, ?)";
+                            try (PreparedStatement insertStmt = connection.prepareStatement(insertWaitingSql)) {
+                                insertStmt.setInt(1, patientId);
+                                insertStmt.setString(2, fullName);
+                                insertStmt.setDate(3, dob);
+                                insertStmt.setString(4, gender);
+                                insertStmt.setString(5, phone);
+                                insertStmt.setString(6, email);
+                                insertStmt.setString(7, address);
+                                insertStmt.setString(8, labRoomName);
+                                if (hasLabId) {
+                                    insertStmt.setInt(9, labId);
+                                } else {
+                                    insertStmt.setNull(9, java.sql.Types.INTEGER);
+                                }
+                                insertStmt.executeUpdate();
+                            }
+                        }
+                    }
+                }
+            }
+
             connection.commit();
             return invoiceId;
         } catch (SQLException | ReceptionistException e) {
