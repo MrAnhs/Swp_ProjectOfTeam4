@@ -76,12 +76,31 @@ public class SaveNotesServlet extends HttpServlet {
                 return;
             }
 
+            String revisitDateStr = request.getParameter("revisit_date");
+            java.sql.Timestamp revisitDate = null;
+            if (revisitDateStr != null && !revisitDateStr.trim().isEmpty()) {
+                try {
+                    java.time.LocalDate localDate = java.time.LocalDate.parse(revisitDateStr.trim());
+                    if (localDate.isBefore(java.time.LocalDate.now())) {
+                        sendJson(response, HttpServletResponse.SC_BAD_REQUEST, false,
+                                "Ngày tái khám không được là ngày trong quá khứ.");
+                        return;
+                    }
+                    revisitDate = java.sql.Timestamp.valueOf(localDate.atStartOfDay());
+                } catch (Exception e) {
+                    sendJson(response, HttpServletResponse.SC_BAD_REQUEST, false,
+                            "Ngày tái khám không hợp lệ.");
+                    return;
+                }
+            }
+
             dao.saveMedicalRecordAndCompleteForDoctor(
                     recordId,
                     doctorId,
                     notes,
                     diagnosis.trim(),
-                    canView
+                    canView,
+                    revisitDate
             );
 
             sendJson(response, HttpServletResponse.SC_OK, true, "Luu ho so thanh cong");
