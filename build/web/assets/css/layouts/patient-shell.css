@@ -1,0 +1,172 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+}
+
+.sidebar-modern {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 1000;
+    display: flex;
+    width: var(--sidebar-width);
+    flex-direction: column;
+    background: #fff;
+    border-right: 1px solid var(--color-border);
+}
+
+.sidebar-header {
+    padding: 1.4rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.brand-dashboard {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--color-primary);
+    font-size: 1.15rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.brand-icon-dash {
+    display: grid;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    background: var(--color-primary);
+    border-radius: 10px;
+    color: #fff;
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 1rem;
+    padding: 0.8rem;
+    background: #f8fafc;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+
+.user-avatar {
+    display: grid;
+    width: 38px;
+    height: 38px;
+    flex: 0 0 auto;
+    place-items: center;
+    background: #dff7f4;
+    border-radius: 50%;
+    color: var(--color-primary-dark);
+    font-weight: 700;
+}
+
+.user-info {
+    min-width: 0;
+}
+
+.user-info h6,
+.user-info small {
+    display: block;
+    overflow: hidden;
+    margin: 0;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.user-info small {
+    color: var(--color-muted);
+    font-size: 0.75rem;
+}
+
+.sidebar-nav {
+    display: grid;
+    gap: 0.25rem;
+    padding: 0 1rem;
+}
+
+.nav-item-dash,
+.btn-logout {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border-radius: var(--radius-sm);
+    color: var(--color-muted);
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.nav-item-dash { position: relative; }
+
+.nav-item-dash:hover,
+.nav-item-dash.active {
+    background: #e8f7f4;
+    color: var(--color-primary-dark);
+}
+
+.sidebar-footer {
+    margin-top: auto;
+    padding: 1rem;
+    border-top: 1px solid var(--color-border);
+}
+
+.btn-logout:hover {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.sidebar-notification-badge {
+    min-width: 22px;
+    height: 22px;
+    margin-left: auto;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: #e5484d;
+    color: #fff;
+    font-size: .72rem;
+    font-weight: 700;
+    line-height: 22px;
+    text-align: center;
+}
+
+.sidebar-notification-badge.is-hidden { display: none; }
+
+.main-content-dash {
+    min-height: 100vh;
+    margin-left: var(--sidebar-width);
+    padding: 2rem;
+}
+
+@media (max-width: 900px) {
+    .sidebar-modern {
+        width: 76px;
+    }
+
+    .sidebar-modern .brand-text,
+    .sidebar-modern .user-info,
+    .sidebar-modern .nav-text {
+        display: none;
+    }
+
+    .user-profile,
+    .nav-item-dash,
+    .btn-logout {
+        justify-content: center;
+    }
+
+    .sidebar-notification-badge {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+    }
+
+    .main-content-dash {
+        margin-left: 76px;
+        padding: 1rem;
+    }
+}
