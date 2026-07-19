@@ -58,10 +58,11 @@ public class ProfileDAO {
     public void update(Connection connection, Profile profile) throws SQLException {
         String role = normalizeRole(profile.getRole());
         String table = detailTable(role);
-        String sqlAccount = "UPDATE Account SET full_name = ? WHERE account_id = ?";
+        String sqlAccount = "UPDATE Account SET full_name = ?, email = ? WHERE account_id = ?";
         try (PreparedStatement statement = connection.prepareStatement(sqlAccount)) {
             statement.setString(1, profile.getFullName());
-            statement.setInt(2, profile.getAccountId());
+            statement.setString(2, profile.getEmail());
+            statement.setInt(3, profile.getAccountId());
             if (statement.executeUpdate() == 0) throw new SQLException("Tài khoản không tồn tại");
         }
 
@@ -69,6 +70,7 @@ public class ProfileDAO {
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             int i = 1;
             statement.setString(i++, profile.getFullName());
+            statement.setString(i++, profile.getEmail());
             statement.setString(i++, profile.getPhone());
             if (supportsBirthDetails(role)) {
                 setDate(statement, i++, profile.getDateOfBirth());
@@ -76,7 +78,27 @@ public class ProfileDAO {
                 statement.setString(i++, profile.getAddress());
             }
             statement.setInt(i, profile.getAccountId());
-            if (statement.executeUpdate() == 0) throw new SQLException("Hồ sơ role không tồn tại");
+            if (statement.executeUpdate() == 0) {
+                String sqlInsert;
+                if (supportsBirthDetails(role)) {
+                    sqlInsert = "INSERT INTO " + table + " (full_name, email, phone, date_of_birth, gender, address, account_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
+                } else {
+                    sqlInsert = "INSERT INTO " + table + " (full_name, email, phone, account_id) VALUES (?, ?, ?, ?)";
+                }
+                try (PreparedStatement insertStatement = connection.prepareStatement(sqlInsert)) {
+                    int j = 1;
+                    insertStatement.setString(j++, profile.getFullName());
+                    insertStatement.setString(j++, profile.getEmail());
+                    insertStatement.setString(j++, profile.getPhone());
+                    if (supportsBirthDetails(role)) {
+                        setDate(insertStatement, j++, profile.getDateOfBirth());
+                        insertStatement.setString(j++, profile.getGender());
+                        insertStatement.setString(j++, profile.getAddress());
+                    }
+                    insertStatement.setInt(j, profile.getAccountId());
+                    insertStatement.executeUpdate();
+                }
+            }
         }
     }
 
@@ -157,9 +179,9 @@ public class ProfileDAO {
 
     private String detailUpdateSql(String role, String table) {
         if (supportsBirthDetails(role)) {
-            return "UPDATE " + table + " SET full_name = ?, phone = ?, date_of_birth = ?, gender = ?, address = ? WHERE account_id = ?";
+            return "UPDATE " + table + " SET full_name = ?, email = ?, phone = ?, date_of_birth = ?, gender = ?, address = ? WHERE account_id = ?";
         }
-        return "UPDATE " + table + " SET full_name = ?, phone = ? WHERE account_id = ?";
+        return "UPDATE " + table + " SET full_name = ?, email = ?, phone = ? WHERE account_id = ?";
     }
 
     private boolean supportsBirthDetails(String role) {
