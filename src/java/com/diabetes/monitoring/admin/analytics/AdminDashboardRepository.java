@@ -688,7 +688,8 @@ public class AdminDashboardRepository {
                 String sql = "SELECT ds.schedule_id, doc.full_name AS doctor_name, r.room_name, ds.time_slot, "
                            + "ds.max_patients, ds.status "
                            + "FROM Doctor_Schedule ds "
-                           + "JOIN Account doc ON doc.account_id = ds.doctor_id "
+                           + "JOIN Doctor d ON d.doctor_id = ds.doctor_id "
+                           + "JOIN Account doc ON doc.account_id = d.account_id "
                            + "LEFT JOIN Room r ON r.room_id = ds.room_id "
                            + "WHERE ds.work_date = CAST(GETDATE() AS DATE) "
                            + "ORDER BY ds.time_slot ASC";
