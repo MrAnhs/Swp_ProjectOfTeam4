@@ -136,7 +136,7 @@ public class LaboratoryDAO {
                     setNullable(ps, 4, result.getChol());
                     setNullable(ps, 5, result.getTg());
                     setNullable(ps, 6, result.getHdl());
-                    setNullable(ps, 7, result.getIdl());
+                    setNullable(ps, 7, result.getLdl());
                     setNullable(ps, 8, result.getVldl());
                     setNullable(ps, 9, result.getBmi());
                     setNullable(ps, 10, result.getWeight());
@@ -180,7 +180,7 @@ public class LaboratoryDAO {
         item.setChol(nullableDouble(rs, "chol"));
         item.setTg(nullableDouble(rs, "tg"));
         item.setHdl(nullableDouble(rs, "hdl"));
-        item.setIdl(nullableDouble(rs, "ldl"));
+        item.setLdl(nullableDouble(rs, "ldl"));
         item.setVldl(nullableDouble(rs, "vldl"));
         item.setBmi(nullableDouble(rs, "bmi"));
         item.setWeight(nullableDouble(rs, "weight"));
