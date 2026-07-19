@@ -593,12 +593,14 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
                                                           }
 
                                                           function showAiScheduleMessage(message, isSuccess) {
-                                                              const alertBox = document.getElementById('aiScheduleModalAlert');
-                                                              if (!alertBox) {
-                                                                  return;
-                                                              }
-                                                              alertBox.className = 'alert border-0 fw-semibold ' + (isSuccess ? 'alert-success' : 'alert-danger');
-                                                              alertBox.innerHTML = '<i class="fa-solid ' + (isSuccess ? 'fa-circle-check' : 'fa-triangle-exclamation') + ' me-2"></i>' + escapeHtmlForSchedule(message);
+                                                               const alertBox = document.getElementById('aiScheduleAlert');
+                                                               if (!alertBox) {
+                                                                   console.error('[AI Schedule] Alert box not found. Message:', message);
+                                                                   return;
+                                                               }
+                                                               alertBox.style.display = 'block';
+                                                               alertBox.className = 'alert border-0 fw-semibold ' + (isSuccess ? 'alert-success' : 'alert-danger');
+                                                               alertBox.innerHTML = '<i class="fa-solid ' + (isSuccess ? 'fa-circle-check' : 'fa-triangle-exclamation') + ' me-2"></i>' + escapeHtmlForSchedule(message);
                                                           }
 
                                                           document.addEventListener('DOMContentLoaded', function () {
@@ -850,9 +852,12 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
         if (container) container.classList.add('d-none');
         
         if (startTimeInput && endTimeInput && slotDurationInput) {
-            document.querySelector('input[name="startTime"]').value = startTimeInput.value || '07:00';
-            document.querySelector('input[name="endTime"]').value = endTimeInput.value || '17:00';
-            document.querySelector('input[name="slotMinutes"]').value = slotDurationInput.value || '60';
+            const stInput = form.querySelector('input[name="startTime"]');
+            const etInput = form.querySelector('input[name="endTime"]');
+            const smInput = form.querySelector('input[name="slotMinutes"]');
+            if (stInput) stInput.value = startTimeInput.value || '07:30';
+            if (etInput) etInput.value = endTimeInput.value || '17:30';
+            if (smInput) smInput.value = slotDurationInput.value || '240';
         }
         
         const formData = new FormData(form);
@@ -886,6 +891,7 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
             if (loader) loader.classList.add('d-none');
             if (container) container.classList.remove('d-none');
         } catch (err) {
+            console.error('[AI Schedule] generateProposal error:', err);
             showAiScheduleMessage('Không thể tạo đề xuất AI: ' + err.message, false);
             showStep(2);
         }
