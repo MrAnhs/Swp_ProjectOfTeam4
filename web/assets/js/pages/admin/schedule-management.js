@@ -364,6 +364,28 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
                                                               if (textarea) {
                                                                   const slots = buildCustomShiftTemplate();
                                                                   textarea.value = slots.join('\n');
+                                                                  
+                                                                  // Render visual shift blocks inside preview container
+                                                                  const previewContainer = document.getElementById('aiShiftPreviewBlocks');
+                                                                  if (previewContainer) {
+                                                                      if (slots.length === 0) {
+                                                                          previewContainer.innerHTML = '<div class="text-center text-muted py-2 small">Chưa thiết kế khung ca trực nào</div>';
+                                                                      } else {
+                                                                          let html = '<div class="d-flex flex-wrap gap-2">';
+                                                                          slots.forEach(slot => {
+                                                                              const parts = slot.split('|');
+                                                                              if (parts.length >= 2) {
+                                                                                  const time = parts[0];
+                                                                                  const dept = parts[1];
+                                                                                  const displayDept = departmentMapping[dept] || dept;
+                                                                                  html += '<span class="badge bg-purple-subtle text-purple border border-purple-subtle" style="background:#f3e8ff; color:#6b21a8; font-size:0.75rem; font-weight:600; padding:0.25rem 0.5rem; border-radius:6px;">' 
+                                                                                       + time + ' (' + displayDept + ')</span>';
+                                                                              }
+                                                                          });
+                                                                          html += '</div>';
+                                                                          previewContainer.innerHTML = html;
+                                                                      }
+                                                                  }
                                                               }
                                                               updateAiMaxSchedules();
                                                           }
