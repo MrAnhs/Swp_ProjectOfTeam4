@@ -34,7 +34,7 @@ public class LaboratoryRequestServlet extends DoctorServlet {
             int doctorId = getDoctorId(currentUser);
 
             dao.createLaboratoryRequest(
-                    recordId, doctorId, serviceIds, requestNote);
+                    recordId, doctorId, serviceIds, requestNote, 0);
             session.setAttribute("doctorMessage",
                     "Đã tạo hóa đơn cho " + serviceIds.length
                     + " loại xét nghiệm. Yêu cầu sẽ được gửi đến phòng xét nghiệm "

@@ -616,28 +616,97 @@ public class DoctorLabServlet extends HttpServlet {
                     }
                 }
 
-                // 2. Insert the Healthy_Record
+                // 2. Fetch invoice_id and check if Healthy_Record already exists for this invoice
                 int healthRecordId = -1;
-                String sqlInsert = "INSERT INTO Healthy_Record (urea, cr, hba1c, chol, tg, hdl, ldl, vldl, bmi, patient_id, weight, height, other_information, status, created_at) " +
-                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved', GETDATE())";
-                try (PreparedStatement stmt = conn.prepareStatement(sqlInsert, PreparedStatement.RETURN_GENERATED_KEYS)) {
-                    stmt.setBigDecimal(1, urea);
-                    stmt.setBigDecimal(2, cr);
-                    stmt.setBigDecimal(3, hba1c);
-                    stmt.setBigDecimal(4, chol);
-                    stmt.setBigDecimal(5, tg);
-                    stmt.setBigDecimal(6, hdl);
-                    stmt.setBigDecimal(7, ldl);
-                    stmt.setBigDecimal(8, vldl);
-                    stmt.setBigDecimal(9, bmi);
-                    stmt.setInt(10, patientId);
-                    stmt.setBigDecimal(11, weight);
-                    stmt.setBigDecimal(12, height);
-                    stmt.setString(13, otherInfo);
-                    stmt.executeUpdate();
-                    try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
-                        if (generatedKeys.next()) {
-                            healthRecordId = generatedKeys.getInt(1);
+                int invoiceId = -1;
+                if (waitingIdStr != null && !waitingIdStr.trim().isEmpty()) {
+                    int waitingId = Integer.parseInt(waitingIdStr.trim());
+                    String sqlGetInvoice = "SELECT invoice_id FROM Invoice_Detail WHERE invoice_detail_id = ?";
+                    try (PreparedStatement ps = conn.prepareStatement(sqlGetInvoice)) {
+                        ps.setInt(1, waitingId);
+                        try (ResultSet rs = ps.executeQuery()) {
+                            if (rs.next()) {
+                                invoiceId = rs.getInt("invoice_id");
+                            }
+                        }
+                    }
+                }
+
+                if (invoiceId > 0) {
+                    String sqlFindRecord = "SELECT health_record_id FROM Healthy_Record WHERE invoice_id = ?";
+                    try (PreparedStatement ps = conn.prepareStatement(sqlFindRecord)) {
+                        ps.setInt(1, invoiceId);
+                        try (ResultSet rs = ps.executeQuery()) {
+                            if (rs.next()) {
+                                healthRecordId = rs.getInt("health_record_id");
+                            }
+                        }
+                    }
+                }
+
+                if (healthRecordId > 0) {
+                    // Update existing Healthy_Record with non-null values
+                    String sqlUpdate = "UPDATE Healthy_Record SET " +
+                            "urea = COALESCE(?, urea), " +
+                            "cr = COALESCE(?, cr), " +
+                            "hba1c = COALESCE(?, hba1c), " +
+                            "chol = COALESCE(?, chol), " +
+                            "tg = COALESCE(?, tg), " +
+                            "hdl = COALESCE(?, hdl), " +
+                            "ldl = COALESCE(?, ldl), " +
+                            "vldl = COALESCE(?, vldl), " +
+                            "bmi = COALESCE(?, bmi), " +
+                            "weight = COALESCE(?, weight), " +
+                            "height = COALESCE(?, height), " +
+                            "other_information = CASE WHEN ? IS NOT NULL AND LTRIM(RTRIM(?)) <> '' THEN ? ELSE other_information END, " +
+                            "status = 'approved' " +
+                            "WHERE health_record_id = ?";
+                    try (PreparedStatement stmt = conn.prepareStatement(sqlUpdate)) {
+                        stmt.setBigDecimal(1, urea);
+                        stmt.setBigDecimal(2, cr);
+                        stmt.setBigDecimal(3, hba1c);
+                        stmt.setBigDecimal(4, chol);
+                        stmt.setBigDecimal(5, tg);
+                        stmt.setBigDecimal(6, hdl);
+                        stmt.setBigDecimal(7, ldl);
+                        stmt.setBigDecimal(8, vldl);
+                        stmt.setBigDecimal(9, bmi);
+                        stmt.setBigDecimal(10, weight);
+                        stmt.setBigDecimal(11, height);
+                        stmt.setString(12, otherInfo);
+                        stmt.setString(13, otherInfo);
+                        stmt.setString(14, otherInfo);
+                        stmt.setInt(15, healthRecordId);
+                        stmt.executeUpdate();
+                    }
+                } else {
+                    // Insert a new Healthy_Record
+                    String sqlInsert = "INSERT INTO Healthy_Record (urea, cr, hba1c, chol, tg, hdl, ldl, vldl, bmi, patient_id, weight, height, other_information, status, created_at, invoice_id) " +
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved', GETDATE(), ?)";
+                    try (PreparedStatement stmt = conn.prepareStatement(sqlInsert, PreparedStatement.RETURN_GENERATED_KEYS)) {
+                        stmt.setBigDecimal(1, urea);
+                        stmt.setBigDecimal(2, cr);
+                        stmt.setBigDecimal(3, hba1c);
+                        stmt.setBigDecimal(4, chol);
+                        stmt.setBigDecimal(5, tg);
+                        stmt.setBigDecimal(6, hdl);
+                        stmt.setBigDecimal(7, ldl);
+                        stmt.setBigDecimal(8, vldl);
+                        stmt.setBigDecimal(9, bmi);
+                        stmt.setInt(10, patientId);
+                        stmt.setBigDecimal(11, weight);
+                        stmt.setBigDecimal(12, height);
+                        stmt.setString(13, otherInfo);
+                        if (invoiceId > 0) {
+                            stmt.setInt(14, invoiceId);
+                        } else {
+                            stmt.setNull(14, java.sql.Types.INTEGER);
+                        }
+                        stmt.executeUpdate();
+                        try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                            if (generatedKeys.next()) {
+                                healthRecordId = generatedKeys.getInt(1);
+                            }
                         }
                     }
                 }

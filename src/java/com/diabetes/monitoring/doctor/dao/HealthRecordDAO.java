@@ -1725,6 +1725,12 @@ public class HealthRecordDAO {
                     ps.setInt(1, recordId);
                     ps.executeUpdate();
                 }
+                String updateHealthyRecordSql = "UPDATE Healthy_Record SET invoice_id = ? WHERE health_record_id = ?";
+                try (PreparedStatement ps = conn.prepareStatement(updateHealthyRecordSql)) {
+                    ps.setInt(1, invoiceId);
+                    ps.setInt(2, recordId);
+                    ps.executeUpdate();
+                }
                 notificationService.notifyInvoiceCreated(conn, invoiceId);
                 conn.commit();
                 return true;
