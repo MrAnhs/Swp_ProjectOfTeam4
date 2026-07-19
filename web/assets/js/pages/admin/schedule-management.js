@@ -377,7 +377,17 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
                                                                               if (parts.length >= 2) {
                                                                                   const time = parts[0];
                                                                                   const dept = parts[1];
-                                                                                  const displayDept = departmentMapping[dept] || dept;
+                                                                                  const vietnameseDepts = {
+                                                                                      'Endocrinology': 'Nội tiết - Tiểu đường',
+                                                                                      'Cardiology': 'Tim mạch',
+                                                                                      'Nephrology': 'Thận học',
+                                                                                      'General': 'Tổng quát',
+                                                                                      'Nội tiết - Tiểu đường': 'Nội tiết - Tiểu đường',
+                                                                                      'Tim mạch': 'Tim mạch',
+                                                                                      'Thận học': 'Thận học',
+                                                                                      'Tổng quát': 'Tổng quát'
+                                                                                  };
+                                                                                  const displayDept = vietnameseDepts[dept] || dept;
                                                                                   html += '<span class="badge bg-purple-subtle text-purple border border-purple-subtle" style="background:#f3e8ff; color:#6b21a8; font-size:0.75rem; font-weight:600; padding:0.25rem 0.5rem; border-radius:6px;">' 
                                                                                        + time + ' (' + displayDept + ')</span>';
                                                                               }

@@ -185,11 +185,10 @@ public final class GeminiSchedulingService {
         prompt.append("]\nRÀNG BUỘC TOÁN HỌC - TUÂN THỦ NGHIÊM NGẶT QUY TẮC Y TẾ:\n")
                 .append("1. CÂN BẰNG CA: Đếm tổng số ca trống N và tổng số bác sĩ hợp lệ M. Mỗi bác sĩ phải nhận số ca bằng nhau hoặc chỉ chênh lệch tối đa 1 ca. Đây là ưu tiên cực kỳ cao.\n")
                 .append("2. QUY TẮC CHUYÊN KHOA: Bác sĩ bắt buộc phải được xếp trực ở phòng khám thuộc ĐÚNG chuyên khoa (department) của họ. Ngoại lệ duy nhất là bác sĩ thuộc khoa 'General' (Khám tổng quát) được phép trực ở bất kỳ khoa nào.\n")
-                .append("3. GIỚI HẠN THEO NGÀY: Một bác sĩ tối đa trực 2 ca nửa buổi (Morning/Afternoon) hoặc 1 ca cả ngày (FullDay) trong một ngày. Nếu trực ca FullDay thì tuyệt đối không được trực thêm ca nào khác cùng ngày đó.\n")
+                .append("3. KHÔNG TRÙNG CA: Một bác sĩ tuyệt đối không được gán 2 ca trực trùng nhau về mặt thời gian (time_slot) trong cùng một ngày. (Bác sĩ được phép trực nhiều ca khác nhau trong ngày miễn là không trùng khung giờ).\n")
                 .append("4. GIỚI HẠN THEO TUẦN: Tổng thời gian làm việc của một bác sĩ không được vượt quá 44 giờ/tuần (tương ứng tối đa 11 ca nửa buổi trong 1 tuần, ca FullDay tính bằng 2 ca nửa buổi).\n")
-                .append("5. KHÔNG TRỰC LIÊN TIẾP: Một bác sĩ không được trực 2 ca liên tiếp trong cùng một ngày.\n")
-                .append("6. Đổi doctor_id null bằng doctor_id hợp lệ của doctors_list, giữ nguyên thứ tự, date, time_slot và department của empty_schedules.\n")
-                .append("7. Chỉ trả JSON: [{\"doctor_id\":\"1\",\"date\":\"dd/MM/yyyy\",")
+                .append("5. Đổi doctor_id null bằng doctor_id hợp lệ của doctors_list, giữ nguyên thứ tự, date, time_slot và department của empty_schedules.\n")
+                .append("6. Chỉ trả JSON: [{\"doctor_id\":\"1\",\"date\":\"dd/MM/yyyy\",")
                 .append("\"time_slot\":\"HH:mm-HH:mm\",\"department\":\"Endocrinology|General|...\"}]. ")
                 .append("Không markdown, không giải thích, không dấu ba chấm.");
         return prompt.toString();
@@ -255,7 +254,7 @@ public final class GeminiSchedulingService {
 
         Map<String, Integer> actualSlots = new HashMap<>();
         Map<String, Integer> previousDoctorByDate = new HashMap<>();
-        Map<String, Integer> dailyShiftCount = new HashMap<>();
+        Set<String> doctorAssignedSlots = new HashSet<>();
         Map<String, Integer> contextWeeklyShiftCount = new HashMap<>();
         Map<Integer, Integer> simulatedLoad = new HashMap<>();
         Map<Integer, Integer> totalAssignedCount = new HashMap<>();
@@ -294,30 +293,18 @@ public final class GeminiSchedulingService {
             boolean isFullDay = timeSlotLower.contains("fullday") || timeSlotLower.contains("cả ngày") 
                     || timeSlotLower.contains("07:30-17:00") || timeSlotLower.contains("07:30-17:30");
 
-            // Rule 2: Rest Period / Daily Limit Constraint
-            String dailyKey = workDate + "|" + doctorId;
-            int shiftsToday = dailyShiftCount.getOrDefault(dailyKey, 0);
-            if (isFullDay) {
-                if (shiftsToday > 0) {
-                    return "bác sĩ " + doctorId + " đã có ca trực khác trong ngày " + workDate + ", không thể xếp thêm ca FullDay";
-                }
-            } else {
-                if (shiftsToday >= 2) {
-                    return "bác sĩ " + doctorId + " vượt quá 2 ca trong ngày " + workDate;
-                }
-                if (shiftsToday == 2) { // 2 shifts representation indicates a FullDay was already assigned
-                    return "bác sĩ " + doctorId + " đã trực ca FullDay trong ngày " + workDate;
-                }
+            // Rule 2: Anti-collision (No overlapping shifts for the same doctor on the same day)
+            String doctorSlotKey = workDate + "|" + row.get("timeSlot") + "|" + doctorId;
+            if (doctorAssignedSlots.contains(doctorSlotKey)) {
+                return "bác sĩ " + doctorId + " bị trùng ca trực " + row.get("timeSlot") + " ngày " + workDate;
             }
+            doctorAssignedSlots.add(doctorSlotKey);
 
             // Rule 3: Weekly Hour Limit Constraint (Max 44 hours / 11 half-shifts per week)
             java.time.LocalDate localDate = java.time.LocalDate.parse(workDate);
             java.time.LocalDate monday = localDate.minusDays(localDate.getDayOfWeek().getValue() - 1);
             String weeklyKey = monday.toString() + "|" + doctorId;
             
-            // Initialization of weekly counts map is handled at method level if needed, 
-            // but we can initialize a local map at the validation method start scope.
-            // Let's ensure weeklyShiftCount map is created.
             if (!contextWeeklyShiftCount.containsKey(weeklyKey)) {
                 contextWeeklyShiftCount.put(weeklyKey, 0);
             }
@@ -337,8 +324,7 @@ public final class GeminiSchedulingService {
                 if (candidateId == doctorId
                         || (candidatePreviousDoctor != null && candidatePreviousDoctor == candidateId)
                         || !"active".equalsIgnoreCase(String.valueOf(candidate.get("status")))
-                        || number(candidate.get("currentLoad")) >= 90
-                        || dailyShiftCount.getOrDefault(workDate + "|" + candidateId, 0) >= 2) {
+                        || number(candidate.get("currentLoad")) >= 90) {
                     continue;
                 }
                 int candidateLoad = simulatedLoad.getOrDefault(
@@ -356,7 +342,6 @@ public final class GeminiSchedulingService {
             if (previousDoctor != null && previousDoctor == doctorId) {
                 return "bác sĩ " + doctorId + " bị xếp hai ca liên tiếp ngày " + workDate;
             }
-            dailyShiftCount.put(dailyKey, isFullDay ? 2 : (shiftsToday + 1));
             simulatedLoad.put(doctorId, selectedLoad + (isFullDay ? 2 : 1));
             totalAssignedCount.put(doctorId, selectedAssigned + (isFullDay ? 2 : 1));
         }
