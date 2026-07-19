@@ -479,6 +479,10 @@
                 <i class="bi bi-people-fill text-success"></i>
                 <span class="nav-text">Danh sách bệnh nhân</span>
             </a>
+            <a href="#pill-schedule" class="nav-link nav-item-dash" id="pill-schedule-tab" data-bs-toggle="pill" role="tab" aria-controls="pill-schedule" aria-selected="false">
+                <i class="bi bi-calendar3 text-success"></i>
+                <span class="nav-text">Lịch trực cá nhân</span>
+            </a>
             <div class="nav-item-group-rooms">
                 <a href="#pill-rooms" class="nav-link nav-item-dash" id="pill-rooms-tab" data-bs-toggle="pill" role="tab" aria-controls="pill-rooms" aria-selected="false" onclick="onParentRoomClick()">
                     <i class="bi bi-door-closed text-success"></i>
@@ -1196,7 +1200,6 @@
                     </div>
                 </div>
             </div>
-        
             <!-- Module 5: Lịch làm việc -->
             
             <div class="tab-pane fade" id="pill-schedule" role="tabpanel" aria-labelledby="pill-schedule-tab">
