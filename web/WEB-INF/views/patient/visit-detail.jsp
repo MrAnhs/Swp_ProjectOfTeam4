@@ -20,8 +20,9 @@
         <header class="page-header"><div><p class="page-eyebrow">Bệnh án</p><h1 id="visitTitle">Chi tiết lần khám</h1><p id="visitMeta">Đang tải...</p></div><a class="btn-page-secondary" href="${pageContext.request.contextPath}/patient/history"><i class="bi bi-arrow-left"></i> Quay lại</a></header>
         <section class="page-card"><div id="visitDetail" class="loading-state">Đang tải kết quả...</div></section>
     </main>
-    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/app-config.js?v=20260709-fontfix2"></script>
-    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/api-client.js?v=20260709-fontfix2"></script>
-    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/patient/visit-detail.js?v=20260709-fontfix2"></script>
+    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/app-config.js?v=20260710-patient-fontfix-all2"></script>
+    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/api-client.js?v=20260710-patient-fontfix-all2"></script>
+    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/patient/appointment-status.js?v=20260710-patient-fontfix-all2"></script>
+    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/patient/visit-detail.js?v=20260710-patient-fontfix-all2"></script>
 </body>
 </html>

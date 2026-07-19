@@ -31,6 +31,7 @@ public class HealthRecord {
     private int priorityLevel;
     private boolean syncedAutomatically;
     private Timestamp syncedAt;
+    private Timestamp revisitDate;
 
     public HealthRecord() {
     }
@@ -399,5 +400,20 @@ public class HealthRecord {
 
     public int getRecord_id() {
         return this.healthRecordId;
+    }
+
+    public Timestamp getRevisitDate() {
+        return revisitDate;
+    }
+
+    public void setRevisitDate(Timestamp revisitDate) {
+        this.revisitDate = revisitDate;
+    }
+
+    public String getRevisitDateFormatted() {
+        if (revisitDate == null) {
+            return "";
+        }
+        return new java.text.SimpleDateFormat("yyyy-MM-dd").format(revisitDate);
     }
 }

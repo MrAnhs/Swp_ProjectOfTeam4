@@ -10,11 +10,18 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 
 public class PatientAppointmentServlet extends HttpServlet {
+    private static final long BOOKING_INTERVAL_MILLIS = 60_000L;
+    private static final String LAST_SUCCESSFUL_BOOKING =
+            PatientAppointmentServlet.class.getName() + ".lastSuccessfulBooking";
+
     private final AppointmentService appointmentService = new AppointmentService();
     private final PatientAppointmentDAO appointmentDAO = new PatientAppointmentDAO();
 
@@ -33,8 +40,8 @@ public class PatientAppointmentServlet extends HttpServlet {
         try {
             String appointmentIdParameter = request.getParameter("id");
             if (appointmentIdParameter == null || appointmentIdParameter.isBlank()) {
-                writeAppointmentList(response,
-                        appointmentDAO.findByPatientAccountId(currentUser.getId()));
+                writeAppointmentList(response, appointmentDAO.findByPatientAccountId(
+                        currentUser.getId(), parseSearchDate(request.getParameter("searchDate"))));
                 return;
             }
 
@@ -63,17 +70,32 @@ public class PatientAppointmentServlet extends HttpServlet {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 
-        User currentUser = (User) request.getSession().getAttribute("currentUser");
+        HttpSession session = request.getSession();
+        User currentUser = (User) session.getAttribute("currentUser");
         if (currentUser == null) {
             writeError(response, HttpServletResponse.SC_UNAUTHORIZED, "Bạn chưa đăng nhập.");
             return;
         }
+
+        synchronized (session) {
+            Long lastSuccessfulBooking = (Long) session.getAttribute(LAST_SUCCESSFUL_BOOKING);
+            if (lastSuccessfulBooking != null) {
+                long elapsed = System.currentTimeMillis() - lastSuccessfulBooking;
+                if (elapsed < BOOKING_INTERVAL_MILLIS) {
+                    long seconds = (BOOKING_INTERVAL_MILLIS - elapsed + 999L) / 1000L;
+                    writeError(response, 429,
+                            "Bạn vừa đặt lịch thành công. Vui lòng thử lại sau "
+                            + seconds + " giây.");
+                    return;
+                }
+            }
 
         try {
             int doctorId = parsePositiveInt(request.getParameter("doctorId"));
             int scheduleId = parsePositiveInt(request.getParameter("scheduleId"));
             AppointmentBookingResult result = appointmentService.bookByDoctor(
                     currentUser.getId(), doctorId, scheduleId);
+            session.setAttribute(LAST_SUCCESSFUL_BOOKING, System.currentTimeMillis());
             response.setStatus(HttpServletResponse.SC_CREATED);
             response.getWriter().print(toJson(result));
         } catch (IllegalArgumentException | NullPointerException e) {
@@ -86,6 +108,7 @@ public class PatientAppointmentServlet extends HttpServlet {
             writeError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     "Không thể tạo lịch hẹn. Vui lòng thử lại.");
         }
+        }
     }
 
     private int parsePositiveInt(String value) {
@@ -94,6 +117,17 @@ public class PatientAppointmentServlet extends HttpServlet {
             throw new NumberFormatException("Value must be positive");
         }
         return number;
+    }
+
+    private LocalDate parseSearchDate(String value) throws IOException {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return LocalDate.parse(value);
+        } catch (DateTimeParseException e) {
+            throw new IOException("Ngày tìm kiếm không hợp lệ.", e);
+        }
     }
 
     private String toJson(AppointmentBookingResult result) {
@@ -105,7 +139,10 @@ public class PatientAppointmentServlet extends HttpServlet {
                 .append("\"status\":\"").append(escapeJson(result.getStatus())).append("\",")
                 .append("\"doctorName\":\"").append(escapeJson(result.getDoctorName())).append("\",")
                 .append("\"department\":\"").append(escapeJson(result.getDepartment())).append("\",")
-                .append("\"timeSlot\":\"").append(escapeJson(result.getTimeSlot())).append("\"}")
+                .append("\"timeSlot\":\"").append(escapeJson(result.getTimeSlot())).append("\",")
+                .append("\"roomId\":").append(result.getRoomId() == null ? "null" : result.getRoomId()).append(',')
+                .append("\"roomName\":\"").append(escapeJson(result.getRoomName())).append("\",")
+                .append("\"roomLocation\":\"").append(escapeJson(result.getRoomLocation())).append("\"}")
                 .toString();
     }
 
@@ -128,13 +165,15 @@ public class PatientAppointmentServlet extends HttpServlet {
                 .append("\"doctorId\":").append(appointment.getDoctorId()).append(',')
                 .append("\"scheduleId\":").append(appointment.getScheduleId()).append(',')
                 .append("\"conversationId\":")
-                .append(appointment.getConversationId() == null
-                        ? "null" : appointment.getConversationId()).append(',')
+                .append(appointment.getConversationId() == null ? "null" : appointment.getConversationId()).append(',')
                 .append("\"doctorName\":\"").append(escapeJson(appointment.getDoctorName())).append("\",")
                 .append("\"department\":\"").append(escapeJson(appointment.getDepartment())).append("\",")
                 .append("\"doctorPhone\":\"").append(escapeJson(appointment.getDoctorPhone())).append("\",")
                 .append("\"doctorEmail\":\"").append(escapeJson(appointment.getDoctorEmail())).append("\",")
                 .append("\"timeSlot\":\"").append(escapeJson(appointment.getTimeSlot())).append("\",")
+                .append("\"roomId\":").append(appointment.getRoomId() == null ? "null" : appointment.getRoomId()).append(',')
+                .append("\"roomName\":\"").append(escapeJson(appointment.getRoomName())).append("\",")
+                .append("\"roomLocation\":\"").append(escapeJson(appointment.getRoomLocation())).append("\",")
                 .append("\"appointmentTime\":\"").append(appointment.getAppointmentTime()).append("\",")
                 .append("\"bookingType\":\"").append(escapeJson(appointment.getBookingType())).append("\",")
                 .append("\"queueNumber\":").append(appointment.getQueueNumber()).append(',')

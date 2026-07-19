@@ -242,8 +242,10 @@ public class ProcessAIServlet extends HttpServlet {
     }
 
     private String buildAiPayload(HealthRecord record) {
+        String genderStr = record.getGender() != null ? record.getGender().toLowerCase() : "male";
         return "{"
-                + "\"urea\":" + record.getUrea()
+                + "\"health_record_id\":" + record.getHealthRecordId()
+                + ",\"urea\":" + record.getUrea()
                 + ",\"cr\":" + record.getCr()
                 + ",\"hba1c\":" + record.getHba1c()
                 + ",\"chol\":" + record.getChol()
@@ -252,6 +254,8 @@ public class ProcessAIServlet extends HttpServlet {
                 + ",\"ldl\":" + record.getLdl()
                 + ",\"vldl\":" + record.getVldl()
                 + ",\"bmi\":" + record.getBmi()
+                + ",\"age\":" + record.getAge()
+                + ",\"gender\":\"" + genderStr + "\""
                 + "}";
     }
 

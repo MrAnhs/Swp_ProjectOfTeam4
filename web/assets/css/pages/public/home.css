@@ -1,9 +1,9 @@
 :root {
-            --primary-color: #2dbbbc;
-            --primary-dark: #239495;
-            --primary-light: #e8f7f4;
-            --gradient-start: #f4fbf9;
-            --gradient-end: #e8f7f4;
+            --primary-color: #2AB5A3;
+            --primary-dark: #208A7C;
+            --primary-light: #E9FAF7;
+            --gradient-start: #FFFFFF;
+            --gradient-end: #F8FAFC;
         }
 
         * {

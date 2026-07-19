@@ -10,6 +10,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 
 public class PatientInvoiceServlet extends HttpServlet {
@@ -25,7 +27,8 @@ public class PatientInvoiceServlet extends HttpServlet {
         try {
             String idParameter = request.getParameter("id");
             if (idParameter == null || idParameter.isBlank()) {
-                writeList(response, invoiceDAO.findByPatientAccountId(user.getId()));
+                writeList(response, invoiceDAO.findByPatientAccountId(
+                        user.getId(), parseSearchDate(request.getParameter("searchDate"))));
                 return;
             }
             int invoiceId = positiveId(idParameter);
@@ -83,6 +86,17 @@ public class PatientInvoiceServlet extends HttpServlet {
         int id = Integer.parseInt(value);
         if (id <= 0) throw new NumberFormatException();
         return id;
+    }
+
+    private LocalDate parseSearchDate(String value) throws IOException {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return LocalDate.parse(value);
+        } catch (DateTimeParseException e) {
+            throw new IOException("Ngày tìm kiếm không hợp lệ.", e);
+        }
     }
 
     private void prepare(HttpServletResponse response) {

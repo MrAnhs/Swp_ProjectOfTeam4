@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Trigger hot reload v22 -->
 
 <web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
 
@@ -35,6 +36,7 @@
         <url-pattern>/doctor-lab/*</url-pattern>
         <url-pattern>/ai-chat</url-pattern>
         <url-pattern>/update-profile</url-pattern>
+        <url-pattern>/settings/*</url-pattern>
         <url-pattern>/ai-conversation</url-pattern>
         <url-pattern>/ai-summary</url-pattern>
         <url-pattern>/get-ai-summary</url-pattern>
@@ -400,6 +402,16 @@
 
         <url-pattern>/update-profile</url-pattern>
 
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>ProfileServlet</servlet-name>
+        <servlet-class>com.diabetes.monitoring.profile.ProfileServlet</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>ProfileServlet</servlet-name>
+        <url-pattern>/settings/*</url-pattern>
     </servlet-mapping>
 
 

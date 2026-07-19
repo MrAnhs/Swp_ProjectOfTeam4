@@ -52,12 +52,13 @@ public class ReceptionistDAO {
     }
 
     public Map<String, Object> findAppointmentPreview(int appointmentId) throws SQLException {
-        String sql = "SELECT TOP 1 a.appointment_id, a.patient_id, a.doctor_id, a.schedule_id, a.appointment_time, "
+        String sql = "SELECT TOP 1 a.appointment_id, a.patient_id, ds.doctor_id AS doctor_id, a.schedule_id, a.appointment_time, "
                 + "a.booking_type, a.queue_number, a.status, p.full_name, p.phone, p.email, p.address, "
                 + "p.date_of_birth, p.gender, d.full_name AS doctor_name, d.department "
                 + "FROM Appointment a "
                 + "INNER JOIN Patient p ON p.patient_id = a.patient_id "
-                + "LEFT JOIN Doctor d ON d.doctor_id = a.doctor_id "
+                + "LEFT JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
+                + "LEFT JOIN Doctor d ON d.doctor_id = ds.doctor_id "
                 + "WHERE a.appointment_id = ?";
         try (Connection connection = openConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -98,7 +99,8 @@ public class ReceptionistDAO {
                 + "p.full_name AS patient_name, p.phone, d.full_name AS doctor_name "
                 + "FROM Appointment a "
                 + "INNER JOIN Patient p ON p.patient_id = a.patient_id "
-                + "LEFT JOIN Doctor d ON d.doctor_id = a.doctor_id "
+                + "LEFT JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
+                + "LEFT JOIN Doctor d ON d.doctor_id = ds.doctor_id "
                 + "WHERE CAST(a.appointment_time AS date) BETWEEN ? AND ? "
                 + "ORDER BY a.appointment_time, a.queue_number";
         try (Connection connection = openConnection();
@@ -236,15 +238,16 @@ public class ReceptionistDAO {
             LocalDate workDate = ((Date) schedule.get("workDate")).toLocalDate();
             String timeSlot = (String) schedule.get("timeSlot");
             LocalDateTime appointmentTime = LocalDateTime.of(workDate, parseStartTime(timeSlot));
-            if (!appointmentTime.isAfter(LocalDateTime.now())) {
-                throw new ReceptionistException("Ca khám đã bắt đầu hoặc đã kết thúc.");
+            LocalDateTime endAppointmentTime = LocalDateTime.of(workDate, parseEndTime(timeSlot));
+            if (!endAppointmentTime.isAfter(LocalDateTime.now())) {
+                throw new ReceptionistException("Ca khám đã kết thúc.");
             }
 
             int booked = (Integer) schedule.get("booked");
             int maxPatients = (Integer) schedule.get("maxPatients");
             int queueNumber = nextQueueNumber(connection, request.scheduleId);
-            String bookingType = request.revisitAppointmentId > 0 ? "Revisit" : "At_Counter";
-            int appointmentId = insertAppointment(connection, patientId, request.doctorId,
+            String bookingType = "At_Counter";
+            int appointmentId = insertAppointment(connection, patientId,
                     request.scheduleId, appointmentTime, queueNumber, bookingType);
 
             if (booked + 1 >= maxPatients) {
@@ -344,6 +347,13 @@ public class ReceptionistDAO {
                     throw new ReceptionistException("Hóa đơn đã được xử lý trước đó.");
                 }
             }
+
+            String detailSql = "UPDATE Invoice_Detail SET lab_status = 'Requested' "
+                    + "WHERE invoice_id = ? AND lab_status = 'Waiting_Payment'";
+            try (PreparedStatement statement = connection.prepareStatement(detailSql)) {
+                statement.setInt(1, invoiceId);
+                statement.executeUpdate();
+            }
             connection.commit();
             return invoiceId;
         } catch (SQLException | ReceptionistException e) {
@@ -356,10 +366,12 @@ public class ReceptionistDAO {
 
     public List<Map<String, Object>> findTodayQueue(String status) throws SQLException {
         String sql = "SELECT a.appointment_id, a.queue_number, a.appointment_time, a.status, "
-                + "p.full_name AS patient_name, p.phone, d.full_name AS doctor_name "
+                + "p.full_name AS patient_name, p.phone, d.full_name AS doctor_name, mr.revisit_date "
                 + "FROM Appointment a "
                 + "INNER JOIN Patient p ON p.patient_id = a.patient_id "
-                + "LEFT JOIN Doctor d ON d.doctor_id = a.doctor_id "
+                + "LEFT JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
+                + "LEFT JOIN Doctor d ON d.doctor_id = ds.doctor_id "
+                + "LEFT JOIN Medical_record mr ON mr.appointment_id = a.appointment_id "
                 + "WHERE CAST(a.appointment_time AS date) = CAST(GETDATE() AS date) "
                 + (status == null || status.isBlank() ? "" : "AND a.status = ? ")
                 + "ORDER BY a.appointment_time, a.queue_number";
@@ -380,6 +392,14 @@ public class ReceptionistDAO {
                     item.put("patientName", resultSet.getString("patient_name"));
                     item.put("phone", resultSet.getString("phone"));
                     item.put("doctorName", resultSet.getString("doctor_name"));
+                    
+                    java.sql.Timestamp revisitTs = resultSet.getTimestamp("revisit_date");
+                    if (revisitTs != null) {
+                        item.put("revisitDate", new java.text.SimpleDateFormat("dd/MM/yyyy").format(revisitTs));
+                    } else {
+                        item.put("revisitDate", null);
+                    }
+                    
                     items.add(item);
                 }
                 return items;
@@ -410,13 +430,12 @@ public class ReceptionistDAO {
             LocalDate workDate = ((Date) schedule.get("workDate")).toLocalDate();
             String timeSlot = (String) schedule.get("timeSlot");
             LocalDateTime appointmentTime = LocalDateTime.of(workDate, parseStartTime(timeSlot));
-            String sql = "UPDATE Appointment SET doctor_id = ?, schedule_id = ?, appointment_time = ?, status = 'Waiting' "
+            String sql = "UPDATE Appointment SET schedule_id = ?, appointment_time = ?, status = 'Waiting' "
                     + "WHERE appointment_id = ? AND status IN ('Waiting', 'Checked_In')";
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
-                statement.setInt(1, doctorId);
-                statement.setInt(2, scheduleId);
-                statement.setTimestamp(3, Timestamp.valueOf(appointmentTime));
-                statement.setInt(4, appointmentId);
+                statement.setInt(1, scheduleId);
+                statement.setTimestamp(2, Timestamp.valueOf(appointmentTime));
+                statement.setInt(3, appointmentId);
                 if (statement.executeUpdate() == 0) {
                     throw new SQLException("Không thể đổi bác sĩ/ca cho lịch hẹn này.");
                 }
@@ -468,7 +487,8 @@ public class ReceptionistDAO {
             throws SQLException {
         String sql = "SELECT TOP 1 a.appointment_time, a.booking_type, a.status, "
                 + "a.queue_number, d.full_name AS doctor_name "
-                + "FROM Appointment a LEFT JOIN Doctor d ON a.doctor_id = d.doctor_id "
+                + "FROM Appointment a LEFT JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
+                + "LEFT JOIN Doctor d ON d.doctor_id = ds.doctor_id "
                 + "WHERE a.patient_id = ? ORDER BY a.appointment_time DESC";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, patientId);
@@ -615,24 +635,28 @@ public class ReceptionistDAO {
         }
     }
 
-    private int insertAppointment(Connection connection, int patientId, int doctorId, int scheduleId,
+    private int insertAppointment(Connection connection, int patientId, int scheduleId,
             LocalDateTime appointmentTime, int queueNumber, String bookingType) throws SQLException {
         boolean hasBookingSource = hasColumn(connection, "Appointment", "booking_source");
+        boolean hasConversationId = hasColumn(connection, "Appointment", "conversation_id");
         String effectiveBookingType = bookingType == null || bookingType.isBlank() ? "At_Counter" : bookingType;
-        String sql = hasBookingSource
-                ? "INSERT INTO Appointment (patient_id, doctor_id, schedule_id, conversation_id, "
-                + "appointment_time, booking_type, booking_source, queue_number, status, created_at) "
-                + "VALUES (?, ?, ?, NULL, ?, ?, 'Receptionist', ?, 'Waiting', GETDATE())"
-                : "INSERT INTO Appointment (patient_id, doctor_id, schedule_id, conversation_id, "
-                + "appointment_time, booking_type, queue_number, status, created_at) "
-                + "VALUES (?, ?, ?, NULL, ?, ?, ?, 'Waiting', GETDATE())";
+        String columns = hasConversationId
+                ? "patient_id, schedule_id, conversation_id, appointment_time, booking_type, "
+                : "patient_id, schedule_id, appointment_time, booking_type, ";
+        String values = hasConversationId ? "?, ?, NULL, ?, ?, " : "?, ?, ?, ?, ";
+        if (hasBookingSource) {
+            columns += "booking_source, ";
+            values += "'Receptionist', ";
+        }
+        String sql = "INSERT INTO Appointment (" + columns
+                + "queue_number, status, created_at) VALUES (" + values
+                + "?, 'Waiting', GETDATE())";
         try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             statement.setInt(1, patientId);
-            statement.setInt(2, doctorId);
-            statement.setInt(3, scheduleId);
-            statement.setTimestamp(4, Timestamp.valueOf(appointmentTime));
-            statement.setString(5, effectiveBookingType);
-            statement.setInt(6, queueNumber);
+            statement.setInt(2, scheduleId);
+            statement.setTimestamp(3, Timestamp.valueOf(appointmentTime));
+            statement.setString(4, effectiveBookingType);
+            statement.setInt(5, queueNumber);
             statement.executeUpdate();
             try (ResultSet keys = statement.getGeneratedKeys()) {
                 if (keys.next()) {
@@ -642,7 +666,6 @@ public class ReceptionistDAO {
         }
         throw new SQLException("Unable to create appointment");
     }
-
     private boolean hasColumn(Connection connection, String tableName, String columnName) throws SQLException {
         String sql = "SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -683,7 +706,12 @@ public class ReceptionistDAO {
 
     private void markLateWaitingAppointmentsAsAbsent(Connection connection) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement(
-                "UPDATE Appointment SET status = 'Absent' WHERE status = 'Waiting' AND appointment_time < GETDATE()")) {
+                "UPDATE a SET status = 'Absent' FROM Appointment a "
+                + "INNER JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
+                + "WHERE a.status = 'Waiting' "
+                + "AND DATEADD(SECOND, DATEDIFF(SECOND, CAST('00:00:00' AS time), "
+                + "TRY_CONVERT(time, RIGHT(REPLACE(ds.time_slot, ' ', ''), 5))), "
+                + "CAST(CAST(a.appointment_time AS date) AS datetime)) < GETDATE()")) {
             statement.executeUpdate();
         }
     }
@@ -693,6 +721,17 @@ public class ReceptionistDAO {
             return LocalTime.of(9, 0);
         }
         return LocalTime.parse(timeSlot.substring(0, 5));
+    }
+
+    private LocalTime parseEndTime(String timeSlot) {
+        if (timeSlot == null || timeSlot.length() < 11) {
+            return LocalTime.of(17, 0);
+        }
+        try {
+            return LocalTime.parse(timeSlot.substring(6, 11));
+        } catch (Exception e) {
+            return LocalTime.of(17, 0);
+        }
     }
 
     private Map<String, Object> mapAppointmentPreview(ResultSet resultSet) throws SQLException {
