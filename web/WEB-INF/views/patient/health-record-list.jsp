@@ -6,34 +6,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="app-context-path" content="${pageContext.request.contextPath}">
-    <title>Lịch sử hồ sơ - DiabetesCare</title>
+    <title>L&#7883;ch s&#7917; h&#7891; s&#417; - DiabetesCare</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/base/variables.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/layouts/patient-shell.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/pages/patient/patient-pages.css">
 </head>
 <body>
-    <c:set var="activePatientPage" value="records" />
+    <c:set var="activePatientPage" value="health-records" />
     <%@ include file="/WEB-INF/views/components/patient/sidebar.jspf" %>
     <main class="main-content-dash">
         <header class="page-header">
-            <div><p class="page-eyebrow">Hồ sơ sức khỏe</p><h1>Lịch sử hồ sơ</h1><p>Theo dõi các hồ sơ đã gửi và trạng thái xử lý.</p></div>
-            <a class="btn-page-primary" href="${pageContext.request.contextPath}/patient/health-records/new"><i class="bi bi-plus-circle"></i> Nộp hồ sơ mới</a>
+            <div><p class="page-eyebrow">H&#7891; s&#417; s&#7913;c kh&#7887;e</p><h1>L&#7883;ch s&#7917; h&#7891; s&#417;</h1><p>Theo d&#245;i c&#225;c h&#7891; s&#417; &#273;&#227; g&#7917;i v&#224; tr&#7841;ng th&#225;i x&#7917; l&#253;.</p></div>
         </header>
         <section class="page-card">
-            <div class="filter-bar">
-                <label>Trạng thái
-                    <select id="statusFilter"><option value="">Tất cả</option><option value="pending">Chờ xử lý</option><option value="approved">Đã duyệt</option></select>
+            <div class="filter-row">
+                <label>Tr&#7841;ng th&#225;i
+                    <select id="statusFilter"><option value="">T&#7845;t c&#7843;</option><option value="pending">Ch&#7901; x&#7917; l&#253;</option><option value="approved">&#272;&#227; duy&#7879;t</option></select>
                 </label>
-                <label>Tìm kiếm<input id="recordSearch" type="search" placeholder="Mã hồ sơ hoặc triệu chứng"></label>
+                <label>T&#236;m ki&#7871;m<input id="recordSearch" type="search" placeholder="M&#227; h&#7891; s&#417; ho&#7863;c tri&#7879;u ch&#7913;ng"></label>
             </div>
-            <div id="recordList" class="record-list loading-state">Đang tải danh sách hồ sơ...</div>
+            <div id="recordList" class="record-list loading-state">&#272;ang t&#7843;i danh s&#225;ch h&#7891; s&#417;...</div>
         </section>
     </main>
-    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/app-config.js"></script>
-    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/api-client.js"></script>
-    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/patient/health-record-list.js"></script>
+    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/app-config.js?v=20260710-patient-fontfix-all2"></script>
+    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/api-client.js?v=20260710-patient-fontfix-all2"></script>
+    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/patient/health-record-status.js?v=20260710-patient-fontfix-all2"></script>
+    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/patient/health-record-list.js?v=20260710-patient-fontfix-all2"></script>
 </body>
 </html>

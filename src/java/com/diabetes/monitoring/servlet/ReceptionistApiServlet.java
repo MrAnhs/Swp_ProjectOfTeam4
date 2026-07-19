@@ -25,7 +25,11 @@ public class ReceptionistApiServlet extends HttpServlet {
         try {
             String path = apiPath(request);
             if ("/patients/search".equals(path)) {
-                write(response, successObject(service.searchPatient(request.getParameter("phone"))));
+                String keyword = request.getParameter("keyword");
+                if (keyword == null || keyword.isBlank()) {
+                    keyword = request.getParameter("phone");
+                }
+                write(response, successObject(service.searchPatient(keyword)));
                 return;
             }
             if ("/doctors".equals(path)) {
@@ -42,8 +46,21 @@ public class ReceptionistApiServlet extends HttpServlet {
                 return;
             }
             if ("/invoices".equals(path)) {
-                List<Map<String, Object>> invoices = service.getInvoices(request.getParameter("status"));
+                List<Map<String, Object>> invoices = service.getInvoices(request.getParameter("status"), request.getParameter("invoiceType"));
                 write(response, "{\"success\":true,\"invoices\":" + toJson(invoices) + "}");
+                return;
+            }
+            if ("/queue".equals(path)) {
+                List<Map<String, Object>> items = service.getTodayQueue(request.getParameter("status"));
+                write(response, "{\"success\":true,\"items\":" + toJson(items) + "}");
+                return;
+            }
+            if ("/appointments/preview".equals(path)) {
+                write(response, successObject(service.getAppointmentPreview(request.getParameter("appointmentId"))));
+                return;
+            }
+            if ("/appointments/calendar".equals(path)) {
+                write(response, "{\"success\":true,\"items\":" + toJson(service.getAppointmentCalendar(request.getParameter("fromDate"), request.getParameter("toDate"))) + "}");
                 return;
             }
             if ("/queue".equals(path)) {
@@ -66,6 +83,10 @@ public class ReceptionistApiServlet extends HttpServlet {
         prepareJson(response);
         try {
             String path = apiPath(request);
+            if ("/patients".equals(path)) {
+                write(response, "{\"success\":true,\"patient\":" + toJson(service.createPatient(params(request))) + "}");
+                return;
+            }
             if ("/appointments".equals(path)) {
                 write(response, successObject(service.registerAppointment(params(request))));
                 return;
@@ -81,6 +102,16 @@ public class ReceptionistApiServlet extends HttpServlet {
             if ("/queue/check-in".equals(path)) {
                 service.checkInAppointment(request.getParameter("appointmentId"));
                 write(response, "{\"success\":true,\"message\":\"Đã check-in bệnh nhân.\"}");
+                return;
+            }
+            if ("/queue/reassign".equals(path)) {
+                service.reassignAppointment(request.getParameter("appointmentId"), request.getParameter("doctorId"), request.getParameter("scheduleId"));
+                write(response, "{\"success\":true,\"message\":\"Đã đổi bác sĩ/ca khám thành công.\"}");
+                return;
+            }
+            if ("/queue/cancel".equals(path)) {
+                service.cancelAppointment(request.getParameter("appointmentId"));
+                write(response, "{\"success\":true,\"message\":\"Đã hủy lịch hẹn thành công.\"}");
                 return;
             }
             writeError(response, HttpServletResponse.SC_NOT_FOUND, "API không tồn tại.");

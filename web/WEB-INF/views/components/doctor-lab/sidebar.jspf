@@ -26,6 +26,9 @@
         <a href="#completed-list">
             <i class="bi bi-clock-history"></i> Lịch sử hoàn thành
         </a>
+        <a href="${pageContext.request.contextPath}/settings">
+            <i class="bi bi-gear"></i> Cài đặt
+        </a>
     </nav>
 
     <div class="lab-sidebar-footer">

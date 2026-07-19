@@ -7,6 +7,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,19 +21,31 @@ public class PatientVisitDAO {
             + "hr.other_information "
             + "FROM Appointment a "
             + "INNER JOIN Patient p ON p.patient_id = a.patient_id "
-            + "INNER JOIN Doctor d ON d.doctor_id = a.doctor_id "
+            + "INNER JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
+            + "INNER JOIN Doctor d ON d.doctor_id = ds.doctor_id "
             + "LEFT JOIN Medical_record mr ON mr.appointment_id = a.appointment_id "
             + "OUTER APPLY (SELECT TOP 1 h.* FROM Healthy_Record h "
             + "WHERE h.record_id = mr.record_id OR h.health_record_id = mr.health_record_id "
             + "ORDER BY h.created_at DESC, h.health_record_id DESC) hr ";
 
     public List<PatientVisit> findByAccountId(int accountId) throws SQLException {
-        String sql = SELECT + "WHERE p.account_id = ? "
+        return findByAccountId(accountId, null);
+    }
+
+    public List<PatientVisit> findByAccountId(int accountId, LocalDate searchDate)
+            throws SQLException {
+        String sql = SELECT + "WHERE p.account_id = "
+                + "? AND a.status IN ('Checked_In', 'In_Progress', 'Completed') "
+                + (searchDate == null ? "" : "AND CAST(a.appointment_time AS date) = ? ")
                 + "ORDER BY a.appointment_time DESC, a.appointment_id DESC";
         List<PatientVisit> visits = new ArrayList<>();
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
+            markExpiredWaitingAppointments(connection, accountId);
             statement.setInt(1, accountId);
+            if (searchDate != null) {
+                statement.setDate(2, java.sql.Date.valueOf(searchDate));
+            }
             try (ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) visits.add(map(resultSet));
             }
@@ -40,8 +53,26 @@ public class PatientVisitDAO {
         return visits;
     }
 
+    private void markExpiredWaitingAppointments(Connection connection, int accountId)
+            throws SQLException {
+        String sql = "UPDATE a SET status = 'Absent' "
+                + "FROM Appointment a "
+                + "INNER JOIN Patient p ON p.patient_id = a.patient_id "
+                + "INNER JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
+                + "WHERE p.account_id = ? "
+                + "AND a.status = 'Waiting' "
+                + "AND DATEADD(SECOND, DATEDIFF(SECOND, CAST('00:00:00' AS time), "
+                + "TRY_CONVERT(time, RIGHT(REPLACE(ds.time_slot, ' ', ''), 5))), "
+                + "CAST(CAST(a.appointment_time AS date) AS datetime)) < GETDATE()";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, accountId);
+            statement.executeUpdate();
+        }
+    }
+
     public PatientVisit findByAppointmentId(int appointmentId, int accountId) throws SQLException {
-        String sql = SELECT + "WHERE a.appointment_id = ? AND p.account_id = ?";
+        String sql = SELECT + "WHERE a.appointment_id = ? AND p.account_id = "
+                + "? AND a.status IN ('Checked_In', 'In_Progress', 'Completed')";
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, appointmentId);

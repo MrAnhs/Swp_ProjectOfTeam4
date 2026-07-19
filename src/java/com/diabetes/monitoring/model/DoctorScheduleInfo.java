@@ -9,6 +9,9 @@ public class DoctorScheduleInfo {
     private int maxPatients;
     private int bookedPatients;
     private String status;
+    private Integer roomId;
+    private String roomName;
+    private String roomLocation;
 
     public int getScheduleId() {
         return scheduleId;
@@ -60,5 +63,29 @@ public class DoctorScheduleInfo {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public Integer getRoomId() {
+        return roomId;
+    }
+
+    public void setRoomId(Integer roomId) {
+        this.roomId = roomId;
+    }
+
+    public String getRoomName() {
+        return roomName;
+    }
+
+    public void setRoomName(String roomName) {
+        this.roomName = roomName;
+    }
+
+    public String getRoomLocation() {
+        return roomLocation;
+    }
+
+    public void setRoomLocation(String roomLocation) {
+        this.roomLocation = roomLocation;
     }
 }

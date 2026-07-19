@@ -1,4 +1,4 @@
-﻿<%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <!DOCTYPE html>
@@ -392,6 +392,60 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
             background-color: #e6f6f3 !important;
         }
+        /* FAP Schedule Custom Styling */
+        .fap-card-slot {
+            padding: 6px 8px;
+            border-radius: 8px;
+            background: #ffffff;
+            border: 1px solid #e9ecef;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+            line-height: 1.3;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+        .fap-card-slot:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+        }
+        .slot-blood_sugar { 
+            border-left: 4px solid #dc3545 !important; 
+            background-color: #fef2f2 !important;
+            color: #991b1b !important;
+        }
+        .slot-urine_test  { 
+            border-left: 4px solid #0d6efd !important; 
+            background-color: #eff6ff !important;
+            color: #1e40af !important;
+        }
+        .slot-liver_test  { border-left: 4px solid #198754 !important; }
+        .slot-kidney_test { border-left: 4px solid #fd7e14 !important; }
+        .slot-lipids_test { border-left: 4px solid #0dcaf0 !important; }
+        .slot-lab_test    { border-left: 4px solid #6c757d !important; }
+        .fap-badge-mat {
+            background-color: #fff3cd !important;
+            color: #856404 !important;
+            border: 1px solid #ffeeba;
+            font-size: 0.65rem;
+            font-weight: 500;
+        }
+        .fap-badge-edunext {
+            background-color: #cce5ff !important;
+            color: #004085 !important;
+            border: 1px solid #b8daff;
+            font-size: 0.65rem;
+            font-weight: 500;
+        }
+        .fap-badge-meet {
+            background-color: #e2e3e5 !important;
+            color: #383d41 !important;
+            border: 1px solid #d6d8db;
+            font-size: 0.65rem;
+            font-weight: 500;
+        }
+        .fap-status-dot {
+            font-size: 0.75rem;
+            margin-right: 4px;
+        }
     </style>
 </head>
 <body>
@@ -472,10 +526,14 @@
                 <i class="bi bi-clock-history text-success"></i>
                 <span class="nav-text">Lịch sử xét nghiệm</span>
             </a>
+            <a href="#pill-schedule" class="nav-link nav-item-dash" id="pill-schedule-tab" data-bs-toggle="pill" role="tab" aria-controls="pill-schedule" aria-selected="false">
+                <i class="bi bi-calendar3 text-success"></i>
+                <span class="nav-text">Lịch làm việc</span>
+            </a>
         </nav>
 
         <div class="sidebar-footer">
-            <form action="${pageContext.request.contextPath}/auth" method="get" class="m-0">
+            <form action="${pageContext.request.contextPath}/logout" method="get" class="m-0">
                 <button type="submit" class="nav-item-dash btn-logout border-0 w-100 text-start bg-transparent">
                     <i class="bi bi-box-arrow-right"></i>
                     <span class="nav-text">Đăng xuất</span>
@@ -693,30 +751,59 @@
                                         <c:forEach var="r" items="${records}" varStatus="status">
                                             <c:if test="${status.index < 4}">
                                                 <c:choose>
-                                                    <c:when test="${r.otherInfo eq 'phòng xét nghiệm máu - chức năng gan'}">
+                                                    <c:when test="${fn:contains(r.otherInfo, 'gan')}">
                                                         <c:set var="cardTestName" value="Xét nghiệm chức năng gan" />
                                                         <c:set var="cardBadgeClass" value="bg-success" />
                                                         <c:set var="cardIcon" value="bi-heart-pulse-fill" />
                                                     </c:when>
-                                                    <c:when test="${r.otherInfo eq 'phòng xét nghiệm máu - chức năng thận'}">
+                                                    <c:when test="${fn:contains(r.otherInfo, 'thận')}">
                                                         <c:set var="cardTestName" value="Xét nghiệm chức năng thận" />
                                                         <c:set var="cardBadgeClass" value="bg-warning text-dark" />
                                                         <c:set var="cardIcon" value="bi-prescription" />
                                                     </c:when>
-                                                    <c:when test="${r.otherInfo eq 'phòng xét nghiệm máu - mỡ máu'}">
+                                                    <c:when test="${fn:contains(r.otherInfo, 'mỡ máu')}">
                                                         <c:set var="cardTestName" value="Xét nghiệm mỡ máu" />
                                                         <c:set var="cardBadgeClass" value="bg-primary" />
                                                         <c:set var="cardIcon" value="bi-droplet-half" />
                                                     </c:when>
-                                                    <c:when test="${r.otherInfo eq 'phòng xét nghiệm máu - đường huyết' or r.otherInfo eq 'phòng xét nghiệm máu' or (not empty r.hba1c and r.hba1c ne '0' and r.hba1c ne '0.0' and (empty r.cr or r.cr eq '0' or r.cr eq '0.0') and (empty r.chol or r.chol eq '0' or r.chol eq '0.0'))}">
+                                                    <c:when test="${fn:contains(r.otherInfo, 'nước tiểu')}">
+                                                        <c:set var="cardTestName" value="Xét nghiệm nước tiểu" />
+                                                        <c:set var="cardBadgeClass" value="bg-info text-dark" />
+                                                        <c:set var="cardIcon" value="bi-droplet" />
+                                                    </c:when>
+                                                    <c:when test="${fn:contains(r.otherInfo, 'đường huyết') or fn:contains(r.otherInfo, 'xét nghiệm máu')}">
                                                         <c:set var="cardTestName" value="Xét nghiệm đường huyết" />
                                                         <c:set var="cardBadgeClass" value="bg-danger" />
                                                         <c:set var="cardIcon" value="bi-activity" />
                                                     </c:when>
                                                     <c:otherwise>
-                                                        <c:set var="cardTestName" value="Xét nghiệm nước tiểu" />
-                                                        <c:set var="cardBadgeClass" value="bg-info text-dark" />
-                                                        <c:set var="cardIcon" value="bi-droplet" />
+                                                        <c:choose>
+                                                            <c:when test="${isLiverTest}">
+                                                                <c:set var="cardTestName" value="Xét nghiệm chức năng gan" />
+                                                                <c:set var="cardBadgeClass" value="bg-success" />
+                                                                <c:set var="cardIcon" value="bi-heart-pulse-fill" />
+                                                            </c:when>
+                                                            <c:when test="${isKidneyTest}">
+                                                                <c:set var="cardTestName" value="Xét nghiệm chức năng thận" />
+                                                                <c:set var="cardBadgeClass" value="bg-warning text-dark" />
+                                                                <c:set var="cardIcon" value="bi-prescription" />
+                                                            </c:when>
+                                                            <c:when test="${isLipidsTest}">
+                                                                <c:set var="cardTestName" value="Xét nghiệm mỡ máu" />
+                                                                <c:set var="cardBadgeClass" value="bg-primary" />
+                                                                <c:set var="cardIcon" value="bi-droplet-half" />
+                                                            </c:when>
+                                                            <c:when test="${not empty r.hba1c and r.hba1c ne '0' and r.hba1c ne '0.0'}">
+                                                                <c:set var="cardTestName" value="Xét nghiệm đường huyết" />
+                                                                <c:set var="cardBadgeClass" value="bg-danger" />
+                                                                <c:set var="cardIcon" value="bi-activity" />
+                                                            </c:when>
+                                                            <c:otherwise>
+                                                                <c:set var="cardTestName" value="Xét nghiệm nước tiểu" />
+                                                                <c:set var="cardBadgeClass" value="bg-info text-dark" />
+                                                                <c:set var="cardIcon" value="bi-droplet" />
+                                                            </c:otherwise>
+                                                        </c:choose>
                                                     </c:otherwise>
                                                 </c:choose>
                                                 <div class="col-md-6 mb-3">
@@ -754,7 +841,7 @@
             <!-- Module 2: Lịch sử xét nghiệm -->
             <div class="tab-pane fade" id="pill-history" role="tabpanel" aria-labelledby="pill-history-tab">
                 <div class="card card-custom">
-                    <div class="card-header card-header-custom py-3 d-flex justify-content-between align-items-center">
+                    <div class="card-header card-header-custom py-2 d-flex justify-content-between align-items-center">
                         <span><i class="bi bi-clock-history me-2"></i> Lịch sử kết quả xét nghiệm gần đây</span>
                         <span class="badge bg-success">approved</span>
                     </div>
@@ -781,17 +868,17 @@
                                             <c:forEach var="r" items="${records}">
                                                 <tr>
                                                     <c:choose>
-                                                         <c:when test="${r.otherInfo eq 'phòng xét nghiệm máu - chức năng gan'}">
+                                                         <c:when test="${fn:contains(r.otherInfo, 'gan')}">
                                                              <c:set var="isLiverTest" value="true" />
                                                              <c:set var="isLipidsTest" value="false" />
                                                              <c:set var="isKidneyTest" value="false" />
                                                          </c:when>
-                                                         <c:when test="${r.otherInfo eq 'phòng xét nghiệm máu - chức năng thận'}">
+                                                         <c:when test="${fn:contains(r.otherInfo, 'thận')}">
                                                              <c:set var="isLiverTest" value="false" />
                                                              <c:set var="isLipidsTest" value="false" />
                                                              <c:set var="isKidneyTest" value="true" />
                                                          </c:when>
-                                                         <c:when test="${r.otherInfo eq 'phòng xét nghiệm máu - mỡ máu'}">
+                                                         <c:when test="${fn:contains(r.otherInfo, 'mỡ máu')}">
                                                              <c:set var="isLiverTest" value="false" />
                                                              <c:set var="isLipidsTest" value="true" />
                                                              <c:set var="isKidneyTest" value="false" />
@@ -806,20 +893,39 @@
                                                     <td class="small text-secondary"><c:out value="${r.createdAt}" /></td>
                                                     <td>
                                                         <c:choose>
-                                                            <c:when test="${r.otherInfo eq 'phòng xét nghiệm máu - đường huyết' or r.otherInfo eq 'phòng xét nghiệm máu' or (not empty r.hba1c and r.hba1c ne '0' and r.hba1c ne '0.0' and (empty r.cr or r.cr eq '0' or r.cr eq '0.0') and (empty r.chol or r.chol eq '0' or r.chol eq '0.0'))}">
-                                                                <span class="badge bg-danger"><i class="bi bi-activity me-1"></i>Xét nghiệm đường huyết</span>
-                                                            </c:when>
-                                                            <c:when test="${isLiverTest}">
+                                                            <c:when test="${fn:contains(r.otherInfo, 'gan')}">
                                                                 <span class="badge bg-success"><i class="bi bi-heart-pulse-fill me-1"></i>Xét nghiệm chức năng gan</span>
                                                             </c:when>
-                                                            <c:when test="${isKidneyTest}">
+                                                            <c:when test="${fn:contains(r.otherInfo, 'thận')}">
                                                                 <span class="badge bg-warning text-dark"><i class="bi bi-prescription me-1"></i>Xét nghiệm chức năng thận</span>
                                                             </c:when>
-                                                            <c:when test="${isLipidsTest}">
+                                                            <c:when test="${fn:contains(r.otherInfo, 'mỡ máu')}">
                                                                 <span class="badge bg-primary"><i class="bi bi-droplet-half me-1"></i>Xét nghiệm mỡ máu</span>
                                                             </c:when>
-                                                            <c:otherwise>
+                                                            <c:when test="${fn:contains(r.otherInfo, 'nước tiểu')}">
                                                                 <span class="badge bg-info text-dark"><i class="bi bi-droplet me-1"></i>Xét nghiệm nước tiểu</span>
+                                                            </c:when>
+                                                            <c:when test="${fn:contains(r.otherInfo, 'đường huyết') or fn:contains(r.otherInfo, 'xét nghiệm máu')}">
+                                                                <span class="badge bg-danger"><i class="bi bi-activity me-1"></i>Xét nghiệm đường huyết</span>
+                                                            </c:when>
+                                                            <c:otherwise>
+                                                                <c:choose>
+                                                                    <c:when test="${isLiverTest}">
+                                                                        <span class="badge bg-success"><i class="bi bi-heart-pulse-fill me-1"></i>Xét nghiệm chức năng gan</span>
+                                                                    </c:when>
+                                                                    <c:when test="${isKidneyTest}">
+                                                                        <span class="badge bg-warning text-dark"><i class="bi bi-prescription me-1"></i>Xét nghiệm chức năng thận</span>
+                                                                    </c:when>
+                                                                    <c:when test="${isLipidsTest}">
+                                                                        <span class="badge bg-primary"><i class="bi bi-droplet-half me-1"></i>Xét nghiệm mỡ máu</span>
+                                                                    </c:when>
+                                                                    <c:when test="${not empty r.hba1c and r.hba1c ne '0' and r.hba1c ne '0.0'}">
+                                                                        <span class="badge bg-danger"><i class="bi bi-activity me-1"></i>Xét nghiệm đường huyết</span>
+                                                                    </c:when>
+                                                                    <c:otherwise>
+                                                                        <span class="badge bg-info text-dark"><i class="bi bi-droplet me-1"></i>Xét nghiệm nước tiểu</span>
+                                                                    </c:otherwise>
+                                                                </c:choose>
                                                             </c:otherwise>
                                                         </c:choose>
                                                     </td>
@@ -859,7 +965,7 @@
             <!-- Module 3: Danh sách bệnh nhân -->
             <div class="tab-pane fade" id="pill-patients" role="tabpanel" aria-labelledby="pill-patients-tab">
                 <div class="card card-custom">
-                    <div class="card-header card-header-custom py-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
+                    <div class="card-header card-header-custom py-2 d-flex flex-wrap align-items-center justify-content-between gap-3">
                         <span class="fw-bold"><i class="bi bi-people-fill me-2"></i> Danh sách bệnh nhân xét nghiệm</span>
                         
                         <!-- Search Box and Status Filters -->
@@ -896,7 +1002,7 @@
                                     <c:choose>
                                         <c:when test="${empty patients}">
                                             <tr>
-                                                                <td colspan="6" class="text-center py-4 text-secondary">Chưa có bệnh nhân nào đăng ký.</td>
+                                                <td colspan="6" class="text-center py-4 text-secondary">Chưa có bệnh nhân nào đăng ký.</td>
                                             </tr>
                                         </c:when>
                                         <c:otherwise>
@@ -906,7 +1012,7 @@
                                                 <c:set var="isTesting" value="${p.waitlistStatus eq 'testing'}" />
                                                 <c:set var="isWaiting" value="${p.waitlistStatus eq 'waiting'}" />
                                                 <tr class="patient-row" 
-                                                    data-status="${isCompleted ? 'completed' : (isTesting ? 'testing' : 'waiting')}" 
+                                                    data-status="${isCompleted ? 'completed' : (isTesting ? 'testing' : (isWaiting ? 'waiting' : 'none'))}" 
                                                     data-room="${empty p.labRoom ? 'none' : p.labRoom}"
                                                     data-search-text="${p.fullName.toLowerCase()} ${p.email.toLowerCase()} ${p.phone.toLowerCase()}">
                                                     <td>#<c:out value="${p.patientId}" /></td>
@@ -944,18 +1050,21 @@
                                                          </c:choose>
                                                      </td>
                                                     <td>
-                                                        <c:choose>
-                                                            <c:when test="${isCompleted}">
-                                                                <span class="badge bg-success"><i class="bi bi-check-circle-fill me-1"></i>Đã xét nghiệm</span>
-                                                            </c:when>
-                                                            <c:when test="${isTesting}">
-                                                                <span class="badge bg-primary text-white"><i class="bi bi-activity me-1"></i>Đang xét nghiệm</span>
-                                                            </c:when>
-                                                            <c:otherwise>
-                                                                <span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split me-1"></i>Chờ xét nghiệm</span>
-                                                            </c:otherwise>
-                                                        </c:choose>
-                                                    </td>
+                                                         <c:choose>
+                                                             <c:when test="${isCompleted}">
+                                                                 <span class="badge bg-success"><i class="bi bi-check-circle-fill me-1"></i>Đã xét nghiệm</span>
+                                                             </c:when>
+                                                             <c:when test="${isTesting}">
+                                                                 <span class="badge bg-primary text-white"><i class="bi bi-activity me-1"></i>Đang xét nghiệm</span>
+                                                             </c:when>
+                                                             <c:when test="${isWaiting}">
+                                                                 <span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split me-1"></i>Chờ xét nghiệm</span>
+                                                             </c:when>
+                                                             <c:otherwise>
+                                                                 <span class="badge bg-secondary"><i class="bi bi-dash-circle me-1"></i>Chưa chỉ định</span>
+                                                             </c:otherwise>
+                                                         </c:choose>
+                                                     </td>
                                                     <td>
                                                         <c:choose>
                                                             <c:when test="${isCompleted}">
@@ -975,17 +1084,30 @@
                                                                 </button>
                                                             </c:when>
                                                             <c:otherwise>
-                                                                <button type="button" class="btn btn-outline-vinmec btn-xs px-2 py-1" style="font-size: 0.75rem;"
-                                                                        onclick="selectPatientForTest('${p.patientId}', '<c:out value="${p.fullName}"/>', '<c:out value="${p.email}"/>', '<c:out value="${p.phone}"/>', '<c:out value="${p.dob}"/>', '<c:out value="${p.gender}"/>', '<c:out value="${p.address}"/>')">
-                                                                    <i class="bi bi-file-earmark-plus-fill me-1"></i> Nhập xét nghiệm
-                                                                </button>
+                                                                <div class="dropdown d-inline-block">
+                                                                    <button type="button" class="btn btn-outline-vinmec btn-xs dropdown-toggle px-2 py-1" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 0.75rem;">
+                                                                        <i class="bi bi-file-earmark-plus-fill me-1"></i> Nhập xét nghiệm
+                                                                    </button>
+                                                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size: 0.8rem;">
+                                                                        <li>
+                                                                            <a class="dropdown-item py-1" href="javascript:void(0)" onclick="selectPatientForTestType('${p.patientId}', 'phòng xét nghiệm máu - đường huyết')">
+                                                                                <i class="bi bi-activity text-danger me-1"></i> Đường huyết
+                                                                            </a>
+                                                                        </li>
+                                                                        <li>
+                                                                            <a class="dropdown-item py-1" href="javascript:void(0)" onclick="selectPatientForTestType('${p.patientId}', 'phòng xét nghiệm nước tiểu')">
+                                                                                <i class="bi bi-droplet text-info me-1"></i> Nước tiểu
+                                                                            </a>
+                                                                        </li>
+                                                                    </ul>
+                                                                </div>
                                                             </c:otherwise>
                                                         </c:choose>
                                                     </td>
                                                  </tr>
-                                            </c:forEach>
-                                        </c:otherwise>
-                                    </c:choose>
+                                             </c:forEach>
+                                         </c:otherwise>
+                                     </c:choose>
                                 </tbody>
                             </table>
                         </div>
@@ -996,7 +1118,7 @@
             <!-- Module: Phòng xét nghiệm -->
             <div class="tab-pane fade" id="pill-rooms" role="tabpanel" aria-labelledby="pill-rooms-tab">
                 <div class="card card-custom">
-                    <div class="card-header card-header-custom py-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
+                    <div class="card-header card-header-custom py-2 d-flex flex-wrap align-items-center justify-content-between gap-3">
                         <span class="fw-bold" id="room-table-title"><i class="bi bi-door-closed me-2"></i> Phòng xét nghiệm chức năng</span>
                     </div>
                     <div class="card-body p-0">
@@ -1074,7 +1196,42 @@
                     </div>
                 </div>
             </div>
-        </div>
+        
+            <!-- Module 5: Lịch làm việc -->
+            
+            <div class="tab-pane fade" id="pill-schedule" role="tabpanel" aria-labelledby="pill-schedule-tab">
+                <div class="card card-custom">
+                    <div class="card-header card-header-custom py-2 d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-calendar3 fs-5"></i>
+                            <span class="fw-bold fs-5">Lịch làm việc theo tuần (Weekly Timetable)</span>
+                        </div>
+                        <span class="badge bg-success text-white fw-bold px-2 py-1" style="background-color: #007f61 !important;">Cập nhật liên tục</span>
+                    </div>
+                    <div class="card-body p-2 bg-light-subtle">
+                        <div class="table-responsive">
+                            <table class="table table-bordered text-center align-middle m-0" style="width: 100%; border-color: #dee2e6; table-layout: fixed;">
+                                <thead>
+                                    <tr style="background: linear-gradient(135deg, #007f61, #009672); color: white; border: none;">
+                                        <th class="py-2" style="width: 14.28%; font-size: 0.8rem;">MON<br><span class="small text-white-50">13/07</span></th>
+                                        <th class="py-2" style="width: 14.28%; font-size: 0.8rem;">TUE<br><span class="small text-white-50">14/07</span></th>
+                                        <th class="py-2" style="width: 14.28%; font-size: 0.8rem;">WED<br><span class="small text-white-50">15/07</span></th>
+                                        <th class="py-2" style="width: 14.28%; font-size: 0.8rem;">THU<br><span class="small text-white-50">16/07</span></th>
+                                        <th class="py-2" style="width: 14.28%; font-size: 0.8rem;">FRI<br><span class="small text-white-50">17/07</span></th>
+                                        <th class="py-2" style="width: 14.28%; font-size: 0.8rem;">SAT<br><span class="small text-white-50">18/07</span></th>
+                                        <th class="py-2" style="width: 14.28%; font-size: 0.8rem;">SUN<br><span class="small text-white-50">19/07</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="fap-timetable-body">
+                                    <!-- Generated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+</div>
+</div>
     </main>
 
     <script>
@@ -1104,25 +1261,25 @@
             submitRandomTest(patientId, waitingId);
         }
 
-        // Fast patient selection from Patients list and run test
-        function selectPatientForTest(patientId, fullName, email, phone, dob, gender, address) {
-            submitRandomTest(patientId, '');
+        // Fast patient selection from Patients list for a specific test type
+        function selectPatientForTestType(patientId, labRoom) {
+            submitRandomTest(patientId, '', labRoom);
         }
-
-        function submitRandomTest(patientId, waitingId) {
+ 
+        function submitRandomTest(patientId, waitingId, labRoom) {
             if (!confirm("Tiến hành xét nghiệm tự động cho bệnh nhân này?")) {
                 return;
             }
-
+ 
             const overlay = document.getElementById('loadingOverlay');
             if (overlay) {
                 overlay.classList.add('show');
             }
-
+ 
             // Create a hidden form and submit it instantly
             const form = document.createElement('form');
             form.method = 'POST';
-            form.action = '${pageContext.request.contextPath}/doctor-lab/health-record';
+            form.action = '${pageContext.request.contextPath}/doctor-lab/dashboard';
             
             const inputPatientId = document.createElement('input');
             inputPatientId.type = 'hidden';
@@ -1141,6 +1298,14 @@
             inputIsRandom.name = 'isRandom';
             inputIsRandom.value = 'true';
             form.appendChild(inputIsRandom);
+            
+            if (labRoom) {
+                const inputLabRoom = document.createElement('input');
+                inputLabRoom.type = 'hidden';
+                inputLabRoom.name = 'labRoom';
+                inputLabRoom.value = labRoom;
+                form.appendChild(inputLabRoom);
+            }
             
             document.body.appendChild(form);
             form.submit();
@@ -1275,7 +1440,7 @@
             rows.forEach(row => {
                 const room = row.getAttribute('data-room');
                 let matched = (room === activeSidebarRoom);
-                if (!matched && room === 'phòng xét nghiệm máu' && activeSidebarRoom === 'phòng xét nghiệm máu - đường huyết') {
+                if (!matched && activeSidebarRoom === 'phòng xét nghiệm máu' && room.startsWith('phòng xét nghiệm máu')) {
                     matched = true;
                 }
                 if (matched) {
@@ -1290,16 +1455,23 @@
             currentStatusFilter = status;
             
             // Update active states of button filters
-            document.getElementById('filter-all-btn').classList.toggle('active', status === 'all');
-            document.getElementById('filter-waiting-btn').classList.toggle('active', status === 'waiting');
-            document.getElementById('filter-testing-btn').classList.toggle('active', status === 'testing');
-            document.getElementById('filter-completed-btn').classList.toggle('active', status === 'completed');
+            const allBtn = document.getElementById('filter-all-btn');
+            const waitingBtn = document.getElementById('filter-waiting-btn');
+            const testingBtn = document.getElementById('filter-testing-btn');
+            const completedBtn = document.getElementById('filter-completed-btn');
+            
+            if (allBtn) allBtn.classList.toggle('active', status === 'all');
+            if (waitingBtn) waitingBtn.classList.toggle('active', status === 'waiting');
+            if (testingBtn) testingBtn.classList.toggle('active', status === 'testing');
+            if (completedBtn) completedBtn.classList.toggle('active', status === 'completed');
             
             filterPatients();
         }
 
         function filterPatients() {
-            const query = document.getElementById('patientSearchInput').value.toLowerCase().trim();
+            const searchInput = document.getElementById('patientSearchInput');
+            if (!searchInput) return;
+            const query = searchInput.value.toLowerCase().trim();
             const rows = document.querySelectorAll('.patient-row');
             
             rows.forEach(row => {
@@ -1327,7 +1499,7 @@
             setSidebarRoomFilter('phòng xét nghiệm máu - đường huyết');
 
             // Add click listeners to other tabs to collapse the sub-menu
-            const otherTabs = ['pill-overview-tab', 'pill-patients-tab', 'pill-history-tab'];
+            const otherTabs = ['pill-overview-tab', 'pill-patients-tab', 'pill-history-tab', 'pill-schedule-tab'];
             otherTabs.forEach(tabId => {
                 const el = document.getElementById(tabId);
                 if (el) {
@@ -1356,25 +1528,25 @@
     <!-- Modal Detail Containers for all records -->
     <c:forEach var="r" items="${records}">
         <c:choose>
-             <c:when test="${r.otherInfo eq 'phòng xét nghiệm máu - chức năng gan'}">
+             <c:when test="${fn:contains(r.otherInfo, 'gan')}">
                  <c:set var="isLiverTest" value="true" />
                  <c:set var="isLipidsTest" value="false" />
                  <c:set var="isKidneyTest" value="false" />
                  <c:set var="isUrineTest" value="false" />
              </c:when>
-             <c:when test="${r.otherInfo eq 'phòng xét nghiệm máu - chức năng thận'}">
+             <c:when test="${fn:contains(r.otherInfo, 'thận')}">
                  <c:set var="isLiverTest" value="false" />
                  <c:set var="isLipidsTest" value="false" />
                  <c:set var="isKidneyTest" value="true" />
                  <c:set var="isUrineTest" value="false" />
              </c:when>
-             <c:when test="${r.otherInfo eq 'phòng xét nghiệm máu - mỡ máu'}">
+             <c:when test="${fn:contains(r.otherInfo, 'mỡ máu')}">
                  <c:set var="isLiverTest" value="false" />
                  <c:set var="isLipidsTest" value="true" />
                  <c:set var="isKidneyTest" value="false" />
                  <c:set var="isUrineTest" value="false" />
              </c:when>
-             <c:when test="${r.otherInfo eq 'phòng xét nghiệm nước tiểu'}">
+             <c:when test="${fn:contains(r.otherInfo, 'nước tiểu')}">
                  <c:set var="isLiverTest" value="false" />
                  <c:set var="isLipidsTest" value="false" />
                  <c:set var="isKidneyTest" value="false" />
@@ -1411,14 +1583,10 @@
                                 </thead>
                                 <tbody>
                                     <c:if test="${not isUrineTest}">
-                                        <!-- HbA1c -->
-                                        <c:if test="${not empty r.hba1c and r.hba1c ne '0' and r.hba1c ne '0.0' and r.hba1c ne '0.00'}">
-                                            <tr><td>Chỉ số đường huyết (HbA1c)</td><td class="fw-bold text-danger"><c:out value="${r.hba1c}" /> %</td></tr>
-                                        </c:if>
                                         <!-- Urea / AST / Đường huyết -->
                                         <c:if test="${not empty r.urea and r.urea ne '0' and r.urea ne '0.0' and r.urea ne '0.00'}">
                                             <c:choose>
-                                                <c:when test="${r.otherInfo eq 'phòng xét nghiệm máu - đường huyết' or r.otherInfo eq 'phòng xét nghiệm máu' or (not empty r.hba1c and r.hba1c ne '0' and r.hba1c ne '0.0')}">
+                                                <c:when test="${fn:contains(r.otherInfo, 'đường huyết') or fn:contains(r.otherInfo, 'xét nghiệm máu')}">
                                                     <tr><td>Chỉ số đường huyết (mmol/L)</td><td class="fw-bold"><c:out value="${r.urea}" /> mmol/L</td></tr>
                                                 </c:when>
                                                 <c:otherwise>
@@ -1426,6 +1594,10 @@
                                                 </c:otherwise>
                                             </c:choose>
                                         </c:if>
+                                         <!-- HbA1c -->
+                                         <c:if test="${not empty r.hba1c and r.hba1c ne '0' and r.hba1c ne '0.0' and r.hba1c ne '0.00'}">
+                                             <tr><td>Chỉ số đường huyết (HbA1c)</td><td class="fw-bold text-danger"><c:out value="${r.hba1c}" /> %</td></tr>
+                                         </c:if>
                                         <!-- Creatinine (Cr) -->
                                         <c:if test="${not empty r.cr and r.cr ne '0' and r.cr ne '0.0' and r.cr ne '0.00'}">
                                             <c:choose>
@@ -1585,6 +1757,82 @@
         <h5 class="text-success fw-bold m-0">Đang tiến hành xét nghiệm...</h5>
         <p class="text-secondary small m-0">Hệ thống đang tự động khởi tạo kết quả, vui lòng đợi trong giây lát.</p>
     </div>
+    <script>
+        const slotsConfig = {
+            "Hành chính": { time: "08:00 - 12:00 & 13:30 - 17:30", label: "Ca hành chính (8h/ngày)" },
+            "Trực 24h": { time: "08:00 - 08:00 (Sáng hôm sau)", label: "Trực 24h" },
+            "Cấp cứu Ca 1": { time: "06:00 - 14:00", label: "Cấp cứu Ca 1" },
+            "Cấp cứu Ca 2": { time: "14:00 - 22:00", label: "Cấp cứu Ca 2" },
+            "Cấp cứu Ca 3": { time: "22:00 - 06:00", label: "Cấp cứu Ca 3" }
+        };
+
+        const mockSchedules = [
+            // Ca hành chính (8h/ngày, 40h/tuần): Mon - Fri
+            { slotKey: "Hành chính", dateStr: "2026-07-13", roomId: "phòng xét nghiệm máu - đường huyết", type: "blood" },
+            { slotKey: "Hành chính", dateStr: "2026-07-14", roomId: "phòng xét nghiệm nước tiểu", type: "urine" },
+            { slotKey: "Hành chính", dateStr: "2026-07-15", roomId: "phòng xét nghiệm máu - đường huyết", type: "blood" },
+            { slotKey: "Hành chính", dateStr: "2026-07-16", roomId: "phòng xét nghiệm nước tiểu", type: "urine" },
+            { slotKey: "Hành chính", dateStr: "2026-07-17", roomId: "phòng xét nghiệm máu - đường huyết", type: "blood" },
+            
+            // Trực tùy bệnh viện (24h): Saturday
+            { slotKey: "Trực 24h", dateStr: "2026-07-18", roomId: "phòng xét nghiệm máu - đường huyết", type: "blood" },
+            
+            // Cấp cứu (8h x 3 ca): Sunday emergency shifts
+            { slotKey: "Cấp cứu Ca 2", dateStr: "2026-07-19", roomId: "phòng xét nghiệm nước tiểu", type: "urine" }
+        ];
+
+        const weekDates = [
+            "2026-07-13",
+            "2026-07-14",
+            "2026-07-15",
+            "2026-07-16",
+            "2026-07-17",
+            "2026-07-18",
+            "2026-07-19"
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const tbody = document.getElementById("fap-timetable-body");
+            if (tbody) {
+                tbody.innerHTML = "";
+                const slotKeys = ["Hành chính", "Trực 24h", "Cấp cứu Ca 1", "Cấp cứu Ca 2", "Cấp cứu Ca 3"];
+                
+                slotKeys.forEach(slotKey => {
+                    const config = slotsConfig[slotKey];
+                    const tr = document.createElement("tr");
+                    
+                    for (let d = 0; d < 7; d++) {
+                        const dateStr = weekDates[d];
+                        const td = document.createElement("td");
+                        td.className = "align-middle p-1";
+                        td.style.width = "14.28%";
+                        td.style.height = "55px";
+                        
+                        const match = mockSchedules.find(s => s.dateStr === dateStr && s.slotKey === slotKey);
+                        
+                        if (match) {
+                            let slotClass = match.type === "blood" ? "slot-blood_sugar" : "slot-urine_test";
+                            let badgeStyle = match.type === "blood" 
+                                ? "background-color: #fee2e2 !important; color: #b91c1c !important; border: 1px solid #fecaca !important;" 
+                                : "background-color: #dbeafe !important; color: #1d4ed8 !important; border: 1px solid #bfdbfe !important;";
+                            td.innerHTML = `
+                                <div class="fap-card-slot \${slotClass}">
+                                    <div class="fw-bold" style="font-size: 0.72rem; word-break: break-word;">\${match.roomId}</div>
+                                    <div class="mt-1">
+                                        <span class="badge px-1.5 py-0.5 font-monospace" style="font-size: 0.65rem; border-radius: 4px; \${badgeStyle}">\${config.label} (\${config.time})</span>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            td.innerHTML = "";
+                        }
+                        tr.appendChild(td);
+                    }
+                    tbody.appendChild(tr);
+                });
+            }
+        });
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

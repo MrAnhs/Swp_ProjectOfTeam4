@@ -242,14 +242,11 @@ public class AdminRepository {
     public int markLateWaitingAppointmentsAsNoShow() {
         String sql = "UPDATE a SET a.status = 'Absent' "
             + "FROM Appointment a "
-            + "LEFT JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
+            + "INNER JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
             + "WHERE LOWER(a.status) = 'waiting' "
-            + "AND CAST(a.appointment_time AS DATE) = CAST(GETDATE() AS DATE) "
-            + "AND ("
-            + "    (ds.schedule_id IS NOT NULL AND TRY_CONVERT(time, LEFT(LTRIM(RTRIM(SUBSTRING(ds.time_slot, CHARINDEX('-', ds.time_slot) + 1, 20))), 5)) IS NOT NULL "
-            + "        AND DATEADD(MINUTE, -30, DATEADD(DAY, DATEDIFF(DAY, 0, GETDATE()), CAST(TRY_CONVERT(time, LEFT(LTRIM(RTRIM(SUBSTRING(ds.time_slot, CHARINDEX('-', ds.time_slot) + 1, 20))), 5)) AS datetime))) <= GETDATE()) "
-            + " OR (ds.schedule_id IS NULL AND DATEADD(MINUTE, 30, a.appointment_time) <= GETDATE())"
-            + ")";
+            + "AND DATEADD(SECOND, DATEDIFF(SECOND, CAST('00:00:00' AS time), "
+            + "TRY_CONVERT(time, RIGHT(REPLACE(ds.time_slot, ' ', ''), 5))), "
+            + "CAST(CAST(a.appointment_time AS date) AS datetime)) < GETDATE()";
 
         try (Connection connection = DatabaseConnection.getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
             int updated = statement.executeUpdate();
@@ -935,6 +932,10 @@ public class AdminRepository {
             return false;
         }
 
+        if (isAccountEmailExistsForOtherAccount(email, accountId)) {
+            return false;
+        }
+
         String sqlGetRole = "SELECT role FROM Account WHERE account_id = ?";
         String sqlUpdateAccount = "UPDATE Account SET full_name = ?, email = ? WHERE account_id = ?";
         String sqlUpdatePatientByAccount = "UPDATE Patient SET full_name = ?, email = ?, phone = ?, address = ? WHERE account_id = ?";
@@ -1193,6 +1194,9 @@ public class AdminRepository {
 
     // Tạo dịch vụ y tế mới.
     public boolean createMedicalService(String serviceName, BigDecimal price, String serviceType, String status) {
+        if (serviceName == null || serviceName.isBlank() || price == null || price.compareTo(BigDecimal.ZERO) <= 0) {
+            return false;
+        }
         if (!isAllowedServiceType(serviceType) || !isAllowedServiceStatus(status)) {
             return false;
         }
@@ -1212,6 +1216,9 @@ public class AdminRepository {
 
     // Cập nhật thông tin dịch vụ y tế.
     public boolean updateMedicalService(int serviceId, String serviceName, BigDecimal price, String serviceType, String status) {
+        if (serviceId <= 0 || serviceName == null || serviceName.isBlank() || price == null || price.compareTo(BigDecimal.ZERO) <= 0) {
+            return false;
+        }
         if (!isAllowedServiceType(serviceType) || !isAllowedServiceStatus(status)) {
             return false;
         }
@@ -3291,6 +3298,25 @@ public class AdminRepository {
                 return "Admin";
             default:
                 return null;
+        }
+    }
+
+    // Kiểm tra email có thuộc tài khoản khác hay không.
+    private boolean isAccountEmailExistsForOtherAccount(String email, int accountId) {
+        if (email == null || email.isBlank() || accountId <= 0) {
+            return false;
+        }
+
+        String sql = "SELECT COUNT(*) FROM Account WHERE LOWER(email) = LOWER(?) AND account_id <> ?";
+        try (Connection connection = DatabaseConnection.getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, email.trim());
+            statement.setInt(2, accountId);
+            try (ResultSet rs = statement.executeQuery()) {
+                return rs.next() && rs.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to check duplicate account email for profile edit", e);
+            return true;
         }
     }
 

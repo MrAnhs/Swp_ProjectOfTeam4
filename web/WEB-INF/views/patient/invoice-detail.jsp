@@ -20,8 +20,8 @@
         <header class="page-header"><div><p class="page-eyebrow">Thanh toán</p><h1 id="invoiceTitle">Chi tiết hóa đơn</h1><p id="invoiceMeta">Đang tải...</p></div><a class="btn-page-secondary" href="${pageContext.request.contextPath}/patient/invoices"><i class="bi bi-arrow-left"></i> Quay lại</a></header>
         <section class="page-card invoice-document-card"><div id="invoiceDetail" class="loading-state">Đang tải hóa đơn...</div></section>
     </main>
-    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/app-config.js?v=20260709-fontfix2"></script>
-    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/api-client.js?v=20260709-fontfix2"></script>
-    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/patient/invoice-detail.js?v=20260709-fontfix2"></script>
+    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/app-config.js?v=20260710-patient-fontfix-all2"></script>
+    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/api-client.js?v=20260710-patient-fontfix-all2"></script>
+    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/patient/invoice-detail.js?v=20260710-patient-fontfix-all2"></script>
 </body>
 </html>
