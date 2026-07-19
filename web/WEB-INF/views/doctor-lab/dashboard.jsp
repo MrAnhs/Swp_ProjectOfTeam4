@@ -1149,6 +1149,18 @@
                     return dd + "/" + mm;
                 }
 
+                function formatDateLocalLab(date) {
+                    const yyyy = date.getFullYear();
+                    const mm = String(date.getMonth() + 1).padStart(2, '0');
+                    const dd = String(date.getDate()).padStart(2, '0');
+                    return `${yyyy}-${mm}-${dd}`;
+                }
+
+                function parseLocalDateLab(dateStr) {
+                    const parts = dateStr.split('-');
+                    return new Date(parts[0], parts[1] - 1, parts[2]);
+                }
+
                 function generateLabWeekOptions() {
                     const select = document.getElementById("labWeekSelect");
                     if (!select) return;
@@ -1164,7 +1176,7 @@
                         sunday.setDate(monday.getDate() + 6);
                         
                         const option = document.createElement("option");
-                        option.value = monday.toISOString().split('T')[0];
+                        option.value = formatDateLocalLab(monday);
                         
                         const formatStr = formatDateShortLab(monday) + " To " + formatDateShortLab(sunday);
                         option.textContent = formatStr;
@@ -1198,7 +1210,7 @@
 
                 function renderLabScheduleGrid() {
                     const mondayStr = document.getElementById("labWeekSelect").value;
-                    const mondayDate = new Date(mondayStr);
+                    const mondayDate = parseLocalDateLab(mondayStr);
                     
                     const headerRow = document.getElementById("labHeaderRow");
                     if (!headerRow) return;
@@ -1215,8 +1227,8 @@
                         
                         const dateStr = formatDateShortLab(current);
                         headerRow.innerHTML += `<th class="grid-header-cell text-center" style="min-width: 130px; background-color: #007f61 !important; color: white; font-weight: 600;">
-                            <div>${dayNames[i]}</div>
-                            <div class="fw-normal text-xs opacity-75 mt-0.5" style="font-size: 0.72rem;">${dateStr}</div>
+                            <div>\${dayNames[i]}</div>
+                            <div class="fw-normal text-xs opacity-75 mt-0.5" style="font-size: 0.72rem;">\${dateStr}</div>
                         </th>`;
                     }
                     
@@ -1226,8 +1238,8 @@
                     weekEnd.setDate(mondayDate.getDate() + 6);
                     weekEnd.setHours(23,59,59,999);
                     
-                    const weekStartStr = weekStart.toISOString().split('T')[0];
-                    const weekEndStr = weekEnd.toISOString().split('T')[0];
+                    const weekStartStr = formatDateLocalLab(weekStart);
+                    const weekEndStr = formatDateLocalLab(weekEnd);
                     
                     const weekSchedules = labSchedules.filter(s => {
                         return s.workDate >= weekStartStr && s.workDate <= weekEndStr;
@@ -1242,13 +1254,13 @@
                     timeSlots.forEach((slot, index) => {
                         let rowHtml = `<tr>
                             <td class="fw-semibold text-nowrap bg-light text-center py-4" style="width: 140px;">
-                                <div class="small text-secondary mb-1">Ca ${index + 1}</div>
-                                <span class="badge bg-success bg-opacity-10 text-success slot-badge border border-success border-opacity-10" style="font-size: 0.8rem;">${slot}</span>
+                                <div class="small text-secondary mb-1">Ca \${index + 1}</div>
+                                <span class="badge bg-success bg-opacity-10 text-success slot-badge border border-success border-opacity-10" style="font-size: 0.8rem;">\${slot}</span>
                             </td>`;
                         
                         for (let i = 0; i < 7; i++) {
                             const dateObj = weekDates[i];
-                            const dateStr = dateObj.toISOString().split('T')[0];
+                            const dateStr = formatDateLocalLab(dateObj);
                             
                             const matchedSchedules = weekSchedules.filter(s => {
                                 return s.workDate === dateStr && getStandardShiftLab(s.timeSlot) === slot;
@@ -1267,13 +1279,13 @@
                                     }
                                     
                                     cellHtml += `<div class="schedule-cell-card p-2 text-start w-100 shadow-xs" style="min-height: 85px; border: 1px solid rgba(0, 127, 97, 0.12); border-radius: 8px; background-color: #ffffff;">
-                                        <div class="fw-bold text-success mb-0.5" style="font-size: 0.82rem;">${matched.roomName || 'Phòng xét nghiệm'}</div>
+                                        <div class="fw-bold text-success mb-0.5" style="font-size: 0.82rem;">\${matched.roomName || 'Phòng xét nghiệm'}</div>
                                         <div class="text-secondary small mb-1" style="font-size: 0.7rem;">
-                                            <span class="fw-semibold text-dark me-1"><i class="bi bi-clock me-0.5"></i>${matched.timeSlot}</span>
-                                            <span>(${matched.roomId || '-'})</span>
+                                            <span class="fw-semibold text-dark me-1"><i class="bi bi-clock me-0.5"></i>\${matched.timeSlot}</span>
+                                            <span>(\${matched.roomId || '-'})</span>
                                         </div>
                                         <div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-top-style: dashed !important; border-top-color: #eee !important;">
-                                            <span class="badge ${badgeClass} text-xs py-0.5 px-1" style="font-size: 0.72rem;">${statusText}</span>
+                                            <span class="badge \${badgeClass} text-xs py-0.5 px-1" style="font-size: 0.72rem;">\${statusText}</span>
                                         </div>
                                     </div>`;
                                 });
