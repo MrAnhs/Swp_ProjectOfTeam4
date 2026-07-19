@@ -3,6 +3,8 @@ package com.diabetes.monitoring.admin.scheduling;
 import com.diabetes.monitoring.admin.common.AdminJsonUtil;
 import com.diabetes.monitoring.admin.scheduling.AdminAiSchedulingService.AiSchedulingRequest;
 import com.diabetes.monitoring.admin.scheduling.AdminAiSchedulingService.AiSchedulingResult;
+import com.diabetes.monitoring.admin.scheduling.AdminStaffScheduleService.AiStaffSchedulingRequest;
+import com.diabetes.monitoring.admin.scheduling.AdminStaffScheduleService.AiStaffSchedulingResult;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -10,6 +12,8 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -22,6 +26,8 @@ import java.util.Map;
 public class AdminSchedulingHandler {
     private final AdminScheduleHandler scheduleHandler = new AdminScheduleHandler();
     private final AdminAiSchedulingHandler aiSchedulingHandler = new AdminAiSchedulingHandler();
+    private final AdminStaffScheduleHandler staffScheduleHandler = new AdminStaffScheduleHandler();
+
     public void loadSchedules(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException { scheduleHandler.loadSchedules(request, response); }
     public void createSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException { scheduleHandler.createSchedule(request, response); }
     public void updateSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException { scheduleHandler.updateSchedule(request, response); }
@@ -30,6 +36,7 @@ public class AdminSchedulingHandler {
     public void transferSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException { scheduleHandler.transferSchedule(request, response); }
     public void loadTransferCandidates(HttpServletRequest request, HttpServletResponse response) throws IOException { scheduleHandler.loadTransferCandidates(request, response); }
     public void loadScheduleDetail(HttpServletRequest request, HttpServletResponse response) throws IOException { scheduleHandler.loadScheduleDetail(request, response); }
+    public void loadStaffScheduleDetail(HttpServletRequest request, HttpServletResponse response) throws IOException { staffScheduleHandler.loadStaffScheduleDetail(request, response); }
     public void aiCreateSchedules(HttpServletRequest request, HttpServletResponse response) throws IOException { aiSchedulingHandler.aiCreateSchedules(request, response); }
     public void aiSaveProposedSchedules(HttpServletRequest request, HttpServletResponse response) throws IOException { aiSchedulingHandler.aiSaveProposedSchedules(request, response); }
     public void aiSuggestTime(HttpServletRequest request, HttpServletResponse response) throws IOException { aiSchedulingHandler.aiSuggestTime(request, response); }
@@ -46,19 +53,89 @@ public class AdminSchedulingHandler {
  */
 class AdminScheduleHandler {
     private final AdminScheduleService scheduleService = new AdminScheduleService();
+    private final AdminStaffScheduleService staffScheduleService = new AdminStaffScheduleService();
+
     public void loadSchedules(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         scheduleService.prepareScheduleViews();
+        staffScheduleService.refreshStaffScheduleStatus();
 
         String department = request.getParameter("department");
         String doctorName = request.getParameter("doctorName");
         Date workDate = nullableDate(request.getParameter("workDate"));
+        String staffType = request.getParameter("staffType");
+        String staffName = request.getParameter("staffName");
+        String staffDepartment = request.getParameter("staffDepartment");
+        Date staffWorkDate = nullableDate(request.getParameter("staffWorkDate"));
+        String doctorStatus = cleanText(request.getParameter("doctorStatus"));
+        String receptionistStatus = cleanText(request.getParameter("receptionistStatus"));
+        String labStatus = cleanText(request.getParameter("labStatus"));
+        String doctorViewMode = normalizeViewMode(request.getParameter("doctorViewMode"));
+        String receptionistViewMode = normalizeViewMode(request.getParameter("receptionistViewMode"));
+        String labViewMode = normalizeViewMode(request.getParameter("labViewMode"));
+        int doctorCurrentPage = parseInt(request.getParameter("doctorPage"), 1);
+        int receptionistCurrentPage = parseInt(request.getParameter("receptionistPage"), 1);
+        int labCurrentPage = parseInt(request.getParameter("labPage"), 1);
+        int doctorPageSize = normalizePageSize(parseInt(request.getParameter("doctorPageSize"), 10));
+        int receptionistPageSize = normalizePageSize(parseInt(request.getParameter("receptionistPageSize"), 10));
+        int labPageSize = normalizePageSize(parseInt(request.getParameter("labPageSize"), 10));
         int transferScheduleId = parseInt(request.getParameter("transferScheduleId"), -1);
+
+        String doctorSort = cleanText(request.getParameter("doctorSort"));
+        String doctorSortDir = cleanText(request.getParameter("doctorSortDir"));
+        String receptionistSort = cleanText(request.getParameter("receptionistSort"));
+        String receptionistSortDir = cleanText(request.getParameter("receptionistSortDir"));
+        String labSort = cleanText(request.getParameter("labSort"));
+        String labSortDir = cleanText(request.getParameter("labSortDir"));
+
+        AdminSchedulePage doctorPage = scheduleService.getDoctorSchedulesPage(
+                department, doctorName, workDate, doctorStatus, doctorViewMode,
+                doctorSort, doctorSortDir, doctorCurrentPage, doctorPageSize);
+        AdminSchedulePage receptionistPage = staffScheduleService.getStaffSchedulesPage(
+                "Receptionist", staffName, staffDepartment, staffWorkDate,
+                receptionistStatus, receptionistViewMode, receptionistSort, receptionistSortDir,
+                receptionistCurrentPage, receptionistPageSize);
+        AdminSchedulePage labPage = staffScheduleService.getStaffSchedulesPage(
+                "doctor_lab", staffName, staffDepartment, staffWorkDate,
+                labStatus, labViewMode, labSort, labSortDir, labCurrentPage, labPageSize);
+
+        request.setAttribute("selectedDoctorSort", doctorSort == null ? "" : doctorSort);
+        request.setAttribute("selectedDoctorSortDir", doctorSortDir == null ? "" : doctorSortDir);
+        request.setAttribute("selectedReceptionistSort", receptionistSort == null ? "" : receptionistSort);
+        request.setAttribute("selectedReceptionistSortDir", receptionistSortDir == null ? "" : receptionistSortDir);
+        request.setAttribute("selectedLabSort", labSort == null ? "" : labSort);
+        request.setAttribute("selectedLabSortDir", labSortDir == null ? "" : labSortDir);
 
         request.setAttribute("doctors", scheduleService.getDoctorsForSchedule());
         request.setAttribute("departments", scheduleService.getScheduleDepartments());
+        request.setAttribute("rooms", scheduleService.getRoomsForSchedule());
+        request.setAttribute("labRooms", scheduleService.getLabRoomsForSchedule());
         request.setAttribute("selectedDepartment", department == null ? "" : department);
         request.setAttribute("doctorNameFilter", doctorName == null ? "" : doctorName);
         request.setAttribute("selectedWorkDate", request.getParameter("workDate"));
+        request.setAttribute("selectedDoctorStatus", doctorStatus == null ? "" : doctorStatus);
+        request.setAttribute("selectedDoctorViewMode", doctorViewMode);
+        request.setAttribute("doctorPage", doctorPage);
+        request.setAttribute("doctorPageSize", doctorPage.getPageSize());
+        request.setAttribute("doctorPaginationBaseUrl", buildSchedulePageBaseUrl(request, "doctorPage"));
+        request.setAttribute("receptionists", staffScheduleService.getStaffForSchedule("Receptionist"));
+        request.setAttribute("labDoctors", staffScheduleService.getStaffForSchedule("doctor_lab"));
+        request.setAttribute("selectedStaffType", staffType == null ? "" : staffType);
+        request.setAttribute("staffNameFilter", staffName == null ? "" : staffName);
+        request.setAttribute("selectedStaffDepartment", staffDepartment == null ? "" : staffDepartment);
+        request.setAttribute("selectedStaffWorkDate", request.getParameter("staffWorkDate"));
+        request.setAttribute("selectedReceptionistStatus", receptionistStatus == null ? "" : receptionistStatus);
+        request.setAttribute("selectedReceptionistViewMode", receptionistViewMode);
+        request.setAttribute("selectedLabStatus", labStatus == null ? "" : labStatus);
+        request.setAttribute("selectedLabViewMode", labViewMode);
+        request.setAttribute("staffSchedules", receptionistPage.getItems());
+        request.setAttribute("receptionistSchedules", receptionistPage.getItems());
+        request.setAttribute("labSchedules", labPage.getItems());
+        request.setAttribute("receptionistPage", receptionistPage);
+        request.setAttribute("labPage", labPage);
+        request.setAttribute("receptionistPageSize", receptionistPage.getPageSize());
+        request.setAttribute("labPageSize", labPage.getPageSize());
+        request.setAttribute("receptionistPaginationBaseUrl", buildSchedulePageBaseUrl(request, "receptionistPage"));
+        request.setAttribute("labPaginationBaseUrl", buildSchedulePageBaseUrl(request, "labPage"));
 
         Map<String, Object> selectedSchedule = null;
         List<Map<String, Object>> transferCandidates = new ArrayList<>();
@@ -78,7 +155,7 @@ class AdminScheduleHandler {
         request.setAttribute("selectedSchedule", selectedSchedule);
         request.setAttribute("transferCandidates", transferCandidates);
 
-        List<Map<String, Object>> rawSchedules = scheduleService.getDoctorSchedules(department, doctorName, workDate);
+        List<Map<String, Object>> rawSchedules = doctorPage.getItems();
         for (Map<String, Object> row : rawSchedules) {
             if (!row.containsKey("activeAppointments")) {
                 row.put("activeAppointments", row.get("activeCount"));
@@ -89,26 +166,61 @@ class AdminScheduleHandler {
             if (!row.containsKey("bookedCount")) {
                 row.put("bookedCount", row.get("bookedAppointments"));
             }
-            boolean isFull = Boolean.TRUE.equals(row.get("isFull"));
-            String configured = String.valueOf(row.get("status"));
-            if ("Expired".equalsIgnoreCase(configured) || "Cancelled".equalsIgnoreCase(configured)) {
-                row.put("effectiveStatus", configured);
-            } else {
-                row.put("effectiveStatus", isFull ? "Full" : configured);
-            }
+            // effectiveStatus is calculated in the repository from work date and time slot.
         }
         request.setAttribute("schedules", rawSchedules);
         request.getRequestDispatcher("/WEB-INF/views/admin/scheduling/schedule-management.jsp").forward(request, response);
     }
+    private String normalizeViewMode(String viewMode) {
+        return "history".equalsIgnoreCase(viewMode) ? "history" : "upcoming";
+    }
+
+    private int normalizePageSize(int pageSize) {
+        return pageSize == 20 || pageSize == 50 ? pageSize : 10;
+    }
+
+    private String buildSchedulePageBaseUrl(HttpServletRequest request, String pageParam) {
+        StringBuilder url = new StringBuilder(request.getContextPath())
+                .append("/admin?");
+        boolean[] first = new boolean[]{true};
+        appendQueryParam(url, first, "action", "schedule");
+        for (Map.Entry<String, String[]> entry : request.getParameterMap().entrySet()) {
+            String key = entry.getKey();
+            if ("action".equals(key) || pageParam.equals(key)) {
+                continue;
+            }
+            String[] values = entry.getValue();
+            if (values == null || values.length == 0) {
+                appendQueryParam(url, first, key, "");
+                continue;
+            }
+            for (String value : values) {
+                appendQueryParam(url, first, key, value);
+            }
+        }
+        return url.toString();
+    }
+
+    private void appendQueryParam(StringBuilder url, boolean[] first, String key, String value) {
+        if (!first[0]) {
+            url.append('&');
+        }
+        first[0] = false;
+        url.append(URLEncoder.encode(key, StandardCharsets.UTF_8));
+        url.append('=');
+        url.append(URLEncoder.encode(value == null ? "" : value, StandardCharsets.UTF_8));
+    }
+
     public void createSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException {
         int doctorId = parseInt(request.getParameter("doctorId"), -1);
         Date workDate = nullableDate(request.getParameter("workDate"));
         String timeSlot = request.getParameter("timeSlot");
         int maxPatients = parseInt(request.getParameter("maxPatients"), 0);
         int onlineQuota = parseInt(request.getParameter("onlineQuota"), -1);
+        String roomId = cleanText(request.getParameter("roomId"));
 
-        boolean ok = doctorId > 0 && workDate != null
-                && scheduleService.createSchedule(doctorId, workDate, timeSlot, maxPatients, onlineQuota >= 0 ? onlineQuota : null);
+        boolean ok = doctorId > 0 && workDate != null && roomId != null
+                && scheduleService.createSchedule(doctorId, workDate, timeSlot, maxPatients, onlineQuota >= 0 ? onlineQuota : null, roomId);
         String daoMessage = scheduleService.consumeValidationMessage();
         request.getSession().setAttribute(ok ? "successMessage" : "errorMessage",
                 ok ? "Đã tạo ca trực bác sĩ"
@@ -122,9 +234,10 @@ class AdminScheduleHandler {
         int maxPatients = parseInt(request.getParameter("maxPatients"), 0);
         int onlineQuota = parseInt(request.getParameter("onlineQuota"), -1);
         String status = request.getParameter("status");
+        String roomId = cleanText(request.getParameter("roomId"));
 
-        boolean ok = scheduleId > 0 && doctorId > 0
-                && scheduleService.updateSchedule(scheduleId, doctorId, timeSlot, maxPatients, onlineQuota >= 0 ? onlineQuota : null, status);
+        boolean ok = scheduleId > 0 && doctorId > 0 && roomId != null
+                && scheduleService.updateSchedule(scheduleId, doctorId, timeSlot, maxPatients, onlineQuota >= 0 ? onlineQuota : null, status, roomId);
         String daoMessage = scheduleService.consumeValidationMessage();
         request.getSession().setAttribute(ok ? "successMessage" : "errorMessage",
                 ok ? "Đã cập nhật ca trực"
@@ -254,6 +367,7 @@ class AdminScheduleHandler {
             }
 
             List<Map<String, Object>> doctors = scheduleService.getDoctorsForSchedule();
+            List<Map<String, Object>> rooms = scheduleService.getRoomsForSchedule();
             out.print('{');
             out.print("\"schedule\":{");
             out.print("\"scheduleId\":");
@@ -272,6 +386,16 @@ class AdminScheduleHandler {
             out.print(schedule.getOrDefault("maxPatients", 1));
             out.print(",\"onlineQuota\":");
             out.print(schedule.getOrDefault("onlineQuota", 0));
+            out.print(",\"roomId\":");
+            Object roomId = schedule.get("roomId");
+            out.print("\"");
+            out.print(escape(roomId == null ? "" : String.valueOf(roomId)));
+            out.print("\"");
+            out.print(",\"roomNumber\":\"");
+            out.print(escape(String.valueOf(schedule.getOrDefault("roomNumber", ""))));
+            out.print("\",\"roomName\":\"");
+            out.print(escape(String.valueOf(schedule.getOrDefault("roomName", ""))));
+            out.print("\"");
             out.print(",\"bookedCount\":");
             out.print(schedule.getOrDefault("bookedCount", 0));
             out.print(",\"onlineBookedCount\":");
@@ -296,7 +420,9 @@ class AdminScheduleHandler {
                 out.print(escape(String.valueOf(doctor.getOrDefault("department", ""))));
                 out.print("\"}");
             }
-            out.print("]}");
+            out.print("],\"rooms\":");
+            out.print(AdminJsonUtil.toJsonSimpleRows(rooms));
+            out.print("}");
         } catch (Exception ex) {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             try (PrintWriter out = response.getWriter()) {
@@ -321,6 +447,10 @@ class AdminScheduleHandler {
             return null;
         }
     }
+    private String cleanText(String raw) {
+        return raw == null || raw.trim().isEmpty() ? null : raw.trim();
+    }
+
     private String escape(String value) {
         if (value == null) {
             return "";
@@ -330,6 +460,8 @@ class AdminScheduleHandler {
 }
 
 /**
+ * Handles Staff_Schedule actions for receptionists and lab doctors.
+ */
 class AdminStaffScheduleHandler {
     private final AdminStaffScheduleService staffScheduleService = new AdminStaffScheduleService();
     private final AdminSchedulingService schedulingService = new AdminSchedulingService();
@@ -689,11 +821,12 @@ class AdminStaffScheduleHandler {
 }
 
 /**
->>>>>>> Stashed changes
  * Handles AI-assisted schedule generation requests.
  */
 class AdminAiSchedulingHandler {
     private final AdminAiSchedulingService aiSchedulingService = new AdminAiSchedulingService();
+    private final AdminAiSchedulingRepository aiSchedulingRepository = new AdminAiSchedulingRepository();
+
     public void aiSuggestTime(HttpServletRequest request, HttpServletResponse response) throws IOException {
         response.setContentType("application/json;charset=UTF-8");
         try {
@@ -716,6 +849,7 @@ class AdminAiSchedulingHandler {
             response.getWriter().print("{\"success\":false,\"message\":\"Lỗi gợi ý AI: " + AdminJsonUtil.escapeJson(ex.getMessage()) + "\"}");
         }
     }
+
     public void aiCreateSchedules(HttpServletRequest request, HttpServletResponse response) throws IOException {
         response.setContentType("application/json;charset=UTF-8");
         try {
@@ -857,4 +991,6 @@ class AdminAiSchedulingHandler {
         }
     }
 }
+
+
 

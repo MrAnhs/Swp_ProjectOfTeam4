@@ -195,16 +195,9 @@
             <span class="menu-text">Qu&#7843;n l&#253; l&#7883;ch tr&#7921;c</span>
             <i class="fa-solid fa-angle-right menu-arrow"></i>
         </a>
-
-        <div class="menu-group-title">B&#225;o c&#225;o v&#224; &#272;i&#7873;u ph&#7889;i</div>
-        <a class="menu-item ${currentAction == 'reports' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin?action=reports">
-            <i class="fa-solid fa-chart-line menu-icon"></i>
-            <span class="menu-text">B&#225;o c&#225;o doanh thu/l&#432;&#7907;t kh&#225;m</span>
-            <i class="fa-solid fa-angle-right menu-arrow"></i>
-        </a>
-        <a class="menu-item ${(currentAction == 'exception' or currentAction == 'viewHealthRecords') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin?action=exception">
-            <i class="fa-solid fa-shuffle menu-icon"></i>
-            <span class="menu-text">&#272;i&#7873;u ph&#7889;i kh&#7849;n c&#7845;p</span>
+        <a class="menu-item ${currentAction == 'manageRooms' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin?action=manageRooms">
+            <i class="fa-solid fa-hospital menu-icon"></i>
+            <span class="menu-text">Qu&#7843;n l&#253; ph&#242;ng kh&#225;m</span>
             <i class="fa-solid fa-angle-right menu-arrow"></i>
         </a>
 

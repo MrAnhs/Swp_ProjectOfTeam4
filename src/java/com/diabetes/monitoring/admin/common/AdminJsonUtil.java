@@ -154,6 +154,29 @@ public final class AdminJsonUtil {
         return sb.toString();
     }
 
+    public static String toJsonMap(Map<String, Object> map) {
+        StringBuilder sb = new StringBuilder("{");
+        int index = 0;
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            if (index++ > 0) {
+                sb.append(",");
+            }
+            sb.append("\"").append(escapeJson(entry.getKey())).append("\":");
+            Object value = entry.getValue();
+            if (value == null) {
+                sb.append("null");
+            } else if (value instanceof List) {
+                sb.append(toJsonSimpleRows((List<Map<String, Object>>) value));
+            } else if (value instanceof Number || value instanceof Boolean) {
+                sb.append(String.valueOf(value));
+            } else {
+                sb.append("\"").append(escapeJson(String.valueOf(value))).append("\"");
+            }
+        }
+        sb.append("}");
+        return sb.toString();
+    }
+
     public static int parseInt(String raw, int fallback) {
         try {
             return Integer.parseInt(raw);

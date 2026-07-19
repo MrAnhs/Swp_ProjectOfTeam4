@@ -17,6 +17,8 @@ import java.util.Map;
 public class AdminManagementHandler {
     private final AdminAccountHandler accountHandler = new AdminAccountHandler();
     private final AdminMedicalServiceHandler medicalServiceHandler = new AdminMedicalServiceHandler();
+    private final AdminRoomHandler roomHandler = new AdminRoomHandler();
+
     public void loadAccounts(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException { accountHandler.loadAccounts(request, response); }
     public void createAccount(HttpServletRequest request, HttpServletResponse response) throws IOException { accountHandler.createAccount(request, response); }
     public void updateAccountRole(HttpServletRequest request, HttpServletResponse response) throws IOException { accountHandler.updateAccountRole(request, response); }
@@ -31,9 +33,16 @@ public class AdminManagementHandler {
     public void updateService(HttpServletRequest request, HttpServletResponse response) throws IOException { medicalServiceHandler.updateService(request, response); }
     public void updateServiceStatus(HttpServletRequest request, HttpServletResponse response) throws IOException { medicalServiceHandler.updateServiceStatus(request, response); }
     public void deleteService(HttpServletRequest request, HttpServletResponse response) throws IOException { medicalServiceHandler.deleteService(request, response); }
+
+    public void loadRooms(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException { roomHandler.loadRooms(request, response); }
+    public void createRoom(HttpServletRequest request, HttpServletResponse response) throws IOException { roomHandler.createRoom(request, response); }
+    public void updateRoom(HttpServletRequest request, HttpServletResponse response) throws IOException { roomHandler.updateRoom(request, response); }
+    public void deleteRoom(HttpServletRequest request, HttpServletResponse response) throws IOException { roomHandler.deleteRoom(request, response); }
 }
 
 /**
+ * Handles Admin account management screens and actions.
+ */
 class AdminAccountHandler {
     private final AdminManagementService accountService = new AdminManagementService();
 
@@ -356,6 +365,7 @@ class AdminMedicalServiceHandler {
             return BigDecimal.ZERO;
         }
     }
+}
 
 
 /**

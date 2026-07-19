@@ -13,95 +13,123 @@ public class AdminManagementService {
     private final AdminMedicalServiceService medicalServiceService =
             new AdminMedicalServiceService();
 
-    private void checkAdminPermission(User currentUser) {
-        if (currentUser == null || !"Admin".equalsIgnoreCase(currentUser.getRole())) {
-            throw new SecurityException("Bạn không có quyền quản lý khu vực này.");
-        }
-    }
-
-    public List<User> loadAccounts(String search, String role, String status, int page, int pageSize, User currentUser) {
-        checkAdminPermission(currentUser);
+    public List<User> loadAccounts(String search, String role, String status, int page, int pageSize) {
         return new AdminAccountService().loadAccounts(search, role, status, page, pageSize);
     }
+    public List<User> loadAccounts(String search, String role, String status, int page, int pageSize, User currentUser) {
+        return loadAccounts(search, role, status, page, pageSize);
+    }
 
-    public int getAccountsTotalCount(String search, String role, String status, User currentUser) {
-        checkAdminPermission(currentUser);
+    public int getAccountsTotalCount(String search, String role, String status) {
         return new AdminAccountService().getAccountsTotalCount(search, role, status);
     }
+    public int getAccountsTotalCount(String search, String role, String status, User currentUser) {
+        return getAccountsTotalCount(search, role, status);
+    }
 
-    public boolean isAccountEmailExists(String email, User currentUser) {
-        checkAdminPermission(currentUser);
+    public boolean isAccountEmailExists(String email) {
         return new AdminAccountService().isAccountEmailExists(email);
     }
+    public boolean isAccountEmailExists(String email, User currentUser) {
+        return isAccountEmailExists(email);
+    }
 
-    public boolean createAccount(String fullName, String email, String passwordHash, String role, String status, User currentUser) {
-        checkAdminPermission(currentUser);
+    public boolean createAccount(String fullName, String email, String passwordHash, String role, String status) {
         return new AdminAccountService().createAccount(fullName, email, passwordHash, role, status);
     }
+    public boolean createAccount(String fullName, String email, String passwordHash, String role, String status, User currentUser) {
+        return createAccount(fullName, email, passwordHash, role, status);
+    }
 
-    public boolean updateAccountRole(int accountId, String role, User currentUser) {
-        checkAdminPermission(currentUser);
+    public boolean updateAccountRole(int accountId, String role) {
         return new AdminAccountService().updateAccountRole(accountId, role);
     }
+    public boolean updateAccountRole(int accountId, String role, User currentUser) {
+        return updateAccountRole(accountId, role);
+    }
 
-    public boolean updateAccountStatus(int accountId, String status, User currentUser) {
-        checkAdminPermission(currentUser);
+    public boolean updateAccountStatus(int accountId, String status) {
         return new AdminAccountService().updateAccountStatus(accountId, status);
     }
+    public boolean updateAccountStatus(int accountId, String status, User currentUser) {
+        return updateAccountStatus(accountId, status);
+    }
 
-    public boolean deleteAccount(int accountId, User currentUser) {
-        checkAdminPermission(currentUser);
+    public boolean deleteAccount(int accountId) {
         return new AdminAccountService().deleteAccount(accountId);
     }
+    public boolean deleteAccount(int accountId, User currentUser) {
+        return deleteAccount(accountId);
+    }
 
-    public Map<String, Object> getAccountProfile(int accountId, User currentUser) {
-        checkAdminPermission(currentUser);
+    public Map<String, Object> getAccountProfile(int accountId) {
         return new AdminAccountService().getAccountProfile(accountId);
     }
+    public Map<String, Object> getAccountProfile(int accountId, User currentUser) {
+        return getAccountProfile(accountId);
+    }
 
-    public boolean updateAccountProfileByRole(int accountId, String fullName, String email, String phone, String address, String department, User currentUser) {
-        checkAdminPermission(currentUser);
+    public boolean updateAccountProfileByRole(int accountId, String fullName, String email, String phone, String address, String department) {
         return new AdminAccountService().updateAccountProfileByRole(accountId, fullName, email, phone, address, department);
     }
+    public boolean updateAccountProfileByRole(int accountId, String fullName, String email, String phone, String address, String department, User currentUser) {
+        return updateAccountProfileByRole(accountId, fullName, email, phone, address, department);
+    }
 
-    public boolean updateAccountPassword(int accountId, String rawPassword, User currentUser) {
-        checkAdminPermission(currentUser);
+    public boolean updateAccountPassword(int accountId, String rawPassword) {
         return new AdminAccountService().updateAccountPassword(accountId, rawPassword);
     }
+    public boolean updateAccountPassword(int accountId, String rawPassword, User currentUser) {
+        return updateAccountPassword(accountId, rawPassword);
+    }
 
-    public List<Map<String, Object>> getStaffAccountsQuick(String status, int limit, User currentUser) {
-        checkAdminPermission(currentUser);
+    public List<Map<String, Object>> getStaffAccountsQuick(String status, int limit) {
         return new AdminAccountService().getStaffAccountsQuick(status, limit);
     }
+    public List<Map<String, Object>> getStaffAccountsQuick(String status, int limit, User currentUser) {
+        return getStaffAccountsQuick(status, limit);
+    }
 
-    public List<Map<String, Object>> loadServices(String search, String serviceType, String status, int page, int pageSize, User currentUser) {
-        checkAdminPermission(currentUser);
+    public List<Map<String, Object>> loadServices(String search, String serviceType, String status, int page, int pageSize) {
         return medicalServiceService.loadServices(search, serviceType, status, page, pageSize);
     }
+    public List<Map<String, Object>> loadServices(String search, String serviceType, String status, int page, int pageSize, User currentUser) {
+        return loadServices(search, serviceType, status, page, pageSize);
+    }
 
-    public int getMedicalServicesCount(String search, String serviceType, String status, User currentUser) {
-        checkAdminPermission(currentUser);
+    public int getMedicalServicesCount(String search, String serviceType, String status) {
         return medicalServiceService.getMedicalServicesCount(search, serviceType, status);
     }
+    public int getMedicalServicesCount(String search, String serviceType, String status, User currentUser) {
+        return getMedicalServicesCount(search, serviceType, status);
+    }
 
-    public boolean createService(String serviceName, BigDecimal price, String serviceType, String status, User currentUser) {
-        checkAdminPermission(currentUser);
+    public boolean createService(String serviceName, BigDecimal price, String serviceType, String status) {
         return medicalServiceService.createService(serviceName, price, serviceType, status);
     }
+    public boolean createService(String serviceName, BigDecimal price, String serviceType, String status, User currentUser) {
+        return createService(serviceName, price, serviceType, status);
+    }
 
-    public boolean updateService(int serviceId, String serviceName, BigDecimal price, String serviceType, String status, User currentUser) {
-        checkAdminPermission(currentUser);
+    public boolean updateService(int serviceId, String serviceName, BigDecimal price, String serviceType, String status) {
         return medicalServiceService.updateService(serviceId, serviceName, price, serviceType, status);
     }
-
-    public boolean deleteService(int serviceId, User currentUser) {
-        checkAdminPermission(currentUser);
-        return medicalServiceService.deleteService(serviceId);
+    public boolean updateService(int serviceId, String serviceName, BigDecimal price, String serviceType, String status, User currentUser) {
+        return updateService(serviceId, serviceName, price, serviceType, status);
     }
 
-    public boolean updateServiceStatus(int serviceId, String status, User currentUser) {
-        checkAdminPermission(currentUser);
+    public boolean deleteService(int serviceId) {
+        return medicalServiceService.deleteService(serviceId);
+    }
+    public boolean deleteService(int serviceId, User currentUser) {
+        return deleteService(serviceId);
+    }
+
+    public boolean updateServiceStatus(int serviceId, String status) {
         return medicalServiceService.updateServiceStatus(serviceId, status);
+    }
+    public boolean updateServiceStatus(int serviceId, String status, User currentUser) {
+        return updateServiceStatus(serviceId, status);
     }
 
     public int getCountTotalServices() {
@@ -137,7 +165,7 @@ class AdminAccountService {
     }
 
     public boolean isAccountEmailExists(String email) {
-        return accountRepository.isEmailExists(email);
+        return accountRepository.isAccountEmailExists(email);
     }
 
     public boolean createAccount(String fullName, String email, String passwordHash, String role, String status) {
@@ -157,11 +185,11 @@ class AdminAccountService {
     }
 
     public boolean deleteAccount(int accountId) {
-        return accountRepository.deleteAccount(accountId);
+        return accountRepository.deleteAccountForAdmin(accountId);
     }
 
     public Map<String, Object> getAccountProfile(int accountId) {
-        return accountRepository.getAccountProfile(accountId);
+        return accountRepository.getAccountProfileForAdminEdit(accountId);
     }
 
     public boolean updateAccountProfileByRole(int accountId, String fullName, String email, String phone, String address, String department) {

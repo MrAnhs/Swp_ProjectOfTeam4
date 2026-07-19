@@ -1,14 +1,13 @@
 package com.diabetes.monitoring.admin.scheduling;
 
+import com.diabetes.monitoring.appointment.AppointmentRepository;
+import com.diabetes.monitoring.receptionist.EmergencyRoutingRepository;
 import com.diabetes.monitoring.util.GeminiSchedulingService;
-import com.diabetes.monitoring.util.GeminiSchedulingService.SchedulingResult;
 
 import java.sql.Date;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -17,6 +16,7 @@ import java.util.Map;
  */
 public class AdminSchedulingService {
     private final AdminScheduleService scheduleService = new AdminScheduleService();
+    private final AdminAiSchedulingService aiSchedulingService = new AdminAiSchedulingService();
     private final AdminStaffScheduleService staffScheduleService = new AdminStaffScheduleService();
 
     public void prepareScheduleViews() {
@@ -24,20 +24,170 @@ public class AdminSchedulingService {
         staffScheduleService.refreshStaffScheduleStatus();
     }
 
-    public List<Map<String, Object>> getStaffSchedules(String staffType, String staffName, Date workDate) {
-        return staffScheduleService.getStaffSchedules(staffType, staffName, workDate);
+    public List<Map<String, Object>> getDoctorsForSchedule() {
+        return scheduleService.getDoctorsForSchedule();
+    }
+
+    public List<String> getScheduleDepartments() {
+        return scheduleService.getScheduleDepartments();
+    }
+
+    public List<Map<String, Object>> getRoomsForSchedule() {
+        return scheduleService.getRoomsForSchedule();
+    }
+
+    public List<Map<String, Object>> getLabRoomsForSchedule() {
+        return scheduleService.getLabRoomsForSchedule();
+    }
+
+    public List<Map<String, Object>> getDoctorSchedules(String department,
+            String doctorName,
+            Date workDate) {
+
+        return scheduleService.getDoctorSchedules(department, doctorName,
+                workDate);
+    }
+
+    public AdminSchedulePage getDoctorSchedulesPage(String department,
+            String doctorName,
+            Date workDate,
+            String status,
+            String viewMode,
+            String sortBy,
+            String sortDir,
+            int page,
+            int pageSize) {
+
+        return scheduleService.getDoctorSchedulesPage(department, doctorName,
+                workDate, status, viewMode, sortBy, sortDir, page, pageSize);
+    }
+
+    public Map<String, Object> getDoctorScheduleById(int scheduleId) {
+        return scheduleService.getDoctorScheduleById(scheduleId);
+    }
+
+    public List<Map<String, Object>> getAppointmentsBySchedule(int scheduleId) {
+        return scheduleService.getAppointmentsBySchedule(scheduleId);
+    }
+
+    public boolean createSchedule(int doctorId,
+            Date workDate,
+            String timeSlot,
+            int maxPatients,
+            Integer onlineQuota,
+            String roomId) {
+
+        return scheduleService.createSchedule(doctorId, workDate, timeSlot,
+                maxPatients, onlineQuota, roomId);
+    }
+
+    public boolean updateSchedule(int scheduleId,
+            int doctorId,
+            String timeSlot,
+            int maxPatients,
+            Integer onlineQuota,
+            String status,
+            String roomId) {
+
+        return scheduleService.updateSchedule(scheduleId, doctorId, timeSlot,
+                maxPatients, onlineQuota, status, roomId);
+    }
+
+    public boolean deleteSchedule(int scheduleId) {
+        return scheduleService.deleteSchedule(scheduleId);
+    }
+
+    public boolean cancelSchedule(int scheduleId) {
+        return scheduleService.cancelSchedule(scheduleId);
+    }
+
+    public boolean transferSchedule(int scheduleId, int targetDoctorId) {
+        return scheduleService.transferSchedule(scheduleId, targetDoctorId);
+    }
+
+    public String consumeValidationMessage() {
+        return scheduleService.consumeValidationMessage();
+    }
+
+    public List<Map<String, Object>> getAvailableDoctorsForEmergency(
+            String department,
+            Integer excludeDoctorId) {
+
+        return scheduleService.getAvailableDoctorsForEmergency(department,
+                excludeDoctorId);
+    }
+
+    public List<Map<String, Object>> getAllActiveDoctorsForEmergency(
+            Integer excludeDoctorId) {
+
+        return scheduleService.getAllActiveDoctorsForEmergency(excludeDoctorId);
+    }
+
+    public AdminAiSchedulingService.AiSchedulingResult createSchedules(
+            AdminAiSchedulingService.AiSchedulingRequest request) {
+
+        return aiSchedulingService.createSchedules(request);
+    }
+
+    public List<Map<String, Object>> getStaffForSchedule(String staffType) {
+        return staffScheduleService.getStaffForSchedule(staffType);
+    }
+
+    public List<Map<String, Object>> getStaffSchedules(String staffType,
+            String staffName,
+            String department,
+            Date workDate) {
+
+        return staffScheduleService.getStaffSchedules(staffType, staffName,
+                department, workDate);
+    }
+
+    public AdminSchedulePage getStaffSchedulesPage(String staffType,
+            String staffName,
+            String department,
+            Date workDate,
+            String status,
+            String viewMode,
+            String sortBy,
+            String sortDir,
+            int page,
+            int pageSize) {
+
+        return staffScheduleService.getStaffSchedulesPage(staffType, staffName,
+                department, workDate, status, viewMode, sortBy, sortDir, page, pageSize);
     }
 
     public Map<String, Object> getStaffScheduleById(int staffScheduleId) {
         return staffScheduleService.getStaffScheduleById(staffScheduleId);
     }
 
-    public boolean createStaffSchedule(String accountIdRaw, Date workDate, String timeSlot, String staffType, String department, String workArea, String roomId, int maxWorkload) {
-        return staffScheduleService.createStaffSchedule(accountIdRaw, workDate, timeSlot, staffType, department, workArea, roomId, maxWorkload);
+    public boolean createStaffSchedule(int accountId,
+            String staffType,
+            Date workDate,
+            String timeSlot,
+            String department,
+            String workArea,
+            Integer maxWorkload,
+            String roomId) {
+
+        return staffScheduleService.createStaffSchedule(accountId, staffType,
+                workDate, timeSlot, department, workArea, maxWorkload, roomId);
     }
 
-    public boolean updateStaffSchedule(int staffScheduleId, String accountIdRaw, Date workDate, String timeSlot, String status, String department, String workArea, String roomId, int maxWorkload) {
-        return staffScheduleService.updateStaffSchedule(staffScheduleId, accountIdRaw, workDate, timeSlot, status, department, workArea, roomId, maxWorkload);
+    public boolean updateStaffSchedule(int staffScheduleId,
+            int accountId,
+            String staffType,
+            Date workDate,
+            String timeSlot,
+            String department,
+            String workArea,
+            Integer maxWorkload,
+            String status,
+            String roomId) {
+
+        return staffScheduleService.updateStaffSchedule(staffScheduleId,
+                accountId, staffType, workDate, timeSlot, department,
+                workArea, maxWorkload, status, roomId);
     }
 
     public boolean cancelStaffSchedule(int staffScheduleId) {
@@ -54,7 +204,140 @@ public class AdminSchedulingService {
 
     public AdminStaffScheduleService.AiStaffSchedulingResult createStaffSchedules(
             AdminStaffScheduleService.AiStaffSchedulingRequest request) {
+
         return staffScheduleService.createStaffSchedules(request);
+    }
+}
+
+/**
+ * Applies business rules for doctor schedule management.
+ */
+class AdminScheduleService {
+    private final AdminScheduleRepository scheduleRepository = new AdminScheduleRepository();
+    private final AppointmentRepository appointmentRepository = new AppointmentRepository();
+    private final EmergencyRoutingRepository emergencyRepository = new EmergencyRoutingRepository();
+    private final AdminRoomRepository roomRepository = new AdminRoomRepository();
+
+    public void prepareScheduleViews() {
+        scheduleRepository.refreshDoctorScheduleStatusFromAppointments();
+    }
+
+    public List<Map<String, Object>> getDoctorsForSchedule() {
+        return scheduleRepository.getDoctorsForSchedule();
+    }
+
+    public List<String> getScheduleDepartments() {
+        return scheduleRepository.getScheduleDepartments();
+    }
+
+    public List<Map<String, Object>> getRoomsForSchedule() {
+        return roomRepository.getActiveRooms();
+    }
+
+    public List<Map<String, Object>> getLabRoomsForSchedule() {
+        return roomRepository.getActiveLabRooms();
+    }
+
+    public List<Map<String, Object>> getDoctorSchedules(String department,
+            String doctorName,
+            Date workDate) {
+
+        return scheduleRepository.getDoctorSchedules(department, doctorName,
+                workDate);
+    }
+
+    public AdminSchedulePage getDoctorSchedulesPage(String department,
+            String doctorName,
+            Date workDate,
+            String status,
+            String viewMode,
+            String sortBy,
+            String sortDir,
+            int page,
+            int pageSize) {
+
+        return scheduleRepository.getDoctorSchedulesPage(department, doctorName,
+                workDate, status, viewMode, sortBy, sortDir, page, pageSize);
+    }
+
+    public Map<String, Object> getDoctorScheduleById(int scheduleId) {
+        return scheduleRepository.getDoctorScheduleById(scheduleId);
+    }
+
+    public List<Map<String, Object>> getAppointmentsBySchedule(int scheduleId) {
+        return appointmentRepository.getAppointmentsBySchedule(scheduleId);
+    }
+
+    public boolean createSchedule(int doctorId,
+            Date workDate,
+            String timeSlot,
+            int maxPatients,
+            Integer onlineQuota,
+            String roomId) {
+
+        return scheduleRepository.createDoctorSchedule(doctorId, workDate,
+                timeSlot, maxPatients, onlineQuota, "Available", roomId);
+    }
+
+    public boolean createSchedule(int doctorId,
+            Date workDate,
+            String timeSlot,
+            int maxPatients,
+            Integer onlineQuota) {
+        return createSchedule(doctorId, workDate, timeSlot, maxPatients, onlineQuota, null);
+    }
+
+    public boolean updateSchedule(int scheduleId,
+            int doctorId,
+            String timeSlot,
+            int maxPatients,
+            Integer onlineQuota,
+            String status,
+            String roomId) {
+
+        return scheduleRepository.updateDoctorSchedule(scheduleId, doctorId,
+                timeSlot, maxPatients, onlineQuota, status, roomId);
+    }
+
+    public boolean updateSchedule(int scheduleId,
+            int doctorId,
+            String timeSlot,
+            int maxPatients,
+            Integer onlineQuota,
+            String status) {
+        return updateSchedule(scheduleId, doctorId, timeSlot, maxPatients, onlineQuota, status, null);
+    }
+
+    public boolean deleteSchedule(int scheduleId) {
+        return scheduleRepository.deleteDoctorSchedule(scheduleId);
+    }
+
+    public boolean cancelSchedule(int scheduleId) {
+        return scheduleRepository.cancelDoctorSchedule(scheduleId);
+    }
+
+    public boolean transferSchedule(int scheduleId, int targetDoctorId) {
+        return scheduleRepository.transferDoctorSchedule(scheduleId,
+                targetDoctorId);
+    }
+
+    public String consumeValidationMessage() {
+        return scheduleRepository.consumeScheduleValidationMessage();
+    }
+
+    public List<Map<String, Object>> getAvailableDoctorsForEmergency(
+            String department,
+            Integer excludeDoctorId) {
+
+        return emergencyRepository.getAvailableDoctorsForEmergency(department,
+                excludeDoctorId);
+    }
+
+    public List<Map<String, Object>> getAllActiveDoctorsForEmergency(
+            Integer excludeDoctorId) {
+
+        return emergencyRepository.getAllActiveDoctorsForEmergency(
+                excludeDoctorId);
     }
 }
 
@@ -74,148 +357,273 @@ class AdminStaffScheduleService {
 
     public String consumeValidationMessage() {
         String msg = validationMessage.get();
-        validationMessage.set("");
-        return msg;
-    }
-
-    public void refreshStaffScheduleStatus() {
-        staffRepository.refreshStaffScheduleStatus();
-    }
-
-    public List<Map<String, Object>> getStaffSchedules(String staffType, String staffName, Date workDate) {
-        return staffRepository.getStaffSchedules(staffType, staffName, workDate);
-    }
-
-    public Map<String, Object> getStaffScheduleById(int staffScheduleId) {
-        return staffRepository.getStaffScheduleById(staffScheduleId);
+        validationMessage.remove();
+        return msg == null ? "" : msg;
     }
 
     public List<Map<String, Object>> getStaffForSchedule(String staffType) {
-        return staffRepository.getStaffForSchedule(staffType);
+        String normalizedStaffType = validator.normalizeStaffType(staffType);
+        String role = validator.roleForStaffType(normalizedStaffType);
+        return staffRepository.findStaff(role);
     }
 
-    public boolean createStaffSchedule(String accountIdRaw, Date workDate, String timeSlot, String staffType, String department, String workArea, String roomId, int maxWorkload) {
-        try {
-            int accountId = Integer.parseInt(accountIdRaw);
-            if (!validator.isValidWorkDate(workDate)) {
-                setValidationMessage("Ngày trực không được ở quá khứ.");
+    public List<Map<String, Object>> getStaffSchedules(String staffType,
+            String staffName,
+            String department,
+            Date workDate) {
+
+        staffRepository.refreshStaffScheduleStatus();
+        String normalizedStaffType = validator.normalizeStaffType(staffType);
+        return staffRepository.findSchedules(normalizedStaffType, staffName,
+                department, workDate);
+    }
+
+    public AdminSchedulePage getStaffSchedulesPage(String staffType,
+            String staffName,
+            String department,
+            Date workDate,
+            String status,
+            String viewMode,
+            String sortBy,
+            String sortDir,
+            int page,
+            int pageSize) {
+
+        staffRepository.refreshStaffScheduleStatus();
+        String normalizedStaffType = validator.normalizeStaffType(staffType);
+        return staffRepository.findSchedules(normalizedStaffType, staffName,
+                department, workDate, status, viewMode, sortBy, sortDir, page, pageSize);
+    }
+
+    public Map<String, Object> getStaffScheduleById(int staffScheduleId) {
+        return staffRepository.findById(staffScheduleId);
+    }
+
+    public boolean createStaffSchedule(int accountId,
+            String staffType,
+            Date workDate,
+            String timeSlot,
+            String department,
+            String workArea,
+            Integer maxWorkload,
+            String roomId) {
+
+        setValidationMessage("");
+        String normalizedStaffType = validator.normalizeStaffType(staffType);
+        String normalizedTimeSlot = validator.normalizeTimeSlot(timeSlot);
+        if (normalizedStaffType == null) {
+            setValidationMessage("Loại nhân sự không hợp lệ.");
+            return false;
+        }
+
+        String workloadError = AdminScheduleValidator.validateStaffWorkload(normalizedStaffType, maxWorkload);
+        if (workloadError != null) {
+            setValidationMessage(workloadError);
+            return false;
+        }
+
+        if (AdminScheduleValidator.requiresRoom(normalizedStaffType)
+                && (roomId == null || roomId.trim().isEmpty())) {
+            setValidationMessage("Vui lòng chọn phòng xét nghiệm.");
+            return false;
+        }
+
+        try (java.sql.Connection connection = com.diabetes.monitoring.util.DatabaseConnection.getConnection()) {
+            String error = validator.validate(connection, accountId, normalizedStaffType,
+                    workDate, normalizedTimeSlot, null);
+            if (error != null) {
+                setValidationMessage(error);
                 return false;
             }
-            if (!validator.isValidTimeSlot(timeSlot)) {
-                setValidationMessage("Khung giờ trực không hợp lệ (định dạng HH:mm-HH:mm).");
+
+            String roomError = AdminScheduleValidator.requiresRoom(normalizedStaffType)
+                    ? AdminScheduleValidator.validateRoom(connection, roomId, workDate, normalizedTimeSlot, null)
+                    : null;
+            if (roomError != null) {
+                setValidationMessage(roomError);
                 return false;
             }
-            if (staffRepository.hasOverlapSchedule(accountId, -1, workDate, timeSlot)) {
-                setValidationMessage("Nhân sự này đã có lịch trực khác trùng khung giờ trong ngày.");
-                return false;
-            }
-            return staffRepository.createStaffSchedule(accountId, workDate, timeSlot, staffType, department, workArea, roomId, maxWorkload);
-        } catch (Exception ex) {
-            setValidationMessage("Dữ liệu nhân sự không hợp lệ.");
+
+            return staffRepository.insert(accountId, normalizedStaffType, workDate,
+                    normalizedTimeSlot, department, workArea, maxWorkload, "Scheduled", "Manual", roomId);
+        } catch (java.sql.SQLException e) {
+            setValidationMessage("Lỗi tạo lịch nhân sự: " + e.getMessage());
             return false;
         }
     }
 
-    public boolean updateStaffSchedule(int staffScheduleId, String accountIdRaw, Date workDate, String timeSlot, String status, String department, String workArea, String roomId, int maxWorkload) {
-        try {
-            int accountId = Integer.parseInt(accountIdRaw);
-            Map<String, Object> current = staffRepository.getStaffScheduleById(staffScheduleId);
-            if (current == null) {
-                setValidationMessage("Lịch trực không tồn tại.");
+    public boolean updateStaffSchedule(int staffScheduleId,
+            int accountId,
+            String staffType,
+            Date workDate,
+            String timeSlot,
+            String department,
+            String workArea,
+            Integer maxWorkload,
+            String status,
+            String roomId) {
+
+        setValidationMessage("");
+        String normalizedStaffType = validator.normalizeStaffType(staffType);
+        String normalizedTimeSlot = validator.normalizeTimeSlot(timeSlot);
+        if (staffScheduleId <= 0 || normalizedStaffType == null) {
+            setValidationMessage("Thông tin cập nhật lịch nhân sự không hợp lệ.");
+            return false;
+        }
+
+        String workloadError = AdminScheduleValidator.validateStaffWorkload(normalizedStaffType, maxWorkload);
+        if (workloadError != null) {
+            setValidationMessage(workloadError);
+            return false;
+        }
+
+        if (AdminScheduleValidator.requiresRoom(normalizedStaffType)
+                && (roomId == null || roomId.trim().isEmpty())) {
+            setValidationMessage("Vui lòng chọn phòng xét nghiệm.");
+            return false;
+        }
+
+        try (java.sql.Connection connection = com.diabetes.monitoring.util.DatabaseConnection.getConnection()) {
+            String currentStatus = staffRepository.getStaffScheduleStatus(staffScheduleId);
+            if (currentStatus == null) {
+                setValidationMessage("Không tìm thấy lịch trực nhân sự.");
                 return false;
             }
-            String currentStatus = String.valueOf(current.get("status"));
-            if ("Expired".equalsIgnoreCase(currentStatus) || "Cancelled".equalsIgnoreCase(currentStatus) || "Completed".equalsIgnoreCase(currentStatus)) {
-                setValidationMessage("Ca trực này đã qua, đã hủy hoặc hoàn tất, không thể chỉnh sửa.");
+            if ("cancelled".equalsIgnoreCase(currentStatus)
+                    || "expired".equalsIgnoreCase(currentStatus)
+                    || "completed".equalsIgnoreCase(currentStatus)) {
+                setValidationMessage("Không thể chỉnh sửa lịch đã hủy, đã hoàn tất hoặc đã qua giờ.");
                 return false;
             }
-            if (!validator.isValidWorkDate(workDate)) {
-                setValidationMessage("Ngày trực không được ở quá khứ.");
+
+            String error = validator.validate(connection, accountId, normalizedStaffType,
+                    workDate, normalizedTimeSlot, staffScheduleId);
+            if (error != null) {
+                setValidationMessage(error);
                 return false;
             }
-            if (!validator.isValidTimeSlot(timeSlot)) {
-                setValidationMessage("Khung giờ trực không hợp lệ (định dạng HH:mm-HH:mm).");
+
+            String roomError = AdminScheduleValidator.requiresRoom(normalizedStaffType)
+                    ? AdminScheduleValidator.validateRoom(connection, roomId, workDate, normalizedTimeSlot,
+                            staffScheduleId)
+                    : null;
+            if (roomError != null) {
+                setValidationMessage(roomError);
                 return false;
             }
-            if (staffRepository.hasOverlapSchedule(accountId, staffScheduleId, workDate, timeSlot)) {
-                setValidationMessage("Nhân sự này đã có lịch trực khác trùng khung giờ trong ngày.");
-                return false;
-            }
-            return staffRepository.updateStaffSchedule(staffScheduleId, accountId, workDate, timeSlot, status, department, workArea, roomId, maxWorkload);
-        } catch (Exception ex) {
-            setValidationMessage("Dữ liệu cập nhật không hợp lệ.");
+
+            return staffRepository.update(staffScheduleId, accountId, normalizedStaffType, workDate,
+                    normalizedTimeSlot, department, workArea, maxWorkload, status, roomId);
+        } catch (java.sql.SQLException e) {
+            setValidationMessage("Lỗi cập nhật lịch nhân sự: " + e.getMessage());
             return false;
         }
     }
 
     public boolean cancelStaffSchedule(int staffScheduleId) {
-        Map<String, Object> current = staffRepository.getStaffScheduleById(staffScheduleId);
-        if (current == null) {
-            setValidationMessage("Lịch trực không tồn tại.");
+        setValidationMessage("");
+        try {
+            String currentStatus = staffRepository.getStaffScheduleStatus(staffScheduleId);
+            if (currentStatus == null) {
+                setValidationMessage("Không tìm thấy lịch trực nhân sự.");
+                return false;
+            }
+            if ("cancelled".equalsIgnoreCase(currentStatus)
+                    || "expired".equalsIgnoreCase(currentStatus)
+                    || "completed".equalsIgnoreCase(currentStatus)) {
+                setValidationMessage("Không thể hủy lịch đã hủy, đã hoàn tất hoặc đã qua giờ.");
+                return false;
+            }
+            return staffRepository.cancel(staffScheduleId);
+        } catch (java.sql.SQLException e) {
+            setValidationMessage("Không thể hủy lịch nhân sự do lỗi hệ thống.");
             return false;
         }
-        String currentStatus = String.valueOf(current.get("status"));
-        if ("Expired".equalsIgnoreCase(currentStatus) || "Cancelled".equalsIgnoreCase(currentStatus) || "Completed".equalsIgnoreCase(currentStatus)) {
-            setValidationMessage("Lịch trực này không ở trạng thái hoạt động để hủy.");
-            return false;
-        }
-        return staffRepository.cancelStaffSchedule(staffScheduleId);
     }
 
     public boolean deleteStaffSchedule(int staffScheduleId) {
-        return staffRepository.deleteStaffSchedule(staffScheduleId);
+        setValidationMessage("");
+        try {
+            return staffRepository.delete(staffScheduleId);
+        } catch (java.sql.SQLException e) {
+            setValidationMessage("Không thể xóa lịch nhân sự do lỗi hệ thống.");
+            return false;
+        }
     }
 
-    public AiStaffSchedulingResult createStaffSchedules(AiStaffSchedulingRequest request) {
+    public int refreshStaffScheduleStatus() {
+        return staffRepository.refreshStaffScheduleStatus();
+    }
+
+    public AiStaffSchedulingResult createStaffSchedules(
+            AiStaffSchedulingRequest request) {
+
         AiStaffSchedulingResult result = new AiStaffSchedulingResult();
-        if (request.startDate == null || request.endDate == null || request.startDate.after(request.endDate)) {
-            result.message = "Khoảng ngày lập lịch nhân viên không hợp lệ.";
+        if (request == null || request.startDate == null
+                || request.endDate == null
+                || request.startDate.after(request.endDate)) {
+            result.message = "Khoảng ngày lập lịch nhân sự không hợp lệ.";
             return result;
         }
-        if (request.selectedWeekdays == null || request.selectedWeekdays.isEmpty()) {
-            result.message = "Vui lòng chọn ít nhất một thứ áp dụng trong tuần.";
-            return result;
-        }
-        List<Date> targetDates = new ArrayList<>();
-        LocalDate cursor = request.startDate.toLocalDate();
-        while (!cursor.isAfter(request.endDate.toLocalDate())) {
-            if (request.selectedWeekdays.contains(cursor.getDayOfWeek().getValue())) {
-                targetDates.add(Date.valueOf(cursor));
-            }
-            cursor = cursor.plusDays(1);
-        }
-        if (targetDates.isEmpty()) {
-            result.message = "Khoảng ngày đã chọn không chứa thứ nào tương thích.";
+        if (request.shiftsPerDay == null || request.shiftsPerDay.isEmpty()) {
+            result.message = "Vui lòng nhập ít nhất một khung ca nhân sự.";
             return result;
         }
 
-        List<Map<String, Object>> staff = staffRepository.getStaffForSchedule(request.staffType);
-        List<Map<String, Object>> created = aiSchedulingRepository.createStaffSchedulesBatch(
-                targetDates, request.timeSlot, request.staffType, request.department, request.workArea,
-                request.roomId, request.maxWorkload, staff, request.preview
-        );
+        List<Map<String, Object>> created = aiSchedulingRepository.createAiStaffSchedules(
+                request.staffType,
+                request.startDate,
+                request.endDate,
+                request.shiftsPerDay,
+                request.department,
+                request.workArea,
+                request.staffPerShift,
+                request.maxWorkload,
+                request.roomId,
+                request.conflictHandling);
 
-        result.success = !created.isEmpty();
+        int expected = countDays(request.startDate, request.endDate)
+                * request.shiftsPerDay.size()
+                * Math.min(4, Math.max(1, request.staffPerShift));
+
+        String repoMessage = aiSchedulingRepository.consumeScheduleValidationMessage();
+        boolean hasError = repoMessage != null && !repoMessage.isBlank();
+
+        result.success = !hasError && (created.size() == expected || "skip".equalsIgnoreCase(request.conflictHandling)
+                || "overwrite".equalsIgnoreCase(request.conflictHandling));
         result.items = created;
         if (result.success) {
-            result.message = "AI đã tự động lập thành công " + created.size() + " ca trực cho nhân sự!";
+            result.message = "AI đã tạo " + created.size()
+                    + " ca trực nhân sự trong Staff_Schedule.";
         } else {
-            result.message = "Không có ca trực nào được tạo do trùng lịch hoặc thiếu nhân sự phù hợp.";
+            result.message = repoMessage == null || repoMessage.isBlank()
+                    ? "Không thể tạo đủ lịch nhân sự. Batch đã rollback để tránh dữ liệu thiếu."
+                    : repoMessage;
         }
         return result;
     }
 
+    private int countDays(Date startDate, Date endDate) {
+        int days = 0;
+        LocalDate cursor = startDate.toLocalDate();
+        while (!cursor.isAfter(endDate.toLocalDate())) {
+            days++;
+            cursor = cursor.plusDays(1);
+        }
+        return days;
+    }
+
     public static class AiStaffSchedulingRequest {
+        public String staffType;
         public Date startDate;
         public Date endDate;
-        public String timeSlot;
-        public String staffType;
+        public List<Map<String, String>> shiftsPerDay;
         public String department;
         public String workArea;
+        public int staffPerShift;
+        public Integer maxWorkload;
         public String roomId;
-        public int maxWorkload = 50;
-        public List<Integer> selectedWeekdays = new ArrayList<>();
-        public boolean preview;
+        public String conflictHandling;
     }
 
     public static class AiStaffSchedulingResult {
@@ -266,14 +674,18 @@ class AdminAiSchedulingService {
         String department = request.department;
         List<Map<String, String>> shiftsPerDay = new ArrayList<>(request.shiftsPerDay);
         List<Integer> selectedWeekdays = new ArrayList<>(request.selectedWeekdays);
-        List<Date> targetDates = buildSelectedTargetDates(startDate, endDate, selectedWeekdays);
+        List<Date> targetDates = buildSelectedTargetDates(startDate, endDate,
+                selectedWeekdays);
 
         if (shiftsPerDay.isEmpty()) {
-            shiftsPerDay = buildDefaultShiftTemplates(startTime, endTime, slotMinutes, department);
+            shiftsPerDay = buildDefaultShiftTemplates(startTime, endTime,
+                    slotMinutes, department);
         }
         doctorsPerShift = Math.min(4, Math.max(1, doctorsPerShift));
-        int expectedScheduleCount = targetDates.size() * shiftsPerDay.size() * doctorsPerShift;
-        shiftsPerDay = expandShiftsForDoctorsPerSlot(shiftsPerDay, doctorsPerShift);
+        int expectedScheduleCount = targetDates.size() * shiftsPerDay.size()
+                * doctorsPerShift;
+        shiftsPerDay = expandShiftsForDoctorsPerSlot(shiftsPerDay,
+                doctorsPerShift);
 
         if (startDate == null || endDate == null || startDate.after(endDate)) {
             result.message = "Khoảng ngày lập lịch không hợp lệ.";
@@ -301,7 +713,8 @@ class AdminAiSchedulingService {
         }
 
         maxSchedules = expectedScheduleCount;
-        List<Map<String, Object>> doctors = aiSchedulingRepository.getDoctorsForAiScheduling(startDate, endDate);
+        List<Map<String, Object>> doctors = aiSchedulingRepository.getDoctorsForAiScheduling(startDate,
+                endDate);
         GeminiSchedulingService.SchedulingResult geminiResult = geminiSchedulingService.generate(targetDates,
                 shiftsPerDay,
                 doctors);
@@ -337,10 +750,18 @@ class AdminAiSchedulingService {
         return result;
     }
 
-    private List<Map<String, String>> buildDefaultShiftTemplates(String rawStartTime, String rawEndTime, int slotMinutes, String department) {
+    private List<Map<String, String>> buildDefaultShiftTemplates(
+            String rawStartTime,
+            String rawEndTime,
+            int slotMinutes,
+            String department) {
+
         List<Map<String, String>> shifts = new ArrayList<>();
-        String resolvedDepartment = (department == null || department.isBlank()) ? "Endocrinology" : department;
-        for (String timeSlot : buildScheduleTimeSlots(rawStartTime, rawEndTime, slotMinutes)) {
+        String resolvedDepartment = (department == null || department.isBlank())
+                ? "Endocrinology"
+                : department;
+        for (String timeSlot : buildScheduleTimeSlots(rawStartTime, rawEndTime,
+                slotMinutes)) {
             Map<String, String> shift = new java.util.HashMap<>();
             shift.put("timeSlot", timeSlot);
             shift.put("department", resolvedDepartment);
@@ -349,7 +770,10 @@ class AdminAiSchedulingService {
         return shifts;
     }
 
-    private List<Map<String, String>> expandShiftsForDoctorsPerSlot(List<Map<String, String>> baseShifts, int doctorsPerShift) {
+    private List<Map<String, String>> expandShiftsForDoctorsPerSlot(
+            List<Map<String, String>> baseShifts,
+            int doctorsPerShift) {
+
         List<Map<String, String>> expanded = new ArrayList<>();
         int multiplier = Math.min(4, Math.max(1, doctorsPerShift));
         for (Map<String, String> shift : baseShifts) {
@@ -363,7 +787,10 @@ class AdminAiSchedulingService {
         return expanded;
     }
 
-    private List<String> buildScheduleTimeSlots(String rawStartTime, String rawEndTime, int slotMinutes) {
+    private List<String> buildScheduleTimeSlots(String rawStartTime,
+            String rawEndTime,
+            int slotMinutes) {
+
         List<String> slots = new ArrayList<>();
         if (slotMinutes < 30 || slotMinutes > 480) {
             return slots;
@@ -375,10 +802,11 @@ class AdminAiSchedulingService {
             if (!start.isBefore(end)) {
                 return slots;
             }
-            java.time.LocalTime cursor = start;
+            LocalTime cursor = start;
             while (cursor.plusMinutes(slotMinutes).compareTo(end) <= 0) {
-                java.time.LocalTime slotEnd = cursor.plusMinutes(slotMinutes);
-                slots.add(cursor.format(formatter) + "-" + slotEnd.format(formatter));
+                LocalTime slotEnd = cursor.plusMinutes(slotMinutes);
+                slots.add(cursor.format(formatter) + "-"
+                        + slotEnd.format(formatter));
                 cursor = slotEnd;
             }
         } catch (Exception ex) {
@@ -387,9 +815,13 @@ class AdminAiSchedulingService {
         return slots;
     }
 
-    private List<Date> buildSelectedTargetDates(Date startDate, Date endDate, List<Integer> selectedWeekdays) {
+    private List<Date> buildSelectedTargetDates(Date startDate,
+            Date endDate,
+            List<Integer> selectedWeekdays) {
+
         List<Date> dates = new ArrayList<>();
-        if (startDate == null || endDate == null || startDate.after(endDate) || selectedWeekdays == null || selectedWeekdays.isEmpty()) {
+        if (startDate == null || endDate == null || startDate.after(endDate)
+                || selectedWeekdays == null || selectedWeekdays.isEmpty()) {
             return dates;
         }
         LocalDate cursor = startDate.toLocalDate();

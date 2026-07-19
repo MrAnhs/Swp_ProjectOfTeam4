@@ -46,6 +46,8 @@ public class AdminAnalyticsService {
  */
 class AdminDashboardService {
     private final AdminDashboardDAO dashboardDAO = new AdminDashboardDAO();
+    private final AdminDashboardRepository dashboardRepository = new AdminDashboardRepository();
+
     public void prepareDashboardData() {
         dashboardDAO.normalizeFutureCompletedAppointments();
     }
@@ -106,6 +108,47 @@ class AdminDashboardService {
     }
     public List<Map<String, Object>> getQuickAppointments() {
         return dashboardDAO.getCompletedAppointmentsTodayQuick(50);
+    }
+
+    // Advanced statistics forwarded to repository
+    public int getTodayPatientsCount() {
+        return dashboardRepository.getTodayPatientsCount();
+    }
+    public int getTodayAppointmentsCount() {
+        return dashboardRepository.getTodayAppointmentsCount();
+    }
+    public BigDecimal getSumRevenueToday() {
+        return dashboardRepository.getSumRevenueToday();
+    }
+    public int getCompletedAppointmentsToday() {
+        return dashboardRepository.getCompletedAppointmentsToday();
+    }
+    public int getPatientsWaitingCount() {
+        return dashboardRepository.getPatientsWaitingCount();
+    }
+    public int getPatientsInProgressCount() {
+        return dashboardRepository.getPatientsInProgressCount();
+    }
+    public int getActiveRoomsCount() {
+        return dashboardRepository.getActiveRoomsCount();
+    }
+    public Map<String, Integer> getAppointmentStatusSummary() {
+        return dashboardRepository.getAppointmentStatusSummary();
+    }
+    public List<Map<String, Object>> getRoomQueueSummary() {
+        return dashboardRepository.getRoomQueueSummary();
+    }
+    public Map<String, Object> getTodayScheduleCounts() {
+        return dashboardRepository.getTodayScheduleCounts();
+    }
+    public Map<String, Object> getScheduleStatusSummary() {
+        return dashboardRepository.getScheduleStatusSummary();
+    }
+    public List<Map<String, Object>> getRecentAdminActivities(int limit) {
+        return dashboardRepository.getRecentAdminActivities(limit);
+    }
+    public Map<String, Object> getModalDetails(String type, String id) {
+        return dashboardRepository.getModalDetails(type, id);
     }
 }
 

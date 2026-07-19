@@ -98,8 +98,18 @@ public class AdminServlet extends HttpServlet {
             return;
         }
 
+        if ("manageRooms".equals(action)) {
+            managementHandler.loadRooms(request, response);
+            return;
+        }
+
         if ("dashboardChartData".equals(action)) {
             analyticsHandler.loadDashboardChartData(request, response);
+            return;
+        }
+
+        if ("dashboardModalData".equals(action)) {
+            analyticsHandler.loadDashboardModalData(request, response);
             return;
         }
 
@@ -261,6 +271,19 @@ public class AdminServlet extends HttpServlet {
             return;
         }
 
+        if ("createRoom".equals(action)) {
+            managementHandler.createRoom(request, response);
+            return;
+        }
+        if ("updateRoom".equals(action)) {
+            managementHandler.updateRoom(request, response);
+            return;
+        }
+        if ("deleteRoom".equals(action)) {
+            managementHandler.deleteRoom(request, response);
+            return;
+        }
+
         if ("createSchedule".equals(action)) {
             schedulingHandler.createSchedule(request, response);
             return;
@@ -279,6 +302,23 @@ public class AdminServlet extends HttpServlet {
         }
         if ("transferSchedule".equals(action)) {
             schedulingHandler.transferSchedule(request, response);
+            return;
+        }
+
+        if ("create-staff-schedule".equals(action)) {
+            schedulingHandler.createStaffSchedule(request, response);
+            return;
+        }
+        if ("update-staff-schedule".equals(action)) {
+            schedulingHandler.updateStaffSchedule(request, response);
+            return;
+        }
+        if ("cancel-staff-schedule".equals(action)) {
+            schedulingHandler.cancelStaffSchedule(request, response);
+            return;
+        }
+        if ("delete-staff-schedule".equals(action)) {
+            schedulingHandler.deleteStaffSchedule(request, response);
             return;
         }
 

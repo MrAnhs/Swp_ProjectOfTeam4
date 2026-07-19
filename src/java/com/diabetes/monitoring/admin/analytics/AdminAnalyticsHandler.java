@@ -47,6 +47,10 @@ public class AdminAnalyticsHandler {
      */
     public void loadQuickAppointmentsData(HttpServletResponse response) throws IOException { dashboardHandler.loadQuickAppointmentsData(response); }
     /**
+     * Loads dashboard modal details data via AJAX.
+     */
+    public void loadDashboardModalData(HttpServletRequest request, HttpServletResponse response) throws IOException { dashboardHandler.loadDashboardModalData(request, response); }
+    /**
      * Loads reports data for the Admin UI.
      */
     public void loadReports(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException { reportHandler.loadReports(request, response); }
@@ -86,6 +90,14 @@ class AdminDashboardHandler {
         List<Map<String, Object>> todayPatientFlow = dashboardService.getTodayPatientFlowByTimeSlot();
         List<Map<String, Object>> todayRevenueByService = dashboardService.getTodayRevenueByServiceType();
         List<Map<String, Object>> todayStatusDistribution = dashboardService.getTodayAppointmentStatusDistribution();
+
+        int todayPatientsCount = dashboardService.getTodayPatientsCount();
+        int todayAppointmentsCount = dashboardService.getTodayAppointmentsCount();
+        BigDecimal sumRevenueToday = dashboardService.getSumRevenueToday();
+        int completedAppointmentsToday = dashboardService.getCompletedAppointmentsToday();
+        int patientsWaiting = dashboardService.getPatientsWaitingCount();
+        int patientsInProgress = dashboardService.getPatientsInProgressCount();
+        int activeRooms = dashboardService.getActiveRoomsCount();
 
         int totalWaitingToday = 0;
         for (Map<String, Object> row : todayQueueStatus) {
@@ -243,6 +255,34 @@ class AdminDashboardHandler {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             try (PrintWriter out = response.getWriter()) {
                 out.print("{\"error\":\"true\",\"message\":\"Không thể tải dữ liệu lượt khám.\"}");
+            }
+        }
+    }
+
+    /**
+     * Loads dashboard modal details data for the Admin UI.
+     */
+    public void loadDashboardModalData(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setContentType("application/json;charset=UTF-8");
+        try {
+            String type = request.getParameter("type");
+            String id = request.getParameter("id");
+            if (type == null || type.isBlank()) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                try (PrintWriter out = response.getWriter()) {
+                    out.print("{\"error\":\"true\",\"message\":\"Thiếu tham số type.\"}");
+                }
+                return;
+            }
+
+            Map<String, Object> data = dashboardService.getModalDetails(type, id);
+            try (PrintWriter out = response.getWriter()) {
+                out.print(AdminJsonUtil.toJsonMap(data));
+            }
+        } catch (Exception ex) {
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            try (PrintWriter out = response.getWriter()) {
+                out.print("{\"error\":\"true\",\"message\":\"Không thể tải dữ liệu chi tiết.\"}");
             }
         }
     }
