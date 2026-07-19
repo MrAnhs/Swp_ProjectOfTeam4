@@ -355,17 +355,10 @@ public class ReceptionistDAO {
                 statement.executeUpdate();
             }
 
-            // Retrieve patient and lab doctor details to insert into Lab_Waiting_List
-            String selectLabRequestSql = "SELECT id.lab_id, i.patient_id, p.full_name, p.date_of_birth, "
-                    + "p.gender, p.phone, p.email, p.address, "
-                    + "COALESCE((SELECT TOP 1 r.room_name FROM Lab_Schedule ls "
-                    + "JOIN Room r ON ls.room_id = r.room_id "
-                    + "WHERE ls.lab_id = id.lab_id AND ls.work_date = CAST(GETDATE() AS date) "
-                    + "AND LOWER(ls.status) = 'scheduled' ORDER BY ls.lab_sched_id DESC), dl.lab_name) AS lab_room_name "
+            // Retrieve patient and lab details to insert into Lab_Order
+            String selectLabRequestSql = "SELECT id.lab_id, i.patient_id, id.appointment_id, id.service_id "
                     + "FROM Invoice_Detail id "
                     + "JOIN Invoice i ON id.invoice_id = i.invoice_id "
-                    + "JOIN Patient p ON p.patient_id = i.patient_id "
-                    + "LEFT JOIN Doctor_Lab dl ON dl.lab_id = id.lab_id "
                     + "WHERE id.invoice_id = ? AND id.lab_status = 'Requested'";
             
             try (PreparedStatement selectStmt = connection.prepareStatement(selectLabRequestSql)) {
@@ -373,51 +366,83 @@ public class ReceptionistDAO {
                 try (ResultSet rs = selectStmt.executeQuery()) {
                     while (rs.next()) {
                         int patientId = rs.getInt("patient_id");
+                        int serviceId = rs.getInt("service_id");
                         int labId = rs.getInt("lab_id");
                         boolean hasLabId = !rs.wasNull();
-                        String fullName = rs.getString("full_name");
-                        java.sql.Date dob = rs.getDate("date_of_birth");
-                        String gender = rs.getString("gender");
-                        String phone = rs.getString("phone");
-                        String email = rs.getString("email");
-                        String address = rs.getString("address");
-                        String labRoomName = rs.getString("lab_room_name");
-                        if (labRoomName == null) {
-                            labRoomName = "ph\u00f2ng x\u00e9t nghi\u1ec7m m\u00e1u"; // default fallback
+                        
+                        int appointmentId = rs.getInt("appointment_id");
+                        boolean hasApptId = !rs.wasNull();
+                        if (!hasApptId) {
+                            String selectApptSql = "SELECT TOP 1 appointment_id FROM Appointment WHERE patient_id = ? ORDER BY appointment_id DESC";
+                            try (PreparedStatement apptStmt = connection.prepareStatement(selectApptSql)) {
+                                apptStmt.setInt(1, patientId);
+                                try (ResultSet apptRs = apptStmt.executeQuery()) {
+                                    if (apptRs.next()) {
+                                        appointmentId = apptRs.getInt("appointment_id");
+                                        hasApptId = true;
+                                    }
+                                }
+                            }
                         }
-
-                        // Check if patient is already waiting in this room
-                        String checkWaitingSql = "SELECT COUNT(*) FROM Lab_Waiting_List "
-                                + "WHERE patient_id = ? AND lab_room = ? AND status = 'waiting'";
+                        if (!hasApptId) {
+                            continue;
+                        }
+                        
+                        String roomId = null;
+                        if (hasLabId) {
+                            String selectRoomSql = "SELECT TOP 1 room_id FROM Lab_Schedule WHERE lab_id = ? AND work_date = CAST(GETDATE() AS date) AND LOWER(status) = 'scheduled' ORDER BY ls.lab_sched_id DESC";
+                            // Wait, the column references in subquery: "ls" alias wasn't defined properly if we just do Lab_Schedule, let's make it clean:
+                            selectRoomSql = "SELECT TOP 1 room_id FROM Lab_Schedule WHERE lab_id = ? AND work_date = CAST(GETDATE() AS date) AND LOWER(status) = 'scheduled' ORDER BY lab_sched_id DESC";
+                            try (PreparedStatement roomStmt = connection.prepareStatement(selectRoomSql)) {
+                                roomStmt.setInt(1, labId);
+                                try (ResultSet roomRs = roomStmt.executeQuery()) {
+                                    if (roomRs.next()) {
+                                        roomId = roomRs.getString("room_id");
+                                    }
+                                }
+                            }
+                        }
+                        if (roomId == null || roomId.trim().isEmpty()) {
+                            String selectFallbackRoomSql = "SELECT TOP 1 room_id FROM Room ORDER BY room_id";
+                            try (PreparedStatement roomStmt = connection.prepareStatement(selectFallbackRoomSql);
+                                 ResultSet roomRs = roomStmt.executeQuery()) {
+                                if (roomRs.next()) {
+                                    roomId = roomRs.getString("room_id");
+                                }
+                            }
+                        }
+                        if (roomId == null || roomId.trim().isEmpty()) {
+                            roomId = "R101";
+                        }
+                        
+                        String checkWaitingSql = "SELECT COUNT(*) FROM Lab_Order "
+                                + "WHERE patient_id = ? AND service_id = ? AND status = 'waiting'";
                         boolean isAlreadyWaiting = false;
                         try (PreparedStatement checkStmt = connection.prepareStatement(checkWaitingSql)) {
                             checkStmt.setInt(1, patientId);
-                            checkStmt.setString(2, labRoomName);
+                            checkStmt.setInt(2, serviceId);
                             try (ResultSet checkRs = checkStmt.executeQuery()) {
                                 if (checkRs.next() && checkRs.getInt(1) > 0) {
                                     isAlreadyWaiting = true;
                                 }
                             }
                         }
-
+                        
                         if (!isAlreadyWaiting) {
-                            String insertWaitingSql = "INSERT INTO Lab_Waiting_List "
-                                    + "(patient_id, full_name, date_of_birth, gender, phone, email, address, "
-                                    + "status, created_at, lab_room, lab_id) "
-                                    + "VALUES (?, ?, ?, ?, ?, ?, ?, 'waiting', GETDATE(), ?, ?)";
-                            try (PreparedStatement insertStmt = connection.prepareStatement(insertWaitingSql)) {
-                                insertStmt.setInt(1, patientId);
-                                insertStmt.setString(2, fullName);
-                                insertStmt.setDate(3, dob);
-                                insertStmt.setString(4, gender);
-                                insertStmt.setString(5, phone);
-                                insertStmt.setString(6, email);
-                                insertStmt.setString(7, address);
-                                insertStmt.setString(8, labRoomName);
+                            String orderId = java.util.UUID.randomUUID().toString();
+                            String insertOrderSql = "INSERT INTO Lab_Order "
+                                    + "(order_id, appointment_id, patient_id, room_id, service_id, lab_id, status, created_at) "
+                                    + "VALUES (?, ?, ?, ?, ?, ?, 'waiting', GETDATE())";
+                            try (PreparedStatement insertStmt = connection.prepareStatement(insertOrderSql)) {
+                                insertStmt.setString(1, orderId);
+                                insertStmt.setInt(2, appointmentId);
+                                insertStmt.setInt(3, patientId);
+                                insertStmt.setString(4, roomId);
+                                insertStmt.setInt(5, serviceId);
                                 if (hasLabId) {
-                                    insertStmt.setInt(9, labId);
+                                    insertStmt.setInt(6, labId);
                                 } else {
-                                    insertStmt.setNull(9, java.sql.Types.INTEGER);
+                                    insertStmt.setNull(6, java.sql.Types.INTEGER);
                                 }
                                 insertStmt.executeUpdate();
                             }

@@ -80,6 +80,14 @@ public class Patient {
     }
 
     public String getGender() {
+        if (gender == null) return null;
+        String normalized = gender.trim().toLowerCase();
+        if (normalized.equals("male") || normalized.equals("m") || normalized.equals("nam")) {
+            return "Nam";
+        }
+        if (normalized.equals("female") || normalized.equals("f") || normalized.equals("nữ") || normalized.equals("n?")) {
+            return "Nữ";
+        }
         return gender;
     }
 
