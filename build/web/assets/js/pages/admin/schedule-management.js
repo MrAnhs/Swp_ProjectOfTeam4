@@ -328,55 +328,30 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
                                                           };
 
                                                           function buildCustomShiftTemplate() {
-                                                              const startTimeInput = document.getElementById('aiStartTime');
-                                                              const endTimeInput = document.getElementById('aiEndTime');
-                                                              const slotDurationInput = document.getElementById('aiSlotDuration');
                                                               const deptList = document.getElementById('aiDepartmentList');
                                                               
-                                                              if (!startTimeInput || !endTimeInput || !slotDurationInput || !deptList) {
+                                                              if (!deptList) {
                                                                   return [];
                                                               }
                                                               
-                                                              const startTime = startTimeInput.value;
-                                                              const endTime = endTimeInput.value;
-                                                              const slotMinutes = parseInt(slotDurationInput.value);
-                                                              
-                                                              if (!startTime || !endTime || isNaN(slotMinutes)) {
-                                                                  return [];
-                                                              }
+                                                              const selectedShifts = Array.from(document.querySelectorAll('.ai-shift-select:checked'))
+                                                                  .map(cb => cb.value);
                                                               
                                                               const departments = Array.from(deptList.querySelectorAll('.badge'))
                                                                   .map(badge => badge.getAttribute('data-dept'))
                                                                   .filter(dept => dept);
                                                               
-                                                              if (departments.length === 0) {
+                                                              if (selectedShifts.length === 0 || departments.length === 0) {
                                                                   return [];
                                                               }
                                                               
                                                               const slots = [];
                                                               try {
-                                                                  const [startHour, startMin] = startTime.split(':').map(Number);
-                                                                  const [endHour, endMin] = endTime.split(':').map(Number);
-                                                                  
-                                                                  let currentMinutes = startHour * 60 + startMin;
-                                                                  const endMinutes = endHour * 60 + endMin;
-                                                                  let deptIndex = 0;
-                                                                  
-                                                                  while (currentMinutes + slotMinutes <= endMinutes) {
-                                                                      const slotStart = Math.floor(currentMinutes / 60);
-                                                                      const slotStartMin = currentMinutes % 60;
-                                                                      const slotEnd = Math.floor((currentMinutes + slotMinutes) / 60);
-                                                                      const slotEndMin = (currentMinutes + slotMinutes) % 60;
-                                                                      
-                                                                      const timeSlot = String(slotStart).padStart(2, '0') + ':' + String(slotStartMin).padStart(2, '0')
-                                                                          + '-' + String(slotEnd).padStart(2, '0') + ':' + String(slotEndMin).padStart(2, '0');
-                                                                      
-                                                                      const dept = departments[deptIndex % departments.length];
-                                                                      slots.push(timeSlot + '|' + dept);
-                                                                      
-                                                                      currentMinutes += slotMinutes;
-                                                                      deptIndex++;
-                                                                  }
+                                                                  selectedShifts.forEach(shiftTime => {
+                                                                      departments.forEach(dept => {
+                                                                          slots.push(shiftTime + '|' + dept);
+                                                                      });
+                                                                  });
                                                               } catch (e) {
                                                                   console.error('Error building custom shift template:', e);
                                                               }
@@ -389,6 +364,38 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
                                                               if (textarea) {
                                                                   const slots = buildCustomShiftTemplate();
                                                                   textarea.value = slots.join('\n');
+                                                                  
+                                                                  // Render visual shift blocks inside preview container
+                                                                  const previewContainer = document.getElementById('aiShiftPreviewBlocks');
+                                                                  if (previewContainer) {
+                                                                      if (slots.length === 0) {
+                                                                          previewContainer.innerHTML = '<div class="text-center text-muted py-2 small">Chưa thiết kế khung ca trực nào</div>';
+                                                                      } else {
+                                                                          let html = '<div class="d-flex flex-wrap gap-2">';
+                                                                          slots.forEach(slot => {
+                                                                              const parts = slot.split('|');
+                                                                              if (parts.length >= 2) {
+                                                                                  const time = parts[0];
+                                                                                  const dept = parts[1];
+                                                                                  const vietnameseDepts = {
+                                                                                      'Endocrinology': 'Nội tiết - Tiểu đường',
+                                                                                      'Cardiology': 'Tim mạch',
+                                                                                      'Nephrology': 'Thận học',
+                                                                                      'General': 'Tổng quát',
+                                                                                      'Nội tiết - Tiểu đường': 'Nội tiết - Tiểu đường',
+                                                                                      'Tim mạch': 'Tim mạch',
+                                                                                      'Thận học': 'Thận học',
+                                                                                      'Tổng quát': 'Tổng quát'
+                                                                                  };
+                                                                                  const displayDept = vietnameseDepts[dept] || dept;
+                                                                                  html += '<span class="badge bg-purple-subtle text-purple border border-purple-subtle" style="background:#f3e8ff; color:#6b21a8; font-size:0.75rem; font-weight:600; padding:0.25rem 0.5rem; border-radius:6px;">' 
+                                                                                       + time + ' (' + displayDept + ')</span>';
+                                                                              }
+                                                                          });
+                                                                          html += '</div>';
+                                                                          previewContainer.innerHTML = html;
+                                                                      }
+                                                                  }
                                                               }
                                                               updateAiMaxSchedules();
                                                           }
@@ -586,12 +593,14 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
                                                           }
 
                                                           function showAiScheduleMessage(message, isSuccess) {
-                                                              const alertBox = document.getElementById('aiScheduleModalAlert');
-                                                              if (!alertBox) {
-                                                                  return;
-                                                              }
-                                                              alertBox.className = 'alert border-0 fw-semibold ' + (isSuccess ? 'alert-success' : 'alert-danger');
-                                                              alertBox.innerHTML = '<i class="fa-solid ' + (isSuccess ? 'fa-circle-check' : 'fa-triangle-exclamation') + ' me-2"></i>' + escapeHtmlForSchedule(message);
+                                                               const alertBox = document.getElementById('aiScheduleAlert');
+                                                               if (!alertBox) {
+                                                                   console.error('[AI Schedule] Alert box not found. Message:', message);
+                                                                   return;
+                                                               }
+                                                               alertBox.style.display = 'block';
+                                                               alertBox.className = 'alert border-0 fw-semibold ' + (isSuccess ? 'alert-success' : 'alert-danger');
+                                                               alertBox.innerHTML = '<i class="fa-solid ' + (isSuccess ? 'fa-circle-check' : 'fa-triangle-exclamation') + ' me-2"></i>' + escapeHtmlForSchedule(message);
                                                           }
 
                                                           document.addEventListener('DOMContentLoaded', function () {
@@ -728,11 +737,8 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
         });
     }
 
-    [startTimeInput, endTimeInput, slotDurationInput].forEach(element => {
-        if (element) {
-            element.addEventListener('change', updateTemplatePreview);
-            element.addEventListener('input', updateTemplatePreview);
-        }
+    document.querySelectorAll('.ai-shift-select').forEach(cb => {
+        cb.addEventListener('change', updateTemplatePreview);
     });
     document.querySelectorAll('input[name="selectedWeekdays"]').forEach(cb => {
         cb.addEventListener('change', updateAiMaxSchedules);
@@ -846,9 +852,12 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
         if (container) container.classList.add('d-none');
         
         if (startTimeInput && endTimeInput && slotDurationInput) {
-            document.querySelector('input[name="startTime"]').value = startTimeInput.value || '07:00';
-            document.querySelector('input[name="endTime"]').value = endTimeInput.value || '17:00';
-            document.querySelector('input[name="slotMinutes"]').value = slotDurationInput.value || '60';
+            const stInput = form.querySelector('input[name="startTime"]');
+            const etInput = form.querySelector('input[name="endTime"]');
+            const smInput = form.querySelector('input[name="slotMinutes"]');
+            if (stInput) stInput.value = startTimeInput.value || '07:30';
+            if (etInput) etInput.value = endTimeInput.value || '17:30';
+            if (smInput) smInput.value = slotDurationInput.value || '240';
         }
         
         const formData = new FormData(form);
@@ -882,6 +891,7 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
             if (loader) loader.classList.add('d-none');
             if (container) container.classList.remove('d-none');
         } catch (err) {
+            console.error('[AI Schedule] generateProposal error:', err);
             showAiScheduleMessage('Không thể tạo đề xuất AI: ' + err.message, false);
             showStep(2);
         }

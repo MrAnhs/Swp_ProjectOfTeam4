@@ -831,11 +831,12 @@ public class AdminAiSchedulingRepository {
         int accountId = ((Number) candidate.get("accountId")).intValue();
         List<String> assignedToday =
                 dayAssignedSlots.get(staffDayKey(accountId, workDate));
-        if (assignedToday != null
-                && assignedToday.size()
-                >= AdminScheduleValidator.MAX_SHIFTS_PER_STAFF_PER_DAY) {
-            return false;
-        }
+        // Rule giới hạn 2 ca/ngày đã được loại bỏ theo yêu cầu
+        // if (assignedToday != null
+        //         && assignedToday.size()
+        //         >= AdminScheduleValidator.MAX_SHIFTS_PER_STAFF_PER_DAY) {
+        //     return false;
+        // }
         try {
             return validator.validate(connection, accountId,
                     staffType, workDate, timeSlot, null) == null;
