@@ -238,8 +238,9 @@ public class ReceptionistDAO {
             LocalDate workDate = ((Date) schedule.get("workDate")).toLocalDate();
             String timeSlot = (String) schedule.get("timeSlot");
             LocalDateTime appointmentTime = LocalDateTime.of(workDate, parseStartTime(timeSlot));
-            if (!appointmentTime.isAfter(LocalDateTime.now())) {
-                throw new ReceptionistException("Ca khám đã bắt đầu hoặc đã kết thúc.");
+            LocalDateTime endAppointmentTime = LocalDateTime.of(workDate, parseEndTime(timeSlot));
+            if (!endAppointmentTime.isAfter(LocalDateTime.now())) {
+                throw new ReceptionistException("Ca khám đã kết thúc.");
             }
 
             int booked = (Integer) schedule.get("booked");
@@ -346,6 +347,13 @@ public class ReceptionistDAO {
                     throw new ReceptionistException("Hóa đơn đã được xử lý trước đó.");
                 }
             }
+
+            String detailSql = "UPDATE Invoice_Detail SET lab_status = 'Requested' "
+                    + "WHERE invoice_id = ? AND lab_status = 'Waiting_Payment'";
+            try (PreparedStatement statement = connection.prepareStatement(detailSql)) {
+                statement.setInt(1, invoiceId);
+                statement.executeUpdate();
+            }
             connection.commit();
             return invoiceId;
         } catch (SQLException | ReceptionistException e) {
@@ -358,11 +366,12 @@ public class ReceptionistDAO {
 
     public List<Map<String, Object>> findTodayQueue(String status) throws SQLException {
         String sql = "SELECT a.appointment_id, a.queue_number, a.appointment_time, a.status, "
-                + "p.full_name AS patient_name, p.phone, d.full_name AS doctor_name "
+                + "p.full_name AS patient_name, p.phone, d.full_name AS doctor_name, mr.revisit_date "
                 + "FROM Appointment a "
                 + "INNER JOIN Patient p ON p.patient_id = a.patient_id "
                 + "LEFT JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
                 + "LEFT JOIN Doctor d ON d.doctor_id = ds.doctor_id "
+                + "LEFT JOIN Medical_record mr ON mr.appointment_id = a.appointment_id "
                 + "WHERE CAST(a.appointment_time AS date) = CAST(GETDATE() AS date) "
                 + (status == null || status.isBlank() ? "" : "AND a.status = ? ")
                 + "ORDER BY a.appointment_time, a.queue_number";
@@ -383,6 +392,14 @@ public class ReceptionistDAO {
                     item.put("patientName", resultSet.getString("patient_name"));
                     item.put("phone", resultSet.getString("phone"));
                     item.put("doctorName", resultSet.getString("doctor_name"));
+                    
+                    java.sql.Timestamp revisitTs = resultSet.getTimestamp("revisit_date");
+                    if (revisitTs != null) {
+                        item.put("revisitDate", new java.text.SimpleDateFormat("dd/MM/yyyy").format(revisitTs));
+                    } else {
+                        item.put("revisitDate", null);
+                    }
+                    
                     items.add(item);
                 }
                 return items;
@@ -704,6 +721,17 @@ public class ReceptionistDAO {
             return LocalTime.of(9, 0);
         }
         return LocalTime.parse(timeSlot.substring(0, 5));
+    }
+
+    private LocalTime parseEndTime(String timeSlot) {
+        if (timeSlot == null || timeSlot.length() < 11) {
+            return LocalTime.of(17, 0);
+        }
+        try {
+            return LocalTime.parse(timeSlot.substring(6, 11));
+        } catch (Exception e) {
+            return LocalTime.of(17, 0);
+        }
     }
 
     private Map<String, Object> mapAppointmentPreview(ResultSet resultSet) throws SQLException {

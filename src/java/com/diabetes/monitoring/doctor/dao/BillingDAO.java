@@ -4,6 +4,7 @@ import com.diabetes.monitoring.doctor.model.Invoice;
 import com.diabetes.monitoring.doctor.model.InvoiceDetail;
 import com.diabetes.monitoring.doctor.model.LaboratoryRequest;
 import com.diabetes.monitoring.doctor.model.MedicalService;
+import com.diabetes.monitoring.notification.NotificationService;
 import com.diabetes.monitoring.util.DatabaseConnection;
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 public class BillingDAO {
+    private final NotificationService notificationService = new NotificationService();
 
     public List<MedicalService> getActiveServices() {
         List<MedicalService> services = new ArrayList<>();
@@ -144,6 +146,7 @@ public class BillingDAO {
                     ps.executeBatch();
                 }
 
+                notificationService.notifyInvoiceCreated(conn, invoiceId);
                 conn.commit();
                 return invoiceId;
             } catch (SQLException e) {
@@ -195,6 +198,9 @@ public class BillingDAO {
                 }
                 detail.setInt(1, invoiceId);
                 detail.executeUpdate();
+                notificationService.prepareLaboratoryOrders(conn, invoiceId);
+                notificationService.notifyInvoicePaid(conn, invoiceId);
+                notificationService.notifyLaboratoryRequested(conn, invoiceId);
                 conn.commit();
                 return true;
             } catch (SQLException e) {

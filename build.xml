@@ -10,6 +10,15 @@
 <project name="SWP_Project" default="default" basedir=".">
     <description>Builds, tests, and runs the project SWP_Project.</description>
     <import file="nbproject/build-impl.xml"/>
+
+    <!-- Keep the SMTP runtime dependencies in both in-place deployments and WAR files. -->
+    <target name="-post-compile">
+        <mkdir dir="${build.web.dir}/WEB-INF/lib"/>
+        <copy file="${file.reference.jakarta.mail-2.0.1.jar}"
+              todir="${build.web.dir}/WEB-INF/lib"/>
+        <copy file="${file.reference.jakarta.activation-2.0.1.jar}"
+              todir="${build.web.dir}/WEB-INF/lib"/>
+    </target>
     <!--
 
     There exist several targets which are by default empty and which can be 

@@ -77,6 +77,23 @@ public class PatientAppointmentServlet extends HttpServlet {
             return;
         }
 
+        String action = request.getParameter("action");
+        if ("cancel".equals(action)) {
+            try {
+                int appointmentId = parsePositiveInt(request.getParameter("id"));
+                appointmentService.cancelByPatient(currentUser.getId(), appointmentId);
+                response.getWriter().print("{\"success\":true}");
+            } catch (NumberFormatException e) {
+                writeError(response, HttpServletResponse.SC_BAD_REQUEST, "Mã lịch hẹn không hợp lệ.");
+            } catch (AppointmentBookingException e) {
+                writeError(response, HttpServletResponse.SC_CONFLICT, e.getMessage());
+            } catch (SQLException e) {
+                e.printStackTrace();
+                writeError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Không thể hủy lịch hẹn.");
+            }
+            return;
+        }
+
         synchronized (session) {
             Long lastSuccessfulBooking = (Long) session.getAttribute(LAST_SUCCESSFUL_BOOKING);
             if (lastSuccessfulBooking != null) {
@@ -140,7 +157,7 @@ public class PatientAppointmentServlet extends HttpServlet {
                 .append("\"doctorName\":\"").append(escapeJson(result.getDoctorName())).append("\",")
                 .append("\"department\":\"").append(escapeJson(result.getDepartment())).append("\",")
                 .append("\"timeSlot\":\"").append(escapeJson(result.getTimeSlot())).append("\",")
-                .append("\"roomId\":").append(result.getRoomId() == null ? "null" : result.getRoomId()).append(',')
+                .append("\"roomId\":").append(jsonString(result.getRoomId())).append(',')
                 .append("\"roomName\":\"").append(escapeJson(result.getRoomName())).append("\",")
                 .append("\"roomLocation\":\"").append(escapeJson(result.getRoomLocation())).append("\"}")
                 .toString();
@@ -171,9 +188,12 @@ public class PatientAppointmentServlet extends HttpServlet {
                 .append("\"doctorPhone\":\"").append(escapeJson(appointment.getDoctorPhone())).append("\",")
                 .append("\"doctorEmail\":\"").append(escapeJson(appointment.getDoctorEmail())).append("\",")
                 .append("\"timeSlot\":\"").append(escapeJson(appointment.getTimeSlot())).append("\",")
-                .append("\"roomId\":").append(appointment.getRoomId() == null ? "null" : appointment.getRoomId()).append(',')
+                .append("\"roomId\":").append(jsonString(appointment.getRoomId())).append(',')
                 .append("\"roomName\":\"").append(escapeJson(appointment.getRoomName())).append("\",")
                 .append("\"roomLocation\":\"").append(escapeJson(appointment.getRoomLocation())).append("\",")
+                .append("\"laboratoryRooms\":\"").append(escapeJson(appointment.getLaboratoryRooms())).append("\",")
+                .append("\"laboratoryRoomLocations\":\"")
+                .append(escapeJson(appointment.getLaboratoryRoomLocations())).append("\",")
                 .append("\"appointmentTime\":\"").append(appointment.getAppointmentTime()).append("\",")
                 .append("\"bookingType\":\"").append(escapeJson(appointment.getBookingType())).append("\",")
                 .append("\"queueNumber\":").append(appointment.getQueueNumber()).append(',')
@@ -196,5 +216,9 @@ public class PatientAppointmentServlet extends HttpServlet {
                 .replace("\"", "\\\"")
                 .replace("\n", "\\n")
                 .replace("\r", "");
+    }
+
+    private String jsonString(String value) {
+        return value == null ? "null" : "\"" + escapeJson(value) + "\"";
     }
 }

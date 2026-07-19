@@ -1,6 +1,7 @@
 package com.diabetes.monitoring.profile;
 
 import com.diabetes.monitoring.model.User;
+import com.diabetes.monitoring.verification.EmailVerificationService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,6 +12,8 @@ import java.sql.Timestamp;
 
 public class ProfileServlet extends HttpServlet {
     private final ProfileService profileService = new ProfileService();
+    private final EmailVerificationService verificationService =
+            new EmailVerificationService();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -31,15 +34,26 @@ public class ProfileServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         request.setCharacterEncoding("UTF-8");
         String path = request.getPathInfo();
-        if (!"/profile".equals(path) && !"/email".equals(path) && !"/password".equals(path)) {
+        if (!"/profile".equals(path)
+                && !"/email/request-otp".equals(path)
+                && !"/email/confirm".equals(path)
+                && !"/password".equals(path)) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
             return;
         }
         User user = currentUser(request.getSession(false));
         if (user == null) { writeError(response, 401, "Phiên đăng nhập đã hết hạn"); return; }
         try {
-            if ("/email".equals(path)) {
-                profileService.changeEmail(user, request.getParameter("newEmail"), request.getParameter("currentPassword"));
+            if ("/email/request-otp".equals(path)) {
+                verificationService.requestEmailChange(user,
+                        request.getParameter("newEmail"),
+                        request.getParameter("currentPassword"));
+                writeJson(response, "{\"success\":true,\"expiresInSeconds\":300}");
+                return;
+            }
+            if ("/email/confirm".equals(path)) {
+                verificationService.confirmEmailChange(user,
+                        request.getParameter("newEmail"), request.getParameter("otp"));
                 writeJson(response, "{\"success\":true}");
                 return;
             }
@@ -52,9 +66,7 @@ public class ProfileServlet extends HttpServlet {
             profile.setFullName(request.getParameter("fullName"));
             // Email is managed by the account settings dialog, not the personal profile form.
             // Preserve the current session value when the personal form does not submit email.
-            String submittedEmail = request.getParameter("email");
-            profile.setEmail(submittedEmail == null || submittedEmail.isBlank()
-                    ? user.getEmail() : submittedEmail);
+            profile.setEmail(user.getEmail());
             profile.setPhone(request.getParameter("phone"));
             profile.setDateOfBirth(request.getParameter("dateOfBirth"));
             profile.setGender(request.getParameter("gender"));

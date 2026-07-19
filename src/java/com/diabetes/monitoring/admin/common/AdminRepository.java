@@ -42,6 +42,7 @@ public class AdminRepository {
     static {
         ALLOWED_ROLES.add("patient");
         ALLOWED_ROLES.add("doctor");
+        ALLOWED_ROLES.add("doctor_lab");
         ALLOWED_ROLES.add("receptionist");
         ALLOWED_ROLES.add("admin");
 
@@ -519,8 +520,8 @@ public class AdminRepository {
     public List<Map<String, Object>> getTodayRevenueByServiceType() {
         List<Map<String, Object>> rows = new ArrayList<>();
         String sql = "SELECT "
-                + "COALESCE(SUM(CASE WHEN ms.service_type = 'Examination' THEN COALESCE(id.line_total, id.quantity * COALESCE(id.unit_price, id.price, ms.price, 0)) ELSE 0 END), 0) AS exam_revenue, "
-                + "COALESCE(SUM(CASE WHEN ms.service_type = 'Lab_Test' THEN COALESCE(id.line_total, id.quantity * COALESCE(id.unit_price, id.price, ms.price, 0)) ELSE 0 END), 0) AS lab_revenue "
+                + "COALESCE(SUM(CASE WHEN ms.service_type = 'Examination' THEN id.quantity * id.price ELSE 0 END), 0) AS exam_revenue, "
+                + "COALESCE(SUM(CASE WHEN ms.service_type = 'Lab_Test' THEN id.quantity * id.price ELSE 0 END), 0) AS lab_revenue "
                 + "FROM Invoice i "
                 + "JOIN Invoice_Detail id ON id.invoice_id = i.invoice_id "
                 + "JOIN Medical_Service ms ON ms.service_id = id.service_id "
@@ -1467,9 +1468,13 @@ public class AdminRepository {
     public List<Map<String, Object>> getAppointmentsBySchedule(int scheduleId) {
         List<Map<String, Object>> rows = new ArrayList<>();
         boolean hasBookingSource = hasColumn("Appointment", "booking_source");
+        boolean hasBookingType = hasColumn("Appointment", "booking_type");
+        String bookingSourceExpression = hasBookingSource
+                ? "a.booking_source"
+                : (hasBookingType ? "a.booking_type" : "'Online'");
         String sql = "SELECT a.appointment_id, p.full_name, "
                 + "FORMAT(a.appointment_time, 'HH:mm') AS appointment_time, a.status, "
-                + (hasBookingSource ? "a.booking_source " : "'Online' AS booking_source ")
+                + bookingSourceExpression + " AS booking_source "
                 + "FROM Appointment a "
                 + "JOIN Patient p ON a.patient_id = p.patient_id "
                 + "WHERE a.schedule_id = ? "
@@ -1591,10 +1596,14 @@ public class AdminRepository {
         markLateWaitingAppointmentsAsNoShow();
         refreshDoctorScheduleStatusFromAppointments();
         boolean hasBookingSource = hasColumn("Appointment", "booking_source");
+        boolean hasBookingType = hasColumn("Appointment", "booking_type");
         boolean hasOnlineQuota = hasColumn("Doctor_Schedule", "online_quota");
-        String onlineBookedExpression = hasBookingSource
-                ? "SUM(CASE WHEN LOWER(LTRIM(RTRIM(COALESCE(a.booking_source, '')))) = 'online' AND LOWER(LTRIM(RTRIM(COALESCE(a.status, '')))) IN ('waiting', 'checked_in', 'in_progress', 'completed') THEN 1 ELSE 0 END)"
-                : "0";
+        String onlineSourceExpression = hasBookingSource
+                ? "a.booking_source"
+                : (hasBookingType ? "a.booking_type" : null);
+        String onlineBookedExpression = onlineSourceExpression == null
+                ? "0"
+                : "SUM(CASE WHEN LOWER(LTRIM(RTRIM(COALESCE(" + onlineSourceExpression + ", '')))) = 'online' AND LOWER(LTRIM(RTRIM(COALESCE(a.status, '')))) IN ('waiting', 'checked_in', 'in_progress', 'completed') THEN 1 ELSE 0 END)";
 
         String sql = "SELECT ds.schedule_id, d.full_name, d.department, ds.time_slot, ds.max_patients, "
             + (hasOnlineQuota ? "ds.online_quota" : "NULL")
@@ -1667,12 +1676,16 @@ public class AdminRepository {
         markLateWaitingAppointmentsAsNoShow();
         refreshDoctorScheduleStatusFromAppointments();
         boolean hasBookingSource = hasColumn("Appointment", "booking_source");
+        boolean hasBookingType = hasColumn("Appointment", "booking_type");
         boolean hasOnlineQuota = hasColumn("Doctor_Schedule", "online_quota");
-        String onlineBookingsJoin = hasBookingSource
+        String onlineSourceColumn = hasBookingSource
+                ? "booking_source"
+                : (hasBookingType ? "booking_type" : null);
+        String onlineBookingsJoin = onlineSourceColumn != null
                 ? "LEFT JOIN ("
                 + "   SELECT schedule_id, COUNT(*) AS online_booked_count "
                 + "   FROM Appointment "
-                + "   WHERE LOWER(LTRIM(RTRIM(COALESCE(booking_source, '')))) = 'online' "
+                + "   WHERE LOWER(LTRIM(RTRIM(COALESCE(" + onlineSourceColumn + ", '')))) = 'online' "
                 + "   AND LOWER(LTRIM(RTRIM(COALESCE(status, '')))) IN ('waiting', 'checked_in', 'in_progress', 'completed') "
                 + "   GROUP BY schedule_id"
                 + ") online_bookings ON online_bookings.schedule_id = ds.schedule_id "
@@ -2597,13 +2610,17 @@ public class AdminRepository {
      */
     private boolean canBookBySource(int scheduleId, boolean online) {
         boolean hasBookingSource = hasColumn("Appointment", "booking_source");
+        boolean hasBookingType = hasColumn("Appointment", "booking_type");
         boolean hasOnlineQuota = hasColumn("Doctor_Schedule", "online_quota");
-        String onlineBookedJoin = hasBookingSource
+        String onlineSourceColumn = hasBookingSource
+                ? "booking_source"
+                : (hasBookingType ? "booking_type" : null);
+        String onlineBookedJoin = onlineSourceColumn != null
                 ? "LEFT JOIN ("
                 + "   SELECT schedule_id, COUNT(*) AS online_booked_count "
                 + "   FROM Appointment "
                 + "   WHERE schedule_id = ? "
-                + "   AND LOWER(LTRIM(RTRIM(COALESCE(booking_source, '')))) = 'online' "
+                + "   AND LOWER(LTRIM(RTRIM(COALESCE(" + onlineSourceColumn + ", '')))) = 'online' "
                 + "   AND LOWER(LTRIM(RTRIM(COALESCE(status, '')))) IN ('waiting', 'checked_in', 'in_progress', 'completed') "
                 + "   GROUP BY schedule_id"
                 + ") online_booked ON online_booked.schedule_id = ds.schedule_id "
@@ -2627,7 +2644,7 @@ public class AdminRepository {
         try (Connection connection = DatabaseConnection.getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
             int index = 1;
             statement.setInt(index++, scheduleId);
-            if (hasBookingSource) {
+            if (onlineSourceColumn != null) {
                 statement.setInt(index++, scheduleId);
             }
             statement.setInt(index, scheduleId);
@@ -2653,7 +2670,7 @@ public class AdminRepository {
                     return false;
                 }
 
-                if (!online || !hasBookingSource) {
+                if (!online || onlineSourceColumn == null) {
                     return true;
                 }
 
@@ -2852,9 +2869,13 @@ public class AdminRepository {
     public int refreshDoctorScheduleStatusFromAppointments() {
         markLateWaitingAppointmentsAsNoShow();
         boolean hasBookingSource = hasColumn("Appointment", "booking_source");
-        String onlineBookedExpression = hasBookingSource
-                ? "SUM(CASE WHEN LOWER(LTRIM(RTRIM(COALESCE(ap.booking_source, '')))) = 'online' AND LOWER(LTRIM(RTRIM(COALESCE(ap.status, '')))) IN ('waiting', 'checked_in', 'in_progress', 'completed') THEN 1 ELSE 0 END)"
-                : "0";
+        boolean hasBookingType = hasColumn("Appointment", "booking_type");
+        String onlineSourceExpression = hasBookingSource
+                ? "ap.booking_source"
+                : (hasBookingType ? "ap.booking_type" : null);
+        String onlineBookedExpression = onlineSourceExpression == null
+                ? "0"
+                : "SUM(CASE WHEN LOWER(LTRIM(RTRIM(COALESCE(" + onlineSourceExpression + ", '')))) = 'online' AND LOWER(LTRIM(RTRIM(COALESCE(ap.status, '')))) IN ('waiting', 'checked_in', 'in_progress', 'completed') THEN 1 ELSE 0 END)";
 
         String sql = "UPDATE ds SET ds.status = CASE "
                 + "WHEN LOWER(ds.status) = 'cancelled' THEN 'Cancelled' "
@@ -3292,6 +3313,8 @@ public class AdminRepository {
                 return "Patient";
             case "doctor":
                 return "Doctor";
+            case "doctor_lab":
+                return "doctor_lab";
             case "receptionist":
                 return "Receptionist";
             case "admin":
