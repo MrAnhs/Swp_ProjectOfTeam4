@@ -126,6 +126,18 @@ function formatDateShort(date) {
     return dd + "/" + mm;
 }
 
+function formatDateLocal(date) {
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+}
+
+function parseLocalDate(dateStr) {
+    const parts = dateStr.split('-');
+    return new Date(parts[0], parts[1] - 1, parts[2]);
+}
+
 function generateWeekOptions() {
     const select = document.getElementById("weekSelect");
     if (!select) return;
@@ -141,7 +153,7 @@ function generateWeekOptions() {
         sunday.setDate(monday.getDate() + 6);
         
         const option = document.createElement("option");
-        option.value = monday.toISOString().split('T')[0];
+        option.value = formatDateLocal(monday);
         
         const formatStr = formatDateShort(monday) + " To " + formatDateShort(sunday);
         option.textContent = formatStr;
@@ -175,7 +187,7 @@ function getStandardShift(dbTimeSlot) {
 
 function renderScheduleGrid() {
     const mondayStr = document.getElementById("weekSelect").value;
-    const mondayDate = new Date(mondayStr);
+    const mondayDate = parseLocalDate(mondayStr);
     
     // Update headers with actual dates
     const headerRow = document.getElementById("headerRow");
@@ -203,8 +215,8 @@ function renderScheduleGrid() {
     weekEnd.setDate(mondayDate.getDate() + 6);
     weekEnd.setHours(23,59,59,999);
     
-    const weekStartStr = weekStart.toISOString().split('T')[0];
-    const weekEndStr = weekEnd.toISOString().split('T')[0];
+    const weekStartStr = formatDateLocal(weekStart);
+    const weekEndStr = formatDateLocal(weekEnd);
     
     const weekSchedules = schedules.filter(s => {
         return s.workDate >= weekStartStr && s.workDate <= weekEndStr;
@@ -225,7 +237,7 @@ function renderScheduleGrid() {
         
         for (let i = 0; i < 7; i++) {
             const dateObj = weekDates[i];
-            const dateStr = dateObj.toISOString().split('T')[0];
+            const dateStr = formatDateLocal(dateObj);
             
             // Find all schedules matching dateStr and falling into this slot
             const matchedSchedules = weekSchedules.filter(s => {
