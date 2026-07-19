@@ -38,16 +38,6 @@ public class LaboratoryRequestServlet extends DoctorServlet {
             int labId = Integer.parseInt(labIdVal);
             int doctorId = getDoctorId(currentUser);
 
-            int labId = 0;
-            try {
-                String labIdParam = request.getParameter("lab_id");
-                if (labIdParam != null && !labIdParam.isBlank()) {
-                    labId = Integer.parseInt(labIdParam);
-                }
-            } catch (NumberFormatException e) {
-                // Keep default 0
-            }
-
             dao.createLaboratoryRequest(
                     recordId, doctorId, serviceIds, requestNote, labId);
             session.setAttribute("doctorMessage",

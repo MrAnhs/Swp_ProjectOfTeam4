@@ -34,17 +34,6 @@ public class LaboratoryRequest {
     private String labDoctorName;
     private String labName;
 
-    private Integer labId;
-    private String labDoctorName;
-    private String labName;
-
-    public Integer getLabId() { return labId; }
-    public void setLabId(Integer labId) { this.labId = labId; }
-    public String getLabDoctorName() { return labDoctorName; }
-    public void setLabDoctorName(String labDoctorName) { this.labDoctorName = labDoctorName; }
-    public String getLabName() { return labName; }
-    public void setLabName(String labName) { this.labName = labName; }
-
     public int getLaboratoryRequestId() { return laboratoryRequestId; }
     public void setLaboratoryRequestId(int laboratoryRequestId) { this.laboratoryRequestId = laboratoryRequestId; }
     public int getInvoiceId() { return invoiceId; }
@@ -120,8 +109,7 @@ public class LaboratoryRequest {
     public void setHdl(Double hdl) { this.hdl = hdl; }
     public Double getLdl() { return ldl; }
     public void setLdl(Double ldl) { this.ldl = ldl; }
-    public Double getIdl() { return ldl; }
-    public void setIdl(Double ldl) { this.ldl = ldl; }
+
     public Double getVldl() { return vldl; }
     public void setVldl(Double vldl) { this.vldl = vldl; }
     public Double getBmi() { return bmi; }
