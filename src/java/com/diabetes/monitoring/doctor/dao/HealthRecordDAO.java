@@ -271,7 +271,7 @@ public class HealthRecordDAO {
     public boolean canModifyDiagnosis(int recordId, int doctorId) {
         String sql = "SELECT COUNT(*) FROM Healthy_Record "
                 + "WHERE health_record_id = ? AND doctor_id = ? "
-                + "AND status IN ('Accepted', 'AI_Processed', 'Editing', 'Completed')";
+                + "AND status IN ('approved', 'Accepted', 'AI_Processed', 'Editing', 'Completed')";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -289,7 +289,7 @@ public class HealthRecordDAO {
     public boolean canRunAI(int recordId, int doctorId) {
         String sql = "SELECT COUNT(*) FROM Healthy_Record "
                 + "WHERE health_record_id = ? AND doctor_id = ? "
-                + "AND status IN ('Accepted', 'AI_Processed', 'Editing', 'Completed')";
+                + "AND status IN ('approved', 'Accepted', 'AI_Processed', 'Editing', 'Completed')";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -339,7 +339,7 @@ public class HealthRecordDAO {
                 + "urea = ?, cr = ?, hba1c = ?, chol = ?, tg = ?, hdl = ?, "
                 + "ldl = ?, vldl = ?, bmi = ? "
                 + "WHERE health_record_id = ? AND doctor_id = ? "
-                + "AND status IN ('Accepted', 'AI_Processed', 'Editing', 'Completed')";
+                + "AND status IN ('approved', 'Accepted', 'AI_Processed', 'Editing', 'Completed')";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -1753,7 +1753,7 @@ public class HealthRecordDAO {
                 + "revisit_date = ?, processed_at = GETDATE() WHERE health_record_id = ?";
         String statusSql = "UPDATE Healthy_Record SET status = 'Completed' "
                 + "WHERE health_record_id = ? AND doctor_id = ? "
-                + "AND status IN ('Accepted', 'AI_Processed', 'Editing', 'Completed')";
+                + "AND status IN ('approved', 'Accepted', 'AI_Processed', 'Editing', 'Completed')";
         String appointmentStatusSql = "UPDATE a SET a.status = 'Completed' "
                 + "FROM Appointment a "
                 + "JOIN Medical_record mr ON mr.appointment_id = a.appointment_id "
@@ -1778,7 +1778,8 @@ public class HealthRecordDAO {
                     }
                 }
 
-                if (!"Accepted".equals(currentStatus)
+                if (!"approved".equals(currentStatus)
+                        && !"Accepted".equals(currentStatus)
                         && !"AI_Processed".equals(currentStatus)
                         && !"Editing".equals(currentStatus)
                         && !"Completed".equals(currentStatus)) {
