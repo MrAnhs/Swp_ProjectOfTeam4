@@ -501,19 +501,32 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
                                                               } else if (status === 'Full') {
                                                                   statusBadge = '<span class="badge text-bg-danger"><i class="bi bi-exclamation-circle"></i> \u0110\u00E3 \u0111\u1EA7y</span>';
                                                               }
-
-                                                              let actionColumn = '<span class="badge ai-schedule-badge" title="'
+                                                              const scheduleId = escapeHtmlForSchedule(schedule.scheduleId || '');
+                                                              let actionColumn = '';
+                                                              if (scheduleId) {
+                                                                  let additionalActions = '';
+                                                                  if (status !== 'Expired' && status !== 'Cancelled') {
+                                                                      additionalActions = '<li><button type="button" class="dropdown-item" onclick="openEditScheduleModal(\'' + scheduleId + '\')"><i class="bi bi-pencil-square me-2"></i>Chỉnh sửa</button></li>'
+                                                                          + '<li><button type="button" class="dropdown-item" onclick="openTransferModalFromRow(this)"><i class="bi bi-arrow-left-right me-2"></i>Chuyển ca</button></li>'
+                                                                          + '<li><form method="post" onsubmit="return confirm(\'Bạn có chắc muốn hủy lịch trực này?\');">'
+                                                                          + '<input type="hidden" name="action" value="cancelSchedule">'
+                                                                          + '<input type="hidden" name="scheduleId" value="' + scheduleId + '">'
+                                                                          + '<button type="submit" class="dropdown-item text-danger"><i class="bi bi-trash me-2"></i>Hủy lịch</button>'
+                                                                          + '</form></li>';
+                                                                  }
+                                                                  actionColumn = '<div class="dropdown table-actions">'
+                                                                      + '<button type="button" class="btn btn-sm btn-outline-secondary rounded-circle" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Thao tác lịch trực">'
+                                                                      + '<i class="bi bi-three-dots-vertical"></i>'
+                                                                      + '</button>'
+                                                                      + '<ul class="dropdown-menu dropdown-menu-end">'
+                                                                      + '<li><button type="button" class="dropdown-item schedule-detail-action" data-schedule-id="' + scheduleId + '"><i class="bi bi-eye me-2"></i>Xem chi tiết</button></li>'
+                                                                      + additionalActions
+                                                                      + '</ul>'
+                                                                      + '</div>';
+                                                              } else {
+                                                                  actionColumn = '<span class="badge ai-schedule-badge" title="'
                                                                       + escapeHtmlForSchedule(schedule.reason || '')
-                                                                      + '"><i class="fa-solid fa-database me-1"></i>\u0110\u00E3 l\u01B0u DB</span>';
-
-                                                              if (status === 'Expired') {
-                                                                  actionColumn = '<button type="button" class="btn btn-sm btn-outline-secondary" disabled>'
-                                                                          + '<i class="bi bi-clock"></i> \u0110\u00E3 qua'
-                                                                          + '</button>';
-                                                              } else if (status === 'Cancelled') {
-                                                                  actionColumn = '<button type="button" class="btn btn-sm btn-outline-dark" disabled>'
-                                                                          + '<i class="bi bi-x-circle"></i> \u0110\u00E3 h\u1EE7y'
-                                                                          + '</button>';
+                                                                      + '"><i class="fa-solid fa-database me-1"></i>Đã lưu DB</span>';
                                                               }
 
                                                               return '<tr class="ai-generated-row" data-schedule-id="' + (schedule.scheduleId || '') + '" data-doctor-name="' + escapeHtmlForSchedule(schedule.doctorName)
@@ -582,176 +595,431 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
                                                           }
 
                                                           document.addEventListener('DOMContentLoaded', function () {
-                                                              const startDate = document.getElementById('aiStartDate');
-                                                              const endDate = document.getElementById('aiEndDate');
-                                                              const form = document.getElementById('aiScheduleForm');
-                                                              const startTimeInput = document.getElementById('aiStartTime');
-                                                              const endTimeInput = document.getElementById('aiEndTime');
-                                                              const slotDurationInput = document.getElementById('aiSlotDuration');
-                                                              const departmentInput = document.getElementById('aiDepartmentInput');
-                                                              const addDepartmentBtn = document.getElementById('aiAddDepartmentBtn');
-                                                              const departmentList = document.getElementById('aiDepartmentList');
-                                                              
-                                                              if (startDate && !startDate.value) {
-                                                                  startDate.value = getIsoDateOffset(1);
-                                                              }
-                                                              if (endDate && !endDate.value) {
-                                                                  endDate.value = getIsoDateOffset(7);
-                                                              }
-                                                              
-                                                              // Handle department badge removal
-                                                              if (departmentList) {
-                                                                  departmentList.addEventListener('click', function(e) {
-                                                                      if (e.target.classList.contains('badge')) {
-                                                                          e.target.remove();
-                                                                          updateTemplatePreview();
-                                                                      }
-                                                                  });
-                                                              }
-                                                              
-                                                              // Handle add department button
-                                                              if (addDepartmentBtn && departmentInput && departmentList) {
-                                                                  addDepartmentBtn.addEventListener('click', function() {
-                                                                      const dept = departmentInput.value.trim();
-                                                                      if (!dept) return;
-                                                                      
-                                                                      const normalizedDept = Object.keys(departmentMapping).find(key => 
-                                                                          key.toLowerCase() === dept.toLowerCase()
-                                                                      ) || dept;
-                                                                      
-                                                                      const exists = Array.from(departmentList.querySelectorAll('.badge'))
-                                                                          .some(badge => badge.getAttribute('data-dept') === normalizedDept);
-                                                                      
-                                                                      if (!exists) {
-                                                                          const badge = document.createElement('span');
-                                                                          badge.className = 'badge bg-info text-dark cursor-pointer';
-                                                                          badge.setAttribute('data-dept', normalizedDept);
-                                                                          badge.textContent = normalizedDept + ' \u2715';
-                                                                          departmentList.appendChild(badge);
-                                                                          departmentInput.value = '';
-                                                                          updateTemplatePreview();
-                                                                      }
-                                                                  });
-                                                                  
-                                                                  departmentInput.addEventListener('keypress', function(e) {
-                                                                      if (e.key === 'Enter') {
-                                                                          e.preventDefault();
-                                                                          addDepartmentBtn.click();
-                                                                      }
-                                                                  });
-                                                              }
-                                                              
-                                                              // Setup update triggers
-                                                              [startDate, endDate, document.getElementById('aiDoctorsPerShift'), 
-                                                               startTimeInput, endTimeInput, slotDurationInput,
-                                                               ...document.querySelectorAll('input[name="selectedWeekdays"]')].forEach(element => {
-                                                                  if (element) {
-                                                                      element.addEventListener('input', function() {
-                                                                          if (element === startTimeInput || element === endTimeInput || element === slotDurationInput) {
-                                                                              updateTemplatePreview();
-                                                                          } else {
-                                                                              updateAiMaxSchedules();
-                                                                          }
-                                                                      });
-                                                                      element.addEventListener('change', function() {
-                                                                          if (element === startTimeInput || element === endTimeInput || element === slotDurationInput) {
-                                                                              updateTemplatePreview();
-                                                                          } else {
-                                                                              updateAiMaxSchedules();
-                                                                          }
-                                                                      });
-                                                                  }
-                                                              });
-                                                              
-                                                              updateTemplatePreview();
-                                                              if (!form) {
-                                                                  return;
-                                                              }
+    const startDate = document.getElementById('aiStartDate');
+    const endDate = document.getElementById('aiEndDate');
+    const form = document.getElementById('aiScheduleForm');
+    const startTimeInput = document.getElementById('aiStartTime');
+    const endTimeInput = document.getElementById('aiEndTime');
+    const slotDurationInput = document.getElementById('aiSlotDuration');
+    const visitDurationInput = document.getElementById('aiVisitDuration');
+    const maxPatientsInput = document.getElementById('aiMaxPatients');
+    const departmentSelect = document.getElementById('aiDepartmentSelect');
+    const addDepartmentBtn = document.getElementById('aiAddDepartmentBtn');
+    const departmentList = document.getElementById('aiDepartmentList');
+    
+    // Wizard navigation buttons
+    const prevBtn = document.getElementById('aiWizardPrevBtn');
+    const nextBtn = document.getElementById('aiWizardNextBtn');
+    const submitBtn = document.getElementById('aiScheduleSubmitBtn');
+    
+    let currentStep = 1;
+    let proposedSchedules = [];
+    let availableDoctors = [];
 
-                                                              form.addEventListener('submit', async function (event) {
-                                                                  event.preventDefault();
-                                                                  
-                                                                  // Update hidden fields from custom design inputs
-                                                                  if (startTimeInput && endTimeInput && slotDurationInput) {
-                                                                      document.querySelector('input[name="startTime"]').value = startTimeInput.value || '07:00';
-                                                                      document.querySelector('input[name="endTime"]').value = endTimeInput.value || '19:00';
-                                                                      document.querySelector('input[name="slotMinutes"]').value = slotDurationInput.value || '60';
-                                                                  }
-                                                                  
-                                                                  const formData = new FormData(form);
-                                                                  const params = new URLSearchParams();
-                                                                  params.set('action', 'aiCreateSchedules');
-                                                                  formData.forEach((value, key) => params.append(key, value));
+    if (startDate && !startDate.value) {
+        startDate.value = getIsoDateOffset(1);
+    }
+    if (endDate && !endDate.value) {
+        endDate.value = getIsoDateOffset(7);
+    }
 
-                                                                  if (getSelectedWeekdays().length === 0) {
-                                                                      showAiScheduleMessage('Vui l\u00F2ng ch\u1ECDn \u00EDt nh\u1EA5t m\u1ED9t ng\u00E0y \u00E1p d\u1EE5ng trong tu\u1EA7n.', false);
-                                                                      return;
-                                                                  }
-                                                                  if (Number(document.getElementById('aiMaxSchedules').value) <= 0) {
-                                                                      showAiScheduleMessage('Kho\u1EA3ng ng\u00E0y \u0111\u00E3 ch\u1ECDn kh\u00F4ng c\u00F3 ng\u00E0y \u00E1p d\u1EE5ng ph\u00F9 h\u1EE3p.', false);
-                                                                      return;
-                                                                  }
+    // Dynamic weekday disabling based on date range
+    function updateWeekdayStates() {
+        if (!startDate || !endDate || !startDate.value || !endDate.value) return;
+        const start = new Date(startDate.value + 'T00:00:00');
+        const end = new Date(endDate.value + 'T00:00:00');
+        const diffDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+        
+        const checkboxes = document.querySelectorAll('input[name="selectedWeekdays"]');
+        if (diffDays >= 7) {
+            checkboxes.forEach(cb => {
+                cb.disabled = false;
+                const label = cb.nextElementSibling;
+                if (label) {
+                    label.style.textDecoration = 'none';
+                    label.style.opacity = '1';
+                }
+            });
+        } else {
+            const validDays = new Set();
+            let cursor = new Date(start);
+            while (cursor <= end) {
+                let jsDay = cursor.getDay();
+                let isoDay = jsDay === 0 ? 7 : jsDay;
+                validDays.add(isoDay);
+                cursor.setDate(cursor.getDate() + 1);
+            }
+            checkboxes.forEach(cb => {
+                const dayVal = Number(cb.value);
+                const label = cb.nextElementSibling;
+                if (validDays.has(dayVal)) {
+                    cb.disabled = false;
+                    if (label) {
+                        label.style.textDecoration = 'none';
+                        label.style.opacity = '1';
+                    }
+                } else {
+                    cb.disabled = true;
+                    cb.checked = false;
+                    if (label) {
+                        label.style.textDecoration = 'line-through';
+                        label.style.opacity = '0.5';
+                    }
+                }
+            });
+        }
+        updateAiMaxSchedules();
+    }
 
-                                                                  setAiScheduleBusy(true);
-                                                                  try {
-                                                                      const response = await fetch(adminScheduleEndpoint, {
-                                                                          method: 'POST',
-                                                                          headers: {
-                                                                              'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-                                                                              'Accept': 'application/json'
-                                                                          },
-                                                                          body: params.toString()
-                                                                      });
-                                                                      if (!response.ok) {
-                                                                          throw new Error('HTTP ' + response.status);
-                                                                      }
-                                                                      const data = await response.json();
-                                                                      showAiScheduleMessage(data.message || '\u0110\u00E3 x\u1EED l\u00FD y\u00EAu c\u1EA7u l\u1EADp l\u1ECBch.', data.success);
-                                                                      if (data.success) {
-                                                                          appendCreatedSchedules(data.items || []);
-                                                                          window.setTimeout(() => {
-                                                                              const modalEl = document.getElementById('aiScheduleModal');
-                                                                              const instance = bootstrap.Modal.getInstance(modalEl);
-                                                                              if (instance) {
-                                                                                  instance.hide();
-                                                                              }
-                                                                          }, 900);
-                                                                      }
-                                                                  } catch (error) {
-                                                                      showAiScheduleMessage('Kh\u00F4ng th\u1EC3 t\u1EA1o l\u1ECBch b\u1EB1ng Gemini: ' + error.message, false);
-                                                                  } finally {
-                                                                      setAiScheduleBusy(false);
-                                                                  }
-                                                              });
-                                                          });
+    [startDate, endDate].forEach(input => {
+        if (input) {
+            input.addEventListener('change', updateWeekdayStates);
+        }
+    });
+    updateWeekdayStates();
 
-// Event listener b\u1EA5p v\u00E0o h\u00E0ng schedule \u0111\u1EC3 xem b\u1EC7nh nh\u00E2n
+    // Workload calculation
+    function updateWorkloadInfo() {
+        if (!slotDurationInput || !visitDurationInput || !maxPatientsInput) return;
+        const slotMin = parseInt(slotDurationInput.value) || 60;
+        const visitMin = parseInt(visitDurationInput.value) || 15;
+        const maxPatients = Math.floor(slotMin / visitMin);
+        maxPatientsInput.value = maxPatients;
+        const workloadInfo = document.getElementById('aiWorkloadCalcInfo');
+        if (workloadInfo) {
+            workloadInfo.innerHTML = '<i class="bi bi-calculator me-1"></i>Số bệnh nhân tối đa mỗi ca: ' + maxPatients + ' lượt khám (' + slotMin + ' phút / ' + visitMin + ' phút).';
+        }
+        updateAiMaxSchedules();
+    }
+
+    [slotDurationInput, visitDurationInput].forEach(input => {
+        if (input) {
+            input.addEventListener('change', updateWorkloadInfo);
+        }
+    });
+    updateWorkloadInfo();
+
+    // Autocomplete adding from select list
+    if (addDepartmentBtn && departmentSelect && departmentList) {
+        addDepartmentBtn.addEventListener('click', function() {
+            const dept = departmentSelect.value;
+            if (!dept) return;
+            const exists = Array.from(departmentList.querySelectorAll('.badge'))
+                .some(badge => badge.getAttribute('data-dept') === dept);
+            if (!exists) {
+                const badge = document.createElement('span');
+                badge.className = 'badge bg-purple-subtle text-purple border border-purple-subtle cursor-pointer';
+                badge.style = 'background:#f3e8ff; color:#6b21a8; border-color:#e9d5ff;';
+                badge.setAttribute('data-dept', dept);
+                badge.textContent = dept + ' \u2715';
+                departmentList.appendChild(badge);
+                updateTemplatePreview();
+            }
+        });
+    }
+
+    // Badge removal
+    if (departmentList) {
+        departmentList.addEventListener('click', function(e) {
+            if (e.target.classList.contains('badge')) {
+                e.target.remove();
+                updateTemplatePreview();
+            }
+        });
+    }
+
+    [startTimeInput, endTimeInput, slotDurationInput].forEach(element => {
+        if (element) {
+            element.addEventListener('change', updateTemplatePreview);
+            element.addEventListener('input', updateTemplatePreview);
+        }
+    });
+    document.querySelectorAll('input[name="selectedWeekdays"]').forEach(cb => {
+        cb.addEventListener('change', updateAiMaxSchedules);
+    });
+
+    // Wizard navigation controls
+    function showStep(step) {
+        currentStep = step;
+        
+        // Progress Stepper Indicators
+        for (let i = 1; i <= 3; i++) {
+            const indicator = document.getElementById('indicator' + i);
+            if (indicator) {
+                const stepNum = indicator.querySelector('.step-num');
+                if (i < step) {
+                    indicator.className = 'wizard-step-indicator completed';
+                    if (stepNum) {
+                        stepNum.style.background = '#10b981';
+                        stepNum.style.borderColor = '#10b981';
+                        stepNum.style.color = '#fff';
+                        stepNum.innerHTML = '<i class="bi bi-check-lg"></i>';
+                    }
+                } else if (i === step) {
+                    indicator.className = 'wizard-step-indicator active';
+                    if (stepNum) {
+                        stepNum.style.background = '#7c3aed';
+                        stepNum.style.borderColor = '#7c3aed';
+                        stepNum.style.color = '#fff';
+                        stepNum.innerHTML = i;
+                    }
+                } else {
+                    indicator.className = 'wizard-step-indicator';
+                    if (stepNum) {
+                        stepNum.style.background = '#fff';
+                        stepNum.style.borderColor = '#cbd5e1';
+                        stepNum.style.color = '#cbd5e1';
+                        stepNum.innerHTML = i;
+                    }
+                }
+            }
+        }
+        
+        // Step Panels Visibility
+        const s1 = document.getElementById('aiWizardStep1');
+        const s2 = document.getElementById('aiWizardStep2');
+        const s3 = document.getElementById('aiWizardStep3');
+        if (s1) s1.classList.toggle('d-none', step !== 1);
+        if (s2) s2.classList.toggle('d-none', step !== 2);
+        if (s3) s3.classList.toggle('d-none', step !== 3);
+        
+        // Footer Buttons Visibility
+        if (step === 1) {
+            if (prevBtn) prevBtn.style.display = 'none';
+            if (nextBtn) {
+                nextBtn.style.display = 'inline-block';
+                nextBtn.innerHTML = 'Tiếp tục <i class="bi bi-arrow-right ms-1"></i>';
+            }
+            if (submitBtn) submitBtn.style.display = 'none';
+        } else if (step === 2) {
+            if (prevBtn) prevBtn.style.display = 'inline-block';
+            if (nextBtn) {
+                nextBtn.style.display = 'inline-block';
+                nextBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles me-1"></i> Tạo đề xuất AI';
+            }
+            if (submitBtn) submitBtn.style.display = 'none';
+        } else if (step === 3) {
+            if (prevBtn) prevBtn.style.display = 'inline-block';
+            if (nextBtn) nextBtn.style.display = 'none';
+            if (submitBtn) submitBtn.style.display = 'inline-block';
+        }
+    }
+
+    if (prevBtn) {
+        prevBtn.addEventListener('click', function() {
+            if (currentStep > 1) {
+                showStep(currentStep - 1);
+            }
+        });
+    }
+
+    if (nextBtn) {
+        nextBtn.addEventListener('click', async function() {
+            if (currentStep === 1) {
+                if (!startDate.value || !endDate.value) {
+                    showAiScheduleMessage('Vui lòng chọn khoảng ngày.', false);
+                    return;
+                }
+                if (getSelectedWeekdays().length === 0) {
+                    showAiScheduleMessage('Vui lòng chọn ít nhất một ngày áp dụng trong tuần.', false);
+                    return;
+                }
+                showStep(2);
+            } else if (currentStep === 2) {
+                const depts = Array.from(departmentList.querySelectorAll('.badge'))
+                    .map(badge => badge.getAttribute('data-dept'));
+                if (depts.length === 0) {
+                    showAiScheduleMessage('Vui lòng chọn ít nhất một chuyên khoa.', false);
+                    return;
+                }
+                showStep(3);
+                await generateProposal();
+            }
+        });
+    }
+
+    async function generateProposal() {
+        const loader = document.getElementById('aiProposalLoading');
+        const container = document.getElementById('aiProposalTableContainer');
+        
+        if (loader) loader.classList.remove('d-none');
+        if (container) container.classList.add('d-none');
+        
+        if (startTimeInput && endTimeInput && slotDurationInput) {
+            document.querySelector('input[name="startTime"]').value = startTimeInput.value || '07:00';
+            document.querySelector('input[name="endTime"]').value = endTimeInput.value || '17:00';
+            document.querySelector('input[name="slotMinutes"]').value = slotDurationInput.value || '60';
+        }
+        
+        const formData = new FormData(form);
+        const params = new URLSearchParams();
+        params.set('action', 'aiCreateSchedules');
+        params.set('preview', 'true');
+        formData.forEach((value, key) => params.append(key, value));
+        
+        try {
+            const response = await fetch(adminScheduleEndpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+                    'Accept': 'application/json'
+                },
+                body: params.toString()
+            });
+            if (!response.ok) {
+                throw new Error('HTTP ' + response.status);
+            }
+            const data = await response.json();
+            if (!data.success) {
+                throw new Error(data.message || 'Lỗi không xác định.');
+            }
+            
+            proposedSchedules = data.items || [];
+            availableDoctors = data.doctors || [];
+            
+            renderProposalTable();
+            
+            if (loader) loader.classList.add('d-none');
+            if (container) container.classList.remove('d-none');
+        } catch (err) {
+            showAiScheduleMessage('Không thể tạo đề xuất AI: ' + err.message, false);
+            showStep(2);
+        }
+    }
+
+    function renderProposalTable() {
+        const tbody = document.getElementById('aiProposalTableBody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        
+        if (proposedSchedules.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">Không có ca trực nào được đề xuất.</td></tr>';
+            return;
+        }
+        
+        proposedSchedules.forEach((item, index) => {
+            const row = document.createElement('tr');
+            
+            const specialty = item.department || '';
+            const displayDept = departmentMapping[specialty] || specialty;
+            
+            const doctorsInSpecialty = availableDoctors.filter(doc => {
+                const docDept = String(doc.department || '').toLowerCase().trim();
+                const searchDept = displayDept.toLowerCase().trim();
+                return docDept.includes(searchDept) || searchDept.includes(docDept);
+            });
+            
+            const doctorOptionsList = doctorsInSpecialty.length > 0 ? doctorsInSpecialty : availableDoctors;
+            
+            let selectHtml = '<select class="form-select form-select-sm proposed-doctor-select" style="min-width: 150px; font-size: 0.8rem; padding: 0.25rem 0.5rem;" data-index="' + index + '">';
+            doctorOptionsList.forEach(doc => {
+                const selected = Number(doc.doctorId) === Number(item.doctorId) ? 'selected' : '';
+                selectHtml += '<option value="' + doc.doctorId + '" ' + selected + '>' + escapeHtmlForSchedule(doc.doctorName || doc.fullName || '-') + '</option>';
+            });
+            selectHtml += '</select>';
+            
+            row.innerHTML = '<td><strong>' + escapeHtmlForSchedule(formatVietnameseDate(item.workDate)) + '</strong></td>'
+                + '<td><span class="badge bg-purple-subtle text-purple border border-purple-subtle" style="background:#f3e8ff; color:#6b21a8; font-size: 0.78rem; font-weight:600; padding:0.25rem 0.45rem;">' + escapeHtmlForSchedule(item.timeSlot) + '</span></td>'
+                + '<td><span class="fw-semibold text-dark" style="font-size:0.82rem;">' + escapeHtmlForSchedule(displayDept) + '</span></td>'
+                + '<td>' + selectHtml + '</td>'
+                + '<td><small class="text-muted" style="line-height:1.25; display:block; font-size:0.75rem;">' + escapeHtmlForSchedule(item.reason || '-') + '</small></td>';
+                
+            tbody.appendChild(row);
+        });
+        
+        const summary = document.getElementById('aiScheduleSummary');
+        if (summary) {
+            summary.textContent = 'Hệ thống đã đề xuất ' + proposedSchedules.length + ' ca trực bác sĩ khám. Bạn có thể chọn bác sĩ trực khác từ danh sách thả xuống.';
+        }
+    }
+
+    if (form) {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            if (currentStep !== 3 || proposedSchedules.length === 0) {
+                return;
+            }
+            
+            const selects = document.querySelectorAll('.proposed-doctor-select');
+            const params = new URLSearchParams();
+            params.set('action', 'aiSaveProposedSchedules');
+            params.set('csrfToken', document.querySelector('input[name="csrfToken"]').value);
+            
+            selects.forEach(select => {
+                const index = parseInt(select.getAttribute('data-index'));
+                const item = proposedSchedules[index];
+                const selectedDoctorId = select.value;
+                
+                params.append('doctorId', selectedDoctorId);
+                params.append('workDate', item.workDate);
+                params.append('timeSlot', item.timeSlot);
+                params.append('maxPatients', maxPatientsInput.value);
+            });
+            
+            setAiScheduleBusy(true);
+            try {
+                const response = await fetch(adminScheduleEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+                        'Accept': 'application/json'
+                    },
+                    body: params.toString()
+                });
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status);
+                }
+                const data = await response.json();
+                showAiScheduleMessage(data.message || 'Đã lưu lịch trực.', data.success);
+                if (data.success) {
+                    window.setTimeout(() => {
+                        const modalEl = document.getElementById('aiScheduleModal');
+                        const instance = bootstrap.Modal.getInstance(modalEl);
+                        if (instance) {
+                            instance.hide();
+                        }
+                        window.location.reload();
+                    }, 1200);
+                }
+            } catch (err) {
+                showAiScheduleMessage('Không thể lưu lịch trực đề xuất: ' + err.message, false);
+            } finally {
+                setAiScheduleBusy(false);
+            }
+        });
+    }
+
+    updateTemplatePreview();
+});
+
+// Event listener bấm vào hàng schedule để xem bệnh nhân
             document.addEventListener('click', function(e) {
                 const row = e.target.closest('tbody tr');
                 if (!row) return;
                 
-                // B\u1ECF qua n\u1EBFu b\u1EA5p v\u00E0o button ho\u1EB7c form elements
+                // Bỏ qua nếu bấm vào button hoặc form elements
                 if (e.target.closest('button') || e.target.closest('form')) return;
                 
-                // L\u1EA5y schedule ID t\u1EEB data attribute
+                // Lấy schedule ID từ data attribute
                 const scheduleId = row.dataset.scheduleId;
-                const doctorName = row.dataset.doctorName || 'Kh\u00F4ng x\u00E1c \u0111\u1ECBnh';
+                const doctorName = row.dataset.doctorName || 'Không xác định';
                 const timeSlot = row.querySelector('td:nth-child(4)')?.textContent || '';
                 const workDate = row.querySelector('td:nth-child(3)')?.textContent || '';
                 
                 if (!scheduleId) return;
                 
-                // C\u1EADp nh\u1EADt ti\u00EAu \u0111\u1EC1 modal
+                // Cập nhật tiêu đề modal
                 const titleEl = document.getElementById('appointmentsModalTitle');
                 if (titleEl) {
                     titleEl.textContent = doctorName + ' (' + workDate + ' ' + timeSlot + ')';
                 }
                 
-                // M\u1EDF modal
+                // Mở modal
                 const modal = new bootstrap.Modal(document.getElementById('scheduleAppointmentsModal'));
                 modal.show();
                 
-                // T\u1EA3i danh s\u00E1ch b\u1EC7nh nh\u00E2n
+                // Tải danh sách bệnh nhân
                 fetch(adminContextPath + '/admin?action=scheduleAppointments&scheduleId=' + scheduleId)
                     .then(async response => {
                         const ct = response.headers.get('content-type') || '';
@@ -759,12 +1027,12 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
                             // Session expired for AJAX request - try to show message then redirect
                             if (ct.toLowerCase().indexOf('application/json') !== -1) {
                                 const err = await response.json().catch(() => null);
-                                const msg = (err && err.message) ? err.message : 'Phi\u00EAn l\u00E0m vi\u1EC7c \u0111\u00E3 h\u1EBFt, vui l\u00F2ng \u0111\u0103ng nh\u1EADp l\u1EA1i.';
+                                const msg = (err && err.message) ? err.message : 'Phiên làm việc đã hết, vui lòng đăng nhập lại.';
                                 const tbody = document.getElementById('appointmentsTableBody');
                                 tbody.innerHTML = '<tr><td colspan="4" class="text-center text-warning py-3"><i class="bi bi-exclamation-triangle me-2"></i>' + escapeHtmlForSchedule(msg) + '</td></tr>';
                             } else {
                                 const tbody = document.getElementById('appointmentsTableBody');
-                                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-warning py-3"><i class="bi bi-exclamation-triangle me-2"></i>Phi\u00EAn l\u00E0m vi\u1EC7c c\u00F3 th\u1EC3 \u0111\u00E3 h\u1EBFt. B\u1EA1n s\u1EBD \u0111\u01B0\u1EE3c chuy\u1EC3n \u0111\u1EBFn \u0111\u0103ng nh\u1EADp...</td></tr>';
+                                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-warning py-3"><i class="bi bi-exclamation-triangle me-2"></i>Phiên làm việc có thể đã hết. Bạn sẽ được chuyển đến đăng nhập...</td></tr>';
                             }
                             setTimeout(() => { window.location.href = adminLoginUrl; }, 1200);
                             return Promise.reject(new Error('HTTP 401'));
@@ -777,9 +1045,9 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
                             const tbody = document.getElementById('appointmentsTableBody');
                             // Detect common signs of login page or server error
                             const low = snippet.toLowerCase();
-                            const looksLikeLogin = low.indexOf('\u0111\u0103ng nh\u1EADp') !== -1 || low.indexOf('login') !== -1 || low.indexOf('j_username') !== -1 || low.indexOf('<form') !== -1;
+                            const looksLikeLogin = low.indexOf('đăng nhập') !== -1 || low.indexOf('login') !== -1 || low.indexOf('j_username') !== -1 || low.indexOf('<form') !== -1;
                             if (looksLikeLogin) {
-                                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-warning py-3"><i class="bi bi-exclamation-triangle me-2"></i>Phi\u00EAn l\u00E0m vi\u1EC7c c\u00F3 th\u1EC3 \u0111\u00E3 h\u1EBFt. B\u1EA1n s\u1EBD \u0111\u01B0\u1EE3c chuy\u1EC3n \u0111\u1EBFn trang \u0111\u0103ng nh\u1EADp...</td></tr>';
+                                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-warning py-3"><i class="bi bi-exclamation-triangle me-2"></i>Phiên làm việc có thể đã hết. Bạn sẽ được chuyển đến trang đăng nhập...</td></tr>';
                                 // Redirect to login after short delay
                                 setTimeout(() => {
                                     window.location.href = adminLoginUrl;
@@ -787,7 +1055,7 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
                                 // Stop further processing
                                 return Promise.reject(new Error('Session expired - redirecting to login'));
                             }
-                            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger py-3"><i class="bi bi-exclamation-circle me-2"></i>Server tr\u1EA3 v\u1EC1 n\u1ED9i dung kh\u00F4ng h\u1EE3p l\u1EC7: ' + escapeHtmlForSchedule(snippet) + '</td></tr>';
+                            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger py-3"><i class="bi bi-exclamation-circle me-2"></i>Server trả về nội dung không hợp lệ: ' + escapeHtmlForSchedule(snippet) + '</td></tr>';
                             return Promise.reject(new Error('Server returned non-JSON response'));
                         }
                         return response.json();
@@ -795,7 +1063,7 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
                     .then(data => {
                         const tbody = document.getElementById('appointmentsTableBody');
                         if (!data.items || data.items.length === 0) {
-                            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3">Ch\u01B0a c\u00F3 b\u1EC7nh nh\u00E2n n\u00E0o \u0111\u1EB7t l\u1ECBch</td></tr>';
+                            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3">Chưa có bệnh nhân nào đặt lịch</td></tr>';
                             return;
                         }
 
@@ -811,35 +1079,24 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
                     })
                     .catch(error => {
                         const tbody = document.getElementById('appointmentsTableBody');
-                        const msg = error && error.message ? error.message : 'L\u1ED7i khi t\u1EA3i d\u1EEF li\u1EC7u';
+                        const msg = error && error.message ? error.message : 'Lỗi khi tải dữ liệu';
                         tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger py-3"><i class="bi bi-exclamation-circle me-2"></i>' + escapeHtmlForSchedule(msg) + '</td></tr>';
                     });
             }, false);
             
             function getStatusBadge(status) {
                 const statusMap = {
-                    'Waiting': '<span class="badge text-bg-warning"><i class="bi bi-calendar-check me-1"></i>\u0110\u00E3 \u0111\u1EB7t l\u1ECBch</span>',
-                    'Checked_In': '<span class="badge text-bg-primary"><i class="bi bi-person-check me-1"></i>\u0110\u00E3 check-in</span>',
-                    'In_Progress': '<span class="badge text-bg-info"><i class="bi bi-play-circle me-1"></i>\u0110ang kh\u00E1m</span>',
-                    'Completed': '<span class="badge text-bg-success"><i class="bi bi-check-circle me-1"></i>Ho\u00E0n t\u1EA5t</span>',
-                    'Absent': '<span class="badge text-bg-secondary"><i class="bi bi-x-circle me-1"></i>Kh\u00F4ng c\u00F3 m\u1EB7t</span>',
-                    'Cancelled': '<span class="badge text-bg-danger"><i class="bi bi-trash me-1"></i>\u0110\u00E3 h\u1EE7y</span>'
+                    'Waiting': '<span class="badge text-bg-warning"><i class="bi bi-calendar-check me-1"></i>Đã đặt lịch</span>',
+                    'Checked_In': '<span class="badge text-bg-primary"><i class="bi bi-person-check me-1"></i>Đã check-in</span>',
+                    'In_Progress': '<span class="badge text-bg-info"><i class="bi bi-play-circle me-1"></i>Đang khám</span>',
+                    'Completed': '<span class="badge text-bg-success"><i class="bi bi-check-circle me-1"></i>Hoàn tất</span>',
+                    'Absent': '<span class="badge text-bg-secondary"><i class="bi bi-x-circle me-1"></i>Không có mặt</span>',
+                    'Cancelled': '<span class="badge text-bg-danger"><i class="bi bi-trash me-1"></i>Đã hủy</span>'
                 };
-                return statusMap[status] || '<span class="badge text-bg-secondary">' + (status || 'Kh\u00F4ng x\u00E1c \u0111\u1ECBnh') + '</span>';
+                return statusMap[status] || '<span class="badge text-bg-secondary">' + (status || 'Không xác định') + '</span>';
             }
 
-            function calculateDefaultOnlineQuota(maxPatients) {
-                if (maxPatients <= 1) {
-                    return Math.max(0, maxPatients);
-                }
-                let quota = Math.ceil(maxPatients * 0.6);
-                if (quota >= maxPatients) {
-                    quota = maxPatients - 1;
-                }
-                return Math.max(1, quota);
-            }
-
-            function getOnlineQuotaBadge(onlineBooked, onlineQuota) {
+function getOnlineQuotaBadge(onlineBooked, onlineQuota) {
                 if (onlineBooked > onlineQuota) {
                     return '<span class="badge text-bg-danger mt-1">V\u01B0\u1EE3t quota online</span>';
                 }
@@ -871,3 +1128,345 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
                 div.textContent = text;
                 return div.innerHTML;
             }
+
+function calculateDefaultOnlineQuota(maxPatients) {
+    if (maxPatients <= 1) {
+        return Math.max(0, maxPatients);
+    }
+    let quota = Math.ceil(maxPatients * 0.6);
+    if (quota >= maxPatients) {
+        quota = maxPatients - 1;
+    }
+    return Math.max(1, quota);
+}
+
+// Staff schedule detail/edit actions for Receptionist and Lab Doctor roles.
+function getStaffRoleConfig(staffType) {
+    const isLab = String(staffType || '').toLowerCase() === 'doctor_lab';
+    return {
+        isLab: isLab,
+        title: isLab ? 'bác sĩ xét nghiệm' : 'lễ tân',
+        personLabel: isLab ? 'Bác sĩ xét nghiệm' : 'Lễ tân',
+        departmentLabel: isLab ? 'Nhóm xét nghiệm' : 'Quầy trực',
+        areaLabel: isLab ? 'Phòng xét nghiệm' : 'Khu vực tiếp nhận',
+        workloadLabel: isLab ? 'Số mẫu tối đa/ca' : 'Số lượt tiếp nhận dự kiến/ca'
+    };
+}
+
+function formatStaffStatus(status) {
+    const value = String(status || 'Scheduled');
+    if (value === 'Expired') return 'Đã qua';
+    if (value === 'Cancelled') return 'Đã hủy';
+    if (value === 'Completed') return 'Hoàn tất';
+    return 'Đã xếp lịch';
+}
+
+function isFinalStaffStatus(status) {
+    return ['Expired', 'Cancelled', 'Completed'].includes(String(status || ''));
+}
+
+function ensureStaffModalContainer(id) {
+    let container = document.getElementById(id);
+    if (!container) {
+        container = document.createElement('div');
+        container.id = id;
+        container.className = 'modal fade';
+        container.tabIndex = -1;
+        document.body.appendChild(container);
+    }
+    return container;
+}
+
+function staffScheduleUrl(staffScheduleId) {
+    return adminContextPath + '/admin?action=getStaffSchedule&staffScheduleId=' + encodeURIComponent(staffScheduleId);
+}
+
+async function openStaffScheduleDetailModal(staffScheduleId) {
+    const container = ensureStaffModalContainer('staffScheduleDetailModalContainer');
+    container.innerHTML = '<div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-body py-5 text-center text-muted">Đang tải dữ liệu...</div></div></div>';
+    const bsModal = new bootstrap.Modal(container);
+    bsModal.show();
+    try {
+        const resp = await fetch(staffScheduleUrl(staffScheduleId), { headers: { 'Accept': 'application/json' } });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const data = await resp.json();
+        if (!data || !data.schedule) throw new Error('Không tìm thấy lịch trực');
+        const schedule = data.schedule;
+        const cfg = getStaffRoleConfig(schedule.staffType);
+        const roomLine = cfg.isLab ? '<div class="col-md-6"><div class="text-muted small">Phòng xét nghiệm</div><div class="fw-semibold">' + escapeHtml(schedule.roomName || '-') + '</div></div>'
+            + '<div class="col-md-6"><div class="text-muted small">Số phòng</div><div class="fw-semibold">' + escapeHtml(schedule.roomNumber || schedule.roomId || '-') + '</div></div>' : '';
+        container.innerHTML = '<div class="modal-dialog modal-dialog-centered"><div class="modal-content">'
+            + '<div class="modal-header"><h5 class="modal-title">Chi tiết lịch trực ' + cfg.title + '</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>'
+            + '<div class="modal-body"><div class="row g-3">'
+            + '<div class="col-md-6"><div class="text-muted small">' + cfg.personLabel + '</div><div class="fw-semibold">' + escapeHtml(schedule.staffName || '-') + '</div></div>'
+            + '<div class="col-md-6"><div class="text-muted small">Trạng thái</div><div class="fw-semibold">' + escapeHtml(formatStaffStatus(schedule.status)) + '</div></div>'
+            + '<div class="col-md-6"><div class="text-muted small">Ngày trực</div><div class="fw-semibold">' + escapeHtml(formatVietnameseDate(schedule.workDate)) + '</div></div>'
+            + '<div class="col-md-6"><div class="text-muted small">Khung giờ</div><div class="fw-semibold">' + escapeHtml(schedule.timeSlot || '-') + '</div></div>'
+            + roomLine
+            + '</div></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Đóng</button></div>'
+            + '</div></div>';
+
+    } catch (err) {
+        container.innerHTML = '<div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Chi tiết lịch trực</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body text-danger">Không tải được dữ liệu lịch trực.</div></div></div>';
+    }
+}
+
+async function openEditStaffScheduleModal(staffScheduleId) {
+    const container = ensureStaffModalContainer('editStaffScheduleModalContainer');
+    container.innerHTML = '<div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-body py-5 text-center text-muted">Đang tải dữ liệu...</div></div></div>';
+    const bsModal = new bootstrap.Modal(container);
+    bsModal.show();
+    try {
+        const resp = await fetch(staffScheduleUrl(staffScheduleId), { headers: { 'Accept': 'application/json' } });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const data = await resp.json();
+        if (!data || !data.schedule) throw new Error('Không tìm thấy lịch trực');
+        const schedule = data.schedule;
+        const cfg = getStaffRoleConfig(schedule.staffType);
+        const finalStatus = isFinalStaffStatus(schedule.status);
+        const timeParts = String(schedule.timeSlot || '').split('-');
+        const startTime = timeParts[0] || '';
+        const endTime = timeParts[1] || '';
+        const labGroups = ['Huyết học', 'Sinh hóa', 'Miễn dịch', 'Vi sinh', 'Nước tiểu', 'Tổng quát'];
+        if (cfg.isLab && schedule.department && !labGroups.includes(schedule.department)) {
+            labGroups.push(schedule.department);
+        }
+        const staffOptions = (data.staff || []).map(function (item) {
+            const id = item.accountId || item.id || item.staffId || '';
+            const selected = String(id) === String(schedule.accountId) ? ' selected' : '';
+            const dept = item.department ? ' - ' + escapeHtml(item.department) : '';
+            return '<option value="' + escapeHtml(id) + '"' + selected + '>' + escapeHtml(item.fullName || item.staffName || item.email || id) + dept + '</option>';
+        }).join('');
+        const groupOptions = labGroups.map(function (group) {
+            return '<option value="' + escapeHtml(group) + '"' + (group === schedule.department ? ' selected' : '') + '>' + escapeHtml(group) + '</option>';
+        }).join('');
+        const roomOptions = (data.rooms || []).map(function (room) {
+            const roomId = room.roomId || room.roomNumber || '';
+            const selected = String(roomId) === String(schedule.roomId || '') ? ' selected' : '';
+            const name = room.roomName ? ' - ' + escapeHtml(room.roomName) : '';
+            return '<option value="' + escapeHtml(roomId) + '"' + selected + '>' + escapeHtml(roomId) + name + '</option>';
+        }).join('');
+        const timeControls = cfg.isLab
+            ? '<input type="hidden" name="timeSlot" data-lab-time-slot value="' + escapeHtml(schedule.timeSlot || '') + '">'
+                + '<div class="col-md-6"><label class="form-label">Giờ bắt đầu</label><input type="time" class="form-control" name="startTime" value="' + escapeHtml(startTime) + '" required ' + (finalStatus ? 'disabled' : '') + '><div class="invalid-feedback">Vui lòng chọn giờ bắt đầu.</div></div>'
+                + '<div class="col-md-6"><label class="form-label">Giờ kết thúc</label><input type="time" class="form-control" name="endTime" value="' + escapeHtml(endTime) + '" required ' + (finalStatus ? 'disabled' : '') + '><div class="invalid-feedback">Giờ kết thúc phải sau giờ bắt đầu.</div></div>'
+            : '<div class="col-md-6"><label class="form-label">Khung giờ</label><input type="text" class="form-control" name="timeSlot" value="' + escapeHtml(schedule.timeSlot || '') + '" placeholder="07:00-11:00" pattern="\\d{2}:\\d{2}-\\d{2}:\\d{2}" required ' + (finalStatus ? 'disabled' : '') + '></div>';
+        const departmentControl = '<input type="hidden" name="department" value="' + escapeHtml(schedule.department || 'Xét nghiệm') + '">';
+        const areaControl = '<input type="hidden" name="workArea" value="' + escapeHtml(schedule.workArea || '') + '">';
+        const roomControl = cfg.isLab
+            ? '<div class="col-md-6"><label class="form-label">Phòng xét nghiệm</label><select class="form-select" name="roomId" required ' + (finalStatus ? 'disabled' : '') + '><option value="">-- Chọn phòng xét nghiệm --</option>' + roomOptions + '</select><div class="invalid-feedback">Vui lòng chọn phòng xét nghiệm.</div></div>'
+            : '';
+        container.innerHTML = '<div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content">'
+            + '<form method="post" action="' + adminContextPath + '/admin" class="lab-schedule-form" novalidate>'
+            + '<div class="modal-header"><h5 class="modal-title">Chỉnh sửa lịch trực ' + cfg.title + '</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>'
+            + '<div class="modal-body">' + (finalStatus ? '<div class="alert alert-warning">Ca trực này đã ' + escapeHtml(formatStaffStatus(schedule.status).toLowerCase()) + ', hệ thống không cho chỉnh sửa.</div>' : '')
+            + '<input type="hidden" name="action" value="update-staff-schedule"><input type="hidden" name="csrfToken" value="' + escapeHtml(adminCsrfToken) + '"><input type="hidden" name="staffScheduleId" value="' + escapeHtml(schedule.staffScheduleId) + '"><input type="hidden" name="staffType" value="' + escapeHtml(schedule.staffType) + '">'
+            + '<input type="hidden" name="maxWorkload" value="' + escapeHtml(schedule.maxWorkload == null ? '50' : schedule.maxWorkload) + '">'
+            + '<div class="row g-3">'
+            + '<div class="col-md-6"><label class="form-label">' + cfg.personLabel + '</label><select class="form-select" name="accountId" required ' + (finalStatus ? 'disabled' : '') + '>' + staffOptions + '</select><div class="invalid-feedback">Vui lòng chọn đúng nhân sự đang hoạt động.</div></div>'
+            + '<div class="col-md-6"><label class="form-label">Ngày trực</label><input type="date" class="form-control" name="workDate" value="' + escapeHtml(schedule.workDate || '') + '" required ' + (finalStatus ? 'disabled' : '') + '><div class="invalid-feedback">Ngày trực không được ở quá khứ.</div></div>'
+            + timeControls
+            + departmentControl
+            + roomControl
+            + areaControl
+            + '<div class="col-md-6"><label class="form-label">Trạng thái</label><select class="form-select" name="status" ' + (finalStatus ? 'disabled' : '') + '><option value="Scheduled"' + (schedule.status === 'Scheduled' ? ' selected' : '') + '>Đã xếp lịch</option><option value="Cancelled"' + (schedule.status === 'Cancelled' ? ' selected' : '') + '>Đã hủy</option></select></div>'
+            + '</div></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>' + (finalStatus ? '' : '<button type="submit" class="btn btn-primary">Lưu thay đổi</button>') + '</div>'
+            + '</form></div></div>';
+        attachLabScheduleValidation(container.querySelector('form'));
+    } catch (err) {
+        container.innerHTML = '<div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Chỉnh sửa lịch trực</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body text-danger">Không tải được dữ liệu lịch trực.</div></div></div>';
+    }
+}
+window.openEditStaffScheduleModal = openEditStaffScheduleModal;
+window.openStaffScheduleDetailModal = openStaffScheduleDetailModal;
+
+async function openDoctorScheduleDetailModal(scheduleId) {
+    const container = ensureStaffModalContainer('doctorScheduleDetailModalContainer');
+    container.innerHTML = '<div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-body py-5 text-center text-muted">Đang tải dữ liệu...</div></div></div>';
+    const bsModal = new bootstrap.Modal(container);
+    bsModal.show();
+    try {
+        const resp = await fetch(adminContextPath + '/admin?action=getSchedule&scheduleId=' + encodeURIComponent(scheduleId), { headers: { 'Accept': 'application/json' } });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const data = await resp.json();
+        if (!data || !data.schedule) throw new Error('Không tìm thấy thông tin lịch trực');
+        
+        const schedule = data.schedule;
+        const statusTranslations = {
+            'Available': '<span class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-check-circle me-1"></i>Khả dụng</span>',
+            'Full': '<span class="badge bg-danger-subtle text-danger border border-danger-subtle"><i class="bi bi-exclamation-circle me-1"></i>Đã đầy</span>',
+            'Cancelled': '<span class="badge bg-dark-subtle text-dark border border-dark-subtle"><i class="bi bi-x-circle me-1"></i>Đã hủy</span>',
+            'Expired': '<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle"><i class="bi bi-clock me-1"></i>Đã qua</span>'
+        };
+        const statusHtml = statusTranslations[schedule.status] || ('<span class="badge bg-primary-subtle text-primary border border-primary-subtle">' + escapeHtml(schedule.status || '-') + '</span>');
+        
+        const deptMap = {
+            'Endocrinology': 'Nội tiết - Tiểu đường',
+            'Cardiology': 'Tim mạch',
+            'Nephrology': 'Thận học',
+            'General': 'Tổng quát'
+        };
+        const deptText = deptMap[schedule.department] || (schedule.department || '-');
+
+        container.innerHTML = '<div class="modal-dialog modal-dialog-centered modal-md">'
+            + '<div class="modal-content border-0 shadow-lg" style="border-radius:16px;">'
+            + '<div class="modal-header border-0 pb-0" style="background:linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); border-top-left-radius:16px; border-top-right-radius:16px; padding:1.25rem 1.5rem;">'
+            + '<h5 class="modal-title fw-bold text-purple d-flex align-items-center"><i class="bi bi-eye-fill me-2" style="font-size:1.25rem; color:#7c3aed;"></i>Chi tiết ca trực Bác sĩ</h5>'
+            + '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="background-size:0.8rem;"></button>'
+            + '</div>'
+            + '<div class="modal-body p-4">'
+            + '<div class="row g-3">'
+            + '<div class="col-md-6"><div class="text-muted small fw-semibold text-uppercase" style="font-size:0.72rem; letter-spacing:0.05em;">Bác sĩ khám</div><div class="fw-bold text-dark mt-1" style="font-size:0.95rem;">' + escapeHtml(schedule.doctorName || '-') + '</div></div>'
+            + '<div class="col-md-6"><div class="text-muted small fw-semibold text-uppercase" style="font-size:0.72rem; letter-spacing:0.05em;">Trạng thái</div><div class="mt-1">' + statusHtml + '</div></div>'
+            + '<div class="col-md-6"><div class="text-muted small fw-semibold text-uppercase" style="font-size:0.72rem; letter-spacing:0.05em;">Ngày trực</div><div class="fw-bold text-dark mt-1" style="font-size:0.95rem;">' + escapeHtml(formatVietnameseDate(schedule.workDate)) + '</div></div>'
+            + '<div class="col-md-6"><div class="text-muted small fw-semibold text-uppercase" style="font-size:0.72rem; letter-spacing:0.05em;">Khung giờ trực</div><div class="fw-bold text-dark mt-1" style="font-size:0.95rem;"><i class="bi bi-clock me-1 text-muted"></i>' + escapeHtml(schedule.timeSlot || '-') + '</div></div>'
+            + '<div class="col-md-6"><div class="text-muted small fw-semibold text-uppercase" style="font-size:0.72rem; letter-spacing:0.05em;">Chuyên khoa</div><div class="fw-semibold text-secondary mt-1" style="font-size:0.9rem;">' + escapeHtml(deptText) + '</div></div>'
+            + '<div class="col-md-6"><div class="text-muted small fw-semibold text-uppercase" style="font-size:0.72rem; letter-spacing:0.05em;">Phòng khám trực</div><div class="fw-semibold text-secondary mt-1" style="font-size:0.9rem;"><i class="bi bi-geo-alt me-1 text-muted"></i>' + escapeHtml(schedule.roomName ? (schedule.roomId + ' - ' + schedule.roomName) : (schedule.roomId || '-')) + '</div></div>'
+            + '<div class="col-md-12"><hr class="my-2 border-slate-100"></div>'
+            + '<div class="col-md-6"><div class="text-muted small fw-semibold text-uppercase" style="font-size:0.72rem; letter-spacing:0.05em;">Tổng ca nhận khám</div><div class="fw-bold text-dark mt-1" style="font-size:0.95rem;">' + escapeHtml(schedule.bookedCount !== undefined ? schedule.bookedCount : (schedule.bookedAppointments || 0)) + ' / ' + escapeHtml(schedule.maxPatients || '-') + ' ca</div></div>'
+            + '<div class="col-md-6"><div class="text-muted small fw-semibold text-uppercase" style="font-size:0.72rem; letter-spacing:0.05em;">Đặt hẹn Online</div><div class="fw-bold text-dark mt-1" style="font-size:0.95rem;">' + escapeHtml(schedule.onlineBookedCount !== undefined ? schedule.onlineBookedCount : (schedule.onlineBooked || 0)) + ' / ' + escapeHtml(schedule.onlineQuota !== undefined ? schedule.onlineQuota : '-') + ' ca</div></div>'
+            + '</div></div>'
+            + '<div class="modal-footer border-0 pt-0 px-4 pb-4">'
+            + '<button type="button" class="btn btn-secondary px-4 py-2" data-bs-dismiss="modal" style="border-radius:10px; font-weight:600; font-size:0.85rem; background-color:#64748b; border:none;">Đóng</button>'
+            + '</div>'
+            + '</div></div>';
+
+    } catch (err) {
+        container.innerHTML = '<div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow-lg" style="border-radius:12px;"><div class="modal-header border-0 pb-0"><h5 class="modal-title fw-bold text-danger">Lỗi tải dữ liệu</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body p-4 text-danger">Không thể tải thông tin chi tiết lịch trực bác sĩ.</div></div></div>';
+    }
+}
+window.openDoctorScheduleDetailModal = openDoctorScheduleDetailModal;
+
+document.addEventListener('click', function (event) {
+    const staffDetailButton = event.target.closest('.staff-schedule-detail-action');
+    if (staffDetailButton) {
+        event.preventDefault();
+        openStaffScheduleDetailModal(staffDetailButton.getAttribute('data-staff-schedule-id'));
+        return;
+    }
+    const docDetailButton = event.target.closest('.schedule-detail-action');
+    if (docDetailButton) {
+        event.preventDefault();
+        openDoctorScheduleDetailModal(docDetailButton.getAttribute('data-schedule-id'));
+    }
+});
+
+function attachLabScheduleValidation(form) {
+    if (!form || form.dataset.labValidationBound === 'true') return;
+    form.dataset.labValidationBound = 'true';
+    const today = new Date().toISOString().slice(0, 10);
+    const setInvalid = function (field, message) {
+        if (!field) return;
+        field.setCustomValidity(message || '');
+        const feedback = field.parentElement ? field.parentElement.querySelector('.invalid-feedback') : null;
+        if (feedback && message) feedback.textContent = message;
+    };
+    const validate = function () {
+        if (form.staffType && form.staffType.value !== 'doctor_lab') return true;
+        let ok = true;
+        const workDate = form.workDate;
+        const start = form.startTime;
+        const end = form.endTime;
+        const workload = form.maxWorkload;
+        setInvalid(workDate, '');
+        setInvalid(start, '');
+        setInvalid(end, '');
+        setInvalid(workload, '');
+        if (workDate && workDate.value && workDate.value < today) {
+            setInvalid(workDate, 'Ngày trực không được ở quá khứ.');
+            ok = false;
+        }
+        if (start && end) {
+            if (!start.value) {
+                setInvalid(start, 'Vui lòng chọn giờ bắt đầu.');
+                ok = false;
+            }
+            if (!end.value || (start.value && end.value <= start.value)) {
+                setInvalid(end, 'Giờ kết thúc phải sau giờ bắt đầu.');
+                ok = false;
+            }
+            const hiddenSlot = form.querySelector('[data-lab-time-slot]');
+            if (hiddenSlot && start.value && end.value && end.value > start.value) {
+                hiddenSlot.value = start.value + '-' + end.value;
+            }
+        }
+        if (workload) {
+            const value = Number(workload.value);
+            if (!Number.isFinite(value) || value < 1 || value > 500) {
+                setInvalid(workload, 'Số mẫu tối đa/ca phải từ 1 đến 500.');
+                ok = false;
+            }
+        }
+        return ok && form.checkValidity();
+    };
+    form.addEventListener('submit', function (event) {
+        if (!validate()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+    ['input', 'change'].forEach(function (eventName) {
+        form.addEventListener(eventName, validate);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('#createLabScheduleModal form').forEach(attachLabScheduleValidation);
+
+    // AI Suggestion inside Create Doctor Schedule Modal
+    const createModal = document.getElementById('createScheduleModal');
+    if (createModal) {
+        const docSelect = createModal.querySelector('select[name="doctorId"]');
+        const dateInput = createModal.querySelector('input[name="workDate"]');
+        const suggestBtn = document.getElementById('aiSuggestTimeBtn');
+        const feedbackSpan = document.getElementById('aiSuggestionFeedback');
+        const slotInput = createModal.querySelector('input[name="timeSlot"]');
+
+        const checkInputs = () => {
+            if (docSelect && docSelect.value && dateInput && dateInput.value) {
+                suggestBtn.classList.remove('d-none');
+            } else {
+                suggestBtn.classList.add('d-none');
+                feedbackSpan.textContent = '';
+            }
+        };
+
+        if (docSelect) docSelect.addEventListener('change', checkInputs);
+        if (dateInput) dateInput.addEventListener('change', checkInputs);
+
+        if (suggestBtn) {
+            suggestBtn.addEventListener('click', async function (e) {
+                e.preventDefault();
+                const docId = docSelect.value;
+                const dateVal = dateInput.value;
+                if (!docId || !dateVal) return;
+
+                feedbackSpan.innerHTML = '<span class="text-secondary">🤖 Đang lấy gợi ý...</span>';
+                try {
+                    const resp = await fetch(adminContextPath + '/admin?action=aiSuggestTime&doctorId=' 
+                        + encodeURIComponent(docId) + '&workDate=' + encodeURIComponent(dateVal), {
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                    const data = await resp.json();
+                    if (data && data.success && data.suggestedTime) {
+                        feedbackSpan.innerHTML = '<span class="badge cursor-pointer px-2 py-1 rounded-2" style="background:#f3e8ff; color:#6b21a8; border:1px solid #e9d5ff; font-weight:600;" id="aiApplySuggestedTime">'
+                            + 'Khuyên dùng: ' + escapeHtml(data.suggestedTime) + ' (Bấm để áp dụng)</span>';
+                        
+                        document.getElementById('aiApplySuggestedTime').addEventListener('click', function () {
+                            if (slotInput) {
+                                slotInput.value = data.suggestedTime;
+                                feedbackSpan.innerHTML = '<span class="text-success">Đã áp dụng!</span>';
+                            }
+                        });
+                    } else {
+                        feedbackSpan.innerHTML = '<span class="text-warning">' + escapeHtml(data.message || 'Không có gợi ý.') + '</span>';
+                    }
+                } catch (err) {
+                    feedbackSpan.innerHTML = '<span class="text-danger">Lỗi kết nối AI</span>';
+                }
+            });
+        }
+    }
+});

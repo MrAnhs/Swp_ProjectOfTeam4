@@ -407,7 +407,7 @@
                     <label class="form-check-label" for="canView">Cho phép bệnh nhân xem kết quả</label>
                 </div>
                 <c:if test="${canEditDiagnosis}">
-                    <button class="btn btn-doctor w-100" onclick="saveNotes(${record.healthRecordId})">
+                    <button class="btn btn-doctor w-100" onclick="saveNotes('${record.healthRecordId}')">
                         <i class="bi bi-save"></i> Lưu và hoàn thành
                     </button>
                 </c:if>

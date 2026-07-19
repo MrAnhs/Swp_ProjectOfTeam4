@@ -47,6 +47,10 @@ public class AdminAnalyticsHandler {
      */
     public void loadQuickAppointmentsData(HttpServletResponse response) throws IOException { dashboardHandler.loadQuickAppointmentsData(response); }
     /**
+     * Loads dashboard modal details data via AJAX.
+     */
+    public void loadDashboardModalData(HttpServletRequest request, HttpServletResponse response) throws IOException { dashboardHandler.loadDashboardModalData(request, response); }
+    /**
      * Loads reports data for the Admin UI.
      */
     public void loadReports(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException { reportHandler.loadReports(request, response); }
@@ -87,6 +91,14 @@ class AdminDashboardHandler {
         List<Map<String, Object>> todayRevenueByService = dashboardService.getTodayRevenueByServiceType();
         List<Map<String, Object>> todayStatusDistribution = dashboardService.getTodayAppointmentStatusDistribution();
 
+        int todayPatientsCount = dashboardService.getTodayPatientsCount();
+        int todayAppointmentsCount = dashboardService.getTodayAppointmentsCount();
+        BigDecimal sumRevenueToday = dashboardService.getSumRevenueToday();
+        int completedAppointmentsToday = dashboardService.getCompletedAppointmentsToday();
+        int patientsWaiting = dashboardService.getPatientsWaitingCount();
+        int patientsInProgress = dashboardService.getPatientsInProgressCount();
+        int activeRooms = dashboardService.getActiveRoomsCount();
+
         int totalWaitingToday = 0;
         for (Map<String, Object> row : todayQueueStatus) {
             totalWaitingToday += parseInt(String.valueOf(row.get("waitingCount")), 0);
@@ -98,20 +110,30 @@ class AdminDashboardHandler {
         request.setAttribute("totalServices", totalServices);
         request.setAttribute("sumPaidRevenue", totalRevenuePaid);
         request.setAttribute("completedAppointments", completedAppointments);
-        request.setAttribute("todayQueueStatus", todayQueueStatus);
-        request.setAttribute("todayShiftsList", todayShiftsList);
-        request.setAttribute("todayShiftsCount", todayShiftsList.size());
-        request.setAttribute("totalWaitingToday", totalWaitingToday);
-        request.setAttribute("totalVisitsToday", totalVisitsToday);
-        request.setAttribute("waitingPatientsToday", waitingPatientsToday);
-        request.setAttribute("availableBedsToday", availableBedsToday);
-        request.setAttribute("todayAppointments", totalVisitsToday);
-        request.setAttribute("waitingPatients", waitingPatientsToday);
-        request.setAttribute("availableBeds", availableBedsToday);
-        request.setAttribute("todayPatientFlowJson", AdminJsonUtil.toJsonSimpleRows(todayPatientFlow));
-        request.setAttribute("todayRevenueByServiceJson", AdminJsonUtil.toJsonSimpleRows(todayRevenueByService));
-        request.setAttribute("todayStatusDistributionJson", AdminJsonUtil.toJsonSimpleRows(todayStatusDistribution));
-        request.getRequestDispatcher("/WEB-INF/views/admin/dashboard.jsp").forward(request, response);
+        request.setAttribute("todayPatientsCount", todayPatientsCount);
+        request.setAttribute("todayAppointmentsCount", todayAppointmentsCount);
+        request.setAttribute("sumRevenueToday", sumRevenueToday);
+        request.setAttribute("completedAppointmentsToday", completedAppointmentsToday);
+
+        request.setAttribute("patientsWaiting", patientsWaiting);
+        request.setAttribute("patientsInProgress", patientsInProgress);
+        request.setAttribute("activeRooms", activeRooms);
+
+        request.setAttribute("appointmentStatusSummary", dashboardService.getAppointmentStatusSummary());
+        request.setAttribute("roomQueueSummary", dashboardService.getRoomQueueSummary());
+
+        request.setAttribute("activeAccounts",
+                dashboardService.getCountActiveAccounts());
+        request.setAttribute("lockedAccounts",
+                dashboardService.getCountLockedAccounts());
+        request.setAttribute("todayScheduleCounts",
+                dashboardService.getTodayScheduleCounts());
+        request.setAttribute("scheduleStatusSummary",
+                dashboardService.getScheduleStatusSummary());
+        request.setAttribute("recentAdminActivities",
+                dashboardService.getRecentAdminActivities(10));
+        request.getRequestDispatcher("/WEB-INF/views/admin/dashboard/dashboard.jsp")
+                .forward(request, response);
     }
 
     /**
@@ -233,6 +255,34 @@ class AdminDashboardHandler {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             try (PrintWriter out = response.getWriter()) {
                 out.print("{\"error\":\"true\",\"message\":\"Không thể tải dữ liệu lượt khám.\"}");
+            }
+        }
+    }
+
+    /**
+     * Loads dashboard modal details data for the Admin UI.
+     */
+    public void loadDashboardModalData(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setContentType("application/json;charset=UTF-8");
+        try {
+            String type = request.getParameter("type");
+            String id = request.getParameter("id");
+            if (type == null || type.isBlank()) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                try (PrintWriter out = response.getWriter()) {
+                    out.print("{\"error\":\"true\",\"message\":\"Thiếu tham số type.\"}");
+                }
+                return;
+            }
+
+            Map<String, Object> data = dashboardService.getModalDetails(type, id);
+            try (PrintWriter out = response.getWriter()) {
+                out.print(AdminJsonUtil.toJsonMap(data));
+            }
+        } catch (Exception ex) {
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            try (PrintWriter out = response.getWriter()) {
+                out.print("{\"error\":\"true\",\"message\":\"Không thể tải dữ liệu chi tiết.\"}");
             }
         }
     }
