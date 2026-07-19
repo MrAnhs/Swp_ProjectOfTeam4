@@ -1,3 +1,0 @@
-com.diabetes.monitoring.admin.management.AdminAccountDAO
-com.diabetes.monitoring.admin.management.AdminMedicalServiceDAO
-com.diabetes.monitoring.admin.management.AdminManagementDAO
