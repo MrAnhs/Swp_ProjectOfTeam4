@@ -65,9 +65,7 @@
             <div class="d-flex align-items-center gap-2">
                 <div class="d-flex align-items-center gap-1">
                     <label class="fw-bold text-secondary text-uppercase small m-0" for="yearSelect">Năm</label>
-                    <select id="yearSelect" class="form-select form-select-sm" style="width: 90px;">
-                        <option value="2026" selected>2026</option>
-                        <option value="2027">2027</option>
+                    <select id="yearSelect" class="form-select form-select-sm" style="width: 90px;" onchange="generateWeekOptions(); renderScheduleGrid();">
                     </select>
                 </div>
                 <div class="d-flex align-items-center gap-1">
@@ -138,30 +136,66 @@ function parseLocalDate(dateStr) {
     return new Date(parts[0], parts[1] - 1, parts[2]);
 }
 
+function populateYearSelect() {
+    const select = document.getElementById("yearSelect");
+    if (!select) return;
+    
+    select.innerHTML = "";
+    const currentYear = new Date().getFullYear();
+    for (let y = currentYear - 1; y <= currentYear + 2; y++) {
+        const option = document.createElement("option");
+        option.value = y;
+        option.textContent = y;
+        if (y === currentYear) {
+            option.selected = true;
+        }
+        select.appendChild(option);
+    }
+}
+
 function generateWeekOptions() {
     const select = document.getElementById("weekSelect");
     if (!select) return;
     
-    const today = new Date();
-    const currentWeekStart = getMonday(today);
+    select.innerHTML = "";
     
-    // Generate 4 weeks in the past to 4 weeks in the future
-    for (let i = -4; i <= 4; i++) {
-        const monday = new Date(currentWeekStart);
-        monday.setDate(currentWeekStart.getDate() + (i * 7));
+    const yearSelect = document.getElementById("yearSelect");
+    const selectedYear = yearSelect ? parseInt(yearSelect.value) : new Date().getFullYear();
+    
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    
+    let tempDate = new Date(selectedYear, 0, 1);
+    let firstMonday = getMonday(tempDate);
+    
+    let current = new Date(firstMonday);
+    let weekIndex = 1;
+    
+    while (current.getFullYear() <= selectedYear) {
+        const monday = new Date(current);
         const sunday = new Date(monday);
         sunday.setDate(monday.getDate() + 6);
         
         const option = document.createElement("option");
         option.value = formatDateLocal(monday);
         
-        const formatStr = formatDateShort(monday) + " To " + formatDateShort(sunday);
+        const formatStr = `Tuần ${String(weekIndex).padStart(2, '0')} (${formatDateShort(monday)} - ${formatDateShort(sunday)})`;
         option.textContent = formatStr;
         
-        if (i === 0) {
+        if (selectedYear === currentYear) {
+            const todayStr = formatDateLocal(today);
+            const monStr = formatDateLocal(monday);
+            const sunStr = formatDateLocal(sunday);
+            if (todayStr >= monStr && todayStr <= sunStr) {
+                option.selected = true;
+            }
+        } else if (weekIndex === 1) {
             option.selected = true;
         }
+        
         select.appendChild(option);
+        current.setDate(current.getDate() + 7);
+        weekIndex++;
     }
 }
 
@@ -284,6 +318,7 @@ function renderScheduleGrid() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+    populateYearSelect();
     generateWeekOptions();
     renderScheduleGrid();
 });
