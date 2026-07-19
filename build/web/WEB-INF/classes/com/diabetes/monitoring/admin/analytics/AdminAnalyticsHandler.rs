@@ -1,0 +1,3 @@
+com.diabetes.monitoring.admin.analytics.AdminReportHandler
+com.diabetes.monitoring.admin.analytics.AdminDashboardHandler
+com.diabetes.monitoring.admin.analytics.AdminAnalyticsHandler
