@@ -33,8 +33,18 @@ public class LaboratoryRequestServlet extends DoctorServlet {
             String requestNote = request.getParameter("request_note");
             int doctorId = getDoctorId(currentUser);
 
+            int labId = 0;
+            try {
+                String labIdParam = request.getParameter("lab_id");
+                if (labIdParam != null && !labIdParam.isBlank()) {
+                    labId = Integer.parseInt(labIdParam);
+                }
+            } catch (NumberFormatException e) {
+                // Keep default 0
+            }
+
             dao.createLaboratoryRequest(
-                    recordId, doctorId, serviceIds, requestNote);
+                    recordId, doctorId, serviceIds, requestNote, labId);
             session.setAttribute("doctorMessage",
                     "Đã tạo hóa đơn cho " + serviceIds.length
                     + " loại xét nghiệm. Yêu cầu sẽ được gửi đến phòng xét nghiệm "
