@@ -24,10 +24,14 @@
             const action = item.status === 'Waiting'
                 ? '<button class="btn btn-sm btn-primary queue-check-in" data-appointment-id="' + utils.escapeHtml(item.appointmentId) + '">Check-in</button>'
                 : '';
+            const revisitBadge = item.revisitDate
+                ? '<span class="badge text-bg-warning ms-2"><i class="bi bi-calendar-event"></i> Hẹn tái khám: ' + utils.escapeHtml(item.revisitDate) + '</span>'
+                : '';
             return '<div class="queue-row">'
                 + '<div><div class="fw-bold">S\u1ED1 ' + utils.escapeHtml(item.queueNumber) + ' - ' + utils.escapeHtml(item.patientName) + '</div>'
                 + '<div class="muted-text">' + utils.escapeHtml(item.phone) + ' | ' + utils.escapeHtml(item.doctorName) + ' | ' + utils.escapeHtml(item.appointmentTime) + '</div></div>'
                 + '<div class="d-flex align-items-center gap-2">'
+                + revisitBadge
                 + '<span class="badge text-bg-info">' + utils.escapeHtml(statusLabel(item.status)) + '</span>'
                 + action
                 + '</div>'

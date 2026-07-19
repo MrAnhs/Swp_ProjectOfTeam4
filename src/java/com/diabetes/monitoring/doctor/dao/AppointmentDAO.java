@@ -232,13 +232,15 @@ public class AppointmentDAO {
 
     public List<Appointment> getWaitingAppointmentsByDoctor(int doctorId) {
         List<Appointment> appointments = new ArrayList<>();
-        String sql = "SELECT CAST(NULL AS int) AS conversation_id, a.*, p.full_name AS patient_name, "
+        String sql = "SELECT CAST(NULL AS int) AS conversation_id, a.*, ds.doctor_id AS doctor_id, p.full_name AS patient_name, "
                 + "d.full_name AS doctor_name "
                 + "FROM Appointment a "
                 + "JOIN Patient p ON p.patient_id = a.patient_id "
                 + "JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
                 + "JOIN Doctor d ON d.doctor_id = ds.doctor_id "
-                + "WHERE ds.doctor_id = ? AND a.status = 'Waiting' "
+                + "WHERE ds.doctor_id = ? AND a.status = 'Checked_In' "
+                + "AND CAST(a.appointment_time AS DATE) = CAST(GETDATE() AS DATE) "
+                + "AND a.appointment_time <= GETDATE() "
                 + "ORDER BY a.appointment_time ASC, a.queue_number ASC";
 
         try (Connection conn = DatabaseConnection.getConnection();

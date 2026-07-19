@@ -87,7 +87,7 @@
     </style>
 </head>
 <body class="doctor-app">
-<c:set var="canEditDiagnosis" value="${record.status == 'AI_Processed' || record.status == 'Editing' || record.status == 'Completed'}"/>
+<c:set var="canEditDiagnosis" value="${record.status == 'Accepted' || record.status == 'AI_Processed' || record.status == 'Editing' || record.status == 'Completed'}"/>
 <c:set var="canRunAI" value="${record.status == 'Accepted' || record.status == 'AI_Processed' || record.status == 'Editing' || record.status == 'Completed'}"/>
 <c:set var="hasAIResult" value="${record.status == 'AI_Processed' || record.status == 'Editing' || record.status == 'Completed'}"/>
 <c:set var="isDetailedStage" value="${hasCompletedLaboratoryRequest || hasAIResult}"/>
@@ -170,10 +170,8 @@
             <div class="patient-info-item"><div class="patient-info-label">Họ và tên</div><div class="patient-info-value">${patient.fullName}</div></div>
             <div class="patient-info-item"><div class="patient-info-label">Tuổi</div><div class="patient-info-value">${patient.age} tuổi</div></div>
             <div class="patient-info-item"><div class="patient-info-label">Giới tính</div><div class="patient-info-value">${patient.gender == 'M' ? 'Nam' : (patient.gender == 'F' ? 'Nữ' : patient.gender)}</div></div>
-            <div class="patient-info-item"><div class="patient-info-label">Điện thoại</div><div class="patient-info-value">${empty patient.phone ? 'Chưa cập nhật' : patient.phone}</div></div>
-            <div class="patient-info-item"><div class="patient-info-label">Nhóm máu</div><div class="patient-info-value">${empty patient.bloodType ? 'Chưa cập nhật' : patient.bloodType}</div></div>
-            <div class="patient-info-item"><div class="patient-info-label">Liên hệ khẩn cấp</div><div class="patient-info-value">${empty patient.emergencyContact ? 'Chưa cập nhật' : patient.emergencyContact}</div></div>
-            <div class="patient-info-item"><div class="patient-info-label">Email</div><div class="patient-info-value">${empty patient.email ? 'Chưa cập nhật' : patient.email}</div></div>
+            <div class="patient-info-item wide"><div class="patient-info-label">Điện thoại</div><div class="patient-info-value">${empty patient.phone ? 'Chưa cập nhật' : patient.phone}</div></div>
+            <div class="patient-info-item wide"><div class="patient-info-label">Email</div><div class="patient-info-value">${empty patient.email ? 'Chưa cập nhật' : patient.email}</div></div>
             <div class="patient-info-item wide"><div class="patient-info-label">Địa chỉ</div><div class="patient-info-value">${empty patient.address ? 'Chưa cập nhật' : patient.address}</div></div>
             <div class="patient-info-item wide"><div class="patient-info-label">Ngày sinh</div><div class="patient-info-value"><fmt:formatDate value="${patient.dateOfBirth}" pattern="dd/MM/yyyy"/></div></div>
         </div>
@@ -213,14 +211,25 @@
                     <table class="table doctor-table align-middle mb-0">
                         <thead><tr><th>Ngày khám</th><th>Chẩn đoán</th><th>Ghi chú bác sĩ</th><th>Kết quả xét nghiệm</th></tr></thead>
                         <tbody>
-                        <c:forEach var="history" items="${medicalHistory}">
-                            <tr>
-                                <td><fmt:formatDate value="${history.processedAt}" pattern="dd/MM/yyyy HH:mm"/></td>
-                                <td>${empty history.finalDiagnosis ? 'Chưa có' : history.finalDiagnosis}</td>
-                                <td>${empty history.doctorNote ? 'Chưa có' : history.doctorNote}</td>
-                                <td>Đường huyết ${history.hba1c} · Urea ${history.urea} · CR ${history.cr}</td>
-                            </tr>
-                        </c:forEach>
+                         <c:forEach var="history" items="${medicalHistory}">
+                             <tr>
+                                 <td><fmt:formatDate value="${history.processedAt}" pattern="dd/MM/yyyy HH:mm"/></td>
+                                 <td>${empty history.finalDiagnosis ? 'Chưa có' : history.finalDiagnosis}</td>
+                                 <td>${empty history.doctorNote ? 'Chưa có' : history.doctorNote}</td>
+                                 <td>
+                                     Đường huyết ${history.hba1c} · Urea ${history.urea} · CR ${history.cr}
+                                     <c:if test="${history.diabetesProbability > 0 || history.preDiabetesProbability > 0 || history.normalProbability > 0}">
+                                         <br>
+                                         <small class="text-secondary fw-semibold">
+                                             AI Dự đoán: 
+                                             Tiểu đường (<fmt:formatNumber value="${history.diabetesProbability}" type="percent"/>) · 
+                                             Tiền tiểu đường (<fmt:formatNumber value="${history.preDiabetesProbability}" type="percent"/>) · 
+                                             Bình thường (<fmt:formatNumber value="${history.normalProbability}" type="percent"/>)
+                                         </small>
+                                     </c:if>
+                                 </td>
+                             </tr>
+                         </c:forEach>
                         </tbody>
                     </table>
                 </div>
@@ -366,7 +375,7 @@
             </c:if>
         </div>
 
-        <c:if test="${hasAIResult}">
+        <c:if test="${hasCompletedLaboratoryRequest}">
         <div class="col-xl-5">
             <section class="doctor-card diagnosis-panel">
                 <div class="d-flex align-items-center gap-3 mb-3">
@@ -387,6 +396,10 @@
                         <option value="Tiền tiểu đường" ${record.finalDiagnosis == 'Tiền tiểu đường' ? 'selected' : ''}>Tiền tiểu đường</option>
                         <option value="Tiểu đường" ${record.finalDiagnosis == 'Tiểu đường' ? 'selected' : ''}>Tiểu đường</option>
                     </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Hẹn ngày tái khám (Không bắt buộc)</label>
+                    <input id="revisitDate" type="date" class="form-control" ${!canEditDiagnosis ? 'disabled' : ''} value="${record.revisitDateFormatted}">
                 </div>
                 <div class="form-check mb-4">
                     <input id="canView" class="form-check-input" type="checkbox"
@@ -423,12 +436,32 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+document.addEventListener("DOMContentLoaded", () => {
+    const revisitInput = document.getElementById("revisitDate");
+    if (revisitInput) {
+        revisitInput.min = new Date().toISOString().split('T')[0];
+    }
+});
+
 function saveNotes(recordId) {
+    const revisitDateVal = document.getElementById("revisitDate").value;
+    if (revisitDateVal) {
+        const selectedDate = new Date(revisitDateVal);
+        selectedDate.setHours(0, 0, 0, 0);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (selectedDate < today) {
+            alert("Ngày tái khám không được là ngày trong quá khứ!");
+            return;
+        }
+    }
+
     const body = new URLSearchParams({
         record_id: recordId,
         notes: document.getElementById("doctorNotes").value,
         diagnosis: document.getElementById("finalDiagnosis").value,
         can_view: document.getElementById("canView").checked,
+        revisit_date: document.getElementById("revisitDate").value,
         urea: document.getElementById("metricUrea").value,
         cr: document.getElementById("metricCr").value,
         hba1c: document.getElementById("metricHba1c").value,

@@ -38,10 +38,9 @@
         </div>
     </section>
     <div class="row g-3 mb-4">
-        <div class="col-md-3"><div class="doctor-stat"><div class="doctor-muted small">Tuổi</div><div class="h4 fw-bold mb-0">${patient.age}</div></div></div>
-        <div class="col-md-3"><div class="doctor-stat"><div class="doctor-muted small">Giới tính</div><div class="h4 fw-bold mb-0">${patient.gender}</div></div></div>
-        <div class="col-md-3"><div class="doctor-stat"><div class="doctor-muted small">Nhóm máu</div><div class="h4 fw-bold mb-0">${empty patient.bloodType ? 'N/A' : patient.bloodType}</div></div></div>
-        <div class="col-md-3"><div class="doctor-stat"><div class="doctor-muted small">Số lần khám</div><div class="h4 fw-bold mb-0">${medicalHistory.size()}</div></div></div>
+        <div class="col-md-4"><div class="doctor-stat"><div class="doctor-muted small">Tuổi</div><div class="h4 fw-bold mb-0">${patient.age}</div></div></div>
+        <div class="col-md-4"><div class="doctor-stat"><div class="doctor-muted small">Giới tính</div><div class="h4 fw-bold mb-0">${patient.gender}</div></div></div>
+        <div class="col-md-4"><div class="doctor-stat"><div class="doctor-muted small">Số lần khám</div><div class="h4 fw-bold mb-0">${medicalHistory.size()}</div></div></div>
     </div>
     <section class="doctor-card">
         <c:choose>
@@ -62,6 +61,15 @@
                                 <td class="small">
                                     Đường huyết <strong>${item.hba1c}</strong> · Urea ${item.urea} · CR ${item.cr}<br>
                                     Chol ${item.chol} · TG ${item.tg} · HDL ${item.hdl} · LDL ${item.ldl} · BMI ${item.bmi}
+                                    <c:if test="${item.diabetesProbability > 0 || item.preDiabetesProbability > 0 || item.normalProbability > 0}">
+                                        <br>
+                                        <small class="text-secondary fw-semibold">
+                                            AI Dự đoán: 
+                                            Tiểu đường (<fmt:formatNumber value="${item.diabetesProbability}" type="percent"/>) · 
+                                            Tiền tiểu đường (<fmt:formatNumber value="${item.preDiabetesProbability}" type="percent"/>) · 
+                                            Bình thường (<fmt:formatNumber value="${item.normalProbability}" type="percent"/>)
+                                        </small>
+                                    </c:if>
                                 </td>
                             </tr>
                         </c:forEach>

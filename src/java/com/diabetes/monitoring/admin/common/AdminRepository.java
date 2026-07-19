@@ -519,8 +519,8 @@ public class AdminRepository {
     public List<Map<String, Object>> getTodayRevenueByServiceType() {
         List<Map<String, Object>> rows = new ArrayList<>();
         String sql = "SELECT "
-                + "COALESCE(SUM(CASE WHEN ms.service_type = 'Examination' THEN COALESCE(id.line_total, id.quantity * COALESCE(id.unit_price, id.price, ms.price, 0)) ELSE 0 END), 0) AS exam_revenue, "
-                + "COALESCE(SUM(CASE WHEN ms.service_type = 'Lab_Test' THEN COALESCE(id.line_total, id.quantity * COALESCE(id.unit_price, id.price, ms.price, 0)) ELSE 0 END), 0) AS lab_revenue "
+                + "COALESCE(SUM(CASE WHEN ms.service_type = 'Examination' THEN id.quantity * id.price ELSE 0 END), 0) AS exam_revenue, "
+                + "COALESCE(SUM(CASE WHEN ms.service_type = 'Lab_Test' THEN id.quantity * id.price ELSE 0 END), 0) AS lab_revenue "
                 + "FROM Invoice i "
                 + "JOIN Invoice_Detail id ON id.invoice_id = i.invoice_id "
                 + "JOIN Medical_Service ms ON ms.service_id = id.service_id "
