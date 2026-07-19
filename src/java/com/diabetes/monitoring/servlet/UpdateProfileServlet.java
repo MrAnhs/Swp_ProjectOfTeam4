@@ -187,8 +187,6 @@ public class UpdateProfileServlet extends HttpServlet {
                 throw new SQLException("Patient account not found");
             }
 
-            new com.diabetes.monitoring.notification.NotificationService().notifyProfileUpdated(conn, accountId);
-
             conn.commit();
 
             currentUser.setFullName(fullName);

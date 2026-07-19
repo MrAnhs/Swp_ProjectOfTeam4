@@ -12,11 +12,9 @@ public class AppointmentInfo {
     private String doctorPhone;
     private String doctorEmail;
     private String timeSlot;
-    private String roomId;
+    private Integer roomId;
     private String roomName;
     private String roomLocation;
-    private String laboratoryRooms;
-    private String laboratoryRoomLocations;
     private LocalDateTime appointmentTime;
     private String bookingType;
     private int queueNumber;
@@ -41,18 +39,12 @@ public class AppointmentInfo {
     public void setDoctorEmail(String doctorEmail) { this.doctorEmail = doctorEmail; }
     public String getTimeSlot() { return timeSlot; }
     public void setTimeSlot(String timeSlot) { this.timeSlot = timeSlot; }
-    public String getRoomId() { return roomId; }
-    public void setRoomId(String roomId) { this.roomId = roomId; }
+    public Integer getRoomId() { return roomId; }
+    public void setRoomId(Integer roomId) { this.roomId = roomId; }
     public String getRoomName() { return roomName; }
     public void setRoomName(String roomName) { this.roomName = roomName; }
     public String getRoomLocation() { return roomLocation; }
     public void setRoomLocation(String roomLocation) { this.roomLocation = roomLocation; }
-    public String getLaboratoryRooms() { return laboratoryRooms; }
-    public void setLaboratoryRooms(String laboratoryRooms) { this.laboratoryRooms = laboratoryRooms; }
-    public String getLaboratoryRoomLocations() { return laboratoryRoomLocations; }
-    public void setLaboratoryRoomLocations(String laboratoryRoomLocations) {
-        this.laboratoryRoomLocations = laboratoryRoomLocations;
-    }
     public LocalDateTime getAppointmentTime() { return appointmentTime; }
     public void setAppointmentTime(LocalDateTime appointmentTime) { this.appointmentTime = appointmentTime; }
     public String getBookingType() { return bookingType; }

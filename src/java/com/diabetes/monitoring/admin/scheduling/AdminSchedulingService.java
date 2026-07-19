@@ -730,10 +730,9 @@ class AdminAiSchedulingService {
                     maxSchedules, request.preview);
         }
 
-        // Accept partial results: success if at least one slot was created
-        result.success = !created.isEmpty();
+        result.success = created.size() == maxSchedules;
         result.items = created;
-        if (created.size() == maxSchedules) {
+        if (result.success) {
             boolean usedGemini = created.stream()
                     .anyMatch(row -> "Gemini AI".equals(String.valueOf(row.get("source"))));
             result.message = usedGemini
@@ -741,16 +740,12 @@ class AdminAiSchedulingService {
                             + " slot lịch trực theo target_dates x shifts_per_day x bác sĩ/ca."
                     : "Đã tạo đúng " + created.size()
                             + " slot bằng bộ cân bằng tải dự phòng vì Gemini chưa trả lịch hợp lệ.";
-        } else if (!created.isEmpty()) {
-            result.message = "AI đã xếp được " + created.size() + "/" + maxSchedules
-                    + " ca trực. Một số ca không thể xếp do thiếu bác sĩ đủ điều kiện chuyên khoa."
-                    + " Bạn có thể điều chỉnh thủ công trước khi lưu.";
         } else {
             String repoMessage = aiSchedulingRepository.consumeScheduleValidationMessage();
-            result.success = false;
             result.message = (repoMessage != null && !repoMessage.isBlank())
                     ? repoMessage
-                    : "Không thể tạo bất kỳ slot nào. Vui lòng kiểm tra danh sách bác sĩ và chuyên khoa đã chọn.";
+                    : "Không thể tạo đủ " + maxSchedules
+                            + " slot. Hệ thống đã hủy toàn bộ batch để tránh lịch thiếu hoặc sai chuyên khoa.";
         }
         return result;
     }
