@@ -8,6 +8,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -17,16 +18,26 @@ public class PatientInvoiceDAO {
             Set.of("Cash", "Momo", "VNPay", "Bank_Transfer");
 
     public List<InvoiceInfo> findByPatientAccountId(int accountId) throws SQLException {
+        return findByPatientAccountId(accountId, null);
+    }
+
+    public List<InvoiceInfo> findByPatientAccountId(int accountId, LocalDate searchDate)
+            throws SQLException {
         String sql = "SELECT i.invoice_id, i.total_amount, i.insurance_deduction, i.final_amount, "
                 + "i.payment_method, i.status, i.created_at, i.exported_at, "
                 + "p.patient_id, p.full_name AS patient_name, p.phone AS patient_phone, "
                 + "p.email AS patient_email, p.address AS patient_address "
                 + "FROM Invoice i INNER JOIN Patient p ON p.patient_id = i.patient_id "
-                + "WHERE p.account_id = ? ORDER BY i.created_at DESC, i.invoice_id DESC";
+                + "WHERE p.account_id = ? "
+                + (searchDate == null ? "" : "AND CAST(i.created_at AS date) = ? ")
+                + "ORDER BY i.created_at DESC, i.invoice_id DESC";
         List<InvoiceInfo> invoices = new ArrayList<>();
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, accountId);
+            if (searchDate != null) {
+                statement.setDate(2, java.sql.Date.valueOf(searchDate));
+            }
             try (ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) invoices.add(mapInvoice(resultSet));
             }

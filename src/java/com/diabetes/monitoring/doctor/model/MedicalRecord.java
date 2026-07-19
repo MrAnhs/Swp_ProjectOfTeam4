@@ -27,6 +27,10 @@ public class MedicalRecord {
     private double bmi;
     private String laboratoryTestTypes;
     private BigDecimal laboratoryTotalPrice;
+    private Timestamp revisitDate;
+    private double diabetesProbability;
+    private double preDiabetesProbability;
+    private double normalProbability;
 
     public int getRecordId() {
         return recordId;
@@ -141,5 +145,37 @@ public class MedicalRecord {
     public BigDecimal getLaboratoryTotalPrice() { return laboratoryTotalPrice; }
     public void setLaboratoryTotalPrice(BigDecimal laboratoryTotalPrice) {
         this.laboratoryTotalPrice = laboratoryTotalPrice;
+    }
+
+    public Timestamp getRevisitDate() {
+        return revisitDate;
+    }
+
+    public void setRevisitDate(Timestamp revisitDate) {
+        this.revisitDate = revisitDate;
+    }
+
+    public double getDiabetesProbability() {
+        return diabetesProbability;
+    }
+
+    public void setDiabetesProbability(double diabetesProbability) {
+        this.diabetesProbability = diabetesProbability;
+    }
+
+    public double getPreDiabetesProbability() {
+        return preDiabetesProbability;
+    }
+
+    public void setPreDiabetesProbability(double preDiabetesProbability) {
+        this.preDiabetesProbability = preDiabetesProbability;
+    }
+
+    public double getNormalProbability() {
+        return normalProbability;
+    }
+
+    public void setNormalProbability(double normalProbability) {
+        this.normalProbability = normalProbability;
     }
 }

@@ -272,7 +272,7 @@ public class HealthRecordDAO {
     public boolean canModifyDiagnosis(int recordId, int doctorId) {
         String sql = "SELECT COUNT(*) FROM Healthy_Record "
                 + "WHERE health_record_id = ? AND doctor_id = ? "
-                + "AND status IN ('AI_Processed', 'Editing', 'Completed')";
+                + "AND status IN ('Accepted', 'AI_Processed', 'Editing', 'Completed')";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -445,7 +445,7 @@ public class HealthRecordDAO {
                 + "FROM Appointment a "
                 + "INNER JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
                 + "WHERE a.appointment_id = ? AND ds.doctor_id = ? "
-                + "AND a.status = 'Waiting'";
+                + "AND a.status IN ('Waiting', 'Checked_In')";
 
         try (Connection conn = DatabaseConnection.getConnection()) {
             conn.setAutoCommit(false);
@@ -465,6 +465,7 @@ public class HealthRecordDAO {
                     }
                 }
                 if (!"Waiting".equals(appointmentStatus)
+                        && !"Checked_In".equals(appointmentStatus)
                         && !"In_Progress".equals(appointmentStatus)) {
                     throw new SQLException("Lịch hẹn không thể tiếp nhận");
                 }
@@ -533,7 +534,7 @@ public class HealthRecordDAO {
                     ps.setInt(2, medicalRecordId);
                     ps.executeUpdate();
                 }
-                if ("Waiting".equals(appointmentStatus)) {
+                if ("Waiting".equals(appointmentStatus) || "Checked_In".equals(appointmentStatus)) {
                     try (PreparedStatement ps = conn.prepareStatement(acceptSql)) {
                         ps.setInt(1, appointmentId);
                         ps.setInt(2, doctorId);
@@ -708,6 +709,7 @@ public class HealthRecordDAO {
                 + "mr.final_diagnosis, "
                 + "mr.result_visibility, "
                 + "mr.processed_at, "
+                + "mr.revisit_date, "
                 + "DATEDIFF(YEAR, p.date_of_birth, GETDATE()) - "
                 + "CASE WHEN (MONTH(p.date_of_birth) > MONTH(GETDATE())) OR "
                 + "(MONTH(p.date_of_birth) = MONTH(GETDATE()) AND DAY(p.date_of_birth) > DAY(GETDATE())) "
@@ -769,6 +771,7 @@ public class HealthRecordDAO {
                 );
 
                 hr.setCanPatientView(rs.getBoolean("result_visibility"));
+                hr.setRevisitDate(rs.getTimestamp("revisit_date"));
 
                 return hr;
             }
@@ -1192,7 +1195,7 @@ public class HealthRecordDAO {
 
     String sql =
             "SELECT patient_id, full_name, date_of_birth, gender, phone, email, address, "
-            + "emergency_contact, blood_type, "
+            + "CAST(NULL AS VARCHAR(100)) AS emergency_contact, CAST(NULL AS VARCHAR(20)) AS blood_type, "
             + "DATEDIFF(YEAR, date_of_birth, GETDATE()) - "
             + "CASE WHEN DATEADD(YEAR, DATEDIFF(YEAR, date_of_birth, GETDATE()), date_of_birth) > GETDATE() "
             + "THEN 1 ELSE 0 END AS age " +
@@ -1244,12 +1247,14 @@ public class HealthRecordDAO {
     public List<MedicalRecord> getMedicalHistory(int patientId, int doctorId) {
         List<MedicalRecord> history = new ArrayList<>();
         String sql = "SELECT mr.record_id, mr.health_record_id, mr.patient_id, mr.doctor_id, "
-                + "mr.doctor_note, mr.final_diagnosis, mr.result_visibility, mr.processed_at, "
+                + "mr.doctor_note, mr.final_diagnosis, mr.result_visibility, mr.processed_at, mr.revisit_date, "
                 + "d.full_name AS doctor_name, hr.urea, hr.cr, hr.hba1c, hr.chol, hr.tg, "
-                + "hr.hdl, hr.ldl AS ldl, hr.vldl, hr.bmi "
+                + "hr.hdl, hr.ldl AS ldl, hr.vldl, hr.bmi, "
+                + "ai.diabetes_probability, ai.pre_diabetes_probability, ai.normal_probability "
                 + "FROM Medical_record mr "
                 + "LEFT JOIN Healthy_Record hr ON hr.health_record_id = mr.health_record_id "
                 + "LEFT JOIN Doctor d ON d.doctor_id = mr.doctor_id "
+                + "LEFT JOIN Doctor_AI ai ON ai.health_record_id = mr.health_record_id "
                 + "WHERE mr.patient_id = ? "
                 + "AND EXISTS (SELECT 1 FROM Healthy_Record permitted "
                 + "WHERE permitted.patient_id = mr.patient_id AND permitted.doctor_id = ?) "
@@ -1272,6 +1277,7 @@ public class HealthRecordDAO {
                     item.setFinalDiagnosis(rs.getString("final_diagnosis"));
                     item.setResultVisibility(rs.getBoolean("result_visibility"));
                     item.setProcessedAt(rs.getTimestamp("processed_at"));
+                    item.setRevisitDate(rs.getTimestamp("revisit_date"));
                     item.setUrea(rs.getDouble("urea"));
                     item.setCr(rs.getDouble("cr"));
                     item.setHba1c(rs.getDouble("hba1c"));
@@ -1281,6 +1287,11 @@ public class HealthRecordDAO {
                     item.setLdl(rs.getDouble("ldl"));
                     item.setVldl(rs.getDouble("vldl"));
                     item.setBmi(rs.getDouble("bmi"));
+                    
+                    item.setDiabetesProbability(rs.getDouble("diabetes_probability"));
+                    item.setPreDiabetesProbability(rs.getDouble("pre_diabetes_probability"));
+                    item.setNormalProbability(rs.getDouble("normal_probability"));
+                    
                     history.add(item);
                 }
             }
@@ -1652,20 +1663,21 @@ public class HealthRecordDAO {
             int doctorId,
             String notes,
             String diagnosis,
-            boolean canView) throws SQLException {
+            boolean canView,
+            Timestamp revisitDate) throws SQLException {
 
         String lockSql = "SELECT patient_id, status FROM Healthy_Record WITH (UPDLOCK, ROWLOCK) "
                 + "WHERE health_record_id = ? AND doctor_id = ?";
         String existsSql = "SELECT COUNT(*) FROM Medical_record WHERE health_record_id = ?";
         String insertSql = "INSERT INTO Medical_record "
                 + "(patient_id, doctor_id, final_diagnosis, doctor_note, health_record_id, "
-                + "result_visibility, processed_at) VALUES (?, ?, ?, ?, ?, ?, GETDATE())";
+                + "result_visibility, processed_at, revisit_date) VALUES (?, ?, ?, ?, ?, ?, GETDATE(), ?)";
         String updateSql = "UPDATE Medical_record SET doctor_id = ?, patient_id = ?, "
                 + "doctor_note = ?, final_diagnosis = ?, result_visibility = ?, "
-                + "processed_at = GETDATE() WHERE health_record_id = ?";
+                + "revisit_date = ?, processed_at = GETDATE() WHERE health_record_id = ?";
         String statusSql = "UPDATE Healthy_Record SET status = 'Completed' "
                 + "WHERE health_record_id = ? AND doctor_id = ? "
-                + "AND status IN ('AI_Processed', 'Editing', 'Completed')";
+                + "AND status IN ('Accepted', 'AI_Processed', 'Editing', 'Completed')";
         String appointmentStatusSql = "UPDATE a SET a.status = 'Completed' "
                 + "FROM Appointment a "
                 + "JOIN Medical_record mr ON mr.appointment_id = a.appointment_id "
@@ -1690,7 +1702,8 @@ public class HealthRecordDAO {
                     }
                 }
 
-                if (!"AI_Processed".equals(currentStatus)
+                if (!"Accepted".equals(currentStatus)
+                        && !"AI_Processed".equals(currentStatus)
                         && !"Editing".equals(currentStatus)
                         && !"Completed".equals(currentStatus)) {
                     throw new SQLException("Ho so khong o trang thai cho phep chinh sua");
@@ -1711,7 +1724,12 @@ public class HealthRecordDAO {
                         ps.setString(3, notes);
                         ps.setString(4, diagnosis);
                         ps.setBoolean(5, canView);
-                        ps.setInt(6, healthRecordId);
+                        if (revisitDate != null) {
+                            ps.setTimestamp(6, revisitDate);
+                        } else {
+                            ps.setNull(6, java.sql.Types.TIMESTAMP);
+                        }
+                        ps.setInt(7, healthRecordId);
                     } else {
                         ps.setInt(1, patientId);
                         ps.setInt(2, doctorId);
@@ -1719,6 +1737,11 @@ public class HealthRecordDAO {
                         ps.setString(4, notes);
                         ps.setInt(5, healthRecordId);
                         ps.setBoolean(6, canView);
+                        if (revisitDate != null) {
+                            ps.setTimestamp(7, revisitDate);
+                        } else {
+                            ps.setNull(7, java.sql.Types.TIMESTAMP);
+                        }
                     }
                     if (ps.executeUpdate() != 1) {
                         throw new SQLException("Khong the luu Medical_record");

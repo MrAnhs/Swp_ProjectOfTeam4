@@ -22,21 +22,29 @@ public class PatientDoctorServlet extends HttpServlet {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 
-        String doctorIdParameter = request.getParameter("id");
         try {
+            String mode = request.getParameter("mode");
+            if ("departments".equalsIgnoreCase(mode)) {
+                writeDepartments(response, doctorDAO.findActiveDepartments());
+                return;
+            }
+
+            String doctorIdParameter = request.getParameter("id");
             if (doctorIdParameter == null || doctorIdParameter.isBlank()) {
                 LocalDate workDate = parseWorkDate(request.getParameter("date"));
                 String session = parseSession(request.getParameter("session"));
-                String doctorName = normalizeDoctorName(request.getParameter("name"));
-                writeDoctorList(response, workDate, session,
-                        doctorDAO.findAvailableDoctors(workDate, session, doctorName));
+                String doctorName = normalizeText(request.getParameter("name"));
+                String department = normalizeText(request.getParameter("department"));
+                writeDoctorList(response, workDate, session, department,
+                        doctorDAO.findAvailableDoctors(workDate, session, doctorName, department));
                 return;
             }
 
             int doctorId = parsePositiveId(doctorIdParameter);
             DoctorInfo doctor = doctorDAO.findActiveDoctorById(doctorId);
             if (doctor == null) {
-                writeError(response, HttpServletResponse.SC_NOT_FOUND, "Không tìm thấy bác sĩ đang hoạt động.");
+                writeError(response, HttpServletResponse.SC_NOT_FOUND,
+                        "Không tìm thấy bác sĩ đang hoạt động.");
                 return;
             }
 
@@ -44,8 +52,7 @@ public class PatientDoctorServlet extends HttpServlet {
             String session = parseSession(request.getParameter("session"));
             List<DoctorScheduleInfo> schedules = dateParameter == null || dateParameter.isBlank()
                     ? doctorDAO.findAvailableSchedules(doctorId)
-                    : doctorDAO.findAvailableSchedules(
-                            doctorId, parseWorkDate(dateParameter), session);
+                    : doctorDAO.findAvailableSchedules(doctorId, parseWorkDate(dateParameter), session);
             response.getWriter().print(toDoctorDetailJson(doctor, schedules));
         } catch (DateTimeParseException | IllegalArgumentException e) {
             writeError(response, HttpServletResponse.SC_BAD_REQUEST,
@@ -83,16 +90,31 @@ public class PatientDoctorServlet extends HttpServlet {
         return session;
     }
 
-    private String normalizeDoctorName(String value) {
+    private String normalizeText(String value) {
         return value == null ? "" : value.trim();
     }
 
+    private void writeDepartments(HttpServletResponse response, List<String> departments)
+            throws IOException {
+        StringBuilder json = new StringBuilder("{\"departments\":[");
+        for (int index = 0; index < departments.size(); index++) {
+            if (index > 0) {
+                json.append(',');
+            }
+            json.append('"').append(escapeJson(departments.get(index))).append('"');
+        }
+        json.append("]}");
+        response.getWriter().print(json);
+    }
+
     private void writeDoctorList(HttpServletResponse response, LocalDate workDate,
-            String session, List<DoctorInfo> doctors) throws IOException, SQLException {
+            String session, String department, List<DoctorInfo> doctors) throws IOException, SQLException {
         StringBuilder json = new StringBuilder("{\"date\":\"")
                 .append(workDate)
                 .append("\",\"session\":\"")
                 .append(session)
+                .append("\",\"department\":\"")
+                .append(escapeJson(department))
                 .append("\",\"doctorCount\":")
                 .append(doctors.size())
                 .append(",\"doctors\":[");
@@ -140,6 +162,10 @@ public class PatientDoctorServlet extends HttpServlet {
                     .append("\"maxPatients\":").append(schedule.getMaxPatients()).append(',')
                     .append("\"bookedPatients\":").append(schedule.getBookedPatients()).append(',')
                     .append("\"availableSlots\":").append(schedule.getAvailableSlots()).append(',')
+                    .append("\"roomId\":")
+                    .append(schedule.getRoomId() == null ? "null" : schedule.getRoomId()).append(',')
+                    .append("\"roomName\":\"").append(escapeJson(schedule.getRoomName())).append("\",")
+                    .append("\"roomLocation\":\"").append(escapeJson(schedule.getRoomLocation())).append("\",")
                     .append("\"status\":\"").append(escapeJson(schedule.getStatus())).append("\"")
                     .append('}');
         }

@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="app-context-path" content="${pageContext.request.contextPath}">
-    <title>Chi tiết lịch hẹn - DiabetesCare</title>
+    <title>Chi ti&#7871;t l&#7883;ch h&#7865;n - DiabetesCare</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -21,23 +21,23 @@
     <main class="main-content-dash">
         <header class="page-header">
             <div>
-                <p class="page-eyebrow">Lịch khám</p>
-                <h1 id="appointmentTitle">Chi tiết lịch hẹn</h1>
-                <p id="appointmentMeta">Đang tải thông tin...</p>
+                <p class="page-eyebrow">L&#7883;ch kh&#225;m</p>
+                <h1 id="appointmentTitle">Chi ti&#7871;t l&#7883;ch h&#7865;n</h1>
+                <p id="appointmentMeta">&#272;ang t&#7843;i th&#244;ng tin...</p>
             </div>
             <a class="btn-page-secondary" href="${pageContext.request.contextPath}/patient/appointments">
-                <i class="bi bi-arrow-left"></i> Quay lại danh sách
+                <i class="bi bi-arrow-left"></i> Quay l&#7841;i danh s&#225;ch
             </a>
         </header>
 
         <section class="page-card">
-            <div id="appointmentDetail" class="loading-state">Đang tải lịch hẹn...</div>
+            <div id="appointmentDetail" class="loading-state">&#272;ang t&#7843;i l&#7883;ch h&#7865;n...</div>
         </section>
     </main>
 
-    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/app-config.js?v=20260709-fontfix2"></script>
-    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/api-client.js?v=20260709-fontfix2"></script>
-    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/patient/appointment-status.js?v=20260709-fontfix2"></script>
-    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/patient/appointment-detail.js?v=20260709-fontfix2"></script>
+    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/app-config.js?v=20260710-patient-fontfix-all2"></script>
+    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/api-client.js?v=20260710-patient-fontfix-all2"></script>
+    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/patient/appointment-status.js?v=20260710-patient-fontfix-all2"></script>
+    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/patient/appointment-detail.js?v=20260710-patient-fontfix-all2"></script>
 </body>
 </html>
