@@ -182,16 +182,14 @@ public final class GeminiSchedulingService {
                     .append("\",\"status\":\"").append(escapeJson(String.valueOf(doctor.get("status"))))
                     .append("\",\"current_load\":").append(number(doctor.get("currentLoad"))).append('}');
         }
-        prompt.append("]\nRÀNG BUỘC TOÁN HỌC - CÂN BẰNG CA TUYỆT ĐỐI:\n")
-                .append("1. Đếm tổng số ca trống N và tổng số bác sĩ hợp lệ M. Mỗi bác sĩ phải nhận số ca bằng nhau hoặc chỉ chênh lệch tối đa 1 ca. Đây là ưu tiên cao nhất.\n")
-                .append("2. Duyệt empty_schedules đúng thứ tự. Khởi tạo assigned_count của mỗi bác sĩ bằng 0 và simulated_load bằng current_load.\n")
-                .append("3. Mỗi khi gán một ca, tăng assigned_count và simulated_load của bác sĩ đó trước khi chọn ca kế tiếp.\n")
-                .append("4. Ưu tiên bác sĩ đúng department trước, nhưng nếu nhóm đúng khoa đã đạt định mức hoặc gây lệch tải, phải chọn bác sĩ khoa 'General' (Tổng quát) hoặc chuyên khoa khác có assigned_count thấp hơn.\n")
-                .append("5. Cân bằng số ca giữa bác sĩ quan trọng hơn đúng khoa tuyệt đối. Không để một người nhận nhiều ca trong khi người khác còn 0 hoặc ít hơn quá 1 ca.\n")
-                .append("6. Một bác sĩ không được trực quá 2 ca trong cùng một ngày và không được trực 2 ca liên tiếp trong ngày.\n")
-                .append("7. Giữ nguyên số lượng, thứ tự, date, time_slot và department của empty_schedules; chỉ thay doctor_id null. Nếu một date/time_slot/department xuất hiện nhiều lần thì đó là nhiều bác sĩ cùng trực một ca, phải trả đủ số object tương ứng.\n")
-                .append("8. QUAN TRỌNG: Department 'General' là khoa dự phòng có thể xử lý các ca từ bất kỳ khoa nào. Nếu một khoa chuyên biệt đã đủ bác sĩ, HÃY phân bổ ca cho bác sĩ 'General' để cân bằng tải.\n")
-                .append("9. Chỉ trả JSON: [{\"doctor_id\":\"1\",\"date\":\"dd/MM/yyyy\",")
+        prompt.append("]\nRÀNG BUỘC TOÁN HỌC - TUÂN THỦ NGHIÊM NGẶT QUY TẮC Y TẾ:\n")
+                .append("1. CÂN BẰNG CA: Đếm tổng số ca trống N và tổng số bác sĩ hợp lệ M. Mỗi bác sĩ phải nhận số ca bằng nhau hoặc chỉ chênh lệch tối đa 1 ca. Đây là ưu tiên cực kỳ cao.\n")
+                .append("2. QUY TẮC CHUYÊN KHOA: Bác sĩ bắt buộc phải được xếp trực ở phòng khám thuộc ĐÚNG chuyên khoa (department) của họ. Ngoại lệ duy nhất là bác sĩ thuộc khoa 'General' (Khám tổng quát) được phép trực ở bất kỳ khoa nào.\n")
+                .append("3. GIỚI HẠN THEO NGÀY: Một bác sĩ tối đa trực 2 ca nửa buổi (Morning/Afternoon) hoặc 1 ca cả ngày (FullDay) trong một ngày. Nếu trực ca FullDay thì tuyệt đối không được trực thêm ca nào khác cùng ngày đó.\n")
+                .append("4. GIỚI HẠN THEO TUẦN: Tổng thời gian làm việc của một bác sĩ không được vượt quá 44 giờ/tuần (tương ứng tối đa 11 ca nửa buổi trong 1 tuần, ca FullDay tính bằng 2 ca nửa buổi).\n")
+                .append("5. KHÔNG TRỰC LIÊN TIẾP: Một bác sĩ không được trực 2 ca liên tiếp trong cùng một ngày.\n")
+                .append("6. Đổi doctor_id null bằng doctor_id hợp lệ của doctors_list, giữ nguyên thứ tự, date, time_slot và department của empty_schedules.\n")
+                .append("7. Chỉ trả JSON: [{\"doctor_id\":\"1\",\"date\":\"dd/MM/yyyy\",")
                 .append("\"time_slot\":\"HH:mm-HH:mm\",\"department\":\"Endocrinology|General|...\"}]. ")
                 .append("Không markdown, không giải thích, không dấu ba chấm.");
         return prompt.toString();
@@ -258,6 +256,7 @@ public final class GeminiSchedulingService {
         Map<String, Integer> actualSlots = new HashMap<>();
         Map<String, Integer> previousDoctorByDate = new HashMap<>();
         Map<String, Integer> dailyShiftCount = new HashMap<>();
+        Map<String, Integer> contextWeeklyShiftCount = new HashMap<>();
         Map<Integer, Integer> simulatedLoad = new HashMap<>();
         Map<Integer, Integer> totalAssignedCount = new HashMap<>();
         for (Map.Entry<Integer, Map<String, Object>> entry : doctorById.entrySet()) {
@@ -275,6 +274,12 @@ public final class GeminiSchedulingService {
             }
             String rowDepartment = normalizeDepartment(String.valueOf(row.get("department")));
             String doctorDepartment = normalizeDepartment(String.valueOf(doctor.get("department")));
+            
+            // Rule 1: Specialty Constraint
+            if (!"general".equalsIgnoreCase(doctorDepartment) && !doctorDepartment.equals(rowDepartment)) {
+                return "bác sĩ " + doctorId + " chuyên khoa " + doctorDepartment + " không thể trực phòng khoa " + rowDepartment;
+            }
+
             String workDate = String.valueOf(row.get("workDate"));
             String slotKey = workDate + "|" + row.get("timeSlot") + "|" + rowDepartment;
             int expectedSlotCount = expectedSlots.getOrDefault(slotKey, 0);
@@ -284,11 +289,44 @@ public final class GeminiSchedulingService {
             }
             actualSlots.put(slotKey, actualSlotCount);
 
+            // Determine if the current shift is a FullDay shift
+            String timeSlotLower = String.valueOf(row.get("timeSlot")).toLowerCase();
+            boolean isFullDay = timeSlotLower.contains("fullday") || timeSlotLower.contains("cả ngày") 
+                    || timeSlotLower.contains("07:30-17:00") || timeSlotLower.contains("07:30-17:30");
+
+            // Rule 2: Rest Period / Daily Limit Constraint
             String dailyKey = workDate + "|" + doctorId;
             int shiftsToday = dailyShiftCount.getOrDefault(dailyKey, 0);
-            if (shiftsToday >= 2) {
-                return "bác sĩ " + doctorId + " vượt quá 2 ca trong ngày " + workDate;
+            if (isFullDay) {
+                if (shiftsToday > 0) {
+                    return "bác sĩ " + doctorId + " đã có ca trực khác trong ngày " + workDate + ", không thể xếp thêm ca FullDay";
+                }
+            } else {
+                if (shiftsToday >= 2) {
+                    return "bác sĩ " + doctorId + " vượt quá 2 ca trong ngày " + workDate;
+                }
+                if (shiftsToday == 2) { // 2 shifts representation indicates a FullDay was already assigned
+                    return "bác sĩ " + doctorId + " đã trực ca FullDay trong ngày " + workDate;
+                }
             }
+
+            // Rule 3: Weekly Hour Limit Constraint (Max 44 hours / 11 half-shifts per week)
+            java.time.LocalDate localDate = java.time.LocalDate.parse(workDate);
+            java.time.LocalDate monday = localDate.minusDays(localDate.getDayOfWeek().getValue() - 1);
+            String weeklyKey = monday.toString() + "|" + doctorId;
+            
+            // Initialization of weekly counts map is handled at method level if needed, 
+            // but we can initialize a local map at the validation method start scope.
+            // Let's ensure weeklyShiftCount map is created.
+            if (!contextWeeklyShiftCount.containsKey(weeklyKey)) {
+                contextWeeklyShiftCount.put(weeklyKey, 0);
+            }
+            int weeklyShifts = contextWeeklyShiftCount.get(weeklyKey);
+            int increment = isFullDay ? 2 : 1;
+            if (weeklyShifts + increment > 11) {
+                return "bác sĩ " + doctorId + " vượt quá số giờ làm việc tối đa (44 giờ/tuần) trong tuần bắt đầu từ ngày " + monday;
+            }
+            contextWeeklyShiftCount.put(weeklyKey, weeklyShifts + increment);
 
             int selectedLoad = simulatedLoad.getOrDefault(doctorId, number(doctor.get("currentLoad")));
             int selectedAssigned = totalAssignedCount.getOrDefault(doctorId, 0);
@@ -318,9 +356,9 @@ public final class GeminiSchedulingService {
             if (previousDoctor != null && previousDoctor == doctorId) {
                 return "bác sĩ " + doctorId + " bị xếp hai ca liên tiếp ngày " + workDate;
             }
-            dailyShiftCount.put(dailyKey, shiftsToday + 1);
-            simulatedLoad.put(doctorId, selectedLoad + 1);
-            totalAssignedCount.put(doctorId, selectedAssigned + 1);
+            dailyShiftCount.put(dailyKey, isFullDay ? 2 : (shiftsToday + 1));
+            simulatedLoad.put(doctorId, selectedLoad + (isFullDay ? 2 : 1));
+            totalAssignedCount.put(doctorId, selectedAssigned + (isFullDay ? 2 : 1));
         }
         if (!actualSlots.equals(expectedSlots)) {
             return "thiếu tổ hợp ngày-ca hoặc chưa đủ số bác sĩ/ca bắt buộc";
