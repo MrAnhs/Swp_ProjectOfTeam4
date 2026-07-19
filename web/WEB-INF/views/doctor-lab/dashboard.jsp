@@ -468,11 +468,6 @@
                         <i class="bi bi-droplet text-info"></i>
                         <span>Xét nghiệm nước tiểu</span>
                     </a>
-
-                    <a href="javascript:void(0)" class="nav-item-sub" id="sub-room-test" onclick="selectSidebarRoom('test')">
-                        <i class="bi bi-file-earmark-plus text-primary"></i>
-                        <span>Xét nghiệm Test (Đủ chỉ số)</span>
-                    </a>
                 </div>
             </div>
             
@@ -484,7 +479,7 @@
         </nav>
 
         <div class="sidebar-footer">
-            <form action="${pageContext.request.contextPath}/logout" method="get" class="m-0">
+            <form action="${pageContext.request.contextPath}/auth" method="get" class="m-0">
                 <button type="submit" class="nav-item-dash btn-logout border-0 w-100 text-start bg-transparent">
                     <i class="bi bi-box-arrow-right"></i>
                     <span class="nav-text">Đăng xuất</span>
@@ -1468,9 +1463,6 @@
             } else if (room === 'phòng xét nghiệm nước tiểu') {
                 const el = document.getElementById('sub-room-nuoctieu');
                 if (el) el.classList.add('active');
-            } else if (room === 'test') {
-                const el = document.getElementById('sub-room-test');
-                if (el) el.classList.add('active');
             } else if (room === 'phòng xét nghiệm máu') {
                 const el = document.getElementById('sub-room-mau');
                 if (el) el.classList.add('active');
@@ -1482,8 +1474,6 @@
                 let displayName = 'Phòng xét nghiệm';
                 if (room === 'phòng xét nghiệm nước tiểu') {
                     displayName = 'Phòng xét nghiệm nước tiểu';
-                } else if (room === 'test') {
-                    displayName = 'Xét nghiệm Test (Đủ chỉ số)';
                 } else if (room.includes('đường huyết')) {
                     displayName = 'Xét nghiệm máu - Đường huyết';
                 } else if (room.includes('gan')) {

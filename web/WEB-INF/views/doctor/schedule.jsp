@@ -128,12 +128,12 @@ function formatDateLocal(date) {
     const yyyy = date.getFullYear();
     const mm = String(date.getMonth() + 1).padStart(2, '0');
     const dd = String(date.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
+    return yyyy + "-" + mm + "-" + dd;
 }
 
 function parseLocalDate(dateStr) {
     const parts = dateStr.split('-');
-    return new Date(parts[0], parts[1] - 1, parts[2]);
+    return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
 }
 
 function populateYearSelect() {
@@ -179,7 +179,7 @@ function generateWeekOptions() {
         const option = document.createElement("option");
         option.value = formatDateLocal(monday);
         
-        const formatStr = `Tuần ${String(weekIndex).padStart(2, '0')} (${formatDateShort(monday)} - ${formatDateShort(sunday)})`;
+        const formatStr = "Tuần " + String(weekIndex).padStart(2, '0') + " (" + formatDateShort(monday) + " - " + formatDateShort(sunday) + ")";
         option.textContent = formatStr;
         
         if (selectedYear === currentYear) {
