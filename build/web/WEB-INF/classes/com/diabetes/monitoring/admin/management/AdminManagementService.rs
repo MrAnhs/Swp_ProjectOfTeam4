@@ -1,3 +1,0 @@
-com.diabetes.monitoring.admin.management.AdminAccountService
-com.diabetes.monitoring.admin.management.AdminManagementService
-com.diabetes.monitoring.admin.management.AdminMedicalServiceService

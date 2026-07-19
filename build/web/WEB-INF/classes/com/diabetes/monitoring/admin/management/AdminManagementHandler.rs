@@ -1,5 +1,0 @@
-com.diabetes.monitoring.admin.management.AdminAccountHandler
-com.diabetes.monitoring.admin.management.AdminMedicalServiceHandler$AdminRoomHandler
-com.diabetes.monitoring.admin.management.AdminMedicalServiceHandler
-com.diabetes.monitoring.admin.management.AdminRoomHandler
-com.diabetes.monitoring.admin.management.AdminManagementHandler
