@@ -2,7 +2,6 @@ package com.diabetes.monitoring.dao;
 
 import com.diabetes.monitoring.model.InvoiceInfo;
 import com.diabetes.monitoring.model.InvoiceItem;
-import com.diabetes.monitoring.notification.NotificationService;
 import com.diabetes.monitoring.util.DatabaseConnection;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -63,22 +62,6 @@ public class PatientInvoiceDAO {
         }
     }
 
-    public InvoiceInfo findById(int invoiceId) throws SQLException {
-        String sql = "SELECT i.invoice_id, i.total_amount, i.insurance_deduction, i.final_amount, "
-                + "i.payment_method, i.status, i.created_at, i.exported_at, "
-                + "p.patient_id, p.full_name AS patient_name, p.phone AS patient_phone, "
-                + "p.email AS patient_email, p.address AS patient_address "
-                + "FROM Invoice i INNER JOIN Patient p ON p.patient_id = i.patient_id "
-                + "WHERE i.invoice_id = ?";
-        try (Connection connection = DatabaseConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setInt(1, invoiceId);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                return resultSet.next() ? mapInvoice(resultSet) : null;
-            }
-        }
-    }
-
     public List<InvoiceItem> findItems(int invoiceId, int accountId) throws SQLException {
         String sql = "SELECT id.invoice_detail_id, id.appointment_id, id.service_id, "
                 + "ms.service_name, ms.service_type, id.quantity, id.price "
@@ -123,34 +106,6 @@ public class PatientInvoiceDAO {
             statement.setInt(2, invoiceId);
             statement.setInt(3, accountId);
             return statement.executeUpdate() > 0;
-        }
-    }
-
-    public boolean payInvoiceOnline(int invoiceId, String paymentMethod) throws SQLException {
-        if (!PAYMENT_METHODS.contains(paymentMethod)) {
-            throw new IllegalArgumentException("Phương thức thanh toán không hợp lệ.");
-        }
-        String sql = "UPDATE Invoice SET status = 'Paid', payment_method = ?, "
-                + "exported_at = GETDATE() WHERE invoice_id = ? AND status = 'Pending'";
-        try (Connection connection = DatabaseConnection.getConnection()) {
-            connection.setAutoCommit(false);
-            try (PreparedStatement statement = connection.prepareStatement(sql)) {
-                statement.setString(1, paymentMethod);
-                statement.setInt(2, invoiceId);
-                if (statement.executeUpdate() > 0) {
-                    NotificationService notificationService = new NotificationService();
-                    notificationService.prepareLaboratoryOrders(connection, invoiceId);
-                    notificationService.notifyInvoicePaid(connection, invoiceId);
-                    notificationService.notifyLaboratoryRequested(connection, invoiceId);
-                    connection.commit();
-                    return true;
-                }
-                connection.rollback();
-                return false;
-            } catch (SQLException e) {
-                connection.rollback();
-                throw e;
-            }
         }
     }
 

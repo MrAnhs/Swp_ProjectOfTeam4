@@ -1,6 +1,5 @@
 package com.diabetes.monitoring.doctor.dao;
 
-import com.diabetes.monitoring.notification.NotificationService;
 import com.diabetes.monitoring.doctor.model.HealthRecord;
 import com.diabetes.monitoring.doctor.model.HealthRecordAI;
 import com.diabetes.monitoring.doctor.model.DoctorSummary;
@@ -20,7 +19,6 @@ import java.util.Map;
 import java.util.Set;
 
 public class HealthRecordDAO {
-    private final NotificationService notificationService = new NotificationService();
 
     public enum LaboratoryStage {
         NONE,
@@ -1725,7 +1723,6 @@ public class HealthRecordDAO {
                     ps.setInt(1, recordId);
                     ps.executeUpdate();
                 }
-                notificationService.notifyInvoiceCreated(conn, invoiceId);
                 conn.commit();
                 return true;
             } catch (SQLException e) {
@@ -1842,8 +1839,6 @@ public class HealthRecordDAO {
                     ps.executeUpdate();
                 }
 
-                notificationService.notifyMedicalRecordCompletedByHealthRecord(
-                        conn, healthRecordId, canView);
                 conn.commit();
                 return true;
             } catch (SQLException e) {
@@ -1916,3 +1911,4 @@ public class HealthRecordDAO {
         return list;
     }
 }
+

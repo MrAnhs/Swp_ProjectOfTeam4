@@ -31,6 +31,11 @@ public class LaboratoryRequestServlet extends DoctorServlet {
                 serviceIds[i] = Integer.parseInt(serviceValues[i]);
             }
             String requestNote = request.getParameter("request_note");
+            String labIdVal = request.getParameter("lab_id");
+            if (labIdVal == null || labIdVal.trim().isEmpty()) {
+                throw new java.sql.SQLException("Vui l\u00f2ng ch\u1ecdn b\u00e1c s\u0129 ph\u00f2ng x\u00e9t nghi\u1ec7m");
+            }
+            int labId = Integer.parseInt(labIdVal);
             int doctorId = getDoctorId(currentUser);
 
             int labId = 0;
@@ -46,9 +51,9 @@ public class LaboratoryRequestServlet extends DoctorServlet {
             dao.createLaboratoryRequest(
                     recordId, doctorId, serviceIds, requestNote, labId);
             session.setAttribute("doctorMessage",
-                    "Đã tạo hóa đơn cho " + serviceIds.length
-                    + " loại xét nghiệm. Yêu cầu sẽ được gửi đến phòng xét nghiệm "
-                    + "sau khi lễ tân xác nhận thanh toán.");
+                    "\u0110\u00e3 t\u1ea1o h\u00f3a \u0111\u01a1n cho " + serviceIds.length
+                    + " lo\u1ea1i x\u00e9t nghi\u1ec7m. Y\u00eau c\u1ea7u s\u1ebd \u0111\u01b0\u1ee3c g\u1eedi \u0111\u1ebfn ph\u00f2ng x\u00e9t nghi\u1ec7m "
+                    + "sau khi l\u1ec5 t\u00e2n x\u00e1c nh\u1eadn thanh to\u00e1n.");
             response.sendRedirect(request.getContextPath()
                     + "/doctor/laboratory-requests");
         } catch (NumberFormatException e) {

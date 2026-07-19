@@ -22,7 +22,7 @@
         const query = searchInput.value.trim().toLowerCase();
         const visible = appointments.filter((appointment) => {
             const matchesStatus = !status || appointment.status === status;
-            const haystack = `${appointment.appointmentId} ${appointment.doctorName} ${appointment.department} ${appointment.roomName} ${appointment.roomLocation} ${appointment.laboratoryRooms} ${appointment.laboratoryRoomLocations}`.toLowerCase();
+            const haystack = `${appointment.appointmentId} ${appointment.doctorName} ${appointment.department} ${appointment.roomName} ${appointment.roomLocation}`.toLowerCase();
             return matchesStatus && (!query || haystack.includes(query));
         });
 
@@ -52,13 +52,6 @@
             const queue = document.createElement("p");
             queue.textContent = `S\u1ed1 th\u1ee9 t\u1ef1: ${appointment.queueNumber}`;
 
-            const laboratoryRoom = document.createElement("p");
-            laboratoryRoom.className = "appointment-lab-summary";
-            laboratoryRoom.hidden = !appointment.laboratoryRooms;
-            laboratoryRoom.textContent = appointment.laboratoryRooms
-                ? `Ph\u00f2ng x\u00e9t nghi\u1ec7m: ${appointment.laboratoryRooms} | V\u1ecb tr\u00ed: ${appointment.laboratoryRoomLocations || "Ch\u01b0a c\u1eadp nh\u1eadt"}`
-                : "";
-
             const statusMeta = PatientAppointmentStatus.get(appointment.status);
             const badge = document.createElement("span");
             badge.className = `status-pill ${statusMeta.className}`;
@@ -69,7 +62,7 @@
             link.href = ApiClient.buildUrl(`/patient/appointments/detail?id=${appointment.appointmentId}`);
             link.textContent = "Xem chi ti\u1ebft";
 
-            info.append(title, doctor, time, room, laboratoryRoom, queue, badge);
+            info.append(title, doctor, time, room, queue, badge);
             item.append(info, link);
             list.append(item);
         });
