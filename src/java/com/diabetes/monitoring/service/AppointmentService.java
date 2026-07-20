@@ -124,7 +124,43 @@ public class AppointmentService {
                 }
             }
         }
-        throw new AppointmentBookingException("Kh\u00F4ng t\u00ECm th\u1EA5y h\u1ED3 s\u01A1 b\u1EC7nh nh\u00E2n.");
+
+        // Thử tìm theo email của tài khoản
+        String fallbackSql = "SELECT p.patient_id FROM Patient p "
+                + "INNER JOIN Account a ON a.email = p.email "
+                + "WHERE a.account_id = ?";
+        try (PreparedStatement statement = connection.prepareStatement(fallbackSql)) {
+            statement.setInt(1, accountId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    int patientId = resultSet.getInt("patient_id");
+                    try (PreparedStatement updateStmt = connection.prepareStatement(
+                            "UPDATE Patient SET account_id = ? WHERE patient_id = ?")) {
+                        updateStmt.setInt(1, accountId);
+                        updateStmt.setInt(2, patientId);
+                        updateStmt.executeUpdate();
+                    }
+                    return patientId;
+                }
+            }
+        }
+
+        // Tự động tạo bản ghi Patient nếu chưa tồn tại
+        String createSql = "INSERT INTO Patient (full_name, date_of_birth, gender, phone, email, address, account_id) "
+                + "SELECT full_name, '2000-01-01', N'Nam', '0900000000', email, N'Chưa cập nhật', account_id "
+                + "FROM Account WHERE account_id = ?";
+        try (PreparedStatement statement = connection.prepareStatement(createSql, Statement.RETURN_GENERATED_KEYS)) {
+            statement.setInt(1, accountId);
+            statement.executeUpdate();
+            try (ResultSet keys = statement.getGeneratedKeys()) {
+                if (keys.next()) {
+                    return keys.getInt(1);
+                }
+            }
+        } catch (SQLException ignored) {
+        }
+
+        throw new AppointmentBookingException("Không tìm thấy hồ sơ bệnh nhân cho tài khoản này.");
     }
 
     private ScheduleSelection lockSchedule(Connection connection, int doctorId, int scheduleId)
