@@ -1721,6 +1721,16 @@ public class HealthRecordDAO {
                     ps.setInt(1, recordId);
                     ps.executeUpdate();
                 }
+<<<<<<< HEAD
+                String updateHealthyRecordSql = "UPDATE Healthy_Record SET invoice_id = ? WHERE health_record_id = ?";
+                try (PreparedStatement ps = conn.prepareStatement(updateHealthyRecordSql)) {
+                    ps.setInt(1, invoiceId);
+                    ps.setInt(2, recordId);
+                    ps.executeUpdate();
+                }
+                notificationService.notifyInvoiceCreated(conn, invoiceId);
+=======
+>>>>>>> b6789e344b33b6da54a0d7ea8b6cd470f19497b2
                 conn.commit();
                 return true;
             } catch (SQLException e) {

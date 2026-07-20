@@ -62,7 +62,7 @@ public class DoctorDAO {
                 + "AND ds.work_date = ? AND ds.status = 'Available' "
                 + "AND booked.booked_patients < ds.max_patients "
                 + "AND (ds.work_date > CAST(GETDATE() AS date) "
-                + "OR TRY_CONVERT(time, LEFT(ds.time_slot, 5)) > CAST(GETDATE() AS time)) ");
+                + "OR CAST(GETDATE() AS time) < DATEADD(minute, -30, TRY_CONVERT(time, RIGHT(REPLACE(ds.time_slot, ' ', ''), 5)))) ");
         appendSessionFilter(sql, session);
         if (department != null && !department.isBlank()) {
             sql.append("AND LTRIM(RTRIM(d.department)) = ? ");
@@ -143,7 +143,7 @@ public class DoctorDAO {
                 + "LEFT JOIN Room r ON r.room_id = ds.room_id "
                 + "WHERE ds.doctor_id = ? AND ds.work_date = ? AND ds.status = 'Available' "
                 + "AND (ds.work_date > CAST(GETDATE() AS date) "
-                + "OR TRY_CONVERT(time, LEFT(ds.time_slot, 5)) > CAST(GETDATE() AS time)) ");
+                + "OR CAST(GETDATE() AS time) < DATEADD(minute, -30, TRY_CONVERT(time, RIGHT(REPLACE(ds.time_slot, ' ', ''), 5)))) ");
         appendSessionFilter(sql, session);
         sql.append("GROUP BY ds.schedule_id, ds.work_date, ds.time_slot, "
                 + "ds.max_patients, ds.status, ds.room_id, r.room_name, r.location "

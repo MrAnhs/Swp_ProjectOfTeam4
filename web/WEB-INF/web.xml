@@ -201,6 +201,17 @@
         <servlet-name>PatientPageServlet</servlet-name>
         <url-pattern>/patient/profile</url-pattern>
     </servlet-mapping>
+<<<<<<< HEAD
+    <servlet-mapping>
+        <servlet-name>PatientPageServlet</servlet-name>
+        <url-pattern>/patient/notifications</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>PatientPageServlet</servlet-name>
+        <url-pattern>/patient/family-sharing</url-pattern>
+    </servlet-mapping>
+=======
+>>>>>>> b6789e344b33b6da54a0d7ea8b6cd470f19497b2
 
     <servlet>
         <servlet-name>ReceptionistPageServlet</servlet-name>
@@ -517,6 +528,55 @@
         <servlet-name>PatientVisitServlet</servlet-name>
         <url-pattern>/patient/api/history</url-pattern>
     </servlet-mapping>
+<<<<<<< HEAD
+
+    <servlet>
+        <servlet-name>VnPayController</servlet-name>
+        <servlet-class>com.diabetes.monitoring.servlet.VnPayController</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>VnPayController</servlet-name>
+        <url-pattern>/patient/vnpay-payment</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>VnPayReturnServlet</servlet-name>
+        <servlet-class>com.diabetes.monitoring.servlet.VnPayReturnServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>VnPayReturnServlet</servlet-name>
+        <url-pattern>/patient/vnpay-return</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>VnPayIpnServlet</servlet-name>
+        <servlet-class>com.diabetes.monitoring.servlet.VnPayIpnServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>VnPayIpnServlet</servlet-name>
+        <url-pattern>/vnpay-ipn</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>FamilySharingServlet</servlet-name>
+        <servlet-class>com.diabetes.monitoring.servlet.FamilySharingServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>FamilySharingServlet</servlet-name>
+        <url-pattern>/patient/api/family-sharing</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>FamilyDashboardServlet</servlet-name>
+        <servlet-class>com.diabetes.monitoring.servlet.FamilyDashboardServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>FamilyDashboardServlet</servlet-name>
+        <url-pattern>/patient/family-dashboard</url-pattern>
+    </servlet-mapping>
+
+=======
+>>>>>>> b6789e344b33b6da54a0d7ea8b6cd470f19497b2
     <mime-mapping>
         <extension>js</extension>
         <mime-type>application/javascript; charset=UTF-8</mime-type>

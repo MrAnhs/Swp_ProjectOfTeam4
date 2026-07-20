@@ -48,6 +48,20 @@
             <i class="bi bi-chat-dots"></i>
             <span class="nav-text" >Chat AI</span>
         </a>
+<<<<<<< HEAD
+        <a href="${pageContext.request.contextPath}/patient/notifications"
+           class="nav-item-dash${activePatientPage eq 'notifications' ? ' active' : ''}">
+            <i class="bi bi-bell"></i>
+            <span class="nav-text">Th&#244;ng b&#225;o</span>
+            <span class="sidebar-notification-badge${empty unreadNotificationCount or unreadNotificationCount == 0 ? ' is-hidden' : ''}">${empty unreadNotificationCount ? 0 : unreadNotificationCount}</span>
+        </a>
+        <a href="${pageContext.request.contextPath}/patient/family-sharing"
+           class="nav-item-dash${activePatientPage eq 'family-sharing' ? ' active' : ''}">
+            <i class="bi bi-people"></i>
+            <span class="nav-text">H&#7891; s&#417; gia &#273;&#236;nh</span>
+        </a>
+=======
+>>>>>>> b6789e344b33b6da54a0d7ea8b6cd470f19497b2
         <a href="${pageContext.request.contextPath}/settings"
            class="nav-item-dash${activePatientPage eq 'settings' ? ' active' : ''}">
             <i class="bi bi-gear"></i>

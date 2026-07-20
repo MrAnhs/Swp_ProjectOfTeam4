@@ -39,7 +39,11 @@ public class LaboratoryRequestServlet extends DoctorServlet {
             int doctorId = getDoctorId(currentUser);
 
             dao.createLaboratoryRequest(
+<<<<<<< HEAD
+                    recordId, doctorId, serviceIds, requestNote, 0);
+=======
                     recordId, doctorId, serviceIds, requestNote, labId);
+>>>>>>> b6789e344b33b6da54a0d7ea8b6cd470f19497b2
             session.setAttribute("doctorMessage",
                     "\u0110\u00e3 t\u1ea1o h\u00f3a \u0111\u01a1n cho " + serviceIds.length
                     + " lo\u1ea1i x\u00e9t nghi\u1ec7m. Y\u00eau c\u1ea7u s\u1ebd \u0111\u01b0\u1ee3c g\u1eedi \u0111\u1ebfn ph\u00f2ng x\u00e9t nghi\u1ec7m "
