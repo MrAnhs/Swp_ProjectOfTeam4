@@ -401,9 +401,10 @@
                     const st = String(status).toLowerCase();
                     if (st === 'waiting') return '<span class="badge bg-warning text-dark px-2 py-1">Waiting</span>';
                     if (st === 'confirmed') return '<span class="badge bg-primary px-2 py-1">Confirmed</span>';
-                    if (st === 'in progress') return '<span class="badge bg-info px-2 py-1">In Progress</span>';
+                    if (st === 'in progress' || st === 'in_progress') return '<span class="badge bg-info text-white px-2 py-1">In Progress</span>';
                     if (st === 'completed') return '<span class="badge bg-success px-2 py-1">Completed</span>';
                     if (st === 'cancelled') return '<span class="badge bg-danger px-2 py-1">Cancelled</span>';
+                    if (st === 'absent') return '<span class="badge bg-secondary text-white px-2 py-1">Absent</span>';
                     return '<span class="badge bg-secondary px-2 py-1">' + status + '</span>';
                 };
 
