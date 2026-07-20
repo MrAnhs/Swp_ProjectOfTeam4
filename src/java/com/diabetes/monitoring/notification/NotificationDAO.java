@@ -81,4 +81,14 @@ public class NotificationDAO {
         notification.setTargetUrl(result.getString("TargetUrl"));
         return notification;
     }
+
+    public boolean sendNotification(int accountId, String title, String content, String type, String targetUrl) {
+        String eventKey = "NOTIF_" + System.currentTimeMillis() + "_" + (int)(Math.random() * 1000);
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            return create(conn, accountId, title, content, type, targetUrl, eventKey);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
