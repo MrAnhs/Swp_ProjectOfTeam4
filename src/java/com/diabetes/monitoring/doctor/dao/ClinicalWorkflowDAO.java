@@ -1,6 +1,5 @@
 package com.diabetes.monitoring.doctor.dao;
 
-import com.diabetes.monitoring.notification.NotificationService;
 import com.diabetes.monitoring.doctor.model.HealthRecord;
 import com.diabetes.monitoring.doctor.model.MedicalRecord;
 import com.diabetes.monitoring.util.DatabaseConnection;
@@ -13,7 +12,6 @@ import java.sql.Statement;
 import java.sql.Types;
 
 public class ClinicalWorkflowDAO {
-    private final NotificationService notificationService = new NotificationService();
 
     public int createMedicalRecordForAppointment(int appointmentId) throws SQLException {
         String appointmentSql = "SELECT a.patient_id, ds.doctor_id, a.status "
@@ -242,8 +240,6 @@ public class ClinicalWorkflowDAO {
                     }
                 }
 
-                notificationService.notifyMedicalRecordCompletedByRecord(
-                        conn, recordId, resultVisibility);
                 conn.commit();
                 return true;
             } catch (SQLException e) {

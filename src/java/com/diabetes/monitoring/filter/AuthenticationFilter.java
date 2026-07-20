@@ -40,9 +40,7 @@ public class AuthenticationFilter implements Filter {
                 || path.startsWith("/admin/")
                 || (path.startsWith("/receptionist/") && !path.startsWith("/receptionist/api/"))
                 || (path.startsWith("/doctor/") && !path.startsWith("/doctor/api/"))
-                || (path.startsWith("/doctor-lab/") && !path.startsWith("/doctor-lab/api/"))
-                || "/notifications/page".equals(path);
-                
+                || (path.startsWith("/doctor-lab/") && !path.startsWith("/doctor-lab/api/"));
     }
 
     private void writeJsonError(HttpServletResponse response, int status, String message) throws IOException {

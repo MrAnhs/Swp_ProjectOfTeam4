@@ -101,6 +101,7 @@
         <a class="${isDetailedStage ? 'active' : ''}" href="${pageContext.request.contextPath}/doctor/examinations"><i class="bi bi-clipboard2-pulse-fill"></i> Khám chi tiết</a>
         <a href="${pageContext.request.contextPath}/doctor/completed-records"><i class="bi bi-archive"></i> Đã hoàn thành</a>
         <a href="${pageContext.request.contextPath}/doctor/patients/search"><i class="bi bi-search"></i> Tra cứu</a>
+        <a href="${pageContext.request.contextPath}/doctor/schedule"><i class="bi bi-calendar3"></i> Lịch trực</a>
         <a href="${pageContext.request.contextPath}/settings"><i class="bi bi-gear"></i> Cài đặt</a>
         <a class="text-danger mt-lg-4" href="${pageContext.request.contextPath}/logout"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a>
     </nav>
@@ -267,10 +268,19 @@
                         </c:forEach>
                     </div>
                 </div>
-                <div class="col-lg-9">
+                <div class="col-lg-5">
                     <label class="form-label fw-semibold">Ghi chú cho phòng xét nghiệm</label>
                     <input class="form-control" name="request_note" maxlength="1000"
                            placeholder="Nội dung cần lưu ý">
+                </div>
+                <div class="col-lg-4">
+                    <label class="form-label fw-semibold">Bác sĩ phòng xét nghiệm</label>
+                    <select class="form-select" name="lab_id" required>
+                        <option value="" disabled selected>-- Chọn bác sĩ --</option>
+                        <c:forEach var="doc" items="${labDoctors}">
+                            <option value="${doc.labId}">${doc.fullName} (${doc.labName})</option>
+                        </c:forEach>
+                    </select>
                 </div>
                 <div class="col-lg-3 d-flex align-items-end">
                     <button class="btn btn-doctor w-100" type="submit">
@@ -287,7 +297,7 @@
                 <div class="table-responsive">
                     <table class="table doctor-table align-middle mb-0">
                         <thead>
-                        <tr><th>Loại xét nghiệm</th><th>Giá</th><th>Thanh toán</th><th>Ngày yêu cầu</th><th>Trạng thái</th></tr>
+                        <tr><th>Loại xét nghiệm</th><th>Giá</th><th>Bác sĩ thực hiện</th><th>Thanh toán</th><th>Ngày yêu cầu</th><th>Trạng thái</th></tr>
                         </thead>
                         <tbody>
                         <c:forEach var="lab" items="${laboratoryRequests}">
@@ -295,6 +305,16 @@
                                 <td><strong>${lab.testTypeDisplay}</strong><br><small class="doctor-muted">${lab.requestNote}</small></td>
                                 <td class="fw-semibold">
                                     <fmt:formatNumber value="${lab.testPrice}" type="number" groupingUsed="true"/> VNĐ
+                                </td>
+                                <td>
+                                    <c:choose>
+                                        <c:when test="${not empty lab.labDoctorName}">
+                                            ${lab.labDoctorName} <br><small class="doctor-muted">(${lab.labName})</small>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <span class="text-muted">Chưa phân công</span>
+                                        </c:otherwise>
+                                    </c:choose>
                                 </td>
                                 <td>${lab.paymentStatusDisplay}</td>
                                 <td><fmt:formatDate value="${lab.requestedAt}" pattern="dd/MM/yyyy HH:mm"/></td>
@@ -320,15 +340,15 @@
                     </div>
                 </div>
                 <div class="exam-grid">
-                    <div class="exam-metric"><div class="exam-metric-label">Urea</div><input id="metricUrea" class="form-control form-control-sm" type="number" step="0.01" min="0" value="${record.urea}" ${!canEditDiagnosis ? 'disabled' : ''}></div>
-                    <div class="exam-metric"><div class="exam-metric-label">Creatinine</div><input id="metricCr" class="form-control form-control-sm" type="number" step="0.01" min="0" value="${record.cr}" ${!canEditDiagnosis ? 'disabled' : ''}></div>
-                    <div class="exam-metric"><div class="exam-metric-label">Đường huyết</div><input id="metricHba1c" class="form-control form-control-sm" type="number" step="0.01" min="0" value="${record.hba1c}" ${!canEditDiagnosis ? 'disabled' : ''}></div>
-                    <div class="exam-metric"><div class="exam-metric-label">Cholesterol</div><input id="metricChol" class="form-control form-control-sm" type="number" step="0.01" min="0" value="${record.chol}" ${!canEditDiagnosis ? 'disabled' : ''}></div>
-                    <div class="exam-metric"><div class="exam-metric-label">TG</div><input id="metricTg" class="form-control form-control-sm" type="number" step="0.01" min="0" value="${record.tg}" ${!canEditDiagnosis ? 'disabled' : ''}></div>
-                    <div class="exam-metric"><div class="exam-metric-label">HDL</div><input id="metricHdl" class="form-control form-control-sm" type="number" step="0.01" min="0" value="${record.hdl}" ${!canEditDiagnosis ? 'disabled' : ''}></div>
-                    <div class="exam-metric"><div class="exam-metric-label">LDL/LDL</div><input id="metricIdl" class="form-control form-control-sm" type="number" step="0.01" min="0" value="${record.ldl}" ${!canEditDiagnosis ? 'disabled' : ''}></div>
-                    <div class="exam-metric"><div class="exam-metric-label">VLDL</div><input id="metricVldl" class="form-control form-control-sm" type="number" step="0.01" min="0" value="${record.vldl}" ${!canEditDiagnosis ? 'disabled' : ''}></div>
-                    <div class="exam-metric"><div class="exam-metric-label">BMI</div><input id="metricBmi" class="form-control form-control-sm" type="number" step="0.01" min="0" value="${record.bmi}" ${!canEditDiagnosis ? 'disabled' : ''}></div>
+                    <div class="exam-metric"><div class="exam-metric-label">Urea</div><input id="metricUrea" class="form-control form-control-sm bg-light text-dark fw-bold" type="text" value="${record.urea != null ? record.urea : 'Chưa có'}" readonly disabled></div>
+                    <div class="exam-metric"><div class="exam-metric-label">Creatinine</div><input id="metricCr" class="form-control form-control-sm bg-light text-dark fw-bold" type="text" value="${record.cr != null ? record.cr : 'Chưa có'}" readonly disabled></div>
+                    <div class="exam-metric"><div class="exam-metric-label">Đường huyết (HbA1c)</div><input id="metricHba1c" class="form-control form-control-sm bg-light text-dark fw-bold" type="text" value="${record.hba1c != null ? record.hba1c : 'Chưa có'}" readonly disabled></div>
+                    <div class="exam-metric"><div class="exam-metric-label">Cholesterol</div><input id="metricChol" class="form-control form-control-sm bg-light text-dark fw-bold" type="text" value="${record.chol != null ? record.chol : 'Chưa có'}" readonly disabled></div>
+                    <div class="exam-metric"><div class="exam-metric-label">TG</div><input id="metricTg" class="form-control form-control-sm bg-light text-dark fw-bold" type="text" value="${record.tg != null ? record.tg : 'Chưa có'}" readonly disabled></div>
+                    <div class="exam-metric"><div class="exam-metric-label">HDL</div><input id="metricHdl" class="form-control form-control-sm bg-light text-dark fw-bold" type="text" value="${record.hdl != null ? record.hdl : 'Chưa có'}" readonly disabled></div>
+                    <div class="exam-metric"><div class="exam-metric-label">LDL</div><input id="metricIdl" class="form-control form-control-sm bg-light text-dark fw-bold" type="text" value="${record.ldl != null ? record.ldl : 'Chưa có'}" readonly disabled></div>
+                    <div class="exam-metric"><div class="exam-metric-label">VLDL</div><input id="metricVldl" class="form-control form-control-sm bg-light text-dark fw-bold" type="text" value="${record.vldl != null ? record.vldl : 'Chưa có'}" readonly disabled></div>
+                    <div class="exam-metric"><div class="exam-metric-label">BMI</div><input id="metricBmi" class="form-control form-control-sm bg-light text-dark fw-bold" type="text" value="${record.bmi != null ? record.bmi : 'Chưa có'}" readonly disabled></div>
                 </div>
             </section>
 
@@ -461,16 +481,7 @@ function saveNotes(recordId) {
         notes: document.getElementById("doctorNotes").value,
         diagnosis: document.getElementById("finalDiagnosis").value,
         can_view: document.getElementById("canView").checked,
-        revisit_date: document.getElementById("revisitDate").value,
-        urea: document.getElementById("metricUrea").value,
-        cr: document.getElementById("metricCr").value,
-        hba1c: document.getElementById("metricHba1c").value,
-        chol: document.getElementById("metricChol").value,
-        tg: document.getElementById("metricTg").value,
-        hdl: document.getElementById("metricHdl").value,
-        ldl: document.getElementById("metricIdl").value,
-        vldl: document.getElementById("metricVldl").value,
-        bmi: document.getElementById("metricBmi").value
+        revisit_date: document.getElementById("revisitDate").value
     });
     fetch("${pageContext.request.contextPath}/doctor/records/save", {
         method: "POST",
@@ -487,10 +498,36 @@ function saveNotes(recordId) {
 
 document.querySelectorAll(".lab-multi-form").forEach(form => {
     const options = form.querySelectorAll(".lab-service-option");
+    const select = form.querySelector('select[name="lab_id"]');
     options.forEach(option => {
         const checkbox = option.querySelector('input[name="service_id"]');
         const updateSelectedState = () => {
             option.classList.toggle("is-selected", checkbox.checked);
+            if (checkbox.checked && select) {
+                const serviceText = option.querySelector('strong').textContent.toLowerCase();
+                let targetKeyword = "";
+                if (serviceText.includes("m\u00e1u") || serviceText.includes("\u0111\u01b0\u1eddng huy\u1ebft") || serviceText.includes("hba1c") || serviceText.includes("blood")) {
+                    targetKeyword = "m\u00e1u";
+                } else if (serviceText.includes("n\u01b0\u1edbc ti\u1ec3u") || serviceText.includes("urine")) {
+                    targetKeyword = "n\u01b0\u1edbc ti\u1ec3u";
+                } else if (serviceText.includes("gan") || serviceText.includes("liver")) {
+                    targetKeyword = "gan";
+                } else if (serviceText.includes("th\u1eadn") || serviceText.includes("kidney")) {
+                    targetKeyword = "th\u1eadn";
+                } else if (serviceText.includes("m\u1ee1") || serviceText.includes("lipid")) {
+                    targetKeyword = "m\u1ee1";
+                }
+                if (targetKeyword) {
+                    for (let i = 0; i < select.options.length; i++) {
+                        const opt = select.options[i];
+                        const optText = opt.textContent.toLowerCase();
+                        if (optText.includes(targetKeyword)) {
+                            select.value = opt.value;
+                            break;
+                        }
+                    }
+                }
+            }
         };
         checkbox.addEventListener("change", updateSelectedState);
         updateSelectedState();

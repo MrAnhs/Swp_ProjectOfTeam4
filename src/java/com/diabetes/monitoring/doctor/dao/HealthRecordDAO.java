@@ -1,6 +1,5 @@
 package com.diabetes.monitoring.doctor.dao;
 
-import com.diabetes.monitoring.notification.NotificationService;
 import com.diabetes.monitoring.doctor.model.HealthRecord;
 import com.diabetes.monitoring.doctor.model.HealthRecordAI;
 import com.diabetes.monitoring.doctor.model.DoctorSummary;
@@ -20,7 +19,6 @@ import java.util.Map;
 import java.util.Set;
 
 public class HealthRecordDAO {
-    private final NotificationService notificationService = new NotificationService();
 
     public enum LaboratoryStage {
         NONE,
@@ -309,9 +307,7 @@ public class HealthRecordDAO {
     public boolean hasRequiredAIData(int recordId, int doctorId) {
         String sql = "SELECT COUNT(*) FROM Healthy_Record "
                 + "WHERE health_record_id = ? AND doctor_id = ? "
-                + "AND urea IS NOT NULL AND cr IS NOT NULL AND hba1c IS NOT NULL "
-                + "AND chol IS NOT NULL AND tg IS NOT NULL AND hdl IS NOT NULL "
-                + "AND ldl IS NOT NULL AND vldl IS NOT NULL AND bmi IS NOT NULL";
+                + "AND hba1c IS NOT NULL AND bmi IS NOT NULL AND urea IS NOT NULL";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, recordId);
@@ -1498,7 +1494,7 @@ public class HealthRecordDAO {
         item.setChol(nullableDouble(rs, "chol"));
         item.setTg(nullableDouble(rs, "tg"));
         item.setHdl(nullableDouble(rs, "hdl"));
-        item.setIdl(nullableDouble(rs, "ldl"));
+        item.setLdl(nullableDouble(rs, "ldl"));
         item.setVldl(nullableDouble(rs, "vldl"));
         item.setBmi(nullableDouble(rs, "bmi"));
         item.setWeight(nullableDouble(rs, "weight"));
@@ -1725,6 +1721,7 @@ public class HealthRecordDAO {
                     ps.setInt(1, recordId);
                     ps.executeUpdate();
                 }
+<<<<<<< HEAD
                 String updateHealthyRecordSql = "UPDATE Healthy_Record SET invoice_id = ? WHERE health_record_id = ?";
                 try (PreparedStatement ps = conn.prepareStatement(updateHealthyRecordSql)) {
                     ps.setInt(1, invoiceId);
@@ -1732,6 +1729,8 @@ public class HealthRecordDAO {
                     ps.executeUpdate();
                 }
                 notificationService.notifyInvoiceCreated(conn, invoiceId);
+=======
+>>>>>>> b6789e344b33b6da54a0d7ea8b6cd470f19497b2
                 conn.commit();
                 return true;
             } catch (SQLException e) {
@@ -1848,8 +1847,6 @@ public class HealthRecordDAO {
                     ps.executeUpdate();
                 }
 
-                notificationService.notifyMedicalRecordCompletedByHealthRecord(
-                        conn, healthRecordId, canView);
                 conn.commit();
                 return true;
             } catch (SQLException e) {
@@ -1922,3 +1919,4 @@ public class HealthRecordDAO {
         return list;
     }
 }
+

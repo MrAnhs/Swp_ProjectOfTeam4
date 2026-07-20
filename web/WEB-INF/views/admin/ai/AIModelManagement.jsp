@@ -199,7 +199,7 @@
                         <option value="" ${empty status ? 'selected' : ''}>Tất cả</option>
                         <option value="Pending" ${status == 'Pending' ? 'selected' : ''}>Chờ duyệt</option>
                         <option value="Approved" ${status == 'Approved' ? 'selected' : ''}>Đã duyệt</option>
-                        <option value="Exported" ${status == 'Exported' ? 'selected' : ''}>Đã duyệt (Đã gửi sang AI)</option>
+                        <option value="Exported" ${status == 'Exported' ? 'selected' : ''}>Đã đưa sang AI</option>
                         <option value="Rejected" ${status == 'Rejected' ? 'selected' : ''}>Đã từ chối</option>
                     </select>
                 </div>
@@ -298,7 +298,7 @@
                                 <td class="status-cell">
                                     <c:choose>
                                         <c:when test="${item.decisionStatus == 'Approved'}"><span class="badge text-bg-success rounded-pill">Đã duyệt</span></c:when>
-                                        <c:when test="${item.decisionStatus == 'Exported'}"><span class="badge text-bg-success rounded-pill">Đã duyệt</span></c:when>
+                                        <c:when test="${item.decisionStatus == 'Exported'}"><span class="badge text-bg-info text-white rounded-pill"><i class="fa-solid fa-file-export me-1"></i>Đã đưa sang AI</span></c:when>
                                         <c:when test="${item.decisionStatus == 'Rejected'}"><span class="badge text-bg-danger rounded-pill">Đã từ chối</span></c:when>
                                         <c:otherwise><span class="badge text-bg-warning rounded-pill">Chờ duyệt</span></c:otherwise>
                                     </c:choose>
@@ -1218,14 +1218,9 @@
             <input type="hidden" name="action" value="ai-start-training">
             <input type="hidden" name="totalRecords" value="${approvedDataset}">
             <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
-            <div class="d-flex justify-content-center gap-2">
-                <button type="button" id="btnStartTrain" class="btn btn-success bg-primary-clinic border-0 rounded-pill px-5 py-2.5 fw-bold shadow-sm">
-                    <i class="fa-solid fa-play me-2"></i>BẮT ĐẦU HUẤN LUYỆN
-                </button>
-                <a href="https://wandb.ai/nam30112k5-no/diabetes-prediction/workspace?nw=nwusernam30112k5" target="_blank" class="btn btn-outline-success rounded-pill px-4 py-2.5 fw-bold shadow-sm">
-                    <i class="fa-solid fa-chart-line me-2"></i>XEM BÁO CÁO W&B
-                </a>
-            </div>
+            <button type="button" id="btnStartTrain" class="btn btn-success bg-primary-clinic border-0 rounded-pill px-5 py-2.5 fw-bold shadow-sm">
+                <i class="fa-solid fa-play me-2"></i>BẮT ĐẦU HUẤN LUYỆN
+            </button>
         </form>
     </div>
 
@@ -1274,14 +1269,10 @@
             </table>
         </div>
         
-        <div class="text-center d-flex justify-content-center gap-2">
+        <div class="text-center">
             <a href="${pageContext.request.contextPath}/admin?action=ai-management"
                class="btn btn-success bg-primary-clinic border-0 rounded-pill px-5 py-2 fw-bold">
                 <i class="fa-solid fa-arrow-left me-2"></i>← Quay lại tổng quan
-            </a>
-            <a href="https://wandb.ai/" id="btnViewWandbReport" target="_blank"
-               class="btn btn-outline-success rounded-pill px-5 py-2 fw-bold">
-                <i class="fa-solid fa-chart-line me-2"></i>Xem báo cáo đợt train này
             </a>
         </div>
     </div>
@@ -1343,7 +1334,6 @@
             document.getElementById('resAlgorithm').innerText = data.bestAlgorithm;
             document.getElementById('resAccuracy').innerText = data.bestAccuracy;
             document.getElementById('resF1').innerText = data.bestF1;
-            document.getElementById('btnViewWandbReport').href = data.wandbUrl || 'https://wandb.ai/';
             
             const tbody = document.getElementById('metricsTableBody'); 
             tbody.innerHTML = '';

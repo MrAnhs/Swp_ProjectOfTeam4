@@ -80,7 +80,7 @@ public class AdminDashboardRepository {
     public int getPatientsInProgressCount() {
         return executeCount(
                 "SELECT COUNT(*) FROM Appointment "
-                + "WHERE LOWER(status) = 'in progress' "
+                + "WHERE LOWER(status) = 'in_progress' "
                 + "AND CAST(appointment_time AS DATE) = CAST(GETDATE() AS DATE)");
     }
 
@@ -123,7 +123,7 @@ public class AdminDashboardRepository {
         String sql = "SELECT r.room_id, r.room_name, COUNT(ap.appointment_id) AS queue_count "
                 + "FROM Room r "
                 + "LEFT JOIN Doctor_Schedule ds ON ds.room_id = r.room_id AND ds.work_date = CAST(GETDATE() AS DATE) "
-                + "LEFT JOIN Appointment ap ON ap.schedule_id = ds.schedule_id AND ap.status IN ('waiting', 'confirmed', 'in progress') "
+                + "LEFT JOIN Appointment ap ON ap.schedule_id = ds.schedule_id AND LOWER(ap.status) IN ('waiting', 'confirmed', 'in_progress') "
                 + "WHERE LOWER(r.status) = 'active' "
                 + "GROUP BY r.room_id, r.room_name "
                 + "ORDER BY r.room_id";
@@ -605,9 +605,11 @@ public class AdminDashboardRepository {
                            + "COALESCE(ds.time_slot, FORMAT(ap.appointment_time, 'HH:mm')) AS time_slot, "
                            + "ap.status "
                            + "FROM Appointment ap "
-                           + "JOIN Account pat ON pat.account_id = ap.patient_id "
+                           + "JOIN Patient p ON p.patient_id = ap.patient_id "
+                           + "JOIN Account pat ON pat.account_id = p.account_id "
                            + "LEFT JOIN Doctor_Schedule ds ON ds.schedule_id = ap.schedule_id "
-                           + "LEFT JOIN Account doc ON doc.account_id = ds.doctor_id "
+                           + "LEFT JOIN Doctor d ON d.doctor_id = ds.doctor_id "
+                           + "LEFT JOIN Account doc ON doc.account_id = d.account_id "
                            + "WHERE CAST(ap.appointment_time AS DATE) = CAST(GETDATE() AS DATE) "
                            + "ORDER BY time_slot ASC";
                 statement = connection.prepareStatement(sql);
@@ -643,9 +645,11 @@ public class AdminDashboardRepository {
                            + "doc.full_name AS doctor_name, "
                            + "COALESCE(ds.time_slot, FORMAT(ap.appointment_time, 'HH:mm')) AS time_slot "
                            + "FROM Appointment ap "
-                           + "JOIN Account pat ON pat.account_id = ap.patient_id "
+                           + "JOIN Patient p ON p.patient_id = ap.patient_id "
+                           + "JOIN Account pat ON pat.account_id = p.account_id "
                            + "LEFT JOIN Doctor_Schedule ds ON ds.schedule_id = ap.schedule_id "
-                           + "LEFT JOIN Account doc ON doc.account_id = ds.doctor_id "
+                           + "LEFT JOIN Doctor d ON d.doctor_id = ds.doctor_id "
+                           + "LEFT JOIN Account doc ON doc.account_id = d.account_id "
                            + "WHERE LOWER(ap.status) = 'completed' "
                            + "AND CAST(ap.appointment_time AS DATE) = CAST(GETDATE() AS DATE) "
                            + "ORDER BY time_slot ASC";
@@ -660,14 +664,16 @@ public class AdminDashboardRepository {
                     items.add(m);
                 }
             } else if ("waiting".equals(type) || "inProgress".equals(type)) {
-                String statusVal = "waiting".equals(type) ? "waiting" : "in progress";
+                String statusVal = "waiting".equals(type) ? "waiting" : "in_progress";
                 String sql = "SELECT ap.appointment_id, pat.full_name AS patient_name, "
                            + "doc.full_name AS doctor_name, r.room_name, "
                            + "COALESCE(ds.time_slot, FORMAT(ap.appointment_time, 'HH:mm')) AS time_slot "
                            + "FROM Appointment ap "
-                           + "JOIN Account pat ON pat.account_id = ap.patient_id "
+                           + "JOIN Patient p ON p.patient_id = ap.patient_id "
+                           + "JOIN Account pat ON pat.account_id = p.account_id "
                            + "LEFT JOIN Doctor_Schedule ds ON ds.schedule_id = ap.schedule_id "
-                           + "LEFT JOIN Account doc ON doc.account_id = ds.doctor_id "
+                           + "LEFT JOIN Doctor d ON d.doctor_id = ds.doctor_id "
+                           + "LEFT JOIN Account doc ON doc.account_id = d.account_id "
                            + "LEFT JOIN Room r ON r.room_id = ds.room_id "
                            + "WHERE LOWER(ap.status) = ? "
                            + "AND CAST(ap.appointment_time AS DATE) = CAST(GETDATE() AS DATE) "
@@ -688,7 +694,8 @@ public class AdminDashboardRepository {
                 String sql = "SELECT ds.schedule_id, doc.full_name AS doctor_name, r.room_name, ds.time_slot, "
                            + "ds.max_patients, ds.status "
                            + "FROM Doctor_Schedule ds "
-                           + "JOIN Account doc ON doc.account_id = ds.doctor_id "
+                           + "JOIN Doctor d ON d.doctor_id = ds.doctor_id "
+                           + "JOIN Account doc ON doc.account_id = d.account_id "
                            + "LEFT JOIN Room r ON r.room_id = ds.room_id "
                            + "WHERE ds.work_date = CAST(GETDATE() AS DATE) "
                            + "ORDER BY ds.time_slot ASC";
@@ -759,7 +766,8 @@ public class AdminDashboardRepository {
 
                 // Get Doctor on duty today
                 String docSql = "SELECT doc.full_name FROM Doctor_Schedule ds "
-                              + "JOIN Account doc ON doc.account_id = ds.doctor_id "
+                              + "JOIN Doctor d ON d.doctor_id = ds.doctor_id "
+                              + "JOIN Account doc ON doc.account_id = d.account_id "
                               + "WHERE ds.room_id = ? AND ds.work_date = CAST(GETDATE() AS DATE)";
                 statement = connection.prepareStatement(docSql);
                 statement.setString(1, id);
@@ -776,10 +784,11 @@ public class AdminDashboardRepository {
                 String queueSql = "SELECT ap.appointment_id, pat.full_name AS patient_name, "
                                 + "ap.status, COALESCE(ds.time_slot, FORMAT(ap.appointment_time, 'HH:mm')) AS time_slot "
                                 + "FROM Appointment ap "
-                                + "JOIN Account pat ON pat.account_id = ap.patient_id "
+                                + "JOIN Patient p ON p.patient_id = ap.patient_id "
+                                + "JOIN Account pat ON pat.account_id = p.account_id "
                                 + "JOIN Doctor_Schedule ds ON ds.schedule_id = ap.schedule_id "
                                 + "WHERE ds.room_id = ? AND ds.work_date = CAST(GETDATE() AS DATE) "
-                                + "AND ap.status IN ('waiting', 'confirmed', 'in progress') "
+                                + "AND LOWER(ap.status) IN ('waiting', 'confirmed', 'in_progress') "
                                 + "ORDER BY time_slot ASC";
                 statement = connection.prepareStatement(queueSql);
                 statement.setString(1, id);
