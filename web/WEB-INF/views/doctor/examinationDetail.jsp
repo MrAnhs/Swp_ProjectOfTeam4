@@ -340,15 +340,15 @@
                     </div>
                 </div>
                 <div class="exam-grid">
-                    <div class="exam-metric"><div class="exam-metric-label">Urea</div><input id="metricUrea" class="form-control form-control-sm" type="number" step="0.01" min="0" value="${record.urea}" ${!canEditDiagnosis ? 'disabled' : ''}></div>
-                    <div class="exam-metric"><div class="exam-metric-label">Creatinine</div><input id="metricCr" class="form-control form-control-sm" type="number" step="0.01" min="0" value="${record.cr}" ${!canEditDiagnosis ? 'disabled' : ''}></div>
-                    <div class="exam-metric"><div class="exam-metric-label">Đường huyết</div><input id="metricHba1c" class="form-control form-control-sm" type="number" step="0.01" min="0" value="${record.hba1c}" ${!canEditDiagnosis ? 'disabled' : ''}></div>
-                    <div class="exam-metric"><div class="exam-metric-label">Cholesterol</div><input id="metricChol" class="form-control form-control-sm" type="number" step="0.01" min="0" value="${record.chol}" ${!canEditDiagnosis ? 'disabled' : ''}></div>
-                    <div class="exam-metric"><div class="exam-metric-label">TG</div><input id="metricTg" class="form-control form-control-sm" type="number" step="0.01" min="0" value="${record.tg}" ${!canEditDiagnosis ? 'disabled' : ''}></div>
-                    <div class="exam-metric"><div class="exam-metric-label">HDL</div><input id="metricHdl" class="form-control form-control-sm" type="number" step="0.01" min="0" value="${record.hdl}" ${!canEditDiagnosis ? 'disabled' : ''}></div>
-                    <div class="exam-metric"><div class="exam-metric-label">LDL/LDL</div><input id="metricIdl" class="form-control form-control-sm" type="number" step="0.01" min="0" value="${record.ldl}" ${!canEditDiagnosis ? 'disabled' : ''}></div>
-                    <div class="exam-metric"><div class="exam-metric-label">VLDL</div><input id="metricVldl" class="form-control form-control-sm" type="number" step="0.01" min="0" value="${record.vldl}" ${!canEditDiagnosis ? 'disabled' : ''}></div>
-                    <div class="exam-metric"><div class="exam-metric-label">BMI</div><input id="metricBmi" class="form-control form-control-sm" type="number" step="0.01" min="0" value="${record.bmi}" ${!canEditDiagnosis ? 'disabled' : ''}></div>
+                    <div class="exam-metric"><div class="exam-metric-label">Urea</div><input id="metricUrea" class="form-control form-control-sm bg-light text-dark fw-bold" type="text" value="${record.urea != null ? record.urea : 'Chưa có'}" readonly disabled></div>
+                    <div class="exam-metric"><div class="exam-metric-label">Creatinine</div><input id="metricCr" class="form-control form-control-sm bg-light text-dark fw-bold" type="text" value="${record.cr != null ? record.cr : 'Chưa có'}" readonly disabled></div>
+                    <div class="exam-metric"><div class="exam-metric-label">Đường huyết (HbA1c)</div><input id="metricHba1c" class="form-control form-control-sm bg-light text-dark fw-bold" type="text" value="${record.hba1c != null ? record.hba1c : 'Chưa có'}" readonly disabled></div>
+                    <div class="exam-metric"><div class="exam-metric-label">Cholesterol</div><input id="metricChol" class="form-control form-control-sm bg-light text-dark fw-bold" type="text" value="${record.chol != null ? record.chol : 'Chưa có'}" readonly disabled></div>
+                    <div class="exam-metric"><div class="exam-metric-label">TG</div><input id="metricTg" class="form-control form-control-sm bg-light text-dark fw-bold" type="text" value="${record.tg != null ? record.tg : 'Chưa có'}" readonly disabled></div>
+                    <div class="exam-metric"><div class="exam-metric-label">HDL</div><input id="metricHdl" class="form-control form-control-sm bg-light text-dark fw-bold" type="text" value="${record.hdl != null ? record.hdl : 'Chưa có'}" readonly disabled></div>
+                    <div class="exam-metric"><div class="exam-metric-label">LDL</div><input id="metricIdl" class="form-control form-control-sm bg-light text-dark fw-bold" type="text" value="${record.ldl != null ? record.ldl : 'Chưa có'}" readonly disabled></div>
+                    <div class="exam-metric"><div class="exam-metric-label">VLDL</div><input id="metricVldl" class="form-control form-control-sm bg-light text-dark fw-bold" type="text" value="${record.vldl != null ? record.vldl : 'Chưa có'}" readonly disabled></div>
+                    <div class="exam-metric"><div class="exam-metric-label">BMI</div><input id="metricBmi" class="form-control form-control-sm bg-light text-dark fw-bold" type="text" value="${record.bmi != null ? record.bmi : 'Chưa có'}" readonly disabled></div>
                 </div>
             </section>
 
@@ -481,16 +481,7 @@ function saveNotes(recordId) {
         notes: document.getElementById("doctorNotes").value,
         diagnosis: document.getElementById("finalDiagnosis").value,
         can_view: document.getElementById("canView").checked,
-        revisit_date: document.getElementById("revisitDate").value,
-        urea: document.getElementById("metricUrea").value,
-        cr: document.getElementById("metricCr").value,
-        hba1c: document.getElementById("metricHba1c").value,
-        chol: document.getElementById("metricChol").value,
-        tg: document.getElementById("metricTg").value,
-        hdl: document.getElementById("metricHdl").value,
-        ldl: document.getElementById("metricIdl").value,
-        vldl: document.getElementById("metricVldl").value,
-        bmi: document.getElementById("metricBmi").value
+        revisit_date: document.getElementById("revisitDate").value
     });
     fetch("${pageContext.request.contextPath}/doctor/records/save", {
         method: "POST",
