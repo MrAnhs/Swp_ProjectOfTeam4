@@ -307,9 +307,7 @@ public class HealthRecordDAO {
     public boolean hasRequiredAIData(int recordId, int doctorId) {
         String sql = "SELECT COUNT(*) FROM Healthy_Record "
                 + "WHERE health_record_id = ? AND doctor_id = ? "
-                + "AND urea IS NOT NULL AND cr IS NOT NULL AND hba1c IS NOT NULL "
-                + "AND chol IS NOT NULL AND tg IS NOT NULL AND hdl IS NOT NULL "
-                + "AND ldl IS NOT NULL AND vldl IS NOT NULL AND bmi IS NOT NULL";
+                + "AND hba1c IS NOT NULL AND bmi IS NOT NULL AND urea IS NOT NULL";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, recordId);
