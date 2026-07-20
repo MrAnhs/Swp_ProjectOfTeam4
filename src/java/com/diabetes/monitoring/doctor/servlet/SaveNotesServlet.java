@@ -59,22 +59,7 @@ public class SaveNotesServlet extends HttpServlet {
                 return;
             }
 
-            if (!dao.updateHealthMetricsForDoctor(
-                    recordId,
-                    doctorId,
-                    parseNullableDouble(request.getParameter("urea")),
-                    parseNullableDouble(request.getParameter("cr")),
-                    parseNullableDouble(request.getParameter("hba1c")),
-                    parseNullableDouble(request.getParameter("chol")),
-                    parseNullableDouble(request.getParameter("tg")),
-                    parseNullableDouble(request.getParameter("hdl")),
-                    parseNullableDouble(request.getParameter("ldl")),
-                    parseNullableDouble(request.getParameter("vldl")),
-                    parseNullableDouble(request.getParameter("bmi")))) {
-                sendJson(response, HttpServletResponse.SC_FORBIDDEN, false,
-                        "Khong the cap nhat chi so xet nghiem.");
-                return;
-            }
+
 
             String revisitDateStr = request.getParameter("revisit_date");
             java.sql.Timestamp revisitDate = null;
