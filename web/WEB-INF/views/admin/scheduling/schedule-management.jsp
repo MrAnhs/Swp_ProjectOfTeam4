@@ -1685,8 +1685,10 @@
                             }
                         });
                     </script>
-                    <script charset="UTF-8"
-                        src="${pageContext.request.contextPath}/assets/js/pages/admin/schedule-management.js?v=20260713-staff-room1"></script>
+                    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/admin/schedule-common.js?v=20260722-v1"></script>
+                    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/admin/schedule-doctor.js?v=20260722-v1"></script>
+                    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/admin/schedule-staff.js?v=20260722-v1"></script>
+                    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/admin/schedule-wizard.js?v=20260722-v1"></script>
                 </body>
 
                 </html>
