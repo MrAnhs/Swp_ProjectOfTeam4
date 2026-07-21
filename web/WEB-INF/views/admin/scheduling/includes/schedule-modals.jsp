@@ -58,15 +58,16 @@
                         <div class="modal-body">
                             <div class="mb-3">
                                 <label class="form-label">Bác sĩ</label>
-                                <select class="form-select" name="doctorId" required>
+                                <select class="form-select" name="doctorId" id="createScheduleDoctorId" required>
+                                    <option value="">-- Chọn bác sĩ --</option>
                                     <c:forEach var="d" items="${doctors}">
-                                        <option value="${d.doctorId}">${d.fullName}</option>
+                                        <option value="${d.doctorId}" data-department="${d.department}">${d.fullName} (${d.department})</option>
                                     </c:forEach>
                                 </select>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Phòng trực</label>
-                                <select class="form-select" name="roomId" required>
+                                <select class="form-select" name="roomId" id="createScheduleRoomId" required>
                                     <option value="">-- Chọn phòng --</option>
                                     <c:forEach var="room" items="${rooms}">
                                         <option value="${room.roomId}">${room.roomNumber} - ${room.roomName}</option>
@@ -608,4 +609,67 @@
                 </div>
             </div>
         </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const doctorSelect = document.getElementById('createScheduleDoctorId');
+    const roomSelect = document.getElementById('createScheduleRoomId');
+
+    if (doctorSelect && roomSelect) {
+        doctorSelect.addEventListener('change', function() {
+            const selectedOpt = this.options[this.selectedIndex];
+            if (!selectedOpt) return;
+            const dept = selectedOpt.getAttribute('data-department') || '';
+            autoSelectRoomForDepartment(dept);
+        });
+
+        const modal = document.getElementById('createScheduleModal');
+        if (modal) {
+            modal.addEventListener('shown.bs.modal', function () {
+                const selectedOpt = doctorSelect.options[doctorSelect.selectedIndex];
+                if (selectedOpt && selectedOpt.value) {
+                    const dept = selectedOpt.getAttribute('data-department') || '';
+                    autoSelectRoomForDepartment(dept);
+                }
+            });
+        }
+    }
+
+    function autoSelectRoomForDepartment(dept) {
+        if (!roomSelect) return;
+        const options = Array.from(roomSelect.options);
+        if (options.length <= 1) return;
+        
+        let targetKeywords = [];
+        const lowerDept = dept.toLowerCase();
+        
+        if (lowerDept.includes('endocrin') || lowerDept.includes('nội tiết') || lowerDept.includes('tiểu đường')) {
+            targetKeywords = ['nội tiết', '102', '103', 'xét nghiệm']; 
+        } else if (lowerDept.includes('cardio') || lowerDept.includes('tim mạch')) {
+            targetKeywords = ['tim mạch', '104', '105', 'tổng quát'];
+        } else if (lowerDept.includes('nephro') || lowerDept.includes('thận')) {
+            targetKeywords = ['thận', '103', '102', 'tổng quát'];
+        } else {
+            targetKeywords = ['tổng quát', '104', '105', '202', '203'];
+        }
+
+        let bestOptionValue = "";
+        for (let keyword of targetKeywords) {
+            const match = options.find(opt => opt.text.toLowerCase().includes(keyword.toLowerCase()));
+            if (match) {
+                bestOptionValue = match.value;
+                break;
+            }
+        }
+
+        if (!bestOptionValue && options.length > 1) {
+            bestOptionValue = options[1].value;
+        }
+
+        if (bestOptionValue) {
+            roomSelect.value = bestOptionValue;
+        }
+    }
+});
+</script>
 
