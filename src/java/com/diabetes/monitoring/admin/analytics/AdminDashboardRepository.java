@@ -97,6 +97,7 @@ public class AdminDashboardRepository {
         stats.put("in_progress", 0);
         stats.put("completed", 0);
         stats.put("cancelled", 0);
+        stats.put("absent", 0);
 
         String sql = "SELECT status, COUNT(*) FROM Appointment "
                 + "WHERE CAST(appointment_time AS DATE) = CAST(GETDATE() AS DATE) "

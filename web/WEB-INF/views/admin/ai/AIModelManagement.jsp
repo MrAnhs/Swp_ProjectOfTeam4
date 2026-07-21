@@ -200,6 +200,7 @@
                         <option value="Pending" ${status == 'Pending' ? 'selected' : ''}>Chờ duyệt</option>
                         <option value="Approved" ${status == 'Approved' ? 'selected' : ''}>Đã duyệt</option>
                         <option value="Exported" ${status == 'Exported' ? 'selected' : ''}>Đã đưa sang AI</option>
+                        <option value="Trained" ${status == 'Trained' ? 'selected' : ''}>Đã huấn luyện AI</option>
                         <option value="Rejected" ${status == 'Rejected' ? 'selected' : ''}>Đã từ chối</option>
                     </select>
                 </div>
@@ -1269,10 +1270,15 @@
             </table>
         </div>
         
-        <div class="text-center">
+        <div class="text-center d-flex justify-content-center gap-2">
             <a href="${pageContext.request.contextPath}/admin?action=ai-management"
-               class="btn btn-success bg-primary-clinic border-0 rounded-pill px-5 py-2 fw-bold">
-                <i class="fa-solid fa-arrow-left me-2"></i>← Quay lại tổng quan
+               class="btn btn-success bg-primary-clinic border-0 rounded-pill px-4 py-2 fw-bold">
+                <i class="fa-solid fa-arrow-left me-2"></i>Quay lại tổng quan
+            </a>
+            <a href="https://wandb.ai/lenghia211105-fpt-university/diabetes-prediction/workspace"
+               target="_blank"
+               class="btn btn-outline-primary rounded-pill px-4 py-2 fw-bold">
+                <i class="fa-solid fa-chart-line me-2"></i>Xem trên WandB Workspace <i class="fa-solid fa-arrow-up-right-from-square ms-1 text-xs"></i>
             </a>
         </div>
     </div>

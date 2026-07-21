@@ -200,6 +200,13 @@
                                         </div>
                                         <span class="mini-stat-value">${appointmentStatusSummary.cancelled}</span>
                                     </div>
+                                    <div class="mini-stat" role="link" tabindex="0" onclick="openDashboardModal('todayAppointments')" style="cursor: pointer;">
+                                        <div class="mini-stat-main">
+                                            <span class="mini-stat-icon text-secondary" style="background: rgba(100, 116, 139, 0.12);"><i class="fa-solid fa-user-slash"></i></span>
+                                            <span class="mini-stat-label">Absent (Vắng mặt)</span>
+                                        </div>
+                                        <span class="mini-stat-value">${appointmentStatusSummary.absent}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
