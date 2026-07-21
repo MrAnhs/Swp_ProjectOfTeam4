@@ -1,0 +1,25 @@
+/dist/
+
+# Build output - không commit compiled files
+/build/
+
+# Java compiled classes
+*.class
+*.jar
+*.war
+*.ear
+
+# NetBeans / IDE files
+/nbproject/private/
+/.idea/
+*.iml
+*.ipr
+*.iws
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db

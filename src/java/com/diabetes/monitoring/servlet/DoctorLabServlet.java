@@ -221,9 +221,105 @@ public class DoctorLabServlet extends HttpServlet {
             request.setAttribute("normalHbA1cCount", normalHbA1cCount);
             request.setAttribute("totalRecords", records.size());
 
-            // Retrieve lab doctor schedule (No longer query Lab_Schedule table from database)
-            List<Map<String, String>> schedules = new ArrayList<>();
-            request.setAttribute("schedules", schedules);
+            // Retrieve lab doctor schedule from Lab_Schedule table
+            List<Map<String, String>> registeredSchedules = new ArrayList<>();
+            String sqlFetchSched = "SELECT ls.work_date, ls.time_slot, ls.room_id, ls.status, dl.full_name AS doctor_name "
+                    + "FROM Lab_Schedule ls "
+                    + "LEFT JOIN Doctor_Lab dl ON ls.lab_id = dl.lab_id "
+                    + "ORDER BY ls.work_date ASC, ls.time_slot ASC";
+            try (PreparedStatement stmtSched = conn.prepareStatement(sqlFetchSched);
+                 ResultSet rsSched = stmtSched.executeQuery()) {
+                while (rsSched.next()) {
+                    Map<String, String> item = new HashMap<>();
+                    item.put("dateStr", rsSched.getString("work_date"));
+                    item.put("slotKey", rsSched.getString("time_slot"));
+                    item.put("roomId", rsSched.getString("room_id"));
+                    String dName = rsSched.getString("doctor_name");
+                    item.put("doctorName", (dName != null && !dName.trim().isEmpty()) ? dName : "Bác sĩ Lab");
+                    item.put("status", rsSched.getString("status") != null ? rsSched.getString("status") : "Active");
+                    
+                    String roomName = rsSched.getString("room_id");
+                    if (roomName != null && roomName.toLowerCase().contains("máu")) {
+                        item.put("type", "blood");
+                    } else {
+                        item.put("type", "urine");
+                    }
+                    registeredSchedules.add(item);
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+            request.setAttribute("registeredSchedules", registeredSchedules);
+            request.setAttribute("schedules", registeredSchedules);
+
+            // Fetch logged-in doctor's profile info from Doctor_Lab table
+            Map<String, String> doctorProfile = new HashMap<>();
+            boolean isProfileComplete = true;
+            String sqlDoctorProfile = "SELECT full_name, phone, email, lab_name, date_of_birth, gender, address FROM Doctor_Lab WHERE account_id = ?";
+            try (PreparedStatement stmtDoc = conn.prepareStatement(sqlDoctorProfile)) {
+                stmtDoc.setInt(1, currentUser.getId());
+                try (ResultSet rsDoc = stmtDoc.executeQuery()) {
+                    if (rsDoc.next()) {
+                        String dName = rsDoc.getString("full_name");
+                        String dPhone = rsDoc.getString("phone");
+                        String dEmail = rsDoc.getString("email");
+                        String dDob = rsDoc.getString("date_of_birth");
+                        String dGender = rsDoc.getString("gender");
+                        String dAddr = rsDoc.getString("address");
+
+                        if (dDob != null && !dDob.trim().isEmpty()) {
+                            dDob = dDob.trim();
+                            if (dDob.length() >= 10) {
+                                dDob = dDob.substring(0, 10);
+                            }
+                        } else {
+                            dDob = "";
+                        }
+
+                        doctorProfile.put("fullName", (dName != null && !dName.trim().isEmpty()) ? dName.trim() : (currentUser.getFullName() != null ? currentUser.getFullName() : ""));
+                        doctorProfile.put("phone", (dPhone != null && !dPhone.trim().isEmpty()) ? dPhone.trim() : (currentUser.getPhone() != null ? currentUser.getPhone() : ""));
+                        doctorProfile.put("email", (dEmail != null && !dEmail.trim().isEmpty()) ? dEmail.trim() : (currentUser.getEmail() != null ? currentUser.getEmail() : ""));
+                        doctorProfile.put("labName", "Phòng xét nghiệm");
+                        doctorProfile.put("dob", !dDob.isEmpty() ? dDob : (currentUser.getDob() != null ? currentUser.getDob() : ""));
+                        doctorProfile.put("gender", (dGender != null && !dGender.trim().isEmpty()) ? dGender.trim() : (currentUser.getGender() != null ? currentUser.getGender() : "Nam"));
+                        doctorProfile.put("address", (dAddr != null && !dAddr.trim().isEmpty()) ? dAddr.trim() : (currentUser.getAddress() != null ? currentUser.getAddress() : ""));
+                    } else {
+                        String uDob = currentUser.getDob();
+                        if (uDob != null && uDob.length() >= 10) uDob = uDob.substring(0, 10);
+                        doctorProfile.put("fullName", currentUser.getFullName() != null ? currentUser.getFullName() : "");
+                        doctorProfile.put("phone", currentUser.getPhone() != null ? currentUser.getPhone() : "");
+                        doctorProfile.put("email", currentUser.getEmail() != null ? currentUser.getEmail() : "");
+                        doctorProfile.put("labName", "Phòng xét nghiệm");
+                        doctorProfile.put("dob", uDob != null ? uDob : "");
+                        doctorProfile.put("gender", currentUser.getGender() != null ? currentUser.getGender() : "Nam");
+                        doctorProfile.put("address", currentUser.getAddress() != null ? currentUser.getAddress() : "");
+                    }
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+
+            // Check if ALL required fields are populated and valid (fullName, phone, dob, gender, address)
+            String pPhone = doctorProfile.get("phone");
+            String pName = doctorProfile.get("fullName");
+            String pDob = doctorProfile.get("dob");
+            String pGender = doctorProfile.get("gender");
+            String pAddr = doctorProfile.get("address");
+
+            if (pPhone == null || pPhone.trim().isEmpty() || !pPhone.trim().matches("^0\\d{9}$") ||
+                pName == null || pName.trim().isEmpty() ||
+                pDob == null || pDob.trim().isEmpty() ||
+                pGender == null || pGender.trim().isEmpty() ||
+                pAddr == null || pAddr.trim().isEmpty()) {
+                isProfileComplete = false;
+            }
+
+            // Max allowed DOB for age >= 18
+            String maxDobStr = java.time.LocalDate.now().minusYears(18).toString();
+            request.setAttribute("maxDobStr", maxDobStr);
+
+            request.setAttribute("doctorProfile", doctorProfile);
+            request.setAttribute("isProfileComplete", isProfileComplete);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -250,6 +346,241 @@ public class DoctorLabServlet extends HttpServlet {
 
         request.setCharacterEncoding("UTF-8");
         String action = request.getParameter("action");
+
+        if ("updateProfile".equals(action)) {
+
+            String fullName = request.getParameter("fullName");
+            String phone = request.getParameter("phone");
+            String email = currentUser.getEmail(); // Keep existing email
+            String labName = "Phòng xét nghiệm"; // Always fixed to Phòng xét nghiệm
+            String dob = request.getParameter("dob");
+            String gender = request.getParameter("gender");
+            String address = request.getParameter("address");
+            String newPassword = request.getParameter("newPassword");
+
+            // 1. Check all required fields
+            if (fullName == null || fullName.trim().isEmpty() ||
+                phone == null || phone.trim().isEmpty() ||
+                dob == null || dob.trim().isEmpty() ||
+                gender == null || gender.trim().isEmpty() ||
+                address == null || address.trim().isEmpty()) {
+                session.setAttribute("errorMsg", "Vui lòng nhập đầy đủ các thông tin bắt buộc (Họ tên, SĐT, Ngày sinh, Giới tính, Địa chỉ).");
+                response.sendRedirect(request.getContextPath() + "/doctor-lab/dashboard");
+                return;
+            }
+
+            // 2. Validate phone (10 digits starting with 0)
+            phone = phone.trim();
+            if (!phone.matches("^0\\d{9}$")) {
+                session.setAttribute("errorMsg", "Số điện thoại không hợp lệ! Vui lòng nhập số điện thoại gồm đúng 10 chữ số bắt đầu bằng số 0 (Ví dụ: 0987654321).");
+                response.sendRedirect(request.getContextPath() + "/doctor-lab/dashboard");
+                return;
+            }
+
+            // 3. Validate Date of Birth (At least 18 years old)
+            try {
+                java.time.LocalDate bDate = java.time.LocalDate.parse(dob.trim());
+                java.time.LocalDate maxAllowedDob = java.time.LocalDate.now().minusYears(18);
+                java.time.LocalDate minAllowedDob = java.time.LocalDate.now().minusYears(100);
+
+                if (bDate.isAfter(maxAllowedDob)) {
+                    session.setAttribute("errorMsg", "Ngày sinh không hợp lệ! Bác sĩ phải từ 18 tuổi trở lên.");
+                    response.sendRedirect(request.getContextPath() + "/doctor-lab/dashboard");
+                    return;
+                }
+                if (bDate.isBefore(minAllowedDob)) {
+                    session.setAttribute("errorMsg", "Ngày sinh không hợp lệ! Vui lòng kiểm tra lại năm sinh.");
+                    response.sendRedirect(request.getContextPath() + "/doctor-lab/dashboard");
+                    return;
+                }
+            } catch (Exception ex) {
+                session.setAttribute("errorMsg", "Định dạng ngày sinh không hợp lệ.");
+                response.sendRedirect(request.getContextPath() + "/doctor-lab/dashboard");
+                return;
+            }
+
+            try (Connection conn = DatabaseConnection.getConnection()) {
+                // Update Doctor_Lab table
+                String sqlUpdLab = "UPDATE Doctor_Lab SET full_name = ?, phone = ?, email = ?, lab_name = ?, date_of_birth = ?, gender = ?, address = ? WHERE account_id = ?";
+                int rowsUpdated = 0;
+                try (PreparedStatement stmtUpd = conn.prepareStatement(sqlUpdLab)) {
+                    stmtUpd.setString(1, fullName.trim());
+                    stmtUpd.setString(2, phone.trim());
+                    stmtUpd.setString(3, email != null ? email.trim() : "");
+                    stmtUpd.setString(4, labName);
+                    if (dob != null && !dob.trim().isEmpty()) {
+                        stmtUpd.setDate(5, java.sql.Date.valueOf(dob.trim()));
+                    } else {
+                        stmtUpd.setNull(5, java.sql.Types.DATE);
+                    }
+                    stmtUpd.setString(6, gender.trim());
+                    stmtUpd.setString(7, address.trim());
+                    stmtUpd.setInt(8, currentUser.getId());
+                    rowsUpdated = stmtUpd.executeUpdate();
+                }
+
+                if (rowsUpdated == 0) {
+                    String sqlInsLab = "INSERT INTO Doctor_Lab (full_name, phone, email, lab_name, date_of_birth, gender, address, account_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                    try (PreparedStatement stmtIns = conn.prepareStatement(sqlInsLab)) {
+                        stmtIns.setString(1, fullName.trim());
+                        stmtIns.setString(2, phone.trim());
+                        stmtIns.setString(3, email != null ? email.trim() : "");
+                        stmtIns.setString(4, labName);
+                        if (dob != null && !dob.trim().isEmpty()) {
+                            stmtIns.setDate(5, java.sql.Date.valueOf(dob.trim()));
+                        } else {
+                            stmtIns.setNull(5, java.sql.Types.DATE);
+                        }
+                        stmtIns.setString(6, gender.trim());
+                        stmtIns.setString(7, address.trim());
+                        stmtIns.setInt(8, currentUser.getId());
+                        stmtIns.executeUpdate();
+                    }
+                }
+
+                // Update Account table
+                String sqlUpdAcc = "UPDATE Account SET full_name = ?, email = ? WHERE account_id = ?";
+                try (PreparedStatement stmtUpdAcc = conn.prepareStatement(sqlUpdAcc)) {
+                    stmtUpdAcc.setString(1, fullName.trim());
+                    stmtUpdAcc.setString(2, email != null ? email.trim() : "");
+                    stmtUpdAcc.setInt(3, currentUser.getId());
+                    stmtUpdAcc.executeUpdate();
+                }
+
+                // Update password if provided
+                if (newPassword != null && !newPassword.trim().isEmpty()) {
+                    String hashedPw = com.diabetes.monitoring.util.PasswordUtil.hashPassword(newPassword.trim());
+                    String sqlPw = "UPDATE Account SET password_hash = ? WHERE account_id = ?";
+                    try (PreparedStatement stmtPw = conn.prepareStatement(sqlPw)) {
+                        stmtPw.setString(1, hashedPw);
+                        stmtPw.setInt(2, currentUser.getId());
+                        stmtPw.executeUpdate();
+                    }
+                }
+
+                // Update current user session object
+                currentUser.setFullName(fullName.trim());
+                currentUser.setPhone(phone.trim());
+                currentUser.setDob(dob.trim());
+                currentUser.setGender(gender.trim());
+                currentUser.setAddress(address.trim());
+                if (email != null && !email.trim().isEmpty()) {
+                    currentUser.setEmail(email.trim());
+                }
+                session.setAttribute("currentUser", currentUser);
+
+                session.setAttribute("successMsg", "Cập nhật thông tin cá nhân thành công! Hồ sơ bác sĩ đã hoàn tất và kích hoạt đầy đủ.");
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                session.setAttribute("errorMsg", "Lỗi cập nhật hồ sơ: " + ex.getMessage());
+            }
+            response.sendRedirect(request.getContextPath() + "/doctor-lab/dashboard");
+            return;
+        }
+
+        if ("registerSchedule".equals(action)) {
+            String workDateStr = request.getParameter("workDate");
+            String timeSlot = request.getParameter("timeSlot");
+            String roomId = request.getParameter("roomId");
+
+            if (workDateStr == null || workDateStr.trim().isEmpty()
+                    || timeSlot == null || timeSlot.trim().isEmpty()
+                    || roomId == null || roomId.trim().isEmpty()) {
+                session.setAttribute("errorMsg", "Vui lòng nhập đầy đủ thông tin đăng ký lịch.");
+                response.sendRedirect(request.getContextPath() + "/doctor-lab/dashboard#pill-register-schedule");
+                return;
+            }
+
+            try {
+                java.time.LocalDate selectedDate = java.time.LocalDate.parse(workDateStr.trim());
+                java.time.LocalDate today = java.time.LocalDate.now();
+                java.time.LocalDate currentMonday = today.with(java.time.DayOfWeek.MONDAY);
+                java.time.LocalDate nextMonday = currentMonday.plusWeeks(1);
+
+                if (selectedDate.isBefore(nextMonday)) {
+                    String formattedMin = nextMonday.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                    session.setAttribute("errorMsg", "Bác sĩ phải đăng ký lịch làm việc trước ít nhất 1 tuần. Hạn chót đăng ký cho tuần tới là 23:59 Chủ nhật tuần này (Ngày làm việc sớm nhất có thể đăng ký: " + formattedMin + ").");
+                    response.sendRedirect(request.getContextPath() + "/doctor-lab/dashboard#pill-register-schedule");
+                    return;
+                }
+            } catch (Exception ex) {
+                session.setAttribute("errorMsg", "Định dạng ngày làm việc không hợp lệ.");
+                response.sendRedirect(request.getContextPath() + "/doctor-lab/dashboard#pill-register-schedule");
+                return;
+            }
+
+            try (Connection conn = DatabaseConnection.getConnection()) {
+                // Find lab_id for currentUser
+                int labId = 1;
+                String sqlLabId = "SELECT lab_id FROM Doctor_Lab WHERE account_id = ?";
+                try (PreparedStatement stmtLab = conn.prepareStatement(sqlLabId)) {
+                    stmtLab.setInt(1, currentUser.getId());
+                    try (ResultSet rsLab = stmtLab.executeQuery()) {
+                        if (rsLab.next()) {
+                            labId = rsLab.getInt("lab_id");
+                        }
+                    }
+                }
+
+                // Check 1: If ANY doctor has already registered this room for this date & time_slot
+                String sqlCheckRoom = "SELECT ls.lab_sched_id, dl.full_name AS doctor_name " +
+                        "FROM Lab_Schedule ls " +
+                        "LEFT JOIN Doctor_Lab dl ON ls.lab_id = dl.lab_id " +
+                        "WHERE ls.work_date = ? AND ls.time_slot = ? AND LOWER(ls.room_id) = LOWER(?) AND (ls.status = 'Active' OR ls.status = 'Registered')";
+                try (PreparedStatement stmtCheck = conn.prepareStatement(sqlCheckRoom)) {
+                    stmtCheck.setDate(1, java.sql.Date.valueOf(workDateStr.trim()));
+                    stmtCheck.setString(2, timeSlot.trim());
+                    stmtCheck.setString(3, roomId.trim());
+                    try (ResultSet rsCheck = stmtCheck.executeQuery()) {
+                        if (rsCheck.next()) {
+                            String registeredDoctor = rsCheck.getString("doctor_name");
+                            if (registeredDoctor == null || registeredDoctor.trim().isEmpty()) {
+                                registeredDoctor = "bác sĩ khác";
+                            }
+                            java.time.LocalDate d = java.time.LocalDate.parse(workDateStr.trim());
+                            String formattedDate = d.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                            session.setAttribute("errorMsg", "Ca làm việc " + timeSlot.trim() + " tại '" + roomId.trim() + "' ngày " + formattedDate + " đã được " + registeredDoctor + " đăng ký! Không thể đăng ký thêm.");
+                            response.sendRedirect(request.getContextPath() + "/doctor-lab/dashboard#pill-register-schedule");
+                            return;
+                        }
+                    }
+                }
+
+                // Check 2: If THIS doctor already registered ANY room for this date & time_slot
+                String sqlCheckDoc = "SELECT lab_sched_id FROM Lab_Schedule WHERE lab_id = ? AND work_date = ? AND time_slot = ? AND (status = 'Active' OR status = 'Registered')";
+                try (PreparedStatement stmtCheckDoc = conn.prepareStatement(sqlCheckDoc)) {
+                    stmtCheckDoc.setInt(1, labId);
+                    stmtCheckDoc.setDate(2, java.sql.Date.valueOf(workDateStr.trim()));
+                    stmtCheckDoc.setString(3, timeSlot.trim());
+                    try (ResultSet rsCheckDoc = stmtCheckDoc.executeQuery()) {
+                        if (rsCheckDoc.next()) {
+                            java.time.LocalDate d = java.time.LocalDate.parse(workDateStr.trim());
+                            String formattedDate = d.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                            session.setAttribute("errorMsg", "Bạn đã đăng ký " + timeSlot.trim() + " vào ngày " + formattedDate + " rồi!");
+                            response.sendRedirect(request.getContextPath() + "/doctor-lab/dashboard#pill-register-schedule");
+                            return;
+                        }
+                    }
+                }
+
+                String sqlInsert = "INSERT INTO Lab_Schedule (lab_id, work_date, time_slot, room_id, status) VALUES (?, ?, ?, ?, 'Active')";
+                try (PreparedStatement stmtInsert = conn.prepareStatement(sqlInsert)) {
+                    stmtInsert.setInt(1, labId);
+                    stmtInsert.setDate(2, java.sql.Date.valueOf(workDateStr.trim()));
+                    stmtInsert.setString(3, timeSlot.trim());
+                    stmtInsert.setString(4, roomId.trim());
+                    stmtInsert.executeUpdate();
+                }
+                
+                session.setAttribute("successMsg", "Đăng ký ca làm việc thành công!");
+            } catch (Exception e) {
+                e.printStackTrace();
+                session.setAttribute("errorMsg", "Lỗi khi đăng ký lịch: " + e.getMessage());
+            }
+            response.sendRedirect(request.getContextPath() + "/doctor-lab/dashboard#pill-register-schedule");
+            return;
+        }
+
         if ("invite".equals(action)) {
             String waitingIdStr = request.getParameter("waitingId");
             if (waitingIdStr == null || waitingIdStr.trim().isEmpty()) {
