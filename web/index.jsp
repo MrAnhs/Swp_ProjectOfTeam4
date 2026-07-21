@@ -667,13 +667,6 @@
                 <a href="#features" class="nav-link text-white-50 text-decoration-none small">Tính năng</a>
                 <a href="#about" class="nav-link text-white-50 text-decoration-none small">Về chúng tôi</a>
                 <a href="#blog" class="nav-link text-white-50 text-decoration-none small">Blog</a>
-                <div style="position: relative;">
-                    <button class="lang-switcher border-0 bg-transparent text-white-50 small d-flex align-items-center gap-1" type="button">
-                        <i class="bi bi-globe"></i>
-                        <span>Tiếng Việt</span>
-                        <i class="bi bi-chevron-down" style="font-size: 0.75rem;"></i>
-                    </button>
-                </div>
                 <a href="login.jsp" class="nav-link text-white-50 text-decoration-none small">Đăng nhập</a>
                 <a href="register.jsp" class="nav-link text-white-50 text-decoration-none small">Đăng ký</a>
                 <a href="login.jsp" class="btn-primary-nav text-white text-decoration-none small fw-bold px-4 py-2" style="background: linear-gradient(135deg, #2AB5A3, #208A7C); border-radius: 50px; box-shadow: 0 4px 15px rgba(42, 181, 163, 0.4);">BẮT ĐẦU CHAT AI</a>
@@ -727,11 +720,6 @@
                         <div class="sidebar-icon" title="Khám chi tiết"><i class="bi bi-clipboard2-pulse-fill"></i></div>
                         <div class="sidebar-icon" title="Đã hoàn thành"><i class="bi bi-archive"></i></div>
                         <div class="sidebar-icon mt-auto" title="Đăng xuất"><i class="bi bi-box-arrow-left"></i></div>
-                    </div>
-
-                    <!-- Floating sidebar vertical tab -->
-                    <div class="dashboard-floating-sidebar-tab">
-                        <i class="bi bi-heart-pulse"></i> BÁC SĨ
                     </div>
 
                     <!-- Floating Top Pills -->
