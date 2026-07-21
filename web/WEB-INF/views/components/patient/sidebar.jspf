@@ -16,7 +16,6 @@
             <small>${sessionScope.currentUser.email}</small>
         </div>
     </div>
-
     <nav class="sidebar-nav">
         <a href="${pageContext.request.contextPath}/patient/dashboard"
            class="nav-item-dash${activePatientPage eq 'dashboard' ? ' active' : ''}">

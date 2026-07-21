@@ -1,6 +1,7 @@
 package com.diabetes.monitoring.service;
 
 import com.diabetes.monitoring.model.AppointmentBookingResult;
+import com.diabetes.monitoring.notification.NotificationService;
 import com.diabetes.monitoring.util.DatabaseConnection;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -14,6 +15,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
 
 public class AppointmentService {
+    private final NotificationService notificationService = new NotificationService();
 
     public AppointmentBookingResult bookByDoctor(int accountId, int doctorId, int scheduleId)
             throws SQLException, AppointmentBookingException {
@@ -52,6 +54,7 @@ public class AppointmentService {
                 markScheduleFull(connection, scheduleId);
             }
 
+            notificationService.notifyAppointmentCreated(connection, appointmentId);
             connection.commit();
             return createResult(appointmentId, scheduleId, queueNumber, appointmentTime, schedule);
         } catch (AppointmentBookingException | SQLException e) {
@@ -99,6 +102,7 @@ public class AppointmentService {
                 markScheduleFull(connection, schedule.scheduleId);
             }
 
+            notificationService.notifyAppointmentCreated(connection, appointmentId);
             connection.commit();
             return createResult(appointmentId, schedule.scheduleId, queueNumber,
                     appointmentTime, schedule);
@@ -124,43 +128,7 @@ public class AppointmentService {
                 }
             }
         }
-
-        // Thử tìm theo email của tài khoản
-        String fallbackSql = "SELECT p.patient_id FROM Patient p "
-                + "INNER JOIN Account a ON a.email = p.email "
-                + "WHERE a.account_id = ?";
-        try (PreparedStatement statement = connection.prepareStatement(fallbackSql)) {
-            statement.setInt(1, accountId);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                if (resultSet.next()) {
-                    int patientId = resultSet.getInt("patient_id");
-                    try (PreparedStatement updateStmt = connection.prepareStatement(
-                            "UPDATE Patient SET account_id = ? WHERE patient_id = ?")) {
-                        updateStmt.setInt(1, accountId);
-                        updateStmt.setInt(2, patientId);
-                        updateStmt.executeUpdate();
-                    }
-                    return patientId;
-                }
-            }
-        }
-
-        // Tự động tạo bản ghi Patient nếu chưa tồn tại
-        String createSql = "INSERT INTO Patient (full_name, date_of_birth, gender, phone, email, address, account_id) "
-                + "SELECT full_name, '2000-01-01', N'Nam', '0900000000', email, N'Chưa cập nhật', account_id "
-                + "FROM Account WHERE account_id = ?";
-        try (PreparedStatement statement = connection.prepareStatement(createSql, Statement.RETURN_GENERATED_KEYS)) {
-            statement.setInt(1, accountId);
-            statement.executeUpdate();
-            try (ResultSet keys = statement.getGeneratedKeys()) {
-                if (keys.next()) {
-                    return keys.getInt(1);
-                }
-            }
-        } catch (SQLException ignored) {
-        }
-
-        throw new AppointmentBookingException("Không tìm thấy hồ sơ bệnh nhân cho tài khoản này.");
+        throw new AppointmentBookingException("Kh\u00F4ng t\u00ECm th\u1EA5y h\u1ED3 s\u01A1 b\u1EC7nh nh\u00E2n.");
     }
 
     private ScheduleSelection lockSchedule(Connection connection, int doctorId, int scheduleId)
@@ -193,8 +161,7 @@ public class AppointmentService {
                 schedule.maxPatients = resultSet.getInt("max_patients");
                 schedule.doctorName = resultSet.getString("full_name");
                 schedule.department = resultSet.getString("department");
-                int roomId = resultSet.getInt("room_id");
-                schedule.roomId = resultSet.wasNull() ? null : roomId;
+                schedule.roomId = resultSet.getString("room_id");
                 schedule.roomName = resultSet.getString("room_name");
                 schedule.roomLocation = resultSet.getString("room_location");
                 return schedule;
@@ -237,8 +204,7 @@ public class AppointmentService {
                 schedule.maxPatients = resultSet.getInt("max_patients");
                 schedule.doctorName = resultSet.getString("full_name");
                 schedule.department = resultSet.getString("department");
-                int roomId = resultSet.getInt("room_id");
-                schedule.roomId = resultSet.wasNull() ? null : roomId;
+                schedule.roomId = resultSet.getString("room_id");
                 schedule.roomName = resultSet.getString("room_name");
                 schedule.roomLocation = resultSet.getString("room_location");
                 return schedule;
@@ -378,6 +344,62 @@ public class AppointmentService {
         }
     }
 
+    public void cancelByPatient(int accountId, int appointmentId)
+            throws SQLException, AppointmentBookingException {
+        Connection connection = null;
+        try {
+            connection = DatabaseConnection.getConnection();
+            connection.setAutoCommit(false);
+
+            String sqlCheck = "SELECT a.appointment_time, a.status "
+                    + "FROM Appointment a INNER JOIN Patient p ON p.patient_id = a.patient_id "
+                    + "WHERE a.appointment_id = ? AND p.account_id = ?";
+            LocalDateTime appointmentTime = null;
+            String status = null;
+            try (PreparedStatement checkStmt = connection.prepareStatement(sqlCheck)) {
+                checkStmt.setInt(1, appointmentId);
+                checkStmt.setInt(2, accountId);
+                try (ResultSet rs = checkStmt.executeQuery()) {
+                    if (rs.next()) {
+                        Timestamp ts = rs.getTimestamp("appointment_time");
+                        appointmentTime = ts == null ? null : ts.toLocalDateTime();
+                        status = rs.getString("status");
+                    }
+                }
+            }
+
+            if (appointmentTime == null) {
+                throw new AppointmentBookingException("Không tìm thấy lịch hẹn hoặc bạn không có quyền hủy.");
+            }
+
+            if (!"Waiting".equalsIgnoreCase(status)) {
+                throw new AppointmentBookingException("Chỉ có thể hủy lịch hẹn ở trạng thái Chờ khám (Waiting).");
+            }
+
+            if (appointmentTime.isBefore(LocalDateTime.now().plusHours(24))) {
+                throw new AppointmentBookingException("Không thể tự hủy lịch hẹn trong vòng 24 giờ trước giờ khám. Vui lòng liên hệ hotline để được hỗ trợ.");
+            }
+
+            String sqlUpdate = "UPDATE Appointment SET status = 'Cancelled' WHERE appointment_id = ?";
+            try (PreparedStatement updateStmt = connection.prepareStatement(sqlUpdate)) {
+                updateStmt.setInt(1, appointmentId);
+                updateStmt.executeUpdate();
+            }
+
+            notificationService.notifyAppointmentCancelled(connection, appointmentId);
+
+            connection.commit();
+        } catch (SQLException e) {
+            rollback(connection);
+            throw e;
+        } catch (AppointmentBookingException e) {
+            rollback(connection);
+            throw e;
+        } finally {
+            close(connection);
+        }
+    }
+
     private AppointmentBookingResult createResult(int appointmentId, int scheduleId, int queueNumber,
             LocalDateTime appointmentTime, ScheduleSelection schedule) {
         AppointmentBookingResult result = new AppointmentBookingResult();
@@ -425,7 +447,7 @@ public class AppointmentService {
         private int maxPatients;
         private String doctorName;
         private String department;
-        private Integer roomId;
+        private String roomId;
         private String roomName;
         private String roomLocation;
     }

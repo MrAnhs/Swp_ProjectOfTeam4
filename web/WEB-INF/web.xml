@@ -23,6 +23,21 @@
     </filter-mapping>
 
     <filter>
+        <filter-name>NotificationCountFilter</filter-name>
+        <filter-class>com.diabetes.monitoring.filter.NotificationCountFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>NotificationCountFilter</filter-name>
+        <url-pattern>/patient/*</url-pattern>
+        <url-pattern>/doctor/*</url-pattern>
+        <url-pattern>/doctor-lab/*</url-pattern>
+        <url-pattern>/receptionist/*</url-pattern>
+        <url-pattern>/admin</url-pattern>
+        <url-pattern>/admin/*</url-pattern>
+        <url-pattern>/settings/*</url-pattern>
+    </filter-mapping>
+
+    <filter>
         <filter-name>AuthenticationFilter</filter-name>
         <filter-class>com.diabetes.monitoring.filter.AuthenticationFilter</filter-class>
     </filter>
@@ -106,6 +121,15 @@
 
 
     <servlet>
+        <servlet-name>NotificationServlet</servlet-name>
+        <servlet-class>com.diabetes.monitoring.servlet.NotificationServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>NotificationServlet</servlet-name>
+        <url-pattern>/notifications/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
 
         <servlet-name>AuthServlet</servlet-name>
 
@@ -155,6 +179,15 @@
 
         <url-pattern>/register</url-pattern>
 
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>ForgotPasswordServlet</servlet-name>
+        <servlet-class>com.diabetes.monitoring.servlet.ForgotPasswordServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ForgotPasswordServlet</servlet-name>
+        <url-pattern>/forgot-password/*</url-pattern>
     </servlet-mapping>
 
     <servlet>
@@ -309,15 +342,6 @@
     <servlet-mapping>
         <servlet-name>DoctorLaboratoryRequestServlet</servlet-name>
         <url-pattern>/doctor/laboratory-requests/create</url-pattern>
-    </servlet-mapping>
-
-    <servlet>
-        <servlet-name>DoctorScheduleServlet</servlet-name>
-        <servlet-class>com.diabetes.monitoring.doctor.servlet.DoctorScheduleServlet</servlet-class>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>DoctorScheduleServlet</servlet-name>
-        <url-pattern>/doctor/schedule</url-pattern>
     </servlet-mapping>
 
     <servlet>
@@ -525,7 +549,6 @@
         <servlet-name>PatientVisitServlet</servlet-name>
         <url-pattern>/patient/api/history</url-pattern>
     </servlet-mapping>
-<<<<<<< HEAD
 
     <servlet>
         <servlet-name>VnPayController</servlet-name>
@@ -572,11 +595,6 @@
         <url-pattern>/patient/family-dashboard</url-pattern>
     </servlet-mapping>
 
-<<<<<<< HEAD
-=======
->>>>>>> b6789e344b33b6da54a0d7ea8b6cd470f19497b2
-=======
->>>>>>> 015cdbc (Cap nhat day du chuc nang role patient tu ban 14 sang ban 12 va loai bo file build/class theo gitignore)
     <mime-mapping>
         <extension>js</extension>
         <mime-type>application/javascript; charset=UTF-8</mime-type>

@@ -212,8 +212,7 @@ public class DoctorDAO {
         schedule.setMaxPatients(resultSet.getInt("max_patients"));
         schedule.setBookedPatients(resultSet.getInt("booked_patients"));
         schedule.setStatus(resultSet.getString("status"));
-        int roomId = resultSet.getInt("room_id");
-        schedule.setRoomId(resultSet.wasNull() ? null : roomId);
+        schedule.setRoomId(resultSet.getString("room_id"));
         schedule.setRoomName(resultSet.getString("room_name"));
         schedule.setRoomLocation(resultSet.getString("room_location"));
         return schedule;
