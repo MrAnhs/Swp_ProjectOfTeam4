@@ -8,8 +8,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="app-context-path" content="${pageContext.request.contextPath}">
     <title>Cài đặt - DiabetesCare</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/base/variables.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/pages/settings/settings.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/base/variables.css?v=20260721-ui2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/pages/settings/settings.css?v=20260721-ui2">
 </head>
 <body class="settings-page">
     <aside class="settings-sidebar">

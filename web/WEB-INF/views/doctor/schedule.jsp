@@ -9,27 +9,34 @@
     <title>Lịch trực bác sĩ - DiabetesCare</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="${pageContext.request.contextPath}/assets/css/pages/doctor/doctor.css" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/css/pages/doctor/doctor.css?v=20260721-ui2" rel="stylesheet">
     <style>
         .grid-header-cell {
-            background-color: #007f61 !important;
-            color: #ffffff !important;
+            background-color: #0F172A !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            color: #2AB5A3 !important;
             text-align: center;
-            font-weight: 600;
+            font-weight: 700;
         }
         .schedule-cell-card {
-            border: 1px solid rgba(0, 127, 97, 0.12);
-            border-radius: 8px;
-            background-color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: 12px;
+            background-color: rgba(30, 41, 59, 0.45) !important;
+            color: #ffffff !important;
+            backdrop-filter: blur(12px) !important;
             transition: all 0.2s ease;
         }
         .schedule-cell-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(0, 127, 97, 0.08);
+            border-color: rgba(42, 181, 163, 0.4) !important;
+            box-shadow: 0 6px 16px rgba(42, 181, 163, 0.15);
         }
         .slot-badge {
             font-size: 0.8rem;
-            font-weight: 500;
+            font-weight: 600;
+            background-color: rgba(42, 181, 163, 0.15) !important;
+            color: #2AB5A3 !important;
+            border: 1px solid rgba(42, 181, 163, 0.3) !important;
         }
         .text-xs {
             font-size: 0.72rem;
@@ -64,85 +71,84 @@
             <!-- Filter Dropdowns -->
             <div class="d-flex align-items-center gap-2">
                 <div class="d-flex align-items-center gap-1">
-                    <label class="fw-bold text-secondary text-uppercase small m-0" for="yearSelect">Năm</label>
-                    <select id="yearSelect" class="form-select form-select-sm" style="width: 90px;" onchange="generateWeekOptions(); renderScheduleGrid();">
+                    <label class="fw-bold text-uppercase small m-0" style="color: #cbd5e1;" for="yearSelect">Năm</label>
+                    <select id="yearSelect" class="form-select form-select-sm doctor-filter" style="width: 90px;" onchange="generateWeekOptions(); renderScheduleGrid();">
                     </select>
                 </div>
                 <div class="d-flex align-items-center gap-1">
-                    <label class="fw-bold text-secondary text-uppercase small m-0" for="weekSelect">Tuần</label>
-                    <select id="weekSelect" class="form-select form-select-sm" style="min-width: 180px;" onchange="renderScheduleGrid()">
-                        <!-- Options generated dynamically -->
+                    <label class="fw-bold text-uppercase small m-0" style="color: #cbd5e1;" for="weekSelect">Tuần</label>
+                    <select id="weekSelect" class="form-select form-select-sm doctor-filter" style="width: 250px;" onchange="renderScheduleGrid();">
                     </select>
                 </div>
             </div>
         </div>
     </section>
 
-    <section class="doctor-card p-3">
+    <!-- Schedule Grid Table -->
+    <div class="doctor-card p-0 overflow-hidden">
         <div class="table-responsive">
-            <table class="table table-bordered align-middle mb-0">
+            <table class="table doctor-table m-0">
                 <thead>
                     <tr id="headerRow">
-                        <!-- MON to SUN headers with date values populated dynamically -->
+                        <th class="grid-header-cell" style="width: 140px; background-color: #0F172A !important;">Khung giờ</th>
                     </tr>
                 </thead>
                 <tbody id="gridBody">
-                    <!-- Dynamic Grid Rows -->
                 </tbody>
             </table>
         </div>
-    </section>
+    </div>
 </main>
 
 <script>
-// Serialize database schedules from controller
 const schedules = [
     <c:forEach var="s" items="${schedules}" varStatus="loop">
         {
-            workDate: '<fmt:formatDate value="${s.workDate}" pattern="yyyy-MM-dd"/>',
-            workDateDisplay: '<fmt:formatDate value="${s.workDate}" pattern="dd/MM/yyyy"/>',
-            timeSlot: '${s.timeSlot}',
-            roomName: '${s.roomName}',
-            roomId: '${s.roomId}',
+            workDate: '${s.workDate != null ? s.workDate : ""}',
+            timeSlot: '${s.timeSlot != null ? s.timeSlot : ""}',
+            roomName: '${s.roomName != null ? s.roomName : ""}',
+            roomId: '${s.roomId != null ? s.roomId : ""}',
             maxPatients: ${not empty s.maxPatients ? s.maxPatients : 0},
             bookedPatients: ${not empty s.bookedPatients ? s.bookedPatients : 0},
-            status: '${s.status}'
+            status: '${s.status != null ? s.status : ""}'
         }${!loop.last ? ',' : ''}
     </c:forEach>
 ];
 
-function getMonday(d) {
-    d = new Date(d);
-    const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-    return new Date(d.setDate(diff));
-}
-
-function formatDateShort(date) {
-    const dd = String(date.getDate()).padStart(2, '0');
-    const mm = String(date.getMonth() + 1).padStart(2, '0');
-    return dd + "/" + mm;
-}
-
-function formatDateLocal(date) {
-    const yyyy = date.getFullYear();
-    const mm = String(date.getMonth() + 1).padStart(2, '0');
-    const dd = String(date.getDate()).padStart(2, '0');
-    return yyyy + "-" + mm + "-" + dd;
-}
-
 function parseLocalDate(dateStr) {
+    if (!dateStr) return new Date();
     const parts = dateStr.split('-');
     return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+}
+
+function formatDateLocal(dateObj) {
+    const y = dateObj.getFullYear();
+    const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const d = String(dateObj.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + d;
+}
+
+function formatDateShort(dateObj) {
+    const d = String(dateObj.getDate()).padStart(2, '0');
+    const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+    return d + '/' + m;
+}
+
+function getMonday(d) {
+    const date = new Date(d);
+    const day = date.getDay();
+    const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+    return new Date(date.setDate(diff));
 }
 
 function populateYearSelect() {
     const select = document.getElementById("yearSelect");
     if (!select) return;
     
-    select.innerHTML = "";
     const currentYear = new Date().getFullYear();
-    for (let y = currentYear - 1; y <= currentYear + 2; y++) {
+    select.innerHTML = "";
+    
+    for (let y = currentYear - 1; y <= currentYear + 1; y++) {
         const option = document.createElement("option");
         option.value = y;
         option.textContent = y;
@@ -156,43 +162,29 @@ function populateYearSelect() {
 function generateWeekOptions() {
     const select = document.getElementById("weekSelect");
     if (!select) return;
-    
     select.innerHTML = "";
-    
     const yearSelect = document.getElementById("yearSelect");
     const selectedYear = yearSelect ? parseInt(yearSelect.value) : new Date().getFullYear();
-    
     const today = new Date();
-    const currentYear = today.getFullYear();
-    
     let tempDate = new Date(selectedYear, 0, 1);
     let firstMonday = getMonday(tempDate);
-    
     let current = new Date(firstMonday);
     let weekIndex = 1;
-    
     while (current.getFullYear() <= selectedYear) {
         const monday = new Date(current);
         const sunday = new Date(monday);
         sunday.setDate(monday.getDate() + 6);
-        
         const option = document.createElement("option");
         option.value = formatDateLocal(monday);
-        
-        const formatStr = "Tuần " + String(weekIndex).padStart(2, '0') + " (" + formatDateShort(monday) + " - " + formatDateShort(sunday) + ")";
-        option.textContent = formatStr;
-        
-        if (selectedYear === currentYear) {
+        option.textContent = "Tuần " + String(weekIndex).padStart(2, '0') + " (" + formatDateShort(monday) + " - " + formatDateShort(sunday) + ")";
+        if (selectedYear === today.getFullYear()) {
             const todayStr = formatDateLocal(today);
-            const monStr = formatDateLocal(monday);
-            const sunStr = formatDateLocal(sunday);
-            if (todayStr >= monStr && todayStr <= sunStr) {
+            if (todayStr >= formatDateLocal(monday) && todayStr <= formatDateLocal(sunday)) {
                 option.selected = true;
             }
         } else if (weekIndex === 1) {
             option.selected = true;
         }
-        
         select.appendChild(option);
         current.setDate(current.getDate() + 7);
         weekIndex++;
@@ -202,115 +194,60 @@ function generateWeekOptions() {
 function getStandardShift(dbTimeSlot) {
     if (!dbTimeSlot) return null;
     const timeStr = dbTimeSlot.toLowerCase().replace(/\s/g, '');
-    
     const match = timeStr.match(/^(\d{1,2})[\:\s\-\_]/);
     if (match) {
         const startHour = parseInt(match[1]);
-        if (startHour < 12) {
-            return "7:30 - 12:00";
-        } else {
-            return "13:30 - 16:30";
-        }
+        return startHour < 12 ? "7:30 - 12:00" : "13:30 - 16:30";
     }
-    
-    if (timeStr.includes("12:") || timeStr.includes("13:") || timeStr.includes("14:") || timeStr.includes("15:") || timeStr.includes("16:") || timeStr.includes("17:") || timeStr.includes("18:")) {
-        return "13:30 - 16:30";
-    }
-    return "7:30 - 12:00";
+    return timeStr.includes("12:") || timeStr.includes("13:") || timeStr.includes("14:") || timeStr.includes("15:") || timeStr.includes("16:") || timeStr.includes("17:") || timeStr.includes("18:") ? "13:30 - 16:30" : "7:30 - 12:00";
 }
 
 function renderScheduleGrid() {
     const mondayStr = document.getElementById("weekSelect").value;
     if (!mondayStr) return;
     const mondayDate = parseLocalDate(mondayStr);
-    
-    // Update headers with actual dates
     const headerRow = document.getElementById("headerRow");
-    headerRow.innerHTML = '<th class="grid-header-cell" style="width: 140px; background-color: #0d5f49 !important;">Khung giờ</th>';
-    
+    headerRow.innerHTML = '<th class="grid-header-cell" style="width: 140px; background-color: #0F172A !important;">Khung giờ</th>';
     const weekDates = [];
     const dayNames = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
-    
     for (let i = 0; i < 7; i++) {
         const current = new Date(mondayDate);
         current.setDate(mondayDate.getDate() + i);
         weekDates.push(current);
-        
-        const dateStr = formatDateShort(current);
-        headerRow.innerHTML += '<th class="grid-header-cell" style="min-width: 130px;">' +
-            '<div>' + dayNames[i] + '</div>' +
-            '<div class="fw-normal text-xs opacity-75 mt-0.5">' + dateStr + '</div>' +
-        '</th>';
+        headerRow.innerHTML += '<th class="grid-header-cell" style="min-width: 130px;"><div>' + dayNames[i] + '</div><div class="fw-normal text-xs opacity-75 mt-0.5">' + formatDateShort(current) + '</div></th>';
     }
-    
-    // Filter schedules for this week
     const weekStart = new Date(mondayDate);
-    weekStart.setHours(0,0,0,0);
     const weekEnd = new Date(mondayDate);
     weekEnd.setDate(mondayDate.getDate() + 6);
-    weekEnd.setHours(23,59,59,999);
-    
-    const weekStartStr = formatDateLocal(weekStart);
-    const weekEndStr = formatDateLocal(weekEnd);
-    
-    const weekSchedules = schedules.filter(s => {
-        return s.workDate >= weekStartStr && s.workDate <= weekEndStr;
-    });
-    
-    // Define exactly 2 shifts
+    const weekSchedules = schedules.filter(s => s.workDate >= formatDateLocal(weekStart) && s.workDate <= formatDateLocal(weekEnd));
     const timeSlots = ["7:30 - 12:00", "13:30 - 16:30"];
-    
     const tbody = document.getElementById("gridBody");
     tbody.innerHTML = "";
-    
     timeSlots.forEach((slot, index) => {
         let rowHtml = '<tr>' +
-            '<td class="fw-semibold text-nowrap bg-light text-center py-4" style="width: 140px;">' +
-                '<div class="small text-secondary mb-1">Ca ' + (index + 1) + '</div>' +
-                '<span class="badge bg-success bg-opacity-10 text-success slot-badge border border-success border-opacity-10">' + slot + '</span>' +
+            '<td class="fw-semibold text-nowrap text-center py-4" style="width: 140px; background: rgba(15, 23, 42, 0.6); color: #cbd5e1; border-color: rgba(255,255,255,0.06);">' +
+                '<div class="small text-secondary mb-1" style="color: #94a3b8 !important;">Ca ' + (index + 1) + '</div>' +
+                '<span class="badge slot-badge">' + slot + '</span>' +
             '</td>';
-        
         for (let i = 0; i < 7; i++) {
-            const dateObj = weekDates[i];
-            const dateStr = formatDateLocal(dateObj);
-            
-            // Find all schedules matching dateStr and falling into this slot
-            const matchedSchedules = weekSchedules.filter(s => {
-                return s.workDate === dateStr && getStandardShift(s.timeSlot) === slot;
-            });
-            
+            const dateStr = formatDateLocal(weekDates[i]);
+            const matchedSchedules = weekSchedules.filter(s => s.workDate === dateStr && getStandardShift(s.timeSlot) === slot);
             if (matchedSchedules.length > 0) {
-                let cellHtml = '<td class="p-2 align-top" style="background-color: #fafdfc;">' +
-                    '<div class="d-flex flex-column gap-2">';
-                
+                let cellHtml = '<td class="p-2 align-top" style="background-color: transparent; border-color: rgba(255,255,255,0.06);"><div class="d-flex flex-column gap-2">';
                 matchedSchedules.forEach(matched => {
-                    let badgeClass = "bg-success-subtle text-success border border-success-subtle";
+                    let badgeClass = "bg-success-subtle text-success";
                     let statusText = "Sẵn sàng";
-                    if (matched.status === "Full" || matched.status === "full") {
-                        badgeClass = "bg-danger-subtle text-danger border border-danger-subtle";
-                        statusText = "Đầy lịch";
-                    } else if (matched.status === "Expired" || matched.status === "expired") {
-                        badgeClass = "bg-secondary-subtle text-secondary border border-secondary-subtle";
-                        statusText = "Đã qua";
-                    }
-                    
+                    if (matched.status === "Full" || matched.status === "full") { badgeClass = "bg-danger-subtle text-danger"; statusText = "Đầy lịch"; }
+                    else if (matched.status === "Expired" || matched.status === "expired") { badgeClass = "bg-secondary-subtle text-secondary"; statusText = "Đã qua"; }
                     cellHtml += '<div class="schedule-cell-card p-2 text-start w-100 shadow-xs">' +
-                        '<div class="fw-bold text-success mb-0.5" style="font-size: 0.82rem;">' + (matched.roomName || 'Phòng khám') + '</div>' +
-                        '<div class="text-secondary small mb-1" style="font-size: 0.7rem;">' +
-                            '<span class="fw-semibold text-dark me-1"><i class="bi bi-clock me-0.5"></i>' + matched.timeSlot + '</span>' +
-                            '<span>(' + (matched.roomId || '-') + ')</span>' +
-                        '</div>' +
-                        '<div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-top-style: dashed !important; border-top-color: #eee !important;">' +
-                            '<span class="badge ' + badgeClass + ' text-xs py-0.5 px-1">' + statusText + '</span>' +
-                            '<span class="fw-semibold text-secondary text-xs"><i class="bi bi-people me-1"></i>' + matched.bookedPatients + '/' + matched.maxPatients + '</span>' +
-                        '</div>' +
-                    '</div>';
+                        '<div class="fw-bold mb-0.5" style="font-size: 0.82rem; color: #2AB5A3;">' + (matched.roomName || 'Phòng khám') + '</div>' +
+                        '<div class="small mb-1" style="font-size: 0.7rem; color: #94a3b8;"><span class="fw-semibold me-1" style="color: #ffffff;"><i class="bi bi-clock me-0.5" style="color: #2AB5A3;"></i>' + matched.timeSlot + '</span><span>(' + (matched.roomId || '-') + ')</span></div>' +
+                        '<div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-top-style: dashed !important; border-top-color: rgba(255,255,255,0.1) !important;"><span class="badge ' + badgeClass + ' text-xs py-0.5 px-1">' + statusText + '</span><span class="fw-semibold text-xs" style="color: #94a3b8;"><i class="bi bi-people me-1"></i>' + matched.bookedPatients + '/' + matched.maxPatients + '</span></div></div>';
                 });
-                
                 cellHtml += '</div></td>';
                 rowHtml += cellHtml;
             } else {
-                rowHtml += '<td class="text-center text-secondary opacity-25 py-4">-</td>';
+                rowHtml += '<td class="text-center opacity-25 py-4" style="color: #94a3b8; border-color: rgba(255,255,255,0.06);">-</td>';
             }
         }
         rowHtml += '</tr>';

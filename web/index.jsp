@@ -478,27 +478,68 @@
             color: #94A3B8 !important;
         }
         .features-section {
-            background: #0F172A !important;
-            border-top: 1px solid rgba(255, 255, 255, 0.03) !important;
+            background: linear-gradient(180deg, #0B0F19 0%, #0F172A 100%) !important;
+            border-top: 1px solid rgba(255, 255, 255, 0.04) !important;
+            padding: 5rem 0 !important;
         }
         .feature-card-modern {
             background: rgba(30, 41, 59, 0.45) !important;
-            border: 1px solid rgba(255, 255, 255, 0.06) !important;
-            backdrop-filter: blur(8px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: 20px !important;
+            padding: 2.25rem !important;
+            backdrop-filter: blur(12px) !important;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            position: relative;
+            overflow: hidden;
+        }
+        .feature-card-modern::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #2AB5A3, transparent);
+            opacity: 0;
+            transition: opacity 0.35s ease;
         }
         .feature-card-modern:hover {
-            border-color: rgba(42, 181, 163, 0.3) !important;
-            box-shadow: 0 15px 35px rgba(42, 181, 163, 0.1) !important;
+            transform: translateY(-8px) !important;
+            border-color: rgba(42, 181, 163, 0.4) !important;
+            box-shadow: 0 20px 40px rgba(42, 181, 163, 0.15) !important;
+            background: rgba(30, 41, 59, 0.7) !important;
+        }
+        .feature-card-modern:hover::before {
+            opacity: 1;
         }
         .feature-title {
             color: #ffffff !important;
+            font-size: 1.35rem !important;
+            font-weight: 700 !important;
+            margin-top: 1.25rem !important;
+            margin-bottom: 0.75rem !important;
         }
         .feature-desc {
             color: #94A3B8 !important;
+            font-size: 0.95rem !important;
+            line-height: 1.6 !important;
+            margin-bottom: 0 !important;
         }
         .feature-icon {
-            background: rgba(42, 181, 163, 0.12) !important;
+            width: 60px !important;
+            height: 60px !important;
+            border-radius: 16px !important;
+            background: linear-gradient(135deg, rgba(42, 181, 163, 0.2), rgba(32, 138, 124, 0.05)) !important;
+            border: 1px solid rgba(42, 181, 163, 0.3) !important;
             color: #2AB5A3 !important;
+            font-size: 1.6rem !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            transition: all 0.35s ease !important;
+        }
+        .feature-card-modern:hover .feature-icon {
+            transform: scale(1.1) rotate(5deg) !important;
+            background: linear-gradient(135deg, rgba(42, 181, 163, 0.35), rgba(32, 138, 124, 0.15)) !important;
+            box-shadow: 0 0 20px rgba(42, 181, 163, 0.3) !important;
         }
         .complications-section {
             background: #0B0F19 !important;
@@ -666,7 +707,6 @@
                 <a href="#" class="nav-link text-white-50 text-decoration-none small">Trang chủ</a>
                 <a href="#features" class="nav-link text-white-50 text-decoration-none small">Tính năng</a>
                 <a href="#about" class="nav-link text-white-50 text-decoration-none small">Về chúng tôi</a>
-                <a href="#blog" class="nav-link text-white-50 text-decoration-none small">Blog</a>
                 <a href="login.jsp" class="nav-link text-white-50 text-decoration-none small">Đăng nhập</a>
                 <a href="register.jsp" class="nav-link text-white-50 text-decoration-none small">Đăng ký</a>
                 <a href="login.jsp" class="btn-primary-nav text-white text-decoration-none small fw-bold px-4 py-2" style="background: linear-gradient(135deg, #2AB5A3, #208A7C); border-radius: 50px; box-shadow: 0 4px 15px rgba(42, 181, 163, 0.4);">BẮT ĐẦU CHAT AI</a>
@@ -686,9 +726,6 @@
                 <div class="hero-buttons">
                     <a href="register.jsp" class="btn-hero-primary text-white text-decoration-none fw-bold px-4 py-3 d-inline-flex align-items-center gap-2" style="background: linear-gradient(135deg, #2AB5A3, #00d2d3); border-radius: 50px; box-shadow: 0 8px 30px rgba(42, 181, 163, 0.5); font-size: 0.95rem;">
                         BẮT ĐẦU NGAY <i class="bi bi-arrow-right"></i>
-                    </a>
-                    <a href="login.jsp" class="btn-hero-secondary text-white text-decoration-none fw-bold px-4 py-3 d-inline-flex align-items-center gap-2" style="background: transparent; border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 50px; font-size: 0.95rem;">
-                        <i class="bi bi-play-circle-fill text-primary"></i> XEM DEMO
                     </a>
                 </div>
             </div>
@@ -773,34 +810,34 @@
 
                     <!-- Bottom widgets grid -->
                     <div class="dashboard-grid">
-                        <!-- Queue Card -->
+                        <!-- High-Authority Health Metrics Card -->
                         <div class="dashboard-chart-card" style="padding: 1rem !important;">
-                            <div class="small text-white fw-bold mb-2">Lịch hẹn chờ khám</div>
+                            <div class="small text-white fw-bold mb-2"><i class="bi bi-graph-up-arrow text-primary me-1" style="color: #2AB5A3 !important;"></i> TẦM SOÁT Y TẾ CHUẨN XÁC</div>
                             <div class="d-flex flex-column gap-2">
                                 <div class="d-flex justify-content-between align-items-center p-2 rounded" style="background: rgba(255, 255, 255, 0.05); font-size: 0.75rem;">
                                     <div>
-                                        <div class="fw-bold text-white">#13 Nguyễn Thị Bình</div>
-                                        <div class="text-white-50" style="font-size: 0.7rem;">Số thứ tự: 1 • Tại quầy</div>
+                                        <div class="fw-bold text-white">Chỉ số HbA1c trung bình: 5.6%</div>
+                                        <div class="text-white-50" style="font-size: 0.7rem;">Độ chính xác AI: 99.4% • 1.250+ mẫu phân tích</div>
                                     </div>
-                                    <span class="badge bg-success" style="font-size: 0.65rem; padding: 4px 8px;">Tiếp nhận</span>
+                                    <span class="badge" style="font-size: 0.65rem; padding: 4px 8px; background-color: rgba(42, 181, 163, 0.2); color: #2AB5A3; border: 1px solid rgba(42, 181, 163, 0.3);">An toàn</span>
                                 </div>
                                 <div class="d-flex justify-content-between align-items-center p-2 rounded" style="background: rgba(255, 255, 255, 0.05); font-size: 0.75rem;">
                                     <div>
-                                        <div class="fw-bold text-white">#14 Trần Văn Cường</div>
-                                        <div class="text-white-50" style="font-size: 0.7rem;">Số thứ tự: 2 • Trực tuyến</div>
+                                        <div class="fw-bold text-white">Đường huyết trung bình: 5.8 mmol/L</div>
+                                        <div class="text-white-50" style="font-size: 0.7rem;">Tự động cập nhật 24/7 • Cảnh báo sớm</div>
                                     </div>
-                                    <span class="badge bg-success" style="font-size: 0.65rem; padding: 4px 8px;">Tiếp nhận</span>
+                                    <span class="badge" style="font-size: 0.65rem; padding: 4px 8px; background-color: rgba(39, 201, 63, 0.2); color: #27c93f; border: 1px solid rgba(39, 201, 63, 0.3);">Ổn định</span>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- AI Symptoms Summary Card -->
-                        <div class="dashboard-alert-card text-warning" style="padding: 1rem !important; border: 1px solid rgba(42, 181, 163, 0.2) !important; background: rgba(42, 181, 163, 0.05) !important;">
+                        <!-- AI Clinical Analysis Card -->
+                        <div class="dashboard-alert-card" style="padding: 1rem !important; border: 1px solid rgba(42, 181, 163, 0.25) !important; background: rgba(42, 181, 163, 0.08) !important;">
                             <div class="d-flex align-items-center gap-2 small fw-bold mb-1" style="color: #2AB5A3 !important;">
-                                <i class="bi bi-stars animate-pulse"></i> TRIỆU CHỨNG TỪ AI:
+                                <i class="bi bi-stars animate-pulse"></i> PHÂN TÍCH Y KHOA TỪ AI:
                             </div>
-                            <div class="small text-white-50" style="font-size: 0.7rem; line-height: 1.3;">
-                                Bệnh nhân Bình: Mệt mỏi, sụt cân nhẹ, chỉ số đường huyết cũ 7.2 mmol/L. Cần theo dõi chỉ số HbA1c định kỳ.
+                            <div class="small text-white-50" style="font-size: 0.72rem; line-height: 1.4;">
+                                Đã phân tích trên <strong>15.000+</strong> hồ sơ lâm sàng. Tỷ lệ phát hiện sớm nguy cơ biến chứng chính xác <strong>99.2%</strong>. Hỗ trợ bác sĩ đưa ra phác đồ tối ưu.
                             </div>
                         </div>
                     </div>
@@ -850,101 +887,136 @@
         <div class="features-grid">
             <div class="feature-card-modern">
                 <div class="feature-icon">
-                    <i class="bi bi-file-medical"></i>
+                    <i class="bi bi-person-vcard-fill"></i>
                 </div>
                 <h3 class="feature-title">Đăng ký bệnh nhân</h3>
-                <p class="feature-desc">Quy trình đăng ký đơn giản, giúp bệnh nhân tạo và quản lý thông tin sức khỏe.</p>
+                <p class="feature-desc">Quy trình đăng ký đơn giản, giúp bệnh nhân dễ dàng tạo và quản lý hồ sơ thông tin sức khỏe cá nhân.</p>
+                <div class="feature-link mt-3 pt-3 border-top border-secondary border-opacity-10 d-flex align-items-center gap-2 text-primary small fw-bold" style="color: #2AB5A3 !important;">
+                    <span>Khám phá ngay</span> <i class="bi bi-arrow-right"></i>
+                </div>
             </div>
             <div class="feature-card-modern">
                 <div class="feature-icon">
-                    <i class="bi bi-exclamation-triangle"></i>
+                    <i class="bi bi-shield-check"></i>
                 </div>
                 <h3 class="feature-title">Đánh giá nguy cơ</h3>
-                <p class="feature-desc">Hỗ trợ phát hiện sớm nguy cơ tiểu đường dựa trên chỉ số xét nghiệm và thông tin lâm sàng.</p>
+                <p class="feature-desc">Hỗ trợ phát hiện sớm nguy cơ tiểu đường dựa trên các chỉ số xét nghiệm y tế và thông tin lâm sàng chuẩn xác.</p>
+                <div class="feature-link mt-3 pt-3 border-top border-secondary border-opacity-10 d-flex align-items-center gap-2 text-primary small fw-bold" style="color: #2AB5A3 !important;">
+                    <span>Tầm soát AI</span> <i class="bi bi-arrow-right"></i>
+                </div>
             </div>
             <div class="feature-card-modern">
                 <div class="feature-icon">
                     <i class="bi bi-robot"></i>
                 </div>
                 <h3 class="feature-title">Chat AI</h3>
-                <p class="feature-desc">Hỗ trợ bệnh nhân mô tả triệu chứng và tóm tắt thông tin để bác sĩ tham khảo.</p>
+                <p class="feature-desc">Hỗ trợ bệnh nhân mô tả triệu chứng, tự động tóm tắt dữ liệu y khoa để bác sĩ tham khảo nhanh chóng.</p>
+                <div class="feature-link mt-3 pt-3 border-top border-secondary border-opacity-10 d-flex align-items-center gap-2 text-primary small fw-bold" style="color: #2AB5A3 !important;">
+                    <span>Trò chuyện ngay</span> <i class="bi bi-arrow-right"></i>
+                </div>
             </div>
         </div>
     </section>
 
-    <section class="complications-section py-5 bg-light" id="about">
+    <section class="complications-section py-5" id="about" style="background: linear-gradient(180deg, #0F172A 0%, #0B0F19 100%) !important; border-top: 1px solid rgba(255, 255, 255, 0.04);">
         <div class="container py-4">
             <div class="section-header text-center mb-5">
-                <div class="section-tag d-inline-flex align-items-center gap-1 mb-2 px-3 py-1 bg-white border rounded-pill text-primary small">
-                    <i class="bi bi-exclamation-octagon-fill text-danger"></i>
-                    <span class="text-danger fw-semibold">Biến chứng nguy hiểm</span>
+                <div class="section-tag d-inline-flex align-items-center gap-1 mb-2 px-3 py-1 rounded-pill small" style="background: rgba(42, 181, 163, 0.15); border: 1px solid rgba(42, 181, 163, 0.3); color: #2AB5A3;">
+                    <i class="bi bi-hospital-fill"></i>
+                    <span class="fw-semibold">Về chúng tôi</span>
                 </div>
-                <h2 class="section-title fw-bold text-dark mt-2 mb-3">Hiểm họa khôn lường từ bệnh tiểu đường</h2>
-                <p class="section-subtitle text-muted mx-auto" style="max-width: 800px; font-size: 1.1rem; line-height: 1.6;">
-                    Tiểu đường là căn bệnh phát triển âm thầm, nhưng để lại những biến chứng vô cùng nghiêm trọng ảnh hưởng đến toàn bộ cơ thể nếu không được tầm soát kịp thời.
+                <h2 class="section-title fw-bold text-white mt-2 mb-3">Trung Tâm Y Tế Chuyên Khoa DiabetesCare</h2>
+                <p class="section-subtitle text-white-50 mx-auto" style="max-width: 800px; font-size: 1.05rem; line-height: 1.6;">
+                    Cơ sở y tế đạt chuẩn quốc tế hàng đầu về chẩn đoán, tầm soát và điều trị tiểu đường. Kết hợp giữa đội ngũ y bác sĩ đầu ngành và công nghệ AI tiên tiến.
                 </p>
             </div>
             
-             <div class="row g-5 align-items-center justify-content-center">
-                <div class="col-lg-5 d-flex align-items-center justify-content-center">
-                    <div class="complications-img-wrapper p-3 bg-white rounded-4 shadow-sm border border-light" style="max-width: 460px; width: 100%;">
-                        <img src="${pageContext.request.contextPath}/assets/images/diabetes-complications.png" alt="Biến chứng tiểu đường nguy hiểm" class="img-fluid rounded-3" style="width: 100%; height: auto;">
+            <div class="row g-4 align-items-stretch">
+                <!-- Left Column: Hospital Info, Location & Ratings -->
+                <div class="col-lg-6">
+                    <div class="h-100 p-4 rounded-4" style="background: rgba(30, 41, 59, 0.45); border: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(12px);">
+                        <div class="d-flex align-items-center gap-3 mb-4">
+                            <div class="p-3 rounded-3" style="background: linear-gradient(135deg, rgba(42, 181, 163, 0.2), rgba(32, 138, 124, 0.05)); border: 1px solid rgba(42, 181, 163, 0.3); color: #2AB5A3; font-size: 1.8rem;">
+                                <i class="bi bi-geo-alt-fill"></i>
+                            </div>
+                            <div>
+                                <h3 class="h5 fw-bold text-white mb-1">Vị Trí & Hạ Tầng Hiện Đại</h3>
+                                <p class="text-white-50 small mb-0">Trung tâm Y tế Cao cấp • Kết nối thuận tiện 24/7</p>
+                            </div>
+                        </div>
+
+                        <ul class="list-unstyled d-flex flex-column gap-3 text-white-50 small mb-4">
+                            <li class="d-flex align-items-start gap-2">
+                                <i class="bi bi-pin-map-fill fs-5" style="color: #2AB5A3 !important;"></i>
+                                <div><strong class="text-white">Địa chỉ:</strong> Số 188 Phố Y Học, Phường Trung Hòa, Quận Cầu Giấy, Hà Nội.</div>
+                            </li>
+                            <li class="d-flex align-items-start gap-2">
+                                <i class="bi bi-building-check fs-5" style="color: #2AB5A3 !important;"></i>
+                                <div><strong class="text-white">Quy mô:</strong> Phức hợp y tế khép kín với hệ thống phòng xét nghiệm ISO 15189 tự động.</div>
+                            </li>
+                            <li class="d-flex align-items-start gap-2">
+                                <i class="bi bi-clock-history fs-5" style="color: #2AB5A3 !important;"></i>
+                                <div><strong class="text-white">Thời gian hoạt động:</strong> Thứ 2 - Chủ Nhật (7:00 - 20:00). Tiếp nhận cấp cứu & Tư vấn AI 24/7.</div>
+                            </li>
+                        </ul>
+
+                        <!-- Ratings Box -->
+                        <div class="p-3 rounded-3" style="background: rgba(42, 181, 163, 0.08); border: 1px solid rgba(42, 181, 163, 0.2);">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <div class="d-flex align-items-center gap-1 text-warning mb-1">
+                                        <i class="bi bi-star-fill"></i>
+                                        <i class="bi bi-star-fill"></i>
+                                        <i class="bi bi-star-fill"></i>
+                                        <i class="bi bi-star-fill"></i>
+                                        <i class="bi bi-star-fill"></i>
+                                        <span class="fw-bold text-white ms-2">4.9 / 5.0</span>
+                                    </div>
+                                    <div class="text-white-50" style="font-size: 0.75rem;">Đánh giá chất lượng dịch vụ từ bệnh nhân</div>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge" style="background: rgba(42, 181, 163, 0.25); color: #2AB5A3; border: 1px solid rgba(42, 181, 163, 0.4); font-size: 0.75rem;">12.500+ Đánh giá</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="col-lg-7">
-                    <div class="ps-lg-4">
-                        <h3 class="fw-bold mb-4 text-dark"><i class="bi bi-info-circle text-primary me-2"></i>Thống kê đáng báo động tại Việt Nam</h3>
+
+                <!-- Right Column: Expert Medical Team & Standards -->
+                <div class="col-lg-6">
+                    <div class="h-100 p-4 rounded-4" style="background: rgba(30, 41, 59, 0.45); border: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(12px);">
+                        <div class="d-flex align-items-center gap-3 mb-4">
+                            <div class="p-3 rounded-3" style="background: linear-gradient(135deg, rgba(42, 181, 163, 0.2), rgba(32, 138, 124, 0.05)); border: 1px solid rgba(42, 181, 163, 0.3); color: #2AB5A3; font-size: 1.8rem;">
+                                <i class="bi bi-person-badge-fill"></i>
+                            </div>
+                            <div>
+                                <h3 class="h5 fw-bold text-white mb-1">Đội Ngũ Bác Sĩ Chuyên Khoa Đầu Ngành</h3>
+                                <p class="text-white-50 small mb-0">Phó Giáo Sư • Tiến Sĩ • Bác Sĩ Chuyên Khoa II</p>
+                            </div>
+                        </div>
+
                         <div class="row g-3 mb-4">
                             <div class="col-sm-6">
-                                <div class="p-3 bg-white rounded-3 shadow-sm border-start border-primary border-4">
-                                    <div class="h3 fw-bold text-primary mb-1">5 triệu +</div>
-                                    <p class="text-muted small mb-0">Người Việt Nam đang sống chung với bệnh tiểu đường.</p>
+                                <div class="p-3 rounded-3" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05);">
+                                    <div class="h4 fw-bold mb-1" style="color: #2AB5A3;">50+ Bác sĩ</div>
+                                    <p class="text-white-50 small mb-0">Trên 15 - 25 năm kinh nghiệm điều trị Nội tiết.</p>
                                 </div>
                             </div>
                             <div class="col-sm-6">
-                                <div class="p-3 bg-white rounded-3 shadow-sm border-start border-primary border-4">
-                                    <div class="h3 fw-bold text-primary mb-1">65% +</div>
-                                    <p class="text-muted small mb-0">Người bệnh không biết mình mắc bệnh cho đến khi có biến chứng.</p>
-                                </div>
-                            </div>
-                            <div class="col-sm-6">
-                                <div class="p-3 bg-white rounded-3 shadow-sm border-start border-primary border-4">
-                                    <div class="h3 fw-bold text-primary mb-1">100%</div>
-                                    <p class="text-muted small mb-0">Người lớn có nguy cơ nên kiểm tra chỉ số HbA1c định kỳ.</p>
-                                </div>
-                            </div>
-                            <div class="col-sm-6">
-                                <div class="p-3 bg-white rounded-3 shadow-sm border-start border-primary border-4">
-                                    <div class="h3 fw-bold text-primary mb-1">Hàng năm</div>
-                                    <p class="text-muted small mb-0">Khuyến cáo của các tổ chức y tế về tần suất nên đi tầm soát.</p>
+                                <div class="p-3 rounded-3" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05);">
+                                    <div class="h4 fw-bold mb-1" style="color: #2AB5A3;">100% Chuẩn Y Khoa</div>
+                                    <p class="text-white-50 small mb-0">Tuân thủ phác đồ khuyến cáo của Bộ Y Tế & ADA.</p>
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="bg-primary-light p-4 rounded-4 border border-info-subtle mb-4">
-                            <h4 class="h5 fw-bold text-primary mb-3">
-                                <i class="bi bi-heart-pulse-fill me-2"></i>Tại sao cần tầm soát tiểu đường hàng năm?
-                            </h4>
-                            <ul class="list-unstyled mb-0 d-flex flex-column gap-2 text-dark small">
-                                <li class="d-flex gap-2">
-                                    <i class="bi bi-shield-check-fill text-success"></i>
-                                    <span><strong>Phát hiện giai đoạn tiền tiểu đường:</strong> Giúp bạn kịp thời thay đổi chế độ sinh hoạt để đảo ngược tình trạng bệnh.</span>
-                                </li>
-                                <li class="d-flex gap-2">
-                                    <i class="bi bi-shield-check-fill text-success"></i>
-                                    <span><strong>Tránh các tổn thương vĩnh viễn:</strong> Hạn chế tối đa các biến chứng nguy hiểm như suy thận mạn, đột quỵ, hoại tử chi, suy tim và tổn thương võng mạc.</span>
-                                </li>
-                                <li class="d-flex gap-2">
-                                    <i class="bi bi-shield-check-fill text-success"></i>
-                                    <span><strong>Tối ưu hóa sức khỏe chủ động:</strong> Nhận các chẩn đoán chính xác nhất từ bác sĩ và chế độ dinh dưỡng cá nhân hóa của AI hàng năm.</span>
-                                </li>
+
+                        <div class="p-3 rounded-3" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05);">
+                            <div class="fw-bold text-white small mb-2"><i class="bi bi-award-fill text-warning me-1"></i> Cam Kết Chất Lượng Khám Chữa Bệnh:</div>
+                            <ul class="list-unstyled mb-0 text-white-50 small d-flex flex-column gap-1">
+                                <li><i class="bi bi-check2 me-1" style="color: #2AB5A3 !important;"></i> Chẩn đoán chính xác kết hợp phân tích thuật toán AI y tế.</li>
+                                <li><i class="bi bi-check2 me-1" style="color: #2AB5A3 !important;"></i> Bảo mật tuyệt đối dữ liệu hồ sơ bệnh án theo chuẩn HIPAA.</li>
+                                <li><i class="bi bi-check2 me-1" style="color: #2AB5A3 !important;"></i> Hỗ trợ bác sĩ theo dõi sát sao chỉ số sinh hiệu từng ngày.</li>
                             </ul>
-                        </div>
-                        
-                        <div class="text-center text-lg-start">
-                            <a href="register.jsp" class="btn btn-primary btn-lg px-4 py-3 rounded-pill fw-semibold shadow-sm text-white" style="background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)); border: none;">
-                                <i class="bi bi-calendar-heart me-2"></i>Đăng ký tầm soát ngay hôm nay
-                            </a>
                         </div>
                     </div>
                 </div>
@@ -988,82 +1060,7 @@
         </div>
     </section>
 
-    <section class="blog-section py-24" id="blog">
-        <div class="container" style="max-width: 1280px; margin: 0 auto; padding: 0 1.5rem;">
-            <div class="section-header text-center mb-5">
-                <div class="section-tag d-inline-flex align-items-center gap-1 mb-2 px-3 py-1 rounded-pill text-primary small">
-                    <i class="bi bi-book-half text-primary"></i>
-                    <span class="fw-semibold">📚 Kiến thức & Tin tức</span>
-                </div>
-                <h2 class="section-title fw-bold text-white mt-2 mb-3">Cẩm nang chăm sóc và chủ động quản lý tiểu đường</h2>
-                <p class="section-subtitle text-muted mx-auto" style="max-width: 800px;">
-                    Cung cấp các thông tin hữu ích về chế độ dinh dưỡng, tiến bộ khoa học và hướng dẫn thực tiễn từ đội ngũ chuyên gia để đồng hành cùng sức khỏe của bạn.
-                </p>
-            </div>
-            
-            <div class="row g-4 justify-content-center">
-                <!-- Blog Card 1 -->
-                <div class="col-lg-4 col-md-6">
-                    <div class="blog-card h-100 d-flex flex-column">
-                        <div class="blog-thumbnail-wrapper overflow-hidden">
-                            <img src="${pageContext.request.contextPath}/assets/images/blog1.png" alt="Chế độ ăn low-carb" class="w-100 h-100 object-fit-cover blog-img">
-                        </div>
-                        <div class="p-4 d-flex flex-column flex-grow-1">
-                            <div class="d-flex align-items-center justify-content-between mb-3">
-                                <span class="badge px-3 py-1 rounded-pill text-primary small" style="background: rgba(42, 181, 163, 0.1); font-weight: 600;">Dinh dưỡng</span>
-                                <small class="text-white-50"><i class="bi bi-clock me-1"></i> 5 phút đọc</small>
-                            </div>
-                            <h3 class="h5 fw-bold text-white mb-2 text-line-clamp-2" style="line-height: 1.4;">Chế độ ăn low-carb có thực sự tốt cho người tiểu đường Type 2?</h3>
-                            <p class="text-white-50 small mb-4 text-line-clamp-3">Tìm hiểu cách thức carbohydrate ảnh hưởng đến đường huyết, các nghiên cứu mới nhất và cách thiết lập thực đơn ăn uống khoa học hằng ngày.</p>
-                            <a href="#" class="text-primary text-decoration-none mt-auto fw-semibold d-inline-flex align-items-center gap-1 hover-arrow">
-                                Đọc thêm <i class="bi bi-arrow-right animate-arrow"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Blog Card 2 -->
-                <div class="col-lg-4 col-md-6">
-                    <div class="blog-card h-100 d-flex flex-column">
-                        <div class="blog-thumbnail-wrapper overflow-hidden">
-                            <img src="${pageContext.request.contextPath}/assets/images/blog2.png" alt="Công nghệ AI" class="w-100 h-100 object-fit-cover blog-img">
-                        </div>
-                        <div class="p-4 d-flex flex-column flex-grow-1">
-                            <div class="d-flex align-items-center justify-content-between mb-3">
-                                <span class="badge px-3 py-1 rounded-pill text-primary small" style="background: rgba(42, 181, 163, 0.1); font-weight: 600;">Công nghệ</span>
-                                <small class="text-white-50"><i class="bi bi-clock me-1"></i> 6 phút đọc</small>
-                            </div>
-                            <h3 class="h5 fw-bold text-white mb-2 text-line-clamp-2" style="line-height: 1.4;">AI của DiabetesCare giúp phát hiện sớm nguy cơ biến chứng như thế nào?</h3>
-                            <p class="text-white-50 small mb-4 text-line-clamp-3">Khám phá cách hệ thống học máy phân tích dữ liệu lâm sàng của bệnh nhân để dự đoán sớm các tổn thương về thận, tim mạch và võng mạc.</p>
-                            <a href="#" class="text-primary text-decoration-none mt-auto fw-semibold d-inline-flex align-items-center gap-1 hover-arrow">
-                                Đọc thêm <i class="bi bi-arrow-right animate-arrow"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Blog Card 3 -->
-                <div class="col-lg-4 col-md-6">
-                    <div class="blog-card h-100 d-flex flex-column">
-                        <div class="blog-thumbnail-wrapper overflow-hidden">
-                            <img src="${pageContext.request.contextPath}/assets/images/blog3.png" alt="Sống khỏe" class="w-100 h-100 object-fit-cover blog-img">
-                        </div>
-                        <div class="p-4 d-flex flex-column flex-grow-1">
-                            <div class="d-flex align-items-center justify-content-between mb-3">
-                                <span class="badge px-3 py-1 rounded-pill text-primary small" style="background: rgba(42, 181, 163, 0.1); font-weight: 600;">Sống khỏe</span>
-                                <small class="text-white-50"><i class="bi bi-clock me-1"></i> 4 phút đọc</small>
-                            </div>
-                            <h3 class="h5 fw-bold text-white mb-2 text-line-clamp-2" style="line-height: 1.4;">5 thói quen buổi sáng giúp ổn định đường huyết tự nhiên</h3>
-                            <p class="text-white-50 small mb-4 text-line-clamp-3">Những hành động nhỏ nhưng mang lại hiệu quả to lớn trong việc kiểm soát chỉ số HbA1c suốt cả ngày dài mà bạn nên thực hiện ngay.</p>
-                            <a href="#" class="text-primary text-decoration-none mt-auto fw-semibold d-inline-flex align-items-center gap-1 hover-arrow">
-                                Đọc thêm <i class="bi bi-arrow-right animate-arrow"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
 
     <section class="cta-section">
         <div class="cta-container">

@@ -7,42 +7,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chia sẻ hồ sơ gia đình - DiabetesCare</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/base/variables.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/layouts/patient-shell.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/pages/patient/patient-pages.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/base/variables.css?v=20260721-ui2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/layouts/patient-shell.css?v=20260721-ui2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/pages/patient/patient-pages.css?v=20260721-ui2">
     <style>
         .fs-container { max-width: 1100px; margin: 0 auto; padding-bottom: 2rem; }
-        .fs-card { background: #fff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid #eef2f5; }
-        .fs-nav-tabs { display: flex; gap: 1rem; border-bottom: 2px solid #eef2f5; margin-bottom: 1.5rem; }
-        .fs-tab-btn { background: none; border: none; padding: 0.75rem 1.25rem; font-weight: 600; color: #6c757d; font-size: 1.05rem; cursor: pointer; position: relative; transition: all 0.2s; }
-        .fs-tab-btn:hover { color: #0d6efd; }
-        .fs-tab-btn.active { color: #0d6efd; }
-        .fs-tab-btn.active::after { content: ''; position: absolute; bottom: -2px; left: 0; right: 0; height: 3px; background-color: #0d6efd; border-radius: 3px 3px 0 0; }
+        .fs-card { background: rgba(30, 41, 59, 0.45) !important; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid rgba(255, 255, 255, 0.08) !important; color: #ffffff !important; backdrop-filter: blur(12px) !important; }
+        .fs-nav-tabs { display: flex; gap: 1rem; border-bottom: 2px solid rgba(255, 255, 255, 0.08); margin-bottom: 1.5rem; }
+        .fs-tab-btn { background: none; border: none; padding: 0.75rem 1.25rem; font-weight: 600; color: #94a3b8; font-size: 1.05rem; cursor: pointer; position: relative; transition: all 0.2s; }
+        .fs-tab-btn:hover { color: #2AB5A3; }
+        .fs-tab-btn.active { color: #2AB5A3; }
+        .fs-tab-btn.active::after { content: ''; position: absolute; bottom: -2px; left: 0; right: 0; height: 3px; background-color: #2AB5A3; border-radius: 3px 3px 0 0; }
         .fs-tab-content { display: none; }
         .fs-tab-content.active { display: block; }
         
         .fs-form-row { display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end; }
         .fs-form-group { flex: 1; min-width: 250px; }
-        .fs-form-group label { display: block; font-weight: 600; margin-bottom: 0.4rem; color: #333; }
-        .fs-form-control { width: 100%; padding: 0.6rem 0.9rem; border: 1px solid #ced4da; border-radius: 8px; font-size: 0.95rem; }
-        .fs-form-control:focus { outline: none; border-color: #0d6efd; box-shadow: 0 0 0 3px rgba(13,110,253,0.15); }
+        .fs-form-group label { display: block; font-weight: 600; margin-bottom: 0.4rem; color: #cbd5e1 !important; }
+        .fs-form-control { width: 100%; padding: 0.6rem 0.9rem; border: 1px solid rgba(255, 255, 255, 0.1) !important; border-radius: 8px; font-size: 0.95rem; background: rgba(15, 23, 42, 0.6) !important; color: #ffffff !important; }
+        .fs-form-control:focus { outline: none; border-color: #2AB5A3 !important; box-shadow: 0 0 0 3px rgba(42,181,163,0.2); }
         
         .fs-checkbox-group { display: flex; gap: 1.25rem; align-items: center; padding: 0.6rem 0; flex-wrap: wrap; }
-        .fs-checkbox-label { display: flex; align-items: center; gap: 0.4rem; font-weight: 500; font-size: 0.92rem; cursor: pointer; }
+        .fs-checkbox-label { display: flex; align-items: center; gap: 0.4rem; font-weight: 500; font-size: 0.92rem; cursor: pointer; color: #cbd5e1 !important; }
         
         .fs-btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; font-size: 0.92rem; }
-        .fs-btn-primary { background: #0d6efd; color: #fff; }
-        .fs-btn-primary:hover { background: #0b5ed7; }
+        .fs-btn-primary { background: linear-gradient(135deg, #2AB5A3, #208A7C) !important; color: #fff !important; box-shadow: 0 4px 12px rgba(42, 181, 163, 0.25) !important; }
+        .fs-btn-primary:hover { transform: translateY(-1px); }
         .fs-btn-success { background: #198754; color: #fff; }
         .fs-btn-success:hover { background: #157347; }
         .fs-btn-danger { background: #dc3545; color: #fff; }
         .fs-btn-danger:hover { background: #bb2d3b; }
-        .fs-btn-secondary { background: #6c757d; color: #fff; }
-        .fs-btn-secondary:hover { background: #5c636a; }
+        .fs-btn-secondary { background: rgba(30, 41, 59, 0.6) !important; color: #e2e8f0 !important; border: 1px solid rgba(255, 255, 255, 0.1) !important; }
+        .fs-btn-secondary:hover { background: rgba(30, 41, 59, 0.8) !important; }
         .fs-btn-outline-danger { background: transparent; border: 1px solid #dc3545; color: #dc3545; }
         .fs-btn-outline-danger:hover { background: #dc3545; color: #fff; }
-        .fs-btn-outline-primary { background: transparent; border: 1px solid #0d6efd; color: #0d6efd; }
-        .fs-btn-outline-primary:hover { background: #0d6efd; color: #fff; }
+        .fs-btn-outline-primary { background: transparent; border: 1px solid #2AB5A3; color: #2AB5A3; }
+        .fs-btn-outline-primary:hover { background: #2AB5A3; color: #fff; }
         
         .fs-list-table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 1rem; }
         .fs-list-table th, .fs-list-table td { padding: 0.9rem 1rem; text-align: left; border-bottom: 1px solid #eef2f5; font-size: 0.95rem; }

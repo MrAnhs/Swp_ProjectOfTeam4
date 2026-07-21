@@ -10,7 +10,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 public class DoctorDAO {
 
@@ -31,6 +33,27 @@ public class DoctorDAO {
         return doctors;
     }
 
+    public static String cleanDepartmentName(String dept) {
+        if (dept == null || dept.isBlank()) return "";
+        String trimmed = dept.trim();
+        if (trimmed.contains("Ná»") || trimmed.contains("tiáº") || trimmed.contains("tiá°")) {
+            return "Khoa Nội Tiết";
+        }
+        if (trimmed.equalsIgnoreCase("Endocrinology") || trimmed.equalsIgnoreCase("Nội tiết") || trimmed.equalsIgnoreCase("Khoa Nội tiết")) {
+            return "Khoa Nội Tiết";
+        }
+        if (trimmed.equalsIgnoreCase("Cardiology") || trimmed.equalsIgnoreCase("Tim mạch") || trimmed.equalsIgnoreCase("Khoa Tim mạch")) {
+            return "Khoa Tim Mạch";
+        }
+        if (trimmed.equalsIgnoreCase("General") || trimmed.equalsIgnoreCase("Nội tổng hợp") || trimmed.equalsIgnoreCase("Khoa Nội tổng hợp")) {
+            return "Khoa Nội Tổng Hợp";
+        }
+        if (trimmed.equalsIgnoreCase("Nephrology") || trimmed.equalsIgnoreCase("Thận học") || trimmed.equalsIgnoreCase("Khoa Thận học")) {
+            return "Khoa Thận Học";
+        }
+        return trimmed;
+    }
+
     public List<String> findActiveDepartments() throws SQLException {
         String sql = "SELECT DISTINCT LTRIM(RTRIM(d.department)) AS department "
                 + "FROM Doctor d "
@@ -38,15 +61,19 @@ public class DoctorDAO {
                 + "WHERE a.role = 'Doctor' AND a.status = 'Active' "
                 + "AND d.department IS NOT NULL AND LTRIM(RTRIM(d.department)) <> '' "
                 + "ORDER BY department";
-        List<String> departments = new ArrayList<>();
+        Set<String> departments = new LinkedHashSet<>();
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql);
              ResultSet resultSet = statement.executeQuery()) {
             while (resultSet.next()) {
-                departments.add(resultSet.getString("department"));
+                String raw = resultSet.getString("department");
+                String cleaned = cleanDepartmentName(raw);
+                if (!cleaned.isBlank()) {
+                    departments.add(cleaned);
+                }
             }
         }
-        return departments;
+        return new ArrayList<>(departments);
     }
 
     public List<DoctorInfo> findAvailableDoctors(LocalDate workDate, String session,
@@ -65,7 +92,7 @@ public class DoctorDAO {
                 + "OR CAST(GETDATE() AS time) < DATEADD(minute, -30, TRY_CONVERT(time, RIGHT(REPLACE(ds.time_slot, ' ', ''), 5)))) ");
         appendSessionFilter(sql, session);
         if (department != null && !department.isBlank()) {
-            sql.append("AND LTRIM(RTRIM(d.department)) = ? ");
+            sql.append("AND (LTRIM(RTRIM(d.department)) = ? OR LTRIM(RTRIM(d.department)) LIKE ? OR ? LIKE '%' + LTRIM(RTRIM(d.department)) + '%') ");
         }
         if (doctorName != null && !doctorName.isBlank()) {
             sql.append("AND d.full_name LIKE ? ");
@@ -78,7 +105,10 @@ public class DoctorDAO {
             int parameterIndex = 1;
             statement.setDate(parameterIndex++, java.sql.Date.valueOf(workDate));
             if (department != null && !department.isBlank()) {
-                statement.setString(parameterIndex++, department.trim());
+                String deptClean = department.trim();
+                statement.setString(parameterIndex++, deptClean);
+                statement.setString(parameterIndex++, "%" + deptClean + "%");
+                statement.setString(parameterIndex++, deptClean);
             }
             if (doctorName != null && !doctorName.isBlank()) {
                 statement.setString(parameterIndex, "%" + doctorName.trim() + "%");
@@ -200,7 +230,7 @@ public class DoctorDAO {
         doctor.setFullName(resultSet.getString("full_name"));
         doctor.setPhone(resultSet.getString("phone"));
         doctor.setEmail(resultSet.getString("email"));
-        doctor.setDepartment(resultSet.getString("department"));
+        doctor.setDepartment(cleanDepartmentName(resultSet.getString("department")));
         return doctor;
     }
 
