@@ -1,12 +1,35 @@
+/**
+ * =========================================================================
+ * MODULE: LẬP LỊCH THÔNG MINH BÁC SĨ (AI SCHEDULING WIZARD & WEEKLY CALENDAR)
+ * =========================================================================
+ * File này quản lý biểu mẫu Wizard 3 bước lập lịch thông minh bằng AI, 
+ * hiển thị Preview các ca trực đề xuất và xem lịch trực tuần (Weekly Calendar).
+ */
+
+// ==========================================
+// 1. GLOBAL VARIABLES FOR WIZARD
+// ==========================================
 let proposedSchedules = [];
 let availableDoctors = [];
 let currentStep = 1;
 
+// ==========================================
+// 2. SHIFT TEMPLATE & CAPACITY CALCULATION HELPERS
+// ==========================================
+
+/**
+ * Đếm số lượng ca trực trong tệp cấu hình thô mẫu ca trực
+ * @returns {number} Số ca trực
+ */
 function countShiftTemplateLines() {
     const textarea = document.querySelector('textarea[name="shiftTemplates"]');
     return textarea ? textarea.value.split(/\r?\n/).filter(line => line.trim().includes('|')).length : 0;
 }
 
+/**
+ * Xây dựng danh sách ca trực dựa vào giờ bắt đầu, kết thúc, và chuyên khoa đã chọn
+ * @returns {Array<string>} Mảng ca trực dạng "timeSlot|department"
+ */
 function buildCustomShiftTemplate() {
     const startTimeInput = document.getElementById('aiStartTime');
     const endTimeInput = document.getElementById('aiEndTime');
@@ -64,6 +87,9 @@ function buildCustomShiftTemplate() {
     return slots;
 }
 
+/**
+ * Cập nhật hiển thị bản xem trước của khuôn mẫu ca trực trong Textarea cấu hình thô
+ */
 function updateTemplatePreview() {
     const textarea = document.querySelector('textarea[name="shiftTemplates"]');
     if (textarea) {
@@ -73,11 +99,21 @@ function updateTemplatePreview() {
     updateAiMaxSchedules();
 }
 
+/**
+ * Lấy danh sách các thứ được tick chọn trong tuần (1 = Thứ 2, 7 = Chủ nhật)
+ * @returns {Array<number>}
+ */
 function getSelectedWeekdays() {
     return Array.from(document.querySelectorAll('input[name="selectedWeekdays"]:checked'))
         .map(input => Number(input.value));
 }
 
+/**
+ * Đếm số ngày thực tế được áp dụng lịch trực trong khoảng ngày bắt đầu/kết thúc
+ * @param {string} startValue 
+ * @param {string} endValue 
+ * @returns {number} Số ngày thỏa mãn các thứ được chọn
+ */
 function countSelectedTargetDates(startValue, endValue) {
     if (!startValue || !endValue) {
         return 0;
@@ -97,12 +133,19 @@ function countSelectedTargetDates(startValue, endValue) {
     return count;
 }
 
+/**
+ * Lấy số lượng bác sĩ phân bổ trực cho mỗi ca từ ô nhập liệu
+ * @returns {number}
+ */
 function getDoctorsPerShift() {
     const input = document.getElementById('aiDoctorsPerShift');
     const value = input ? Number(input.value) : 1;
     return Number.isFinite(value) && value > 0 ? value : 1;
 }
 
+/**
+ * Tính toán và cập nhật tóm tắt tổng số ca trực dự kiến sẽ tạo
+ */
 function updateAiMaxSchedules() {
     const startDate = document.getElementById('aiStartDate');
     const endDate = document.getElementById('aiEndDate');
@@ -123,6 +166,15 @@ function updateAiMaxSchedules() {
     }
 }
 
+
+// ==========================================
+// 3. WIZARD INTERFACES & UI PROGRESS STEPS
+// ==========================================
+
+/**
+ * Chuyển giao diện nút bấm và trạng thái khi đang lưu lịch trực AI
+ * @param {boolean} isBusy 
+ */
 function setAiScheduleBusy(isBusy) {
     const toolbarButton = document.getElementById('aiScheduleGeminiBtn');
     const submitButton = document.getElementById('aiScheduleSubmitBtn');
@@ -146,6 +198,11 @@ function setAiScheduleBusy(isBusy) {
     }
 }
 
+/**
+ * Hiển thị thông báo trên Modal lập lịch thông minh
+ * @param {string} message 
+ * @param {boolean} isSuccess 
+ */
 function showAiScheduleMessage(message, isSuccess) {
     const alertBox = document.getElementById('aiScheduleModalAlert');
     if (!alertBox) {
@@ -155,6 +212,10 @@ function showAiScheduleMessage(message, isSuccess) {
     alertBox.innerHTML = '<i class="fa-solid ' + (isSuccess ? 'fa-circle-check' : 'fa-triangle-exclamation') + ' me-2"></i>' + escapeHtmlForSchedule(message);
 }
 
+/**
+ * Trích xuất danh sách ca trực được tạo ra bởi AI và đẩy lên hàng đầu của bảng ca trực bác sĩ khám
+ * @param {Array<Object>} schedules 
+ */
 function appendCreatedSchedules(schedules) {
     const tbody = document.getElementById('scheduleTableBody');
     if (!tbody || !Array.isArray(schedules) || schedules.length === 0) {
@@ -167,6 +228,11 @@ function appendCreatedSchedules(schedules) {
     tbody.insertAdjacentHTML('afterbegin', schedules.map(buildScheduleRow).join(''));
 }
 
+/**
+ * Dựng chuỗi HTML cho một hàng của lịch trực
+ * @param {Object} schedule 
+ * @returns {string} HTML string
+ */
 function buildScheduleRow(schedule) {
     const maxPatients = Number(schedule.maxPatients || 20);
     const activeAppointments = Number(schedule.activeAppointments || 0);
@@ -295,6 +361,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const nextBtn = document.getElementById('aiWizardNextBtn');
     const submitBtn = document.getElementById('aiScheduleSubmitBtn');
 
+    // Cập nhật trạng thái tick chọn ngày trong tuần tương ứng với phạm vi ngày
     function updateWeekdayStates() {
         if (!startDate || !endDate || !startDate.value || !endDate.value) return;
         const start = new Date(startDate.value + 'T00:00:00');
@@ -329,6 +396,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     updateWeekdayStates();
 
+    // Cập nhật nhãn thông tin tải lượng khám tối đa dựa trên thời gian
     function updateWorkloadInfo() {
         if (!slotDurationInput || !visitDurationInput || !maxPatientsInput) return;
         const slotMin = parseInt(slotDurationInput.value) || 60;
@@ -349,6 +417,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     updateWorkloadInfo();
 
+    // Thêm chuyên khoa áp dụng ca trực
     if (addDepartmentBtn && departmentSelect && departmentList) {
         addDepartmentBtn.addEventListener('click', function () {
             const dept = departmentSelect.value;
@@ -367,6 +436,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // Xóa chuyên khoa khi bấm dấu X
     if (departmentList) {
         departmentList.addEventListener('click', function (e) {
             if (e.target.classList.contains('badge')) {
@@ -386,6 +456,7 @@ document.addEventListener('DOMContentLoaded', function () {
         cb.addEventListener('change', updateAiMaxSchedules);
     });
 
+    // Quản lý hiển thị của stepper panel
     function showStep(step) {
         currentStep = step;
 
@@ -482,6 +553,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // Gọi AJAX lấy dữ liệu đề xuất từ thuật toán AI
     async function generateProposal() {
         const loader = document.getElementById('aiProposalLoading');
         const container = document.getElementById('aiProposalTableContainer');
@@ -531,6 +603,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // Kết xuất bảng xem trước đề xuất phân ca của AI
     function renderProposalTable() {
         const tbody = document.getElementById('aiProposalTableBody');
         if (!tbody) return;
@@ -577,6 +650,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // Submit xác nhận và lưu danh sách lịch trực AI đề xuất
     if (form) {
         form.addEventListener('submit', async function (e) {
             e.preventDefault();
@@ -637,7 +711,7 @@ document.addEventListener('DOMContentLoaded', function () {
     updateTemplatePreview();
 
     // ==========================================
-    // WEEKLY CALENDAR CONTROLLER
+    // 4. BỘ ĐIỀU HƯỚNG LỊCH TRỰC TUẦN (WEEKLY CALENDAR)
     // ==========================================
     let currentWeeklySchedules = [];
 
@@ -702,6 +776,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // Tải dữ liệu lịch tuần qua AJAX
     async function loadWeeklyCalendar() {
         const picker = document.getElementById('calendarWeekPicker');
         if (!picker) return;
@@ -744,6 +819,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // Vẽ các thẻ trực Bác sĩ/Lễ tân lên lưới lịch trực tuần
     function renderWeeklyCalendarCards(schedules, datesMap) {
         const daysMapByDate = {};
         Object.keys(datesMap).forEach(key => {
@@ -798,6 +874,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // Mở modal xem thông tin ca trực chi tiết trên Calendar tuần
     function openShiftDetailModal(shift) {
         document.getElementById('shiftDetailStaff').textContent = shift.staff || '-';
         document.getElementById('shiftDetailRole').textContent = shift.role || '-';

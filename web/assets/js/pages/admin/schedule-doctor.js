@@ -1,47 +1,81 @@
-// Transfer schedule AJAX support
+/**
+ * =========================================================================
+ * MODULE: QUẢN LÝ LỊCH TRỰC BÁC SĨ KHÁM (DOCTOR SCHEDULE MANAGEMENT)
+ * =========================================================================
+ * File này xử lý các tương tác liên quan đến Bác sĩ khám (xếp ca, chuyển ca,
+ * sửa ca trực và hiển thị danh sách bệnh nhân đã đặt lịch trong ca).
+ */
+
+// ==========================================
+// 1. CHUYỂN GIAO CA TRỰC (TRANSFER SCHEDULE)
+// ==========================================
+
+/**
+ * Mở modal chuyển giao ca trực và tải danh sách bác sĩ thay thế qua AJAX.
+ * @param {string|number} scheduleId - ID của ca trực hiện tại cần chuyển
+ * @param {string} doctorName - Tên bác sĩ hiện tại
+ * @param {string} department - Chuyên khoa
+ * @param {string} workDate - Ngày trực
+ * @param {string} timeSlot - Khung giờ trực
+ */
 async function openTransferModal(scheduleId, doctorName, department, workDate, timeSlot) {
     const modalEl = document.getElementById('transferScheduleModal');
     const bsModal = new bootstrap.Modal(modalEl);
+    
+    // Hiển thị thông tin ca trực hiện tại đang được chọn
     document.getElementById('transferSelectedInfo').textContent = doctorName + ' - ' + department + ' - ' + workDate + ' - ' + timeSlot;
+    
     const select = document.getElementById('transferTargetDoctor');
     select.innerHTML = '<option>Đang tải...</option>';
+    
     try {
         const resp = await fetch(adminContextPath + '/admin?action=getTransferCandidates&scheduleId=' + encodeURIComponent(scheduleId), {
             headers: { 'Accept': 'application/json' }
         });
         if (!resp.ok) throw new Error('HTTP ' + resp.status);
         const data = await resp.json();
+        
         const currentId = data.currentDoctorId || null;
         const items = data.items || [];
+        
         let options = '<option value="">-- Chọn bác sĩ thay thế --</option>';
         for (const d of items) {
-            if (currentId && String(d.doctorId) === String(currentId)) continue; // skip current doctor
+            // Không hiển thị lại bác sĩ hiện tại trong danh sách chuyển
+            if (currentId && String(d.doctorId) === String(currentId)) continue;
             options += '<option value="' + d.doctorId + '">' + escapeHtml(d.fullName) + ' - ' + escapeHtml(d.department) + '</option>';
         }
         select.innerHTML = options;
     } catch (err) {
         select.innerHTML = '<option value="">Không tải được danh sách bác sĩ</option>';
     }
+    
+    // Gán ID ca trực vào nút xác nhận
     document.getElementById('transferConfirmBtn').setAttribute('data-schedule-id', scheduleId);
     bsModal.show();
 }
 
+/**
+ * Lắng nghe sự kiện click xác nhận chuyển giao ca trực
+ */
 document.getElementById('transferConfirmBtn')?.addEventListener('click', async function () {
     const scheduleId = this.getAttribute('data-schedule-id');
     const targetDoctorId = document.getElementById('transferTargetDoctor').value;
     const alertBox = document.getElementById('transferAlert');
     alertBox.className = 'alert d-none';
+    
     if (!targetDoctorId) {
         alertBox.className = 'alert alert-danger';
         alertBox.textContent = 'Vui lòng chọn bác sĩ nhận ca.';
         return;
     }
+    
     try {
         const params = new URLSearchParams();
         params.set('action', 'transferSchedule');
         params.set('scheduleId', scheduleId);
         params.set('targetDoctorId', targetDoctorId);
         params.set('csrfToken', adminCsrfToken);
+        
         const resp = await fetch(adminContextPath + '/admin', {
             method: 'POST',
             headers: {
@@ -50,17 +84,22 @@ document.getElementById('transferConfirmBtn')?.addEventListener('click', async f
             },
             body: params.toString()
         });
+        
         let json = null;
         try { json = await resp.json(); } catch (e) {}
+        
         if (json && json.success) {
             alertBox.className = 'alert alert-success';
             alertBox.textContent = json.message || 'Đã chuyển giao ca trực';
+            
+            // Cập nhật tên bác sĩ trực tiếp trên dòng của bảng biểu mà không cần reload trang
             const row = document.querySelector('tr[data-schedule-id="' + scheduleId + '"]');
             if (row) {
                 row.setAttribute('data-doctor-name', json.targetDoctorName || '');
                 const firstTd = row.querySelector('td');
                 if (firstTd) firstTd.textContent = json.targetDoctorName || firstTd.textContent;
             }
+            
             setTimeout(() => {
                 const bsModal = bootstrap.Modal.getInstance(document.getElementById('transferScheduleModal'));
                 if (bsModal) bsModal.hide();
@@ -78,6 +117,10 @@ document.getElementById('transferConfirmBtn')?.addEventListener('click', async f
 
 window.openTransferModal = openTransferModal;
 
+/**
+ * Trích xuất dữ liệu từ hàng (tr) và mở modal chuyển giao ca trực
+ * @param {HTMLElement} el - Element nút bấm chuyển ca trên hàng
+ */
 function openTransferModalFromRow(el) {
     const tr = el.closest('tr');
     if (!tr) return;
@@ -90,6 +133,15 @@ function openTransferModalFromRow(el) {
 }
 window.openTransferModalFromRow = openTransferModalFromRow;
 
+
+// ==========================================
+// 2. CHỈNH SỬA CA TRỰC BÁC SĨ (EDIT DOCTOR SCHEDULE)
+// ==========================================
+
+/**
+ * Mở modal chỉnh sửa thông tin ca trực của bác sĩ qua AJAX.
+ * @param {string|number} scheduleId - ID ca trực cần sửa
+ */
 async function openEditScheduleModal(scheduleId) {
     const modalHtml = `
                 <div class="modal-dialog">
@@ -144,6 +196,7 @@ async function openEditScheduleModal(scheduleId) {
                     </div>
                 </div>`;
 
+    // Khởi tạo container động chứa modal edit
     let container = document.getElementById('editScheduleModalContainer');
     if (!container) {
         container = document.createElement('div');
@@ -161,6 +214,7 @@ async function openEditScheduleModal(scheduleId) {
         const data = await resp.json();
         if (!data || !data.schedule) throw new Error('Invalid response');
 
+        // Điền dữ liệu vào form
         document.getElementById('editScheduleId').value = data.schedule.scheduleId;
         document.getElementById('editMaxPatients').value = data.schedule.maxPatients || '';
         document.getElementById('editOnlineQuota').value = data.schedule.onlineQuota !== undefined && data.schedule.onlineQuota !== null ? data.schedule.onlineQuota : '';
@@ -184,6 +238,7 @@ async function openEditScheduleModal(scheduleId) {
         }
     }
 
+    // Đăng ký sự kiện submit AJAX cho form chỉnh sửa
     container.querySelector('#editScheduleForm').addEventListener('submit', async function (e) {
         e.preventDefault();
         const form = e.target;
@@ -209,6 +264,7 @@ async function openEditScheduleModal(scheduleId) {
             });
             if (resp.ok) {
                 bsModal.hide();
+                // Cập nhật giá trị trực tiếp trên dòng của bảng
                 const row = document.querySelector('tr[data-schedule-id="' + payload.scheduleId + '"]');
                 if (row) {
                     row.querySelector('td:nth-child(4)').textContent = payload.timeSlot;
@@ -222,6 +278,7 @@ async function openEditScheduleModal(scheduleId) {
                     row.querySelector('td:nth-child(5) div').textContent = (row.dataset.bookedAppointments || 0) + ' / ' + payload.maxPatients;
                     const reserveText = row.querySelector('td:nth-child(5) small:nth-of-type(2)');
                     if (reserveText) reserveText.textContent = 'Dự phòng: ' + reservedSlots + ' slot';
+                    
                     const onlineQuota = Number(row.dataset.onlineQuota || 0);
                     const onlineBooked = Number(row.dataset.onlineBookedCount || 0);
                     const quotaCell = row.querySelector('td:nth-child(6)');
@@ -254,6 +311,15 @@ async function openEditScheduleModal(scheduleId) {
 }
 window.openEditScheduleModal = openEditScheduleModal;
 
+
+// ==========================================
+// 3. CHI TIẾT CA TRỰC BÁC SĨ (SCHEDULE DETAIL)
+// ==========================================
+
+/**
+ * Mở modal xem chi tiết ca trực bác sĩ khám
+ * @param {string|number} scheduleId 
+ */
 async function openDoctorScheduleDetailModal(scheduleId) {
     const container = ensureStaffModalContainer('doctorScheduleDetailModalContainer');
     container.innerHTML = '<div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-body py-5 text-center text-muted">Đang tải dữ liệu...</div></div></div>';
@@ -311,9 +377,19 @@ async function openDoctorScheduleDetailModal(scheduleId) {
 }
 window.openDoctorScheduleDetailModal = openDoctorScheduleDetailModal;
 
+
+// ==========================================
+// 4. DANH SÁCH BỆNH NHÂN TRONG CA (APPOINTMENTS LIST)
+// ==========================================
+
+/**
+ * Đăng ký sự kiện click vào hàng lịch trực để xem danh sách bệnh nhân
+ */
 document.addEventListener('click', function (e) {
     const row = e.target.closest('tbody tr');
     if (!row) return;
+    
+    // Bỏ qua nếu bấm vào các button hành động hoặc select trong hàng
     if (e.target.closest('button') || e.target.closest('form') || e.target.closest('a') || e.target.closest('select')) return;
 
     const scheduleId = row.dataset.scheduleId;
@@ -331,6 +407,7 @@ document.addEventListener('click', function (e) {
     const modal = new bootstrap.Modal(document.getElementById('scheduleAppointmentsModal'));
     modal.show();
 
+    // Gọi AJAX tải danh sách lịch khám của ca trực này
     fetch(adminContextPath + '/admin?action=scheduleAppointments&scheduleId=' + scheduleId)
         .then(async response => {
             const ct = response.headers.get('content-type') || '';
@@ -390,6 +467,11 @@ document.addEventListener('click', function (e) {
         });
 }, false);
 
+/**
+ * Trả về mã màu tương ứng với trạng thái khám bệnh
+ * @param {string} status 
+ * @returns {string} Badge HTML
+ */
 function getStatusBadge(status) {
     const statusMap = {
         'Waiting': '<span class="badge text-bg-warning"><i class="bi bi-calendar-check me-1"></i>Đã đặt lịch</span>',
