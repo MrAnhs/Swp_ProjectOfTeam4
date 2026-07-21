@@ -559,7 +559,6 @@ public class DoctorLabServlet extends HttpServlet {
                     }
                 }
 
-<<<<<<< HEAD
                 // 2. Fetch invoice_id and check if Healthy_Record already exists for this invoice
                 int healthRecordId = -1;
                 int invoiceId = -1;
@@ -577,7 +576,7 @@ public class DoctorLabServlet extends HttpServlet {
                 }
 
                 if (invoiceId > 0) {
-                    String sqlFindRecord = "SELECT health_record_id FROM Healthy_Record WHERE invoice_id = ?";
+                    String sqlFindRecord = "SELECT health_record_id FROM Healthy_Record WHERE invoice_detail_id = ?";
                     try (PreparedStatement ps = conn.prepareStatement(sqlFindRecord)) {
                         ps.setInt(1, invoiceId);
                         try (ResultSet rs = ps.executeQuery()) {
@@ -585,6 +584,15 @@ public class DoctorLabServlet extends HttpServlet {
                                 healthRecordId = rs.getInt("health_record_id");
                             }
                         }
+                    } catch (SQLException ex) {
+                        try (PreparedStatement ps = conn.prepareStatement("SELECT health_record_id FROM Healthy_Record WHERE invoice_id = ?")) {
+                            ps.setInt(1, invoiceId);
+                            try (ResultSet rs = ps.executeQuery()) {
+                                if (rs.next()) {
+                                    healthRecordId = rs.getInt("health_record_id");
+                                }
+                            }
+                        } catch (SQLException ignored) {}
                     }
                 }
 
@@ -625,7 +633,7 @@ public class DoctorLabServlet extends HttpServlet {
                     }
                 } else {
                     // Insert a new Healthy_Record
-                    String sqlInsert = "INSERT INTO Healthy_Record (urea, cr, hba1c, chol, tg, hdl, ldl, vldl, bmi, patient_id, weight, height, other_information, status, created_at, invoice_id) " +
+                    String sqlInsert = "INSERT INTO Healthy_Record (urea, cr, hba1c, chol, tg, hdl, ldl, vldl, bmi, patient_id, weight, height, other_information, status, created_at, invoice_detail_id) " +
                             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved', GETDATE(), ?)";
                     try (PreparedStatement stmt = conn.prepareStatement(sqlInsert, PreparedStatement.RETURN_GENERATED_KEYS)) {
                         stmt.setBigDecimal(1, urea);
@@ -651,100 +659,7 @@ public class DoctorLabServlet extends HttpServlet {
                             if (generatedKeys.next()) {
                                 healthRecordId = generatedKeys.getInt(1);
                             }
-=======
-                // Find a pending Invoice_Detail request
-                int matchingInvoiceDetailId = 0;
-                int matchingHealthRecordId = 0;
-                String findRequestSql = "SELECT TOP 1 id.invoice_detail_id, id.health_record_id "
-                        + "FROM Invoice_Detail id "
-                        + "JOIN Invoice i ON id.invoice_id = i.invoice_id "
-                        + "WHERE i.patient_id = ? AND id.lab_status IN ('Requested', 'Processing') "
-                        + "AND (id.lab_id = ? OR id.lab_id IS NULL) "
-                        + "ORDER BY id.requested_at ASC";
-                try (PreparedStatement stmtFind = conn.prepareStatement(findRequestSql)) {
-                    stmtFind.setInt(1, patientId);
-                    stmtFind.setInt(2, loggedInLabId);
-                    try (ResultSet rsFind = stmtFind.executeQuery()) {
-                        if (rsFind.next()) {
-                            matchingInvoiceDetailId = rsFind.getInt("invoice_detail_id");
-                            matchingHealthRecordId = rsFind.getInt("health_record_id");
->>>>>>> b6789e344b33b6da54a0d7ea8b6cd470f19497b2
                         }
-                    }
-                }
-
-                if (matchingHealthRecordId > 0) {
-                    // Update existing Healthy_Record with the lab results
-                    String sqlUpdateHR = "UPDATE Healthy_Record SET "
-                            + "urea = COALESCE(?, urea), cr = COALESCE(?, cr), "
-                            + "hba1c = COALESCE(?, hba1c), chol = COALESCE(?, chol), "
-                            + "tg = COALESCE(?, tg), hdl = COALESCE(?, hdl), "
-                            + "ldl = COALESCE(?, ldl), vldl = COALESCE(?, vldl), "
-                            + "bmi = COALESCE(?, bmi), "
-                            + "weight = CASE WHEN weight IS NULL OR weight = 0 THEN ? ELSE weight END, "
-                            + "height = CASE WHEN height IS NULL OR height = 0 THEN ? ELSE height END, "
-                            + "status = 'Accepted', synced_at = GETDATE(), "
-                            + "other_information = CASE WHEN other_information IS NULL OR other_information = '' "
-                            + "THEN ? ELSE other_information + '; ' + ? END "
-                            + "WHERE health_record_id = ?";
-                    try (PreparedStatement stmt = conn.prepareStatement(sqlUpdateHR)) {
-                        stmt.setBigDecimal(1, urea);
-                        stmt.setBigDecimal(2, cr);
-                        stmt.setBigDecimal(3, hba1c);
-                        stmt.setBigDecimal(4, chol);
-                        stmt.setBigDecimal(5, tg);
-                        stmt.setBigDecimal(6, hdl);
-                        stmt.setBigDecimal(7, ldl);
-                        stmt.setBigDecimal(8, vldl);
-                        stmt.setBigDecimal(9, bmi);
-                        stmt.setBigDecimal(10, weight);
-                        stmt.setBigDecimal(11, height);
-                        stmt.setString(12, otherInfo);
-                        stmt.setString(13, otherInfo);
-                        stmt.setInt(14, matchingHealthRecordId);
-                        stmt.executeUpdate();
-                    }
-
-                    // Update Invoice_Detail to Completed
-                    String sqlUpdateDetail = "UPDATE Invoice_Detail SET "
-                            + "lab_status = 'Completed', "
-                            + "lab_result = ?, "
-                            + "completed_at = GETDATE() "
-                            + "WHERE invoice_detail_id = ?";
-                    try (PreparedStatement stmt = conn.prepareStatement(sqlUpdateDetail)) {
-                        String resultSummary = String.format(
-                            "HbA1c: %s, Urea: %s, CR: %s, Chol: %s, TG: %s, HDL: %s, LDL: %s",
-                            hba1c != null ? hba1c.toString() : "0",
-                            urea != null ? urea.toString() : "0",
-                            cr != null ? cr.toString() : "0",
-                            chol != null ? chol.toString() : "0",
-                            tg != null ? tg.toString() : "0",
-                            hdl != null ? hdl.toString() : "0",
-                            ldl != null ? ldl.toString() : "0"
-                        );
-                        stmt.setString(1, resultSummary);
-                        stmt.setInt(2, matchingInvoiceDetailId);
-                        stmt.executeUpdate();
-                    }
-                } else {
-                    // Fallback to inserting a new Healthy_Record
-                    String sqlInsert = "INSERT INTO Healthy_Record (urea, cr, hba1c, chol, tg, hdl, ldl, vldl, bmi, patient_id, weight, height, other_information, status, created_at) " +
-                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved', GETDATE())";
-                    try (PreparedStatement stmt = conn.prepareStatement(sqlInsert)) {
-                        stmt.setBigDecimal(1, urea);
-                        stmt.setBigDecimal(2, cr);
-                        stmt.setBigDecimal(3, hba1c);
-                        stmt.setBigDecimal(4, chol);
-                        stmt.setBigDecimal(5, tg);
-                        stmt.setBigDecimal(6, hdl);
-                        stmt.setBigDecimal(7, ldl);
-                        stmt.setBigDecimal(8, vldl);
-                        stmt.setBigDecimal(9, bmi);
-                        stmt.setInt(10, patientId);
-                        stmt.setBigDecimal(11, weight);
-                        stmt.setBigDecimal(12, height);
-                        stmt.setString(13, otherInfo);
-                        stmt.executeUpdate();
                     }
                 }
 

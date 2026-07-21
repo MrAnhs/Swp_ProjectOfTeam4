@@ -22,7 +22,6 @@ public class AppointmentService {
         Connection connection = null;
         try {
             connection = DatabaseConnection.getConnection();
-            connection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
             connection.setAutoCommit(false);
 
             int patientId = findPatientId(connection, accountId);
@@ -73,7 +72,6 @@ public class AppointmentService {
         Connection connection = null;
         try {
             connection = DatabaseConnection.getConnection();
-            connection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
             connection.setAutoCommit(false);
 
             int patientId = findPatientId(connection, accountId);

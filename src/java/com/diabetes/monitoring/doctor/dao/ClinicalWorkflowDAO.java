@@ -96,10 +96,10 @@ public class ClinicalWorkflowDAO {
                 + "JOIN Medical_Service ms ON id.service_id = ms.service_id "
                 + "WHERE mr.record_id = ?";
         String existingSql = "SELECT r.health_record_id FROM Healthy_Record r "
-                + "JOIN Invoice_Detail id ON id.invoice_id = r.invoice_id "
+                + "JOIN Invoice_Detail id ON id.invoice_detail_id = r.invoice_detail_id "
                 + "WHERE id.invoice_detail_id = ?";
         String insertSql = "INSERT INTO Healthy_Record "
-                + "(record_id, invoice_id, patient_id, doctor_id, status, "
+                + "(record_id, invoice_detail_id, patient_id, doctor_id, status, "
                 + "is_synced_automatically, created_at) "
                 + "VALUES (?, ?, ?, ?, 'Activated_Ready', 1, GETDATE())";
 

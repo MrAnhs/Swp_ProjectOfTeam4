@@ -592,12 +592,14 @@ public class HealthRecordDAO {
                     }
                 }
 
-                try (PreparedStatement ps = conn.prepareStatement(historySql)) {
-                    ps.setInt(1, healthRecordId);
-                    ps.setInt(2, fromDoctorId);
-                    ps.setInt(3, toDoctorId);
-                    ps.setString(4, reason);
-                    ps.executeUpdate();
+                if (hasTable(conn, "Record_Transfer_History")) {
+                    try (PreparedStatement ps = conn.prepareStatement(historySql)) {
+                        ps.setInt(1, healthRecordId);
+                        ps.setInt(2, fromDoctorId);
+                        ps.setInt(3, toDoctorId);
+                        ps.setString(4, reason);
+                        ps.executeUpdate();
+                    }
                 }
 
                 conn.commit();
@@ -636,41 +638,17 @@ public class HealthRecordDAO {
     }
 
     public List<TransferHistory> getTransferHistoryForDoctor(int doctorId) {
-        List<TransferHistory> list = new ArrayList<>();
-        String sql = "SELECT h.transfer_id, h.health_record_id, h.from_doctor_id, h.to_doctor_id, "
-                + "fd.full_name AS from_doctor_name, td.full_name AS to_doctor_name, "
-                + "p.full_name AS patient_name, h.reason, h.created_at "
-                + "FROM Record_Transfer_History h "
-                + "LEFT JOIN Doctor fd ON h.from_doctor_id = fd.doctor_id "
-                + "LEFT JOIN Doctor td ON h.to_doctor_id = td.doctor_id "
-                + "LEFT JOIN Healthy_Record r ON h.health_record_id = r.health_record_id "
-                + "LEFT JOIN Patient p ON r.patient_id = p.patient_id "
-                + "WHERE h.from_doctor_id = ? OR h.to_doctor_id = ? "
-                + "ORDER BY h.created_at DESC";
+        return new ArrayList<>();
+    }
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, doctorId);
-            ps.setInt(2, doctorId);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    TransferHistory history = new TransferHistory();
-                    history.setTransferId(rs.getInt("transfer_id"));
-                    history.setHealthRecordId(rs.getInt("health_record_id"));
-                    history.setFromDoctorId(rs.getInt("from_doctor_id"));
-                    history.setToDoctorId(rs.getInt("to_doctor_id"));
-                    history.setFromDoctorName(rs.getString("from_doctor_name"));
-                    history.setToDoctorName(rs.getString("to_doctor_name"));
-                    history.setPatientName(rs.getString("patient_name"));
-                    history.setReason(rs.getString("reason"));
-                    history.setCreatedAt(rs.getTimestamp("created_at"));
-                    list.add(history);
-                }
+    private boolean hasTable(Connection connection, String tableName) throws SQLException {
+        String sql = "SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, tableName);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next();
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
-        return list;
     }
 
     public int getPatientIdByRecordId(int recordId) {
@@ -1721,16 +1699,21 @@ public class HealthRecordDAO {
                     ps.setInt(1, recordId);
                     ps.executeUpdate();
                 }
-<<<<<<< HEAD
-                String updateHealthyRecordSql = "UPDATE Healthy_Record SET invoice_id = ? WHERE health_record_id = ?";
-                try (PreparedStatement ps = conn.prepareStatement(updateHealthyRecordSql)) {
-                    ps.setInt(1, invoiceId);
-                    ps.setInt(2, recordId);
-                    ps.executeUpdate();
+                try {
+                    String updateHealthyRecordSql = "UPDATE Healthy_Record SET invoice_id = ? WHERE health_record_id = ?";
+                    try (PreparedStatement ps = conn.prepareStatement(updateHealthyRecordSql)) {
+                        ps.setInt(1, invoiceId);
+                        ps.setInt(2, recordId);
+                        ps.executeUpdate();
+                    }
+                } catch (SQLException ex) {
+                    try (PreparedStatement ps = conn.prepareStatement("UPDATE Healthy_Record SET invoice_detail_id = ? WHERE health_record_id = ?")) {
+                        ps.setInt(1, invoiceId);
+                        ps.setInt(2, recordId);
+                        ps.executeUpdate();
+                    } catch (SQLException ignored) {}
                 }
-                notificationService.notifyInvoiceCreated(conn, invoiceId);
-=======
->>>>>>> b6789e344b33b6da54a0d7ea8b6cd470f19497b2
+                new com.diabetes.monitoring.notification.NotificationService().notifyInvoiceCreated(conn, invoiceId);
                 conn.commit();
                 return true;
             } catch (SQLException e) {
