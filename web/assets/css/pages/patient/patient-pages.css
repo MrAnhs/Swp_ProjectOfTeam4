@@ -1,6 +1,8 @@
+@import '../../components/forms.css';
+
 body {
-    background: #f5f8fb;
-    color: var(--color-text);
+    background: #0B0F19 !important;
+    color: #e2e8f0 !important;
     font-family: "Inter", sans-serif;
 }
 
@@ -16,16 +18,17 @@ body {
     margin: 0 0 0.35rem;
     font-size: 2rem;
     font-weight: 700;
+    color: #ffffff !important;
 }
 
 .page-header p {
     margin: 0;
-    color: var(--color-muted);
+    color: #94a3b8 !important;
 }
 
 .page-eyebrow {
     margin-bottom: 0.35rem !important;
-    color: var(--color-primary) !important;
+    color: #2AB5A3 !important;
     font-size: 0.78rem;
     font-weight: 700;
     letter-spacing: 0.08em;
@@ -47,14 +50,15 @@ body {
 }
 
 .btn-page-primary {
-    background: var(--color-primary);
-    color: #fff;
+    background: linear-gradient(135deg, #2AB5A3, #208A7C) !important;
+    color: #fff !important;
+    box-shadow: 0 4px 12px rgba(42, 181, 163, 0.25) !important;
 }
 
 .btn-page-secondary {
-    background: #fff;
-    border-color: var(--color-border);
-    color: var(--color-text);
+    background: rgba(30, 41, 59, 0.6) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #e2e8f0 !important;
 }
 
 .btn-page-danger {
@@ -72,40 +76,80 @@ body {
 
 .shortcut-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2rem;
 }
 
 .shortcut-card,
 .page-card {
-    background: #fff;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+    background: rgba(30, 41, 59, 0.45) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2) !important;
+    backdrop-filter: blur(12px) !important;
 }
 
 .shortcut-card {
     display: grid;
     gap: 0.45rem;
-    padding: 1.25rem;
-    color: var(--color-text);
+    padding: 1.5rem;
+    color: #ffffff !important;
     text-decoration: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.shortcut-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #2AB5A3, transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.shortcut-card:hover {
+    transform: translateY(-5px) !important;
+    border-color: rgba(42, 181, 163, 0.4) !important;
+    box-shadow: 0 15px 35px rgba(42, 181, 163, 0.15) !important;
+    background: rgba(30, 41, 59, 0.7) !important;
+}
+
+.shortcut-card:hover::before {
+    opacity: 1;
 }
 
 .shortcut-card i {
-    color: var(--color-primary);
-    font-size: 1.5rem;
+    color: #2AB5A3 !important;
+    font-size: 1.6rem !important;
+}
+
+.shortcut-card strong {
+    color: #ffffff !important;
+    font-weight: 700 !important;
 }
 
 .shortcut-card span,
 .page-card__header p {
-    color: var(--color-muted);
-    font-size: 0.9rem;
+    color: #94a3b8 !important;
+    font-size: 0.875rem !important;
 }
 
 .page-card {
     padding: 1.5rem;
+}
+
+.page-card__header h2 {
+    color: #ffffff !important;
+}
+
+.page-card__header a {
+    color: #2AB5A3 !important;
+    text-decoration: none !important;
+    font-weight: 600 !important;
 }
 
 .page-card__header {
@@ -501,10 +545,10 @@ body {
     gap: 0.5rem;
     flex: 0 0 auto;
     padding: 0.7rem 1rem;
-    background: #e6f7f7;
-    border: 1px solid #b8e7e7;
+    background: rgba(42, 181, 163, 0.2) !important;
+    border: 1px solid rgba(42, 181, 163, 0.3) !important;
     border-radius: 999px;
-    color: var(--color-primary-dark);
+    color: #2AB5A3 !important;
     font-size: 0.85rem;
     font-weight: 600;
 }
@@ -516,22 +560,23 @@ body {
 
 .doctor-booking-card {
     overflow: hidden;
-    background: #fff;
-    border: 1px solid var(--color-border);
+    background: rgba(30, 41, 59, 0.45) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
     border-radius: 14px;
-    box-shadow: 0 5px 16px rgb(15 23 42 / 5%);
+    box-shadow: 0 5px 16px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(12px) !important;
     transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .doctor-booking-card:hover {
-    border-color: #b8d9da;
-    box-shadow: 0 9px 24px rgb(15 23 42 / 8%);
+    border-color: rgba(42, 181, 163, 0.4) !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
     transform: translateY(-1px);
 }
 
 .doctor-booking-card.active {
-    border-color: var(--color-primary);
-    box-shadow: 0 6px 18px rgb(45 187 188 / 14%);
+    border-color: #2AB5A3 !important;
+    box-shadow: 0 0 18px rgba(42, 181, 163, 0.25) !important;
 }
 
 .doctor-booking-card__header {
@@ -540,8 +585,8 @@ body {
     justify-content: space-between;
     gap: 1rem;
     padding: 1.25rem 1.4rem;
-    background: linear-gradient(90deg, #fff 0%, #fbfefe 100%);
-    border-bottom: 1px solid #edf2f7;
+    background: rgba(15, 23, 42, 0.4) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
 }
 
 .doctor-booking-card__identity {
@@ -553,13 +598,13 @@ body {
 
 .doctor-booking-card__identity h3 {
     margin: 0 0 0.3rem;
-    color: #0f172a;
+    color: #ffffff !important;
     font-size: 1.05rem;
 }
 
 .doctor-booking-card__identity p {
     margin: 0;
-    color: var(--color-primary-dark);
+    color: #2AB5A3 !important;
     font-size: 0.88rem;
     font-weight: 600;
 }
@@ -570,9 +615,9 @@ body {
     gap: 0.45rem;
     flex: 0 0 auto;
     padding: 0.65rem 0.85rem;
-    background: #f0fdfa;
+    background: rgba(42, 181, 163, 0.15) !important;
     border-radius: var(--radius-sm);
-    color: #0f766e;
+    color: #2AB5A3 !important;
     font-size: 0.82rem;
     font-weight: 600;
     text-transform: capitalize;
@@ -591,7 +636,7 @@ body {
 }
 
 .doctor-schedule-heading span {
-    color: var(--color-muted);
+    color: #94a3b8 !important;
     font-size: 0.8rem;
 }
 
@@ -604,12 +649,12 @@ body {
     align-items: center;
     gap: 0.45rem;
     margin-bottom: 0.65rem;
-    color: #334155;
+    color: #cbd5e1 !important;
     font-size: 0.88rem;
 }
 
 .doctor-session-group h4 i {
-    color: var(--color-primary);
+    color: #2AB5A3 !important;
 }
 
 .doctor-time-slots {
@@ -623,20 +668,21 @@ body {
     min-width: 136px;
     gap: 0.1rem;
     padding: 0.65rem 0.85rem;
-    background: #fff;
-    border: 1px solid #cbd5e1;
+    background: rgba(15, 23, 42, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
     border-radius: 9px;
     cursor: pointer;
     text-align: center;
+    color: #ffffff !important;
     transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
 }
 
 .doctor-time-slot:hover,
 .doctor-time-slot.active {
-    background: #e6f7f7;
-    border-color: var(--color-primary);
-    color: var(--color-primary-dark);
-    box-shadow: inset 0 0 0 1px var(--color-primary);
+    background: rgba(42, 181, 163, 0.2) !important;
+    border-color: #2AB5A3 !important;
+    color: #2AB5A3 !important;
+    box-shadow: inset 0 0 0 1px #2AB5A3;
     transform: translateY(-1px);
 }
 
@@ -648,11 +694,23 @@ body {
 
 .doctor-time-slot strong {
     font-size: 0.84rem;
+    color: #ffffff !important;
 }
 
 .doctor-time-slot small {
-    color: var(--color-muted);
+    color: #94a3b8 !important;
     font-size: 0.7rem;
+}
+
+.doctor-time-slot .doctor-time-room {
+    margin-top: 0.2rem;
+    color: #2AB5A3 !important;
+    font-weight: 700;
+}
+
+.doctor-time-slot .doctor-time-location {
+    color: #94a3b8 !important;
+    line-height: 1.25;
 }
 
 .booking-empty-state {
@@ -660,20 +718,20 @@ body {
     justify-items: center;
     gap: 0.5rem;
     padding: 2.5rem 1rem;
-    background: #f8fafc;
-    border: 1px dashed #cbd5e1;
+    background: rgba(15, 23, 42, 0.4) !important;
+    border: 1px dashed rgba(255, 255, 255, 0.15) !important;
     border-radius: var(--radius-md);
     text-align: center;
 }
 
 .booking-empty-state i {
-    color: var(--color-primary);
+    color: #2AB5A3 !important;
     font-size: 2rem;
 }
 
 .booking-empty-state p {
     margin: 0;
-    color: var(--color-muted);
+    color: #94a3b8 !important;
 }
 
 .doctor-booking-card__footer {
@@ -683,13 +741,13 @@ body {
     gap: 1rem;
     min-height: 70px;
     padding: 0.85rem 1.4rem;
-    background: #f8fafc;
-    border-top: 1px solid #e6edf3;
+    background: rgba(15, 23, 42, 0.4) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
 }
 
 .doctor-card-message {
     margin: 0;
-    color: var(--color-muted);
+    color: #94a3b8 !important;
     font-size: 0.82rem;
 }
 
@@ -1538,7 +1596,7 @@ body {
 .stack-form label {
     display: grid;
     gap: 0.45rem;
-    color: #334155;
+    color: #cbd5e1 !important;
     font-size: 0.88rem;
     font-weight: 600;
 }
@@ -1551,14 +1609,21 @@ body {
     width: 100%;
     min-height: 44px;
     padding: 0.7rem 0.85rem;
-    border: 1px solid var(--color-border);
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
     border-radius: 10px;
-    background: #fff;
-    color: var(--color-text);
+    background: rgba(15, 23, 42, 0.6) !important;
+    color: #ffffff !important;
     font: inherit;
     font-weight: 400;
     outline: none;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.filter-row select option,
+.stack-form select option,
+.booking-filter-control select option {
+    background-color: #0F172A !important;
+    color: #ffffff !important;
 }
 
 .filter-row input:focus,
@@ -1566,8 +1631,8 @@ body {
 .stack-form input:focus,
 .stack-form select:focus,
 .stack-form textarea:focus {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(41, 184, 185, 0.14);
+    border-color: #2AB5A3 !important;
+    box-shadow: 0 0 0 3px rgba(42, 181, 163, 0.2) !important;
 }
 
 .stack-form textarea {
@@ -1584,16 +1649,16 @@ body {
     padding: 0.7rem 1.1rem;
     border: 0;
     border-radius: 10px;
-    background: var(--color-primary);
-    color: #fff;
+    background: linear-gradient(135deg, #2AB5A3, #208A7C) !important;
+    color: #fff !important;
     font: inherit;
     font-weight: 700;
     cursor: pointer;
+    box-shadow: 0 4px 12px rgba(42, 181, 163, 0.25) !important;
     transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
 .stack-form > .btn-primary:hover {
-    background: #159a9b;
     transform: translateY(-1px);
 }
 

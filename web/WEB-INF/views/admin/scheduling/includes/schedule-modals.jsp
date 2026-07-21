@@ -58,15 +58,16 @@
                         <div class="modal-body">
                             <div class="mb-3">
                                 <label class="form-label">Bác sĩ</label>
-                                <select class="form-select" name="doctorId" required>
+                                <select class="form-select" name="doctorId" id="createScheduleDoctorId" required>
+                                    <option value="">-- Chọn bác sĩ --</option>
                                     <c:forEach var="d" items="${doctors}">
-                                        <option value="${d.doctorId}">${d.fullName}</option>
+                                        <option value="${d.doctorId}" data-department="${d.department}">${d.fullName} (${d.department})</option>
                                     </c:forEach>
                                 </select>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Phòng trực</label>
-                                <select class="form-select" name="roomId" required>
+                                <select class="form-select" name="roomId" id="createScheduleRoomId" required>
                                     <option value="">-- Chọn phòng --</option>
                                     <c:forEach var="room" items="${rooms}">
                                         <option value="${room.roomId}">${room.roomNumber} - ${room.roomName}</option>
@@ -219,7 +220,7 @@
                         <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
                         <input type="hidden" name="staffType" value="Receptionist">
                         <div class="modal-header">
-                            <h5 class="modal-title">Lập lịch lễ tân bằng AI</h5>
+                            <h5 class="modal-title">Lập lịch lễ tân thông minh</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body py-2">
@@ -286,7 +287,7 @@
                         </div>
                         <div class="modal-footer py-2">
                             <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
-                            <button type="submit" class="btn bg-purple-subtle text-purple fw-bold">Tạo lịch bằng AI</button>
+                            <button type="submit" class="btn bg-purple-subtle text-purple fw-bold">Lập lịch thông minh</button>
                         </div>
                     </form>
                 </div>
@@ -301,7 +302,7 @@
                         <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
                         <input type="hidden" name="staffType" value="doctor_lab">
                         <div class="modal-header">
-                            <h5 class="modal-title">Lập lịch xét nghiệm bằng AI</h5>
+                            <h5 class="modal-title">Lập lịch xét nghiệm thông minh</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body py-2">
@@ -374,7 +375,7 @@
                         </div>
                         <div class="modal-footer py-2">
                             <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
-                            <button type="submit" class="btn bg-purple-subtle text-purple fw-bold">Tạo lịch bằng AI</button>
+                            <button type="submit" class="btn bg-purple-subtle text-purple fw-bold">Lập lịch thông minh</button>
                         </div>
                     </form>
                 </div>
@@ -388,7 +389,7 @@
                         <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
                         <div class="modal-header bg-purple-subtle">
                             <div>
-                                <h5 class="modal-title text-purple fw-bold mb-1"><i class="fa-solid fa-wand-magic-sparkles me-2"></i>Lập lịch bác sĩ bằng AI</h5>
+                                <h5 class="modal-title text-purple fw-bold mb-1"><i class="fa-solid fa-wand-magic-sparkles me-2"></i>Lập lịch bác sĩ thông minh</h5>
                                 <div class="small text-secondary">Tối ưu hóa nguồn lực và tự động phân bổ ca trực thông minh.</div>
                             </div>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -608,4 +609,67 @@
                 </div>
             </div>
         </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const doctorSelect = document.getElementById('createScheduleDoctorId');
+    const roomSelect = document.getElementById('createScheduleRoomId');
+
+    if (doctorSelect && roomSelect) {
+        doctorSelect.addEventListener('change', function() {
+            const selectedOpt = this.options[this.selectedIndex];
+            if (!selectedOpt) return;
+            const dept = selectedOpt.getAttribute('data-department') || '';
+            autoSelectRoomForDepartment(dept);
+        });
+
+        const modal = document.getElementById('createScheduleModal');
+        if (modal) {
+            modal.addEventListener('shown.bs.modal', function () {
+                const selectedOpt = doctorSelect.options[doctorSelect.selectedIndex];
+                if (selectedOpt && selectedOpt.value) {
+                    const dept = selectedOpt.getAttribute('data-department') || '';
+                    autoSelectRoomForDepartment(dept);
+                }
+            });
+        }
+    }
+
+    function autoSelectRoomForDepartment(dept) {
+        if (!roomSelect) return;
+        const options = Array.from(roomSelect.options);
+        if (options.length <= 1) return;
+        
+        let targetKeywords = [];
+        const lowerDept = dept.toLowerCase();
+        
+        if (lowerDept.includes('endocrin') || lowerDept.includes('nội tiết') || lowerDept.includes('tiểu đường')) {
+            targetKeywords = ['nội tiết', '102', '103', 'xét nghiệm']; 
+        } else if (lowerDept.includes('cardio') || lowerDept.includes('tim mạch')) {
+            targetKeywords = ['tim mạch', '104', '105', 'tổng quát'];
+        } else if (lowerDept.includes('nephro') || lowerDept.includes('thận')) {
+            targetKeywords = ['thận', '103', '102', 'tổng quát'];
+        } else {
+            targetKeywords = ['tổng quát', '104', '105', '202', '203'];
+        }
+
+        let bestOptionValue = "";
+        for (let keyword of targetKeywords) {
+            const match = options.find(opt => opt.text.toLowerCase().includes(keyword.toLowerCase()));
+            if (match) {
+                bestOptionValue = match.value;
+                break;
+            }
+        }
+
+        if (!bestOptionValue && options.length > 1) {
+            bestOptionValue = options[1].value;
+        }
+
+        if (bestOptionValue) {
+            roomSelect.value = bestOptionValue;
+        }
+    }
+});
+</script>
 

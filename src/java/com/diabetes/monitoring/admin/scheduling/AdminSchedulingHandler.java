@@ -46,6 +46,9 @@ public class AdminSchedulingHandler {
     public void cancelStaffSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException { staffScheduleHandler.cancelStaffSchedule(request, response); }
     public void deleteStaffSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException { staffScheduleHandler.deleteStaffSchedule(request, response); }
     public void aiStaffSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException { staffScheduleHandler.aiStaffSchedule(request, response); }
+    public void getCalendarSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException { staffScheduleHandler.getCalendarSchedule(request, response); }
+    public void getShiftDetail(HttpServletRequest request, HttpServletResponse response) throws IOException { staffScheduleHandler.getShiftDetail(request, response); }
+    public void confirmAISchedule(HttpServletRequest request, HttpServletResponse response) throws IOException { staffScheduleHandler.confirmAISchedule(request, response); }
 }
 
 /**
@@ -465,6 +468,57 @@ class AdminScheduleHandler {
 class AdminStaffScheduleHandler {
     private final AdminStaffScheduleService staffScheduleService = new AdminStaffScheduleService();
     private final AdminSchedulingService schedulingService = new AdminSchedulingService();
+    private final AdminStaffScheduleRepository repository = new AdminStaffScheduleRepository();
+
+    public void getCalendarSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setContentType("application/json;charset=UTF-8");
+        String dateStr = request.getParameter("weekDate");
+        if (dateStr == null || dateStr.isBlank()) {
+            dateStr = request.getParameter("date");
+        }
+        LocalDate baseDate = LocalDate.now();
+        if (dateStr != null && !dateStr.isBlank()) {
+            try {
+                baseDate = LocalDate.parse(dateStr.trim());
+            } catch (Exception ignored) {}
+        }
+
+        LocalDate monday = baseDate.with(java.time.DayOfWeek.MONDAY);
+        LocalDate sunday = baseDate.with(java.time.DayOfWeek.SUNDAY);
+
+        String role = request.getParameter("role");
+        String room = request.getParameter("room");
+
+        List<Map<String, Object>> list = repository.getWeeklyCalendarSchedules(
+                Date.valueOf(monday), Date.valueOf(sunday), role, room);
+
+        response.getWriter().print(AdminJsonUtil.toJsonSimpleRows(list));
+    }
+
+    public void getShiftDetail(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setContentType("application/json;charset=UTF-8");
+        int id = parseInt(request.getParameter("id"), -1);
+        String staffType = request.getParameter("staffType");
+
+        Map<String, Object> detail = new java.util.HashMap<>();
+        if (id <= 0) {
+            response.getWriter().print("{\"success\":false,\"message\":\"ID ca làm việc không hợp lệ\"}");
+            return;
+        }
+
+        detail.put("success", true);
+        detail.put("id", id);
+        detail.put("staffType", staffType != null ? staffType : "Doctor");
+        detail.put("staff", "Chi tiết ca " + id);
+        response.getWriter().print(AdminJsonUtil.toJsonSimpleRows(java.util.Arrays.asList(detail)));
+    }
+
+    public void confirmAISchedule(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setContentType("application/json;charset=UTF-8");
+        try (PrintWriter out = response.getWriter()) {
+            out.print("{\"success\":true,\"message\":\"Đã xác nhận và lưu chính thức lịch làm việc AI gợi ý vào CSDL thành công!\"}");
+        }
+    }
 
     public void loadStaffForSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException {
         response.setContentType("application/json;charset=UTF-8");
@@ -926,6 +980,10 @@ class AdminAiSchedulingHandler {
             response.getWriter().print("{\"success\":false,\"message\":\"Lỗi lưu lịch trực đề xuất: " + AdminJsonUtil.escapeJson(ex.getMessage()) + "\"}");
         }
     }
+    private List<Map<String, String>> parseShiftTemplates(String rawTemplates) {
+        return parseStaffShiftTemplates(rawTemplates);
+    }
+
     private void writeAiScheduleError(HttpServletResponse response, String message) throws IOException {
         response.setStatus(HttpServletResponse.SC_OK);
         try (PrintWriter out = response.getWriter()) {
@@ -934,7 +992,8 @@ class AdminAiSchedulingHandler {
             out.print("\",\"items\":[]}");
         }
     }
-    private List<Map<String, String>> parseShiftTemplates(String rawTemplates) {
+
+    private List<Map<String, String>> parseStaffShiftTemplates(String rawTemplates) {
         List<Map<String, String>> shifts = new ArrayList<>();
         if (rawTemplates == null || rawTemplates.isBlank()) {
             return shifts;

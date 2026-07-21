@@ -1,6 +1,5 @@
 package com.diabetes.monitoring.doctor.dao;
 
-import com.diabetes.monitoring.notification.NotificationService;
 import com.diabetes.monitoring.doctor.model.HealthRecord;
 import com.diabetes.monitoring.doctor.model.MedicalRecord;
 import com.diabetes.monitoring.util.DatabaseConnection;
@@ -13,7 +12,6 @@ import java.sql.Statement;
 import java.sql.Types;
 
 public class ClinicalWorkflowDAO {
-    private final NotificationService notificationService = new NotificationService();
 
     public int createMedicalRecordForAppointment(int appointmentId) throws SQLException {
         String appointmentSql = "SELECT a.patient_id, ds.doctor_id, a.status "
@@ -91,14 +89,15 @@ public class ClinicalWorkflowDAO {
     public int activateHealthRecord(int recordId, int invoiceDetailId) throws SQLException {
         String validateSql = "SELECT mr.patient_id, mr.doctor_id, mr.appointment_id, "
                 + "id.appointment_id AS billed_appointment_id, i.status AS invoice_status, "
-                + "ms.service_type "
+                + "ms.service_type, id.invoice_id "
                 + "FROM Medical_record mr "
                 + "JOIN Invoice_Detail id ON id.invoice_detail_id = ? "
                 + "JOIN Invoice i ON id.invoice_id = i.invoice_id "
                 + "JOIN Medical_Service ms ON id.service_id = ms.service_id "
                 + "WHERE mr.record_id = ?";
-        String existingSql = "SELECT health_record_id FROM Healthy_Record "
-                + "WHERE invoice_detail_id = ?";
+        String existingSql = "SELECT r.health_record_id FROM Healthy_Record r "
+                + "JOIN Invoice_Detail id ON id.invoice_detail_id = r.invoice_detail_id "
+                + "WHERE id.invoice_detail_id = ?";
         String insertSql = "INSERT INTO Healthy_Record "
                 + "(record_id, invoice_detail_id, patient_id, doctor_id, status, "
                 + "is_synced_automatically, created_at) "
@@ -123,6 +122,7 @@ public class ClinicalWorkflowDAO {
                 int billedAppointmentId;
                 String invoiceStatus;
                 String serviceType;
+                int invoiceId;
 
                 try (PreparedStatement ps = conn.prepareStatement(validateSql)) {
                     ps.setInt(1, invoiceDetailId);
@@ -137,6 +137,7 @@ public class ClinicalWorkflowDAO {
                         billedAppointmentId = rs.getInt("billed_appointment_id");
                         invoiceStatus = rs.getString("invoice_status");
                         serviceType = rs.getString("service_type");
+                        invoiceId = rs.getInt("invoice_id");
                     }
                 }
 
@@ -153,7 +154,7 @@ public class ClinicalWorkflowDAO {
                 try (PreparedStatement ps = conn.prepareStatement(
                         insertSql, Statement.RETURN_GENERATED_KEYS)) {
                     ps.setInt(1, recordId);
-                    ps.setInt(2, invoiceDetailId);
+                    ps.setInt(2, invoiceId);
                     ps.setInt(3, patientId);
                     ps.setInt(4, doctorId);
                     ps.executeUpdate();
@@ -239,8 +240,6 @@ public class ClinicalWorkflowDAO {
                     }
                 }
 
-                notificationService.notifyMedicalRecordCompletedByRecord(
-                        conn, recordId, resultVisibility);
                 conn.commit();
                 return true;
             } catch (SQLException e) {

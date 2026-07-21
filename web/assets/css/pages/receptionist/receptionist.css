@@ -1,3 +1,5 @@
+@import '../../components/forms.css';
+
 :root {
     --receptionist-primary: #22b8b6;
     --receptionist-primary-dark: #159a99;

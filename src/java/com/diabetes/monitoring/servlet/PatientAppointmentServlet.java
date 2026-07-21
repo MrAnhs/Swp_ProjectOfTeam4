@@ -123,7 +123,11 @@ public class PatientAppointmentServlet extends HttpServlet {
         } catch (SQLException e) {
             e.printStackTrace();
             writeError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    "Không thể tạo lịch hẹn. Vui lòng thử lại.");
+                    "Không thể tạo lịch hẹn: " + (e.getMessage() != null ? e.getMessage() : "Lỗi cơ sở dữ liệu."));
+        } catch (Exception e) {
+            e.printStackTrace();
+            writeError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    "Không thể tạo lịch hẹn: " + (e.getMessage() != null ? e.getMessage() : "Lỗi hệ thống."));
         }
         }
     }

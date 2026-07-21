@@ -116,6 +116,9 @@ public class AdminAIService {
                 // Update Training History record in DB (Store "XGBoost" as the best model name)
                 trainingRepository.updateTrainingStatus(trainingId, "Completed", bestModel, json);
 
+                // Mark all currently approved/exported records as Trained to reset approved count to 0 for next training cycle
+                datasetRepository.markApprovedRecordsAsTrained(trainingId);
+
                 // Update in-memory state
                 progressState.put("status", "Completed");
                 progressState.put("bestModel", bestModel);

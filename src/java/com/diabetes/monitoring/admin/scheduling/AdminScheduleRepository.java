@@ -1181,10 +1181,11 @@ public class AdminScheduleRepository {
             return "Bác sĩ đã có ca trực trùng thời gian trong ngày.";
         }
 
-        int shiftCount = countNonCancelledSchedulesInDay(connection, doctorId, workDate, excludeScheduleId);
-        if (shiftCount >= MAX_SHIFTS_PER_DOCTOR_PER_DAY) {
-            return "Bác sĩ đã có 2 ca trực trong ngày này.";
-        }
+        // Rule giới hạn 2 ca/ngày đã được loại bỏ theo yêu cầu
+        // int shiftCount = countNonCancelledSchedulesInDay(connection, doctorId, workDate, excludeScheduleId);
+        // if (shiftCount >= MAX_SHIFTS_PER_DOCTOR_PER_DAY) {
+        //     return "Bác sĩ đã có 2 ca trực trong ngày này.";
+        // }
 
         return null;
     }

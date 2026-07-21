@@ -12,21 +12,49 @@ public class NotificationDAO {
     public boolean create(Connection connection, int accountId, String title,
             String content, String type, String targetUrl, String eventKey)
             throws SQLException {
-        String sql = "INSERT INTO Notification "
-                + "(AccountID, Title, Content, Type, IsRead, CreatedAt, TargetUrl, EventKey) "
-                + "SELECT ?, ?, ?, ?, 0, GETDATE(), ?, ? "
-                + "WHERE NOT EXISTS (SELECT 1 FROM Notification WITH (UPDLOCK, HOLDLOCK) "
-                + "WHERE AccountID = ? AND EventKey = ?)";
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setInt(1, accountId);
-            statement.setString(2, title);
-            statement.setString(3, content);
-            statement.setString(4, type);
-            statement.setString(5, targetUrl);
-            statement.setString(6, eventKey);
-            statement.setInt(7, accountId);
-            statement.setString(8, eventKey);
-            return statement.executeUpdate() == 1;
+        boolean hasEventKey = hasColumn(connection, "Notification", "EventKey");
+        boolean hasTargetUrl = hasColumn(connection, "Notification", "TargetUrl");
+
+        if (hasEventKey && hasTargetUrl) {
+            String sql = "INSERT INTO Notification "
+                    + "(AccountID, Title, Content, Type, IsRead, CreatedAt, TargetUrl, EventKey) "
+                    + "SELECT ?, ?, ?, ?, 0, GETDATE(), ?, ? "
+                    + "WHERE NOT EXISTS (SELECT 1 FROM Notification WITH (UPDLOCK, HOLDLOCK) "
+                    + "WHERE AccountID = ? AND EventKey = ?)";
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setInt(1, accountId);
+                statement.setString(2, title);
+                statement.setString(3, content);
+                statement.setString(4, type);
+                statement.setString(5, targetUrl);
+                statement.setString(6, eventKey);
+                statement.setInt(7, accountId);
+                statement.setString(8, eventKey);
+                return statement.executeUpdate() == 1;
+            }
+        } else if (hasTargetUrl) {
+            String sql = "INSERT INTO Notification "
+                    + "(AccountID, Title, Content, Type, IsRead, CreatedAt, TargetUrl) "
+                    + "VALUES (?, ?, ?, ?, 0, GETDATE(), ?)";
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setInt(1, accountId);
+                statement.setString(2, title);
+                statement.setString(3, content);
+                statement.setString(4, type);
+                statement.setString(5, targetUrl);
+                return statement.executeUpdate() == 1;
+            }
+        } else {
+            String sql = "INSERT INTO Notification "
+                    + "(AccountID, Title, Content, Type, IsRead, CreatedAt) "
+                    + "VALUES (?, ?, ?, ?, 0, GETDATE())";
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setInt(1, accountId);
+                statement.setString(2, title);
+                statement.setString(3, content);
+                statement.setString(4, type);
+                return statement.executeUpdate() == 1;
+            }
         }
     }
 
@@ -43,19 +71,22 @@ public class NotificationDAO {
     }
 
     public List<Notification> findLatest(int accountId, int limit) throws SQLException {
-        String sql = "SELECT TOP (?) NotificationID, AccountID, Title, Content, Type, "
-                + "ISNULL(IsRead, 0) AS IsRead, CreatedAt, TargetUrl "
-                + "FROM Notification WHERE AccountID = ? ORDER BY CreatedAt DESC, NotificationID DESC";
-        List<Notification> notifications = new ArrayList<>();
-        try (Connection connection = DatabaseConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setInt(1, limit);
-            statement.setInt(2, accountId);
-            try (ResultSet result = statement.executeQuery()) {
-                while (result.next()) notifications.add(map(result));
+        try (Connection connection = DatabaseConnection.getConnection()) {
+            boolean hasTargetUrl = hasColumn(connection, "Notification", "TargetUrl");
+            String targetUrlSelect = hasTargetUrl ? "TargetUrl" : "NULL AS TargetUrl";
+            String sql = "SELECT TOP (?) NotificationID, AccountID, Title, Content, Type, "
+                    + "ISNULL(IsRead, 0) AS IsRead, CreatedAt, " + targetUrlSelect + " "
+                    + "FROM Notification WHERE AccountID = ? ORDER BY CreatedAt DESC, NotificationID DESC";
+            List<Notification> notifications = new ArrayList<>();
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setInt(1, limit);
+                statement.setInt(2, accountId);
+                try (ResultSet result = statement.executeQuery()) {
+                    while (result.next()) notifications.add(map(result));
+                }
             }
+            return notifications;
         }
-        return notifications;
     }
 
     public boolean markRead(int accountId, int notificationId) throws SQLException {
@@ -80,5 +111,27 @@ public class NotificationDAO {
         notification.setCreatedAt(result.getTimestamp("CreatedAt"));
         notification.setTargetUrl(result.getString("TargetUrl"));
         return notification;
+    }
+
+    public boolean sendNotification(int accountId, String title, String content, String type, String targetUrl) {
+        String eventKey = "NOTIF_" + System.currentTimeMillis() + "_" + (int)(Math.random() * 1000);
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            return create(conn, accountId, title, content, type, targetUrl, eventKey);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private boolean hasColumn(Connection connection, String tableName, String columnName) throws SQLException {
+        String sql = "SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS "
+                + "WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME = ? AND COLUMN_NAME = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, tableName);
+            statement.setString(2, columnName);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next();
+            }
+        }
     }
 }

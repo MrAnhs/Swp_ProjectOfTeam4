@@ -22,7 +22,6 @@ public class AppointmentService {
         Connection connection = null;
         try {
             connection = DatabaseConnection.getConnection();
-            connection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
             connection.setAutoCommit(false);
 
             int patientId = findPatientId(connection, accountId);
@@ -30,9 +29,10 @@ public class AppointmentService {
             schedule.doctorId = doctorId;
             schedule.scheduleId = scheduleId;
             LocalDateTime appointmentTime = toAppointmentTime(schedule.workDate, schedule.timeSlot);
+            LocalDateTime endTime = toAppointmentEndTime(schedule.workDate, schedule.timeSlot);
 
-            if (!appointmentTime.isAfter(LocalDateTime.now())) {
-                throw new AppointmentBookingException("Ca kh\u00E1m \u0111\u00E3 b\u1EAFt \u0111\u1EA7u ho\u1EB7c \u0111\u00E3 k\u1EBFt th\u00FAC.");
+            if (LocalDateTime.now().isAfter(endTime.minusMinutes(30))) {
+                throw new AppointmentBookingException("Ca khám đã kết thúc hoặc chỉ còn ít hơn 30 phút cuối ca.");
             }
 
             int bookedPatients = countBookedPatients(connection, scheduleId);
@@ -72,15 +72,15 @@ public class AppointmentService {
         Connection connection = null;
         try {
             connection = DatabaseConnection.getConnection();
-            connection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
             connection.setAutoCommit(false);
 
             int patientId = findPatientId(connection, accountId);
             ScheduleSelection schedule = lockBestAvailableSchedule(connection, workDate, timeSlot);
             LocalDateTime appointmentTime = toAppointmentTime(schedule.workDate, schedule.timeSlot);
+            LocalDateTime endTime = toAppointmentEndTime(schedule.workDate, schedule.timeSlot);
 
-            if (!appointmentTime.isAfter(LocalDateTime.now())) {
-                throw new AppointmentBookingException("Ca kh\u00E1m \u0111\u00E3 b\u1EAFt \u0111\u1EA7u ho\u1EB7c \u0111\u00E3 k\u1EBFt th\u00FAC.");
+            if (LocalDateTime.now().isAfter(endTime.minusMinutes(30))) {
+                throw new AppointmentBookingException("Ca khám đã kết thúc hoặc chỉ còn ít hơn 30 phút cuối ca.");
             }
 
             int bookedPatients = countBookedPatients(connection, schedule.scheduleId);
@@ -219,6 +219,27 @@ public class AppointmentService {
             LocalTime startTime = LocalTime.parse(timeSlot.substring(0, 5));
             return LocalDateTime.of(workDate, startTime);
         } catch (DateTimeParseException e) {
+            throw new AppointmentBookingException("Khung gi\u1EDD c\u1EE7a ca kh\u00E1m kh\u00F4ng h\u1EE3p l\u1EC7.");
+        }
+    }
+
+    private LocalDateTime toAppointmentEndTime(LocalDate workDate, String timeSlot)
+            throws AppointmentBookingException {
+        if (timeSlot == null || timeSlot.length() < 5) {
+            throw new AppointmentBookingException("Khung gi\u1EDD c\u1EE7a ca kh\u00E1m kh\u00F4ng h\u1EE3p l\u1EC7.");
+        }
+        try {
+            String stripped = timeSlot.replace(" ", "");
+            int dashIndex = stripped.indexOf('-');
+            String endTimeStr;
+            if (dashIndex != -1) {
+                endTimeStr = stripped.substring(dashIndex + 1);
+            } else {
+                endTimeStr = stripped.substring(stripped.length() - 5);
+            }
+            LocalTime endTime = LocalTime.parse(endTimeStr);
+            return LocalDateTime.of(workDate, endTime);
+        } catch (Exception e) {
             throw new AppointmentBookingException("Khung gi\u1EDD c\u1EE7a ca kh\u00E1m kh\u00F4ng h\u1EE3p l\u1EC7.");
         }
     }

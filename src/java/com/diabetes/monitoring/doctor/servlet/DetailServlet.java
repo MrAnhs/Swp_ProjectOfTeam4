@@ -42,6 +42,8 @@ public class DetailServlet extends DoctorServlet {
                     dao.getLaboratoryRequests(recordId, doctorId));
             request.setAttribute("laboratoryServices",
                     dao.getActiveLaboratoryServices());
+            request.setAttribute("labDoctors",
+                    dao.getScheduledLabDoctors());
             request.setAttribute("laboratoryStage", labStage.name());
             request.setAttribute("hasLaboratoryRequest",
                     labStage != HealthRecordDAO.LaboratoryStage.NONE);

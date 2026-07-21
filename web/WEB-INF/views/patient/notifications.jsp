@@ -7,10 +7,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Th&#244;ng b&#225;o - DiabetesCare</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/base/variables.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/layouts/patient-shell.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/pages/patient/patient-pages.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/pages/patient/notifications.css?v=20260715-notification3">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/base/variables.css?v=20260721-ui2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/layouts/patient-shell.css?v=20260721-ui2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/pages/patient/patient-pages.css?v=20260721-ui2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/pages/patient/notifications.css?v=20260721-ui2">
 </head>
 <body>
     <c:set var="activePatientPage" value="notifications" />
@@ -61,7 +61,7 @@
         </section>
     </main>
 
-    <script defer src="${pageContext.request.contextPath}/assets/js/pages/patient/notifications.js?v=20260715-notification3"></script>
+    <script defer src="${pageContext.request.contextPath}/assets/js/pages/patient/notifications.js?v=20260721-ui2"></script>
 </body>
 </html>
 

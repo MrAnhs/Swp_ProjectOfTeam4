@@ -238,6 +238,10 @@
         <servlet-name>PatientPageServlet</servlet-name>
         <url-pattern>/patient/notifications</url-pattern>
     </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>PatientPageServlet</servlet-name>
+        <url-pattern>/patient/family-sharing</url-pattern>
+    </servlet-mapping>
 
     <servlet>
         <servlet-name>ReceptionistPageServlet</servlet-name>
@@ -383,6 +387,15 @@
     <servlet-mapping>
         <servlet-name>DoctorSaveNotesServlet</servlet-name>
         <url-pattern>/doctor/records/save</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>DoctorScheduleServlet</servlet-name>
+        <servlet-class>com.diabetes.monitoring.doctor.servlet.DoctorScheduleServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>DoctorScheduleServlet</servlet-name>
+        <url-pattern>/doctor/schedule</url-pattern>
     </servlet-mapping>
 
     <servlet>
@@ -571,6 +584,24 @@
     <servlet-mapping>
         <servlet-name>VnPayIpnServlet</servlet-name>
         <url-pattern>/vnpay-ipn</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>FamilySharingServlet</servlet-name>
+        <servlet-class>com.diabetes.monitoring.servlet.FamilySharingServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>FamilySharingServlet</servlet-name>
+        <url-pattern>/patient/api/family-sharing</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>FamilyDashboardServlet</servlet-name>
+        <servlet-class>com.diabetes.monitoring.servlet.FamilyDashboardServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>FamilyDashboardServlet</servlet-name>
+        <url-pattern>/patient/family-dashboard</url-pattern>
     </servlet-mapping>
 
     <mime-mapping>

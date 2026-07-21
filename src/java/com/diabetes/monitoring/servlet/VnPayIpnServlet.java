@@ -36,6 +36,21 @@ public class VnPayIpnServlet extends HttpServlet {
 
         // 1. Kiểm tra chữ ký bảo mật (Checksum)
         String signValue = VnPayConfig.hashAllFields(fields);
+        
+        try {
+            java.io.File logFile = new java.io.File("d:\\Ky5\\SWP391\\Swp_ProjectOfTeam4-main\\ipn_log.txt");
+            try (java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.FileWriter(logFile, true))) {
+                pw.println("--- IPN RECEIVED AT " + new java.util.Date() + " ---");
+                pw.println("Query String: " + request.getQueryString());
+                pw.println("Parameters: " + fields);
+                pw.println("vnp_SecureHash: " + vnp_SecureHash);
+                pw.println("Calculated Hash: " + signValue);
+                pw.println("Signature Valid: " + signValue.equalsIgnoreCase(vnp_SecureHash));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         if (!signValue.equalsIgnoreCase(vnp_SecureHash)) {
             System.out.println("VNPay IPN Warning: Invalid Checksum signature received.");
             writeJsonResponse(response, "97", "Invalid Checksum");
