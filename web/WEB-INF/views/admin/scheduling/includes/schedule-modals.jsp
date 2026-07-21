@@ -219,7 +219,7 @@
                         <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
                         <input type="hidden" name="staffType" value="Receptionist">
                         <div class="modal-header">
-                            <h5 class="modal-title">Lập lịch lễ tân bằng AI</h5>
+                            <h5 class="modal-title">Lập lịch lễ tân thông minh</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body py-2">
@@ -286,7 +286,7 @@
                         </div>
                         <div class="modal-footer py-2">
                             <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
-                            <button type="submit" class="btn bg-purple-subtle text-purple fw-bold">Tạo lịch bằng AI</button>
+                            <button type="submit" class="btn bg-purple-subtle text-purple fw-bold">Lập lịch thông minh</button>
                         </div>
                     </form>
                 </div>
@@ -301,7 +301,7 @@
                         <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
                         <input type="hidden" name="staffType" value="doctor_lab">
                         <div class="modal-header">
-                            <h5 class="modal-title">Lập lịch xét nghiệm bằng AI</h5>
+                            <h5 class="modal-title">Lập lịch xét nghiệm thông minh</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body py-2">
@@ -374,7 +374,7 @@
                         </div>
                         <div class="modal-footer py-2">
                             <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
-                            <button type="submit" class="btn bg-purple-subtle text-purple fw-bold">Tạo lịch bằng AI</button>
+                            <button type="submit" class="btn bg-purple-subtle text-purple fw-bold">Lập lịch thông minh</button>
                         </div>
                     </form>
                 </div>
@@ -388,7 +388,7 @@
                         <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
                         <div class="modal-header bg-purple-subtle">
                             <div>
-                                <h5 class="modal-title text-purple fw-bold mb-1"><i class="fa-solid fa-wand-magic-sparkles me-2"></i>Lập lịch bác sĩ bằng AI</h5>
+                                <h5 class="modal-title text-purple fw-bold mb-1"><i class="fa-solid fa-wand-magic-sparkles me-2"></i>Lập lịch bác sĩ thông minh</h5>
                                 <div class="small text-secondary">Tối ưu hóa nguồn lực và tự động phân bổ ca trực thông minh.</div>
                             </div>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>

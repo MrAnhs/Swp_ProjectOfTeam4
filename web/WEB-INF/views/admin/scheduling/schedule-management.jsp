@@ -1024,8 +1024,8 @@
                                         <button type="button" id="aiScheduleGeminiBtn"
                                             class="btn bg-purple-subtle text-purple fw-bold ai-schedule-toolbar-btn schedule-ai-action"
                                             data-bs-toggle="modal" data-bs-target="#aiScheduleModal"
-                                            aria-label="Lập lịch bằng AI">
-                                            <i class="fa-solid fa-brain me-2"></i>Lập lịch bằng AI
+                                            aria-label="Lập lịch thông minh">
+                                            <i class="fa-solid fa-brain me-2"></i>Lập lịch thông minh
                                         </button>
                                         <button type="button" id="createScheduleToolbarBtn"
                                             class="btn btn-primary schedule-primary-action" data-bs-toggle="modal"
@@ -1435,19 +1435,19 @@
                                 }
                                 var config = {
                                     doctorRolePane: {
-                                        aiLabel: '<i class="fa-solid fa-brain me-2"></i>Lập lịch bác sĩ bằng AI',
+                                        aiLabel: '<i class="fa-solid fa-brain me-2"></i>Lập lịch bác sĩ thông minh',
                                         aiTarget: '#aiScheduleModal',
                                         createLabel: 'Tạo ca bác sĩ',
                                         createTarget: '#createScheduleModal'
                                     },
                                     receptionistRolePane: {
-                                        aiLabel: '<i class="fa-solid fa-brain me-2"></i>Lập lịch lễ tân bằng AI',
+                                        aiLabel: '<i class="fa-solid fa-brain me-2"></i>Lập lịch lễ tân thông minh',
                                         aiTarget: '#aiReceptionistScheduleModal',
                                         createLabel: 'Tạo ca lễ tân',
                                         createTarget: '#createReceptionistScheduleModal'
                                     },
                                     labRolePane: {
-                                        aiLabel: '<i class="fa-solid fa-brain me-2"></i>Lập lịch xét nghiệm bằng AI',
+                                        aiLabel: '<i class="fa-solid fa-brain me-2"></i>Lập lịch xét nghiệm thông minh',
                                         aiTarget: '#aiLabScheduleModal',
                                         createLabel: 'Tạo ca bác sĩ xét nghiệm',
                                         createTarget: '#createLabScheduleModal'
