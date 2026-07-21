@@ -768,9 +768,6 @@ document.addEventListener('DOMContentLoaded', function () {
             setTimeout(loadWeeklyCalendar, 50);
         });
 
-        document.getElementById('calGenerateAiBtn')?.addEventListener('click', generateCalendarAiSchedule);
-        document.getElementById('calConfirmAiBtn')?.addEventListener('click', confirmCalendarAiSchedule);
-
         if (!document.getElementById('weeklyCalendarPane')?.hasAttribute('hidden')) {
             loadWeeklyCalendar();
         }
@@ -895,55 +892,5 @@ document.addEventListener('DOMContentLoaded', function () {
         const modalEl = document.getElementById('shiftDetailModal');
         const modal = new bootstrap.Modal(modalEl);
         modal.show();
-    }
-
-    function generateCalendarAiSchedule() {
-        const confirmBtn = document.getElementById('calConfirmAiBtn');
-        if (confirmBtn) confirmBtn.classList.remove('d-none');
-
-        const picker = document.getElementById('calendarWeekPicker');
-        const baseDate = new Date(picker.value || new Date());
-        const monday = getMondayOfDate(baseDate);
-
-        const proposed = [
-            { id: 9901, staff: 'Dr. Nguyễn Văn AI', role: 'Doctor', room: 'Phòng 101', date: formatDateIso(monday), start: '08:00', end: '12:00', timeSlot: 'Morning', status: 'Suggested', isPreview: true },
-            { id: 9902, staff: 'KTV. Trần Thị AI', role: 'Lab', room: 'Phòng Xét nghiệm Máu', date: formatDateIso(monday), start: '08:00', end: '12:00', timeSlot: 'Morning', status: 'Suggested', isPreview: true },
-            { id: 9903, staff: 'Lễ tân Lê Văn AI', role: 'Reception', room: 'Quầy tiếp nhận 1', date: formatDateIso(monday), start: '13:00', end: '17:00', timeSlot: 'Afternoon', status: 'Suggested', isPreview: true }
-        ];
-
-        currentWeeklySchedules = [...currentWeeklySchedules, ...proposed];
-        const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
-        const datesMap = {};
-        days.forEach((dayKey, idx) => {
-            const dateObj = new Date(monday);
-            dateObj.setDate(monday.getDate() + idx);
-            datesMap[dayKey] = formatDateIso(dateObj);
-        });
-
-        days.forEach(dayKey => {
-            ['0800', '1300'].forEach(timeKey => {
-                const cell = document.getElementById(`cell-${dayKey}-${timeKey}`);
-                if (cell) cell.innerHTML = '';
-            });
-        });
-
-        renderWeeklyCalendarCards(currentWeeklySchedules, datesMap);
-    }
-
-    async function confirmCalendarAiSchedule() {
-        try {
-            const resp = await fetch(`${adminContextPath}/admin?action=confirmAISchedule`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-            });
-            const data = await resp.json();
-            if (data.success) {
-                alert(data.message || 'Đã lưu lịch AI vào CSDL thành công!');
-                document.getElementById('calConfirmAiBtn')?.classList.add('d-none');
-                loadWeeklyCalendar();
-            }
-        } catch (err) {
-            alert('Lỗi xác nhận lịch AI: ' + err.message);
-        }
     }
 });

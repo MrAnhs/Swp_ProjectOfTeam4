@@ -1129,79 +1129,64 @@
                                                         style="border-radius: 16px;">
                                                         <div class="card-body p-3">
                                                             <div class="row g-3 align-items-end">
-                                                                <div class="col-lg-4 col-md-6">
-                                                                    <label
-                                                                        class="form-label mb-1 fw-bold text-secondary text-xs">Chọn
-                                                                        tuần (Week Picker)</label>
-                                                                    <div class="input-group input-group-sm">
-                                                                        <button type="button"
-                                                                            class="btn btn-outline-secondary"
-                                                                            id="calPrevWeekBtn" title="Tuần trước"><i
-                                                                                class="bi bi-chevron-left"></i></button>
-                                                                        <button type="button"
-                                                                            class="btn btn-outline-secondary fw-semibold px-2"
-                                                                            id="calTodayBtn">Hôm nay</button>
-                                                                        <input type="date"
-                                                                            class="form-control text-center fw-bold"
-                                                                            id="calendarWeekPicker">
-                                                                        <button type="button"
-                                                                            class="btn btn-outline-secondary"
-                                                                            id="calNextWeekBtn" title="Tuần sau"><i
-                                                                                class="bi bi-chevron-right"></i></button>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-lg-3 col-md-6">
-                                                                    <label
-                                                                        class="form-label mb-1 fw-bold text-secondary text-xs">Lọc
-                                                                        theo vai trò (Role)</label>
-                                                                    <select class="form-select form-select-sm"
-                                                                        id="calendarRoleFilter">
-                                                                        <option value="all">Tất cả vai trò</option>
-                                                                        <option value="Doctor">Bác sĩ khám (Doctor)
-                                                                        </option>
-                                                                        <option value="Lab">Bác sĩ xét nghiệm (Lab)
-                                                                        </option>
-                                                                        <option value="Reception">Lễ tân (Reception)
-                                                                        </option>
-                                                                    </select>
-                                                                </div>
-                                                                <div class="col-lg-3 col-md-5">
-                                                                    <label
-                                                                        class="form-label mb-1 fw-bold text-secondary text-xs">Lọc
-                                                                        theo phòng (Room)</label>
-                                                                    <div class="input-group input-group-sm">
-                                                                        <select class="form-select form-select-sm"
-                                                                            id="calendarRoomFilter">
-                                                                            <option value="all">Tất cả phòng khám
-                                                                            </option>
-                                                                            <c:forEach var="r" items="${rooms}">
-                                                                                <option value="${r.roomId}">
-                                                                                    ${r.roomNumber} - ${r.roomName}
-                                                                                </option>
-                                                                            </c:forEach>
-                                                                        </select>
-                                                                        <button type="button"
-                                                                            class="btn btn-primary fw-semibold px-3"
-                                                                            id="calFilterSubmitBtn">
-                                                                            <i class="bi bi-funnel-fill me-1"></i>Lọc
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
-                                                                <div
-                                                                    class="col-lg-2 col-md-6 d-flex gap-2 justify-content-lg-end">
-                                                                    <button type="button"
-                                                                        class="btn btn-sm bg-purple-subtle text-purple fw-bold ai-schedule-toolbar-btn w-100"
-                                                                        id="calGenerateAiBtn">
-                                                                        <i class="fa-solid fa-brain me-1"></i>Tạo lịch
-                                                                        AI
-                                                                    </button>
-                                                                    <button type="button"
-                                                                        class="btn btn-sm btn-success fw-bold d-none w-100"
-                                                                        id="calConfirmAiBtn">
-                                                                        <i class="bi bi-check-circle me-1"></i>Xác nhận
-                                                                        AI
-                                                                    </button>
-                                                                </div>
+                                                                 <div class="col-lg-4 col-md-4">
+                                                                     <label
+                                                                         class="form-label mb-1 fw-bold text-secondary text-xs">Chọn
+                                                                         tuần (Week Picker)</label>
+                                                                     <div class="input-group input-group-sm">
+                                                                         <button type="button"
+                                                                             class="btn btn-outline-secondary"
+                                                                             id="calPrevWeekBtn" title="Tuần trước"><i
+                                                                                 class="bi bi-chevron-left"></i></button>
+                                                                         <button type="button"
+                                                                             class="btn btn-outline-secondary fw-semibold px-2"
+                                                                             id="calTodayBtn">Hôm nay</button>
+                                                                         <input type="date"
+                                                                             class="form-control text-center fw-bold"
+                                                                             id="calendarWeekPicker">
+                                                                         <button type="button"
+                                                                             class="btn btn-outline-secondary"
+                                                                             id="calNextWeekBtn" title="Tuần sau"><i
+                                                                                 class="bi bi-chevron-right"></i></button>
+                                                                     </div>
+                                                                 </div>
+                                                                 <div class="col-lg-4 col-md-4">
+                                                                     <label
+                                                                         class="form-label mb-1 fw-bold text-secondary text-xs">Lọc
+                                                                         theo vai trò (Role)</label>
+                                                                     <select class="form-select form-select-sm"
+                                                                         id="calendarRoleFilter">
+                                                                         <option value="all">Tất cả vai trò</option>
+                                                                         <option value="Doctor">Bác sĩ khám (Doctor)
+                                                                         </option>
+                                                                         <option value="Lab">Bác sĩ xét nghiệm (Lab)
+                                                                         </option>
+                                                                         <option value="Reception">Lễ tân (Reception)
+                                                                         </option>
+                                                                     </select>
+                                                                 </div>
+                                                                 <div class="col-lg-4 col-md-4">
+                                                                     <label
+                                                                         class="form-label mb-1 fw-bold text-secondary text-xs">Lọc
+                                                                         theo phòng (Room)</label>
+                                                                     <div class="input-group input-group-sm">
+                                                                         <select class="form-select form-select-sm"
+                                                                             id="calendarRoomFilter">
+                                                                             <option value="all">Tất cả phòng khám
+                                                                             </option>
+                                                                             <c:forEach var="r" items="${rooms}">
+                                                                                 <option value="${r.roomId}">
+                                                                                     ${r.roomNumber} - ${r.roomName}
+                                                                                 </option>
+                                                                             </c:forEach>
+                                                                         </select>
+                                                                         <button type="button"
+                                                                             class="btn btn-primary fw-semibold px-3"
+                                                                             id="calFilterSubmitBtn">
+                                                                             <i class="bi bi-funnel-fill me-1"></i>Lọc
+                                                                         </button>
+                                                                     </div>
+                                                                 </div>
                                                             </div>
                                                         </div>
                                                     </div>
