@@ -121,7 +121,7 @@
                                             <div class="progress schedule-load-progress">
                                                 <div class="progress-bar ${loadPct >= 100 ? 'bg-danger' : (loadPct >= 80 ? 'bg-warning' : 'bg-success')}"
                                                      role="progressbar"
-                                                     style="width: ${displayPct}%;"
+                                                     style="--w: ${displayPct}%; width: var(--w);"
                                                      aria-valuemin="0" aria-valuemax="100" aria-valuenow="${loadPct}"></div>
                                             </div>
                                             <span class="badge schedule-load-percent ${loadPct >= 100 ? 'text-bg-danger' : (loadPct >= 80 ? 'text-bg-warning' : 'text-bg-success')}">
