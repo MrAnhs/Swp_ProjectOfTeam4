@@ -545,6 +545,9 @@ function buildScheduleRow(schedule) {
 
         + '<td>' + escapeHtmlForSchedule(schedule.timeSlot) + '</td>'
 
+        + '<td><span class="badge bg-light text-dark border"><i class="fa-solid fa-hospital-user me-1 text-primary"></i>' 
+        + escapeHtmlForSchedule(schedule.room || schedule.roomName || schedule.roomId || 'Chưa xếp') + '</span></td>'
+
         + '<td><div style="background-color: #f0f8f4; padding: 6px 10px; border-radius: 4px; font-weight: 500; text-align: center;">'
         + bookedAppointments + ' / ' + maxPatients + '</div>'
         + '<small class="text-muted d-block text-center mt-1">\u0110\u00E3 check-in/\u0111ang kh\u00E1m: ' + activeAppointments + '</small>'
@@ -578,7 +581,7 @@ function appendCreatedSchedules(schedules) {
     if (!tbody || !Array.isArray(schedules) || schedules.length === 0) {
         return;
     }
-    const emptyRow = tbody.querySelector('td[colspan="9"]');
+    const emptyRow = tbody.querySelector('td[colspan="10"]');
     if (emptyRow) {
         emptyRow.closest('tr').remove();
     }
