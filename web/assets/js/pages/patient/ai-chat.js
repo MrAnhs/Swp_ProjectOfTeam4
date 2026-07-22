@@ -5,7 +5,8 @@ const chatInput = document.getElementById('chatInput');
 const endpoint = window.ApiClient.buildUrl('/ai-chat');
 
 const cleanAiReply = (value) => {
-    let text = String(value || '').trim();
+    let rawText = String(value || '').trim();
+    let text = rawText;
 
     // Unwrap valid nested JSON before applying display-only cleanup.
     for (let i = 0; i < 2 && text.startsWith('{'); i++) {
@@ -36,7 +37,7 @@ const cleanAiReply = (value) => {
         .replace(/\n{3,}/g, '\n\n')
         .trim();
 
-    return text;
+    return text || rawText || "Xin ch\u00e0o! B\u1ea1n c\u00f3 th\u1ec3 cho t\u00f4i bi\u1ebft tri\u1ec7u ch\u1ee9ng hi\u1ec7n t\u1ea1i \u0111\u1ec3 t\u00f4i t\u01b0 v\u1ea5n nh\u00e9.";
 };
 
 const addMessage = (text, type = 'incoming') => {
@@ -69,41 +70,17 @@ const addMessage = (text, type = 'incoming') => {
     chatWindow.scrollTop = chatWindow.scrollHeight;
 };
 
+// Chỉ cập nhật ô Triệu chứng
 const updateHealthSummary = (data) => {
     if (!data) return;
-
-    if (data.urea !== undefined && data.urea !== 0) {
-        document.getElementById('chatUrea').value = data.urea;
-    }
-    if (data.cr !== undefined && data.cr !== 0) {
-        document.getElementById('chatCr').value = data.cr;
-    }
-    if (data.hba1c !== undefined && data.hba1c !== 0) {
-        document.getElementById('chatHba1c').value = data.hba1c;
-    }
-    if (data.chol !== undefined && data.chol !== 0) {
-        document.getElementById('chatChol').value = data.chol;
-    }
-    if (data.tg !== undefined && data.tg !== 0) {
-        document.getElementById('chatTg').value = data.tg;
-    }
-    if (data.hdl !== undefined && data.hdl !== 0) {
-        document.getElementById('chatHdl').value = data.hdl;
-    }
-    if (data.ldl !== undefined && data.ldl !== 0) {
-        document.getElementById('chatLdl').value = data.ldl;
-    }
-    if (data.vldl !== undefined && data.vldl !== 0) {
-        document.getElementById('chatVldl').value = data.vldl;
-    }
-    if (data.weight !== undefined && data.weight !== 0) {
-        document.getElementById('chatWeight').value = data.weight;
-    }
-    if (data.height !== undefined && data.height !== 0) {
-        document.getElementById('chatHeight').value = data.height;
-    }
     if (data.symptoms !== undefined && data.symptoms !== "" && data.symptoms !== "0") {
-        document.getElementById('chatSymptoms').value = data.symptoms;
+        const symptomsEl = document.getElementById('chatSymptoms');
+        const current = symptomsEl.value.trim();
+        if (current && !current.includes(data.symptoms)) {
+            symptomsEl.value = current + ', ' + data.symptoms;
+        } else if (!current) {
+            symptomsEl.value = data.symptoms;
+        }
     }
 };
 
@@ -134,9 +111,7 @@ chatForm.addEventListener('submit', async (event) => {
     try {
         const response = await fetch(endpoint, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: `message=${encodeURIComponent(text)}`,
         });
         
@@ -150,93 +125,71 @@ chatForm.addEventListener('submit', async (event) => {
             console.error("Initial JSON Parse Error:", e);
             const jsonMatch = responseText.match(/\{[\s\S]*\}/);
             if (jsonMatch) {
-                try {
-                    data = JSON.parse(jsonMatch[0]);
-                } catch (e2) {
-                    console.error("Regex JSON Parse Error:", e2);
-                }
+                try { data = JSON.parse(jsonMatch[0]); } catch (e2) {}
             }
         }
         
-        if(document.getElementById('typingIndicator')) document.getElementById('typingIndicator').remove();
+        if (document.getElementById('typingIndicator')) {
+            document.getElementById('typingIndicator').remove();
+        }
         
         if (data) {
             let finalReply = data.reply;
-            let healthData = data.healthData;
+            let symptoms = data.symptoms;
 
-            if (typeof finalReply === 'string' && finalReply.trim().startsWith('{')) {
-                try {
-                    const nestedData = JSON.parse(finalReply);
-                    if (nestedData.reply) {
-                        finalReply = nestedData.reply;
-                        if (nestedData.healthData) healthData = nestedData.healthData;
-                    }
-                } catch (e) {}
+            if (!finalReply || typeof finalReply !== 'string' || !finalReply.trim()) {
+                finalReply = "Xin h\u00e3y ti\u1ebfp t\u1ee5c chia s\u1ebb tri\u1ec7u ch\u1ee9ng c\u1ee7a b\u1ea1n \u0111\u1ec3 t\u00f4i c\u00f3 th\u1ec3 h\u1ed7 tr\u1ee3 nh\u00e9.";
             }
 
-            if (finalReply) {
-                addMessage(finalReply, 'incoming');
-                if (healthData) updateHealthSummary(healthData);
-                if (data.reachedLimit) {
-                    chatInput.disabled = true;
-                    chatInput.placeholder = "\u0110\u00e3 \u0111\u1ea1t gi\u1edbi h\u1ea1n tin nh\u1eafn. Vui l\u00f2ng t\u1ea1o h\u1ed3 s\u01a1.";
-                    const btnSend = chatForm.querySelector('.btn-send');
-                    if (btnSend) btnSend.disabled = true;
-                }
-            } else {
-                addMessage("Xin l\u1ed7i, AI tr\u1ea3 v\u1ec1 d\u1eef li\u1ec7u kh\u00f4ng \u0111\u00fang c\u1ea5u tr\u00fac.", 'incoming');
+            addMessage(finalReply, 'incoming');
+            if (symptoms) updateHealthSummary({ symptoms });
+
+            if (data.reachedLimit) {
+                chatInput.disabled = true;
+                chatInput.placeholder = "\u0110\u00e3 \u0111\u1ea1t gi\u1edbi h\u1ea1n tin nh\u1eafn.";
+                const btnSend = chatForm.querySelector('.btn-send');
+                if (btnSend) btnSend.disabled = true;
             }
         } else {
-            addMessage("L\u1ed7i c\u1ea5u tr\u00fac d\u1eef li\u1ec7u t\u1eeb m\u00e1y ch\u1ee7. Vui l\u00f2ng th\u1eed l\u1ea1i.", 'incoming');
+            addMessage("H\u1ec7 th\u1ed1ng \u0111ang b\u1ecb qu\u00e1 t\u1ea3i. Vui l\u00f2ng th\u1eed l\u1ea1i sau.", 'incoming');
         }
     } catch (error) {
         console.error("Chat error:", error);
-        if(document.getElementById('typingIndicator')) document.getElementById('typingIndicator').remove();
+        if (document.getElementById('typingIndicator')) {
+            document.getElementById('typingIndicator').remove();
+        }
         addMessage("Kh\u00f4ng th\u1ec3 k\u1ebft n\u1ed1i v\u1edbi m\u00e1y ch\u1ee7. Vui l\u00f2ng ki\u1ec3m tra m\u1ea1ng.", 'incoming');
     }
 });
 
+// Nút "Tạo hồ sơ" → lưu triệu chứng + lịch sử chat vào AI_Summary
 function submitHealthRecordFromChat() {
-    const healthData = {
-        urea: document.getElementById('chatUrea').value,
-        creatinine: document.getElementById('chatCr').value,
-        hba1c: document.getElementById('chatHba1c').value,
-        cholesterol: document.getElementById('chatChol').value,
-        tg: document.getElementById('chatTg').value,
-        hdl: document.getElementById('chatHdl').value,
-        ldl: document.getElementById('chatLdl').value,
-        vldl: document.getElementById('chatVldl').value,
-        weight: document.getElementById('chatWeight').value,
-        height: document.getElementById('chatHeight').value,
-        symptoms: document.getElementById('chatSymptoms').value
-    };
+    const symptoms = document.getElementById('chatSymptoms').value.trim();
 
     const chatMessages = [];
-    const messageElements = document.querySelectorAll('.message');
-    messageElements.forEach(msg => {
+    document.querySelectorAll('.message').forEach(msg => {
         const content = msg.querySelector('.message-bubble');
-        const isOutgoing = msg.classList.contains('outgoing');
-        
         if (content) {
-            const sender = isOutgoing ? 'Patient' : 'AI';
-            const text = content.textContent || content.innerText;
-            chatMessages.push(`${sender}: ${text.trim()}`);
+            const sender = msg.classList.contains('outgoing') ? 'B\u1ec7nh nh\u00e2n' : 'AI';
+            chatMessages.push(`${sender}: ${(content.textContent || content.innerText).trim()}`);
         }
     });
-    
     const chatHistory = chatMessages.join('\n');
 
-    if (!confirm('B\u1ea1n c\u00f3 ch\u1eafc mu\u1ed1n g\u1eedi h\u1ed3 s\u01a1 s\u1ee9c kh\u1ecfe n\u00e0y? Sau khi g\u1eedi, cu\u1ed9c tr\u00f2 chuy\u1ec7n v\u1edbi AI s\u1ebd k\u1ebft th\u00fac v\u00e0 \u0111\u01b0\u1ee3c l\u01b0u v\u00e0o l\u1ecbch s\u1eed.')) {
+    if (!chatHistory) {
+        alert('Ch\u01b0a c\u00f3 n\u1ed9i dung cu\u1ed9c tr\u00f2 chuy\u1ec7n \u0111\u1ec3 l\u01b0u.');
+        return;
+    }
+
+    if (!confirm('B\u1ea1n c\u00f3 ch\u1eafc mu\u1ed1n l\u01b0u t\u00f3m t\u1eaft tri\u1ec7u ch\u1ee9ng n\u00e0y? AI s\u1ebd t\u1ed5ng h\u1ee3p cu\u1ed9c tr\u00f2 chuy\u1ec7n v\u00e0 l\u01b0u v\u00e0o h\u1ed3 s\u01a1.')) {
         return;
     }
 
     const params = new URLSearchParams();
-    for (const [key, value] of Object.entries(healthData)) {
-        if (value) params.append(key, value);
-    }
-    params.append('chatHistory', chatHistory);
+    params.append('action', 'finish');
+    if (symptoms) params.append('symptoms', symptoms);
 
-    fetch(window.ApiClient.buildUrl('/submit-health-record'), {
+    fetch(endpoint, {
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -245,14 +198,14 @@ function submitHealthRecordFromChat() {
     .then(r => r.json())
     .then(data => {
         if (data.success) {
-            alert('H\u1ed3 s\u01a1 s\u1ee9c kh\u1ecfe \u0111\u00e3 \u0111\u01b0\u1ee3c g\u1eedi th\u00e0nh c\u00f4ng!');
-            window.location.href = window.ApiClient.buildUrl(`/patient/health-records/detail?id=${data.healthRecordId}`);
+            alert('T\u00f3m t\u1eaft tri\u1ec7u ch\u1ee9ng \u0111\u00e3 \u0111\u01b0\u1ee3c l\u01b0u th\u00e0nh c\u00f4ng!');
+            location.reload();
         } else {
-            alert('L\u1ed7i: ' + (data.error || 'Kh\u00f4ng th\u1ec3 g\u1eedi h\u1ed3 s\u01a1'));
+            alert('L\u1ed7i: ' + (data.error || 'Kh\u00f4ng th\u1ec3 l\u01b0u'));
         }
     })
     .catch(err => {
-        console.error('Error submitting health record:', err);
+        console.error('Submit error:', err);
         alert('L\u1ed7i k\u1ebft n\u1ed1i. Vui l\u00f2ng th\u1eed l\u1ea1i.');
     });
 }
