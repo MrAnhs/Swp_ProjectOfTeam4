@@ -2388,10 +2388,11 @@
 
     <div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true" data-bs-backdrop="${isProfileComplete ? 'true' : 'static'}" data-bs-keyboard="${isProfileComplete ? 'true' : 'false'}">
         <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <form class="modal-content border-0 shadow-lg rounded-4 overflow-hidden" action="${pageContext.request.contextPath}/doctor-lab/dashboard" method="POST" accept-charset="UTF-8" onsubmit="return validateProfileForm(event)" style="max-height: 85vh; display: flex; flex-direction: column;">
+                <input type="hidden" name="action" value="updateProfile">
 
                 <!-- Modal Header -->
-                <div class="modal-header text-white" style="background: linear-gradient(135deg, #007f61 0%, #005f48 100%); padding: 1.1rem 1.4rem;">
+                <div class="modal-header text-white" style="background: linear-gradient(135deg, #007f61 0%, #005f48 100%); padding: 1.1rem 1.4rem; flex-shrink: 0;">
                     <div class="d-flex align-items-center gap-3">
                         <div style="width:42px;height:42px;border-radius:10px;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;font-size:1.2rem;">
                             <i class="bi bi-person-gear"></i>
@@ -2406,10 +2407,7 @@
                     </c:if>
                 </div>
 
-                <form action="${pageContext.request.contextPath}/doctor-lab/dashboard" method="POST" accept-charset="UTF-8" onsubmit="return validateProfileForm(event)">
-                    <input type="hidden" name="action" value="updateProfile">
-
-                    <div class="modal-body" style="padding: 1.5rem; background: #f8fffe;">
+                <div class="modal-body" style="padding: 1.5rem; background: #f8fffe; overflow-y: auto; flex: 1 1 auto;">
 
                         <!-- JS validation alert -->
                         <div id="profJsAlert" class="alert alert-danger border-0 shadow-sm mb-3 py-2 px-3 small d-none" role="alert"></div>
@@ -2552,20 +2550,26 @@
 
                     </div><!-- /modal-body -->
 
-                    <div class="modal-footer bg-white border-top" style="gap:.5rem;">
-                        <c:if test="${isProfileComplete}">
-                            <button type="button" class="btn btn-outline-secondary btn-sm px-4 fw-bold" data-bs-dismiss="modal">
-                                <i class="bi bi-x-circle me-1"></i>Hủy bỏ
-                            </button>
-                        </c:if>
-                        <button type="submit" class="btn btn-success btn-sm px-4 fw-bold shadow-sm">
-                            <i class="bi bi-check-circle-fill me-1"></i>Lưu thông tin
+                    <div class="modal-footer bg-white border-top d-flex justify-content-between align-items-center" style="padding: 1rem 1.5rem; flex-shrink: 0;">
+                        <c:choose>
+                            <c:when test="${isProfileComplete}">
+                                <button type="button" class="btn btn-outline-secondary btn-sm px-4 fw-bold" data-bs-dismiss="modal">
+                                    <i class="bi bi-x-circle me-1"></i>Hủy bỏ
+                                </button>
+                            </c:when>
+                            <c:otherwise>
+                                <a href="${pageContext.request.contextPath}/logout" class="btn btn-outline-danger btn-sm px-3 fw-bold" title="Đăng xuất khỏi hệ thống">
+                                    <i class="bi bi-box-arrow-right me-1"></i>Đăng xuất
+                                </a>
+                            </c:otherwise>
+                        </c:choose>
+                        <button type="submit" id="btnSaveLabProfile" class="btn btn-success btn-sm px-4 fw-bold shadow-sm">
+                            <i class="bi bi-check-circle-fill me-1"></i>Lưu thông tin & Kích hoạt
                         </button>
                     </div>
                 </form>
             </div>
         </div>
-    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

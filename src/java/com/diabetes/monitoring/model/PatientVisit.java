@@ -14,6 +14,7 @@ public class PatientVisit {
     public String finalDiagnosis;
     public String doctorNote;
     public LocalDateTime processedAt;
+    public LocalDateTime revisitDate;
     public Integer healthRecordId;
     public String healthRecordStatus;
     public BigDecimal urea, cr, hba1c, chol, tg, hdl, ldl, vldl, bmi, weight, height;
