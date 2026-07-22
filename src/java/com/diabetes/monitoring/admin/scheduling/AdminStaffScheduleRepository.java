@@ -549,4 +549,256 @@ public class AdminStaffScheduleRepository {
         row.put("createdAt", createdAt);
         return row;
     }
+<<<<<<< Updated upstream
+=======
+
+    /**
+     * Lấy danh sách ca làm việc dạng Weekly Calendar (Tất cả vai trò: Doctor, Lab, Reception)
+     */
+    public List<Map<String, Object>> getWeeklyCalendarSchedules(Date startDate, Date endDate, String roleFilter, String roomFilter) {
+        List<Map<String, Object>> list = new ArrayList<>();
+        String sql = "SELECT * FROM ("
+                + "SELECT 'Doctor' AS staff_type, ds.schedule_id AS id, acc.account_id, acc.full_name AS staff, 'Doctor' AS role, "
+                + "ISNULL(r.room_name, N'Chưa xếp') AS room, ds.room_id, ds.work_date AS date, "
+                + "CASE WHEN LOWER(ds.time_slot) LIKE '%morning%' OR ds.time_slot = '08:00-12:00' OR CAST(LEFT(ds.time_slot, 2) AS INT) < 12 THEN '08:00' ELSE '13:00' END AS start_time, "
+                + "CASE WHEN LOWER(ds.time_slot) LIKE '%morning%' OR ds.time_slot = '08:00-12:00' OR CAST(LEFT(ds.time_slot, 2) AS INT) < 12 THEN '12:00' ELSE '17:00' END AS end_time, "
+                + "ds.time_slot, ds.status "
+                + "FROM Doctor_Schedule ds "
+                + "JOIN Doctor d ON d.doctor_id = ds.doctor_id "
+                + "JOIN Account acc ON acc.account_id = d.account_id "
+                + "LEFT JOIN Room r ON r.room_id = ds.room_id "
+                + "WHERE ds.work_date >= ? AND ds.work_date <= ? "
+                + "UNION ALL "
+                + "SELECT 'Lab' AS staff_type, ls.lab_sched_id AS id, acc.account_id, acc.full_name AS staff, 'Lab' AS role, "
+                + "ISNULL(r.room_name, N'Phòng Lab') AS room, ls.room_id, ls.work_date AS date, "
+                + "CASE WHEN LOWER(ls.time_slot) LIKE '%morning%' OR ls.time_slot = '08:00-12:00' OR CAST(LEFT(ls.time_slot, 2) AS INT) < 12 THEN '08:00' ELSE '13:00' END AS start_time, "
+                + "CASE WHEN LOWER(ls.time_slot) LIKE '%morning%' OR ls.time_slot = '08:00-12:00' OR CAST(LEFT(ls.time_slot, 2) AS INT) < 12 THEN '12:00' ELSE '17:00' END AS end_time, "
+                + "ls.time_slot, ls.status "
+                + "FROM Lab_Schedule ls "
+                + "JOIN Doctor_Lab dl ON dl.lab_id = ls.lab_id "
+                + "JOIN Account acc ON acc.account_id = dl.account_id "
+                + "LEFT JOIN Room r ON r.room_id = ls.room_id "
+                + "WHERE ls.work_date >= ? AND ls.work_date <= ? "
+                + "UNION ALL "
+                + "SELECT 'Reception' AS staff_type, rs.reception_sched_id AS id, acc.account_id, acc.full_name AS staff, 'Reception' AS role, "
+                + "N'Quầy lễ tân' AS room, NULL AS room_id, rs.work_date AS date, "
+                + "CASE WHEN LOWER(rs.time_slot) LIKE '%morning%' OR rs.time_slot = '08:00-12:00' OR CAST(LEFT(rs.time_slot, 2) AS INT) < 12 THEN '08:00' ELSE '13:00' END AS start_time, "
+                + "CASE WHEN LOWER(rs.time_slot) LIKE '%morning%' OR rs.time_slot = '08:00-12:00' OR CAST(LEFT(rs.time_slot, 2) AS INT) < 12 THEN '12:00' ELSE '17:00' END AS end_time, "
+                + "rs.time_slot, rs.status "
+                + "FROM Reception_Schedule rs "
+                + "JOIN Reception rec ON rec.reception_id = rs.reception_id "
+                + "JOIN Account acc ON acc.account_id = rec.account_id "
+                + "WHERE rs.work_date >= ? AND rs.work_date <= ? "
+                + ") cal WHERE 1=1";
+
+        List<Object> params = new ArrayList<>();
+        params.add(startDate);
+        params.add(endDate);
+        params.add(startDate);
+        params.add(endDate);
+        params.add(startDate);
+        params.add(endDate);
+
+        if (roleFilter != null && !roleFilter.trim().isEmpty() && !"all".equalsIgnoreCase(roleFilter)) {
+            String targetRole = roleFilter.trim().toLowerCase();
+            if ("receptionist".equals(targetRole)) {
+                targetRole = "reception";
+            } else if ("doctor_lab".equals(targetRole)) {
+                targetRole = "lab";
+            }
+            sql += " AND LOWER(cal.role) = ?";
+            params.add(targetRole);
+        }
+        if (roomFilter != null && !roomFilter.trim().isEmpty() && !"all".equalsIgnoreCase(roomFilter)) {
+            sql += " AND (CAST(cal.room_id AS VARCHAR) = ? OR cal.room LIKE ?)";
+            params.add(roomFilter.trim());
+            params.add("%" + roomFilter.trim() + "%");
+        }
+
+        sql += " ORDER BY cal.date ASC, cal.start_time ASC, cal.role ASC";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            bindParams(ps, params);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("id", rs.getInt("id"));
+                    map.put("staffType", rs.getString("staff_type"));
+                    map.put("accountId", rs.getInt("account_id"));
+                    map.put("staff", rs.getString("staff"));
+                    map.put("role", rs.getString("role"));
+                    map.put("room", rs.getString("room"));
+                    map.put("roomId", rs.getObject("room_id"));
+                    map.put("date", rs.getDate("date").toString());
+                    map.put("start", rs.getString("start_time"));
+                    map.put("end", rs.getString("end_time"));
+                    map.put("timeSlot", rs.getString("time_slot"));
+                    map.put("status", rs.getString("status") != null ? rs.getString("status") : "Confirmed");
+                    map.put("conflict", false);
+                    map.put("conflictMessage", "");
+                    list.add(map);
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to get weekly calendar schedules", e);
+        }
+
+        // Phát hiện Conflict (Trùng lịch nhân sự hoặc Trùng phòng khám)
+        detectConflicts(list);
+
+        return list;
+    }
+
+    private void detectConflicts(List<Map<String, Object>> list) {
+        Map<String, List<Map<String, Object>>> staffTimeMap = new HashMap<>();
+        Map<String, List<Map<String, Object>>> roomTimeMap = new HashMap<>();
+
+        for (Map<String, Object> item : list) {
+            String date = (String) item.get("date");
+            String timeSlot = (String) item.get("timeSlot");
+            if (timeSlot == null || timeSlot.trim().isEmpty()) {
+                timeSlot = (String) item.get("start");
+            }
+            Integer accountId = (Integer) item.get("accountId");
+            Object roomId = item.get("roomId");
+
+            if (accountId != null) {
+                String key = date + "_" + timeSlot.trim() + "_ACC_" + accountId;
+                staffTimeMap.computeIfAbsent(key, k -> new ArrayList<>()).add(item);
+            }
+            if (roomId != null && !String.valueOf(roomId).trim().isEmpty()) {
+                String key = date + "_" + timeSlot.trim() + "_ROOM_" + roomId;
+                roomTimeMap.computeIfAbsent(key, k -> new ArrayList<>()).add(item);
+            }
+        }
+
+        for (List<Map<String, Object>> group : staffTimeMap.values()) {
+            if (group.size() > 1) {
+                for (Map<String, Object> item : group) {
+                    item.put("conflict", true);
+                    String msg = (String) item.get("conflictMessage");
+                    msg = (msg == null || msg.isEmpty()) ? "⚠ Nhân viên " + item.get("staff") + " bị xếp trùng 2 ca cùng thời gian (" + item.get("date") + " " + item.get("timeSlot") + ")" : msg;
+                    item.put("conflictMessage", msg);
+                }
+            }
+        }
+
+        for (List<Map<String, Object>> group : roomTimeMap.values()) {
+            if (group.size() > 1) {
+                for (Map<String, Object> item : group) {
+                    item.put("conflict", true);
+                    String msg = (String) item.get("conflictMessage");
+                    msg = (msg == null || msg.isEmpty()) ? "⚠ Phòng " + item.get("room") + " bị xếp trùng 2 ca cùng lúc (" + item.get("date") + " " + item.get("timeSlot") + ")" : msg + " | ⚠ Trùng phòng khám";
+                    item.put("conflictMessage", msg);
+                }
+            }
+        }
+    }
+
+    public boolean deleteDoctorSchedule(int id) {
+        String sql = "DELETE FROM Doctor_Schedule WHERE schedule_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to delete doctor schedule", e);
+            return false;
+        }
+    }
+
+    public boolean deleteLabSchedule(int id) {
+        String sql = "DELETE FROM Lab_Schedule WHERE lab_sched_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to delete lab schedule", e);
+            return false;
+        }
+    }
+
+    public boolean deleteReceptionSchedule(int id) {
+        String sql = "DELETE FROM Reception_Schedule WHERE reception_sched_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to delete reception schedule", e);
+            return false;
+        }
+    }
+
+    public boolean autoReassignConflictRoom(int id, String staffType) {
+        // Tự động tìm phòng rỗng trong cùng ca trực và cập nhật
+        String table = "Doctor_Schedule";
+        String idCol = "schedule_id";
+        if ("Lab".equalsIgnoreCase(staffType)) {
+            table = "Lab_Schedule";
+            idCol = "lab_sched_id";
+        }
+        
+        String selectSql = "SELECT work_date, time_slot FROM " + table + " WHERE " + idCol + " = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(selectSql)) {
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Date date = rs.getDate("work_date");
+                    String slot = rs.getString("time_slot");
+                    
+                    // Tìm phòng rỗng
+                    String findEmptyRoom = "SELECT TOP 1 room_id FROM Room WHERE is_active = 1 AND room_id NOT IN ("
+                            + "SELECT room_id FROM Doctor_Schedule WHERE work_date = ? AND time_slot = ? AND room_id IS NOT NULL "
+                            + "UNION ALL "
+                            + "SELECT room_id FROM Lab_Schedule WHERE work_date = ? AND time_slot = ? AND room_id IS NOT NULL"
+                            + ")";
+                    try (PreparedStatement ps2 = conn.prepareStatement(findEmptyRoom)) {
+                        ps2.setDate(1, date);
+                        ps2.setString(2, slot);
+                        ps2.setDate(3, date);
+                        ps2.setString(4, slot);
+                        try (ResultSet rs2 = ps2.executeQuery()) {
+                            if (rs2.next()) {
+                                String emptyRoomId = rs2.getString("room_id");
+                                String updateSql = "UPDATE " + table + " SET room_id = ? WHERE " + idCol + " = ?";
+                                try (PreparedStatement ps3 = conn.prepareStatement(updateSql)) {
+                                    ps3.setString(1, emptyRoomId);
+                                    ps3.setInt(2, id);
+                                    return ps3.executeUpdate() > 0;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to auto reassign conflict room", e);
+        }
+        return false;
+    }
+
+    public boolean autoResolveAllConflicts() {
+        // Dọn dẹp tất cả ca trùng trùng doctor/time_slot
+        String sqlDoctor = "DELETE FROM Doctor_Schedule WHERE schedule_id NOT IN ("
+                + "  SELECT MIN(schedule_id) FROM Doctor_Schedule GROUP BY doctor_id, work_date, time_slot"
+                + ")";
+        String sqlReception = "DELETE FROM Reception_Schedule WHERE reception_sched_id NOT IN ("
+                + "  SELECT MIN(reception_sched_id) FROM Reception_Schedule GROUP BY reception_id, work_date, time_slot"
+                + ")";
+        String sqlLab = "DELETE FROM Lab_Schedule WHERE lab_sched_id NOT IN ("
+                + "  SELECT MIN(lab_sched_id) FROM Lab_Schedule GROUP BY lab_id, work_date, time_slot"
+                + ")";
+
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            try (PreparedStatement ps = conn.prepareStatement(sqlDoctor)) { ps.executeUpdate(); }
+            try (PreparedStatement ps = conn.prepareStatement(sqlReception)) { ps.executeUpdate(); }
+            try (PreparedStatement ps = conn.prepareStatement(sqlLab)) { ps.executeUpdate(); }
+            return true;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to auto resolve all conflicts", e);
+            return false;
+        }
+    }
+>>>>>>> Stashed changes
 }

@@ -322,6 +322,15 @@ public class AdminServlet extends HttpServlet {
             return;
         }
 
+        if ("resolveScheduleConflict".equals(action)) {
+            schedulingHandler.resolveScheduleConflict(request, response);
+            return;
+        }
+        if ("autoResolveAllConflicts".equals(action)) {
+            schedulingHandler.autoResolveAllConflicts(request, response);
+            return;
+        }
+
         if ("aiCreateSchedules".equals(action)) {
             schedulingHandler.aiCreateSchedules(request, response);
             return;

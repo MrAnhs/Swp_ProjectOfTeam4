@@ -1,26 +1,233 @@
-const dashboardBasePath = window.AdminConfig && window.AdminConfig.contextPath ? window.AdminConfig.contextPath : '';
-                                                    const csrfToken = window.AdminConfig && window.AdminConfig.csrfToken ? window.AdminConfig.csrfToken : '';
-                                                    const todayPatientFlowData = window.AdminConfig && Array.isArray(window.AdminConfig.todayPatientFlowData) ? window.AdminConfig.todayPatientFlowData : [];
-                                                    const todayRevenueByServiceData = window.AdminConfig && Array.isArray(window.AdminConfig.todayRevenueByServiceData) ? window.AdminConfig.todayRevenueByServiceData : [];
-                                                    const todayStatusDistributionData = window.AdminConfig && Array.isArray(window.AdminConfig.todayStatusDistributionData) ? window.AdminConfig.todayStatusDistributionData : [];
-                                                    const dailyAvailableBeds = Number(document.getElementById('dailyAvailableBeds') ? document.getElementById('dailyAvailableBeds').textContent : 15) || 15;
-                                                    let dashboardQuickModalInstance = null;
-                                                    let dashboardInvoiceDetailModalInstance = null;
-                                                    let doctorQueueModalInstance = null;
-                                                    let todayAppointmentsModalInstance = null;
-                                                    let todayWaitingModalInstance = null;
-                                                    let bedAvailabilityModalInstance = null;
-                                                    let currentAccountFilter = 'all';
-                                                    function revealKpiCards() {
-                                                        const cards = document.querySelectorAll('.kpi-card');
-                                                        cards.forEach((card, index) => {
-                                                            window.setTimeout(() => {
-                                                                card.classList.add('is-visible');
-                                                            }, index * 90);
-                                                        });
-                                                    }
+function getDashboardContextPath() {
+    if (window.AdminConfig && typeof window.AdminConfig.contextPath === 'string') {
+        return window.AdminConfig.contextPath;
+    }
+    const path = window.location.pathname;
+    const idx = path.indexOf('/admin');
+    if (idx > 0) {
+        return path.substring(0, idx);
+    }
+    return '';
+}
 
-                                                    // Call revealKpiCards immediately if DOM is ready, or on DOMContentLoaded
+const dashboardBasePath = getDashboardContextPath();
+const csrfToken = window.AdminConfig && window.AdminConfig.csrfToken ? window.AdminConfig.csrfToken : '';
+const todayPatientFlowData = window.AdminConfig && Array.isArray(window.AdminConfig.todayPatientFlowData) ? window.AdminConfig.todayPatientFlowData : [];
+const todayRevenueByServiceData = window.AdminConfig && Array.isArray(window.AdminConfig.todayRevenueByServiceData) ? window.AdminConfig.todayRevenueByServiceData : [];
+const todayStatusDistributionData = window.AdminConfig && Array.isArray(window.AdminConfig.todayStatusDistributionData) ? window.AdminConfig.todayStatusDistributionData : [];
+const dailyAvailableBeds = Number(document.getElementById('dailyAvailableBeds') ? document.getElementById('dailyAvailableBeds').textContent : 15) || 15;
+let dashboardQuickModalInstance = null;
+let dashboardInvoiceDetailModalInstance = null;
+let doctorQueueModalInstance = null;
+let todayAppointmentsModalInstance = null;
+let todayWaitingModalInstance = null;
+let bedAvailabilityModalInstance = null;
+let currentAccountFilter = 'all';
+
+function revealKpiCards() {
+    const cards = document.querySelectorAll('.kpi-card');
+    cards.forEach((card, index) => {
+        window.setTimeout(() => {
+            card.classList.add('is-visible');
+        }, index * 90);
+    });
+}
+
+// Hàm mở Modal Xem nhanh (Quick Pop-up) trên Dashboard
+window.openDashboardModal = function openDashboardModal(type, extra, elem) {
+    const targetElem = elem || (window.event ? (window.event.currentTarget || window.event.srcElement) : null);
+    const ctx = getDashboardContextPath();
+    if (type === 'doctorSchedule' || type === 'receptionistSchedule' || type === 'labSchedule' || type === 'schedule') {
+        const modalEl = document.getElementById('quickScheduleModal');
+        if (!modalEl) {
+            window.location.href = ctx + '/admin?action=schedule';
+            return;
+        }
+        // Set title & link based on type
+        const titleEl = document.getElementById('quickScheduleModalTitle');
+        const subtitleEl = document.getElementById('quickScheduleModalSubtitle');
+        const fullLinkEl = document.getElementById('quickScheduleModalFullLink');
+        let roleFilter = 'Doctor';
+                                                            let titleText = '<i class="fa-solid fa-user-doctor text-teal me-2"></i>Bác sĩ khám - Lịch hôm nay';
+                                                            if (type === 'receptionistSchedule') {
+                                                                roleFilter = 'Receptionist';
+                                                                titleText = '<i class="fa-solid fa-headset text-primary me-2"></i>Lễ tân - Lịch hôm nay';
+                                                            } else if (type === 'labSchedule') {
+                                                                roleFilter = 'doctor_lab';
+                                                                titleText = '<i class="fa-solid fa-flask-vial text-warning me-2"></i>Bác sĩ xét nghiệm - Lịch hôm nay';
+                                                            }
+                                                            if (titleEl) titleEl.innerHTML = titleText;
+                                                            if (subtitleEl) subtitleEl.textContent = new Date().toLocaleDateString('vi-VN', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+                                                            if (fullLinkEl) fullLinkEl.href = ctx + '/admin?action=schedule&viewTab=list&roleFilter=' + roleFilter;
+
+                                                            // Reset and show loading
+                                                            const loadingEl = document.getElementById('quickScheduleModalLoading');
+                                                            const emptyEl = document.getElementById('quickScheduleModalEmpty');
+                                                            const listEl = document.getElementById('quickScheduleModalList');
+                                                            const tbody = document.getElementById('quickScheduleModalTbody');
+                                                            if (loadingEl) loadingEl.classList.remove('d-none');
+                                                            if (emptyEl) emptyEl.classList.add('d-none');
+                                                            if (listEl) listEl.classList.add('d-none');
+                                                            if (tbody) tbody.innerHTML = '';
+
+                                                            const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                                                            modal.show();
+
+                                                            // Load today's schedules via AJAX
+                                                            const today = new Date().toISOString().slice(0, 10);
+                                                            fetch(ctx + '/admin?action=getCalendarSchedule&weekDate=' + today + '&role=' + roleFilter, {headers:{'X-Requested-With':'XMLHttpRequest'}})
+                                                                .then(r => r.json())
+                                                                .then(rows => {
+                                                                    if (loadingEl) loadingEl.classList.add('d-none');
+                                                                    // Filter only today
+                                                                    const todayRows = Array.isArray(rows) ? rows.filter(r => {
+                                                                        const d = r.date || r.workDate || r.work_date || '';
+                                                                        return String(d).substring(0, 10) === today;
+                                                                    }) : [];
+                                                                    if (todayRows.length === 0) {
+                                                                        if (emptyEl) emptyEl.classList.remove('d-none');
+                                                                        return;
+                                                                    }
+                                                                    if (listEl) listEl.classList.remove('d-none');
+                                                                    const statusBadge = s => {
+                                                                        if (!s) return '<span class="badge bg-secondary">-</span>';
+                                                                        const m = {Confirmed:'bg-success',Active:'bg-success','Available':'bg-success','Đang diễn ra':'bg-success',Pending:'bg-warning text-dark',Cancelled:'bg-danger',Canceled:'bg-danger'};
+                                                                        return '<span class="badge ' + (m[s] || 'bg-success') + '">' + s + '</span>';
+                                                                    };
+                                                                    if (tbody) {
+                                                                        tbody.innerHTML = todayRows.map(r => `<tr>
+                                                                            <td class="fw-semibold">${r.staff || r.staffName || r.doctorName || '-'}</td>
+                                                                            <td class="text-muted">${r.role || r.department || '-'}</td>
+                                                                            <td><span class="badge bg-primary-subtle text-primary fw-bold">${r.timeSlot || r.time_slot || (r.start ? r.start + '-' + r.end : '-')}</span></td>
+                                                                            <td><i class="bi bi-geo-alt text-danger me-1"></i>${r.room || r.roomName || r.roomId || 'Chưa xếp'}</td>
+                                                                            <td>${statusBadge(r.status)}</td>
+                                                                        </tr>`).join('');
+                                                                    }
+                                                                })
+                                                                .catch(() => {
+                                                                    if (loadingEl) loadingEl.classList.add('d-none');
+                                                                    if (emptyEl) { emptyEl.classList.remove('d-none'); emptyEl.querySelector('p').textContent = 'Không thể tải dữ liệu. Vui lòng thử lại.'; }
+                                                                });
+                                                            return;
+                                                        }
+
+                                                        
+                                                        if (type === 'createAccount') {
+                                                            const modalEl = document.getElementById('quickCreateAccountModal');
+                                                            if (modalEl) {
+                                                                const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                                                                modal.show();
+                                                            }
+                                                            return;
+                                                        }
+                                                        
+                                                        if (type === 'room') {
+                                                            const roomId = extra || '';
+                                                            let roomName = 'Phòng khám ' + roomId;
+                                                            let staffName = 'Chưa phân bổ';
+                                                            let timeSlot = 'Chưa xếp ca';
+                                                            let queueCount = '0';
+
+                                                            const activeEl = targetElem || (elem && elem.getAttribute ? elem : null);
+                                                            if (activeEl && activeEl.getAttribute) {
+                                                                roomName = activeEl.getAttribute('data-room-name') || roomName;
+                                                                staffName = activeEl.getAttribute('data-staff-name') || staffName;
+                                                                timeSlot = activeEl.getAttribute('data-time-slot') || timeSlot;
+                                                                queueCount = activeEl.getAttribute('data-queue-count') || queueCount;
+                                                            }
+
+                                                            const titleEl = document.getElementById('dashboardQuickModalTitle');
+                                                            const contentEl = document.getElementById('dashboardQuickModalContent');
+                                                            const actionLink = document.getElementById('dashboardQuickModalActionLink');
+                                                            const modalEl = document.getElementById('dashboardQuickModal');
+
+                                                            if (!modalEl) return;
+
+                                                            if (titleEl) titleEl.innerHTML = '<i class="fa-solid fa-hospital-user text-purple me-2"></i>Thông tin phòng khám: ' + roomName;
+                                                            if (contentEl) {
+                                                                contentEl.innerHTML = `
+                                                                    <div class="p-3">
+                                                                        <div class="d-flex align-items-center justify-content-between pb-3 border-bottom mb-3">
+                                                                            <div>
+                                                                                <h6 class="fw-bold text-dark mb-1">${roomName} (${roomId})</h6>
+                                                                                <span class="badge bg-success-subtle text-success border border-success-subtle fw-semibold"><i class="fa-solid fa-circle-check me-1"></i>Đang mở hoạt động</span>
+                                                                            </div>
+                                                                            <div class="text-end">
+                                                                                <div class="fs-4 fw-bold text-purple">${queueCount}</div>
+                                                                                <div class="small text-muted">bệnh nhân hàng đợi</div>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <div class="row g-3">
+                                                                            <div class="col-md-6">
+                                                                                <div class="p-3 bg-light rounded border h-100">
+                                                                                    <div class="small text-muted mb-1"><i class="fa-solid fa-user-doctor me-1 text-purple"></i>Nhân sự trực hôm nay</div>
+                                                                                    <div class="fw-bold text-dark fs-6">${staffName}</div>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div class="col-md-6">
+                                                                                <div class="p-3 bg-light rounded border h-100">
+                                                                                    <div class="small text-muted mb-1"><i class="fa-solid fa-clock me-1 text-info"></i>Khung ca trực áp dụng</div>
+                                                                                    <div class="fw-bold text-dark fs-6">${timeSlot}</div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                `;
+                                                            }
+                                                            if (actionLink) {
+                                                                actionLink.style.display = 'inline-block';
+                                                                actionLink.href = ctx + '/admin?action=room&roomId=' + roomId;
+                                                                actionLink.innerHTML = 'Quản lý chi tiết phòng này <i class="fa-solid fa-arrow-right ms-1"></i>';
+                                                            }
+
+                                                            const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                                                            modal.show();
+                                                            return;
+                                                        }
+
+                                                        const titleEl = document.getElementById('dashboardQuickModalTitle');
+                                                        const contentEl = document.getElementById('dashboardQuickModalContent');
+                                                        const actionLink = document.getElementById('dashboardQuickModalActionLink');
+                                                        const modalEl = document.getElementById('dashboardQuickModal');
+
+                                                        if (!modalEl) return;
+
+                                                        let title = 'Chi tiết chỉ số';
+                                                        let html = '';
+                                                        let linkUrl = '#';
+
+                                                        if (type === 'todayPatients') {
+                                                            title = 'Tổng bệnh nhân hôm nay';
+                                                            html = '<div class="p-3 text-center"><i class="fa-solid fa-users fs-1 text-primary mb-2 d-block"></i><p class="text-muted">Theo dõi tổng số lượng bệnh nhân đã đăng ký và đến khám tại bệnh viện hôm nay.</p></div>';
+                                                            linkUrl = dashboardBasePath + '/admin?action=user';
+                                                        } else if (type === 'todayAppointments') {
+                                                            title = 'Lịch hẹn hôm nay';
+                                                            html = '<div class="p-3 text-center"><i class="fa-solid fa-calendar-check fs-1 text-info mb-2 d-block"></i><p class="text-muted">Danh sách toàn bộ các lượt đặt khám được ghi nhận trong ngày.</p></div>';
+                                                            linkUrl = dashboardBasePath + '/admin?action=schedule';
+                                                        } else if (type === 'sumRevenueToday') {
+                                                            title = 'Doanh thu hôm nay';
+                                                            html = '<div class="p-3 text-center"><i class="fa-solid fa-wallet fs-1 text-success mb-2 d-block"></i><p class="text-muted">Tổng doanh thu từ dịch vụ khám & xét nghiệm được ghi nhận hôm nay.</p></div>';
+                                                            linkUrl = dashboardBasePath + '/admin?action=analytics';
+                                                        } else if (type === 'waiting') {
+                                                            title = 'Hàng đợi bệnh nhân chờ khám';
+                                                            html = '<div class="p-3 text-center"><i class="fa-solid fa-clock fs-1 text-warning mb-2 d-block"></i><p class="text-muted">Danh sách bệnh nhân đang ở trạng thái chờ khám tại các phòng.</p></div>';
+                                                            linkUrl = dashboardBasePath + '/admin?action=schedule';
+                                                        } else {
+                                                            title = 'Chi tiết hoạt động hệ thống';
+                                                            html = '<div class="p-3 text-center"><p class="text-muted">Thông tin chi tiết vận hành hệ thống S-COMS.</p></div>';
+                                                        }
+
+                                                        if (titleEl) titleEl.textContent = title;
+                                                        if (contentEl) contentEl.innerHTML = html;
+                                                        if (actionLink) {
+                                                            actionLink.href = linkUrl;
+                                                            actionLink.style.display = 'inline-block';
+                                                        }
+
+                                                        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                                                        modal.show();
+                                                    }
                                                     if (document.readyState === 'loading') {
                                                         document.addEventListener('DOMContentLoaded', revealKpiCards);
                                                     } else {

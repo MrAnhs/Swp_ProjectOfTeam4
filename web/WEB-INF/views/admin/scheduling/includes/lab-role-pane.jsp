@@ -4,52 +4,6 @@
                 <div class="card-header fw-semibold d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <span>Lịch trực bác sĩ xét nghiệm</span>
                 </div>
-                <div class="card-body border-bottom">
-                    <form method="get" action="${pageContext.request.contextPath}/admin" class="row g-3 align-items-end">
-                        <input type="hidden" name="action" value="schedule">
-                        <input type="hidden" name="staffType" value="doctor_lab">
-                        
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold text-secondary">Tên bác sĩ xét nghiệm</label>
-                            <input type="text" class="form-control" name="staffName" value="${staffNameFilter}" placeholder="Nhập tên bác sĩ xét nghiệm...">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold text-secondary">Ngày trực</label>
-                            <input type="date" class="form-control" name="staffWorkDate" value="${selectedStaffWorkDate}" placeholder="Chọn ngày">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold text-secondary">Trạng thái</label>
-                            <select class="form-select" name="labStatus">
-                                <option value="" ${empty selectedLabStatus ? 'selected' : ''}>Tất cả trạng thái</option>
-                                <option value="Scheduled" ${selectedLabStatus == 'Scheduled' ? 'selected' : ''}>Đã xếp lịch</option>
-                                <option value="Cancelled" ${selectedLabStatus == 'Cancelled' ? 'selected' : ''}>Đã hủy</option>
-                                <option value="Expired" ${selectedLabStatus == 'Expired' ? 'selected' : ''}>Đã qua</option>
-                                <option value="Completed" ${selectedLabStatus == 'Completed' ? 'selected' : ''}>Hoàn tất</option>
-                            </select>
-                        </div>
-                        
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold text-secondary">Khoảng thời gian hiển thị</label>
-                            <select class="form-select" name="labViewMode">
-                                <option value="upcoming" ${selectedLabViewMode == 'upcoming' ? 'selected' : ''}>Lịch sắp diễn ra</option>
-                                <option value="history" ${selectedLabViewMode == 'history' ? 'selected' : ''}>Lịch 30 ngày</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold text-secondary">Số dòng</label>
-                            <select class="form-select" name="labPageSize">
-                                <option value="10" ${labPageSize == 10 ? 'selected' : ''}>10 dòng</option>
-                                <option value="20" ${labPageSize == 20 ? 'selected' : ''}>20 dòng</option>
-                                <option value="50" ${labPageSize == 50 ? 'selected' : ''}>50 dòng</option>
-                            </select>
-                            <input type="hidden" name="labPage" value="1">
-                        </div>
-                        <div class="col-md-4 d-flex justify-content-end gap-2">
-                            <button type="submit" class="btn btn-primary px-4 fw-semibold w-100"><i class="fa-solid fa-filter me-2"></i>Lọc</button>
-                            <a class="btn btn-outline-secondary px-4 fw-semibold w-100" href="${pageContext.request.contextPath}/admin?action=schedule&staffType=doctor_lab"><i class="fa-solid fa-rotate-left me-2"></i>Đặt lại</a>
-                        </div>
-                    </form>
-                </div>
                 <div class="table-responsive schedule-list-scroll schedule-table-wrapper">
                     <table class="table table-hover align-middle mb-0 schedule-list-table schedule-table-lab">
                         <thead style="background:#1e3a5f; color:#ffffff;">
@@ -65,12 +19,18 @@
                         </thead>
                         <tbody>
                             <c:if test="${empty labSchedules}">
-                                <tr>
-                                    <td colspan="7"><div class="schedule-empty-state"><span class="schedule-empty-icon"><i class="bi bi-calendar-x"></i></span><div><div class="schedule-empty-title">Chưa có lịch trực bác sĩ xét nghiệm</div><p class="schedule-empty-description">Không tìm thấy lịch phù hợp với bộ lọc hiện tại. Hãy thay đổi bộ lọc hoặc tạo ca trực mới.</p></div></div></td>
-                                </tr>
+                                        <tr>
+                                            <td colspan="7" class="text-center py-5">
+                                                <div class="schedule-empty-container text-center py-3">
+                                                    <span class="schedule-empty-icon"><i class="fa-solid fa-calendar-minus text-secondary fs-4"></i></span>
+                                                    <div class="schedule-empty-title mt-2">Chưa có lịch trực bác sĩ xét nghiệm</div>
+                                                    <div class="schedule-empty-subtitle text-muted small">Không tìm thấy lịch phù hợp với bộ lọc hiện tại. Hãy thay đổi bộ lọc hoặc tạo ca trực mới.</div>
+                                                </div>
+                                            </td>
+                                        </tr>
                             </c:if>
                             <c:forEach var="ss" items="${labSchedules}">
-                                <tr data-staff-schedule-id="${ss.staffScheduleId}">
+                                <tr data-staff-schedule-id="${ss.staffScheduleId}" data-room-id="${ss.roomId}" data-department="${ss.department}">
                                     <td>${ss.staffName}</td>
                                     <td><c:choose><c:when test="${not empty ss.roomName}">${ss.roomName}</c:when><c:otherwise>-</c:otherwise></c:choose></td>
                                     <td>${empty ss.roomNumber ? '-' : ss.roomNumber}</td>

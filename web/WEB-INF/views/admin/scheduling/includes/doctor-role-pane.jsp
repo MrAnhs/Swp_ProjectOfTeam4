@@ -1,72 +1,5 @@
 <%@ page pageEncoding="UTF-8" %>
                 <div class="schedule-role-pane is-visible" id="doctorRolePane" role="tabpanel" aria-labelledby="doctor-role-tab" tabindex="0">
-            <div class="card mb-3">
-                <div class="card-body">
-                    <form method="get" action="${pageContext.request.contextPath}/admin" class="row g-3 align-items-end">
-                        <input type="hidden" name="action" value="schedule">
-                        
-                        <!-- Row 1: Thông tin nhân sự & Thời gian -->
-                        <div class="col-md-3">
-                            <label class="form-label fw-semibold text-secondary">Tên bác sĩ</label>
-                            <input type="text" class="form-control" name="doctorName" placeholder="Nhập tên bác sĩ..." value="${doctorNameFilter}">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label fw-semibold text-secondary">Chuyên khoa</label>
-                            <select class="form-select" name="department">
-                                <option value="">Tất cả chuyên khoa</option>
-                                <c:forEach var="dep" items="${departments}">
-                                    <option value="${dep}" ${selectedDepartment == dep ? 'selected' : ''}>
-                                        <c:choose>
-                                            <c:when test="${dep == 'Endocrinology'}">Nội tiết - Tiểu đường</c:when>
-                                            <c:when test="${dep == 'Cardiology'}">Tim mạch</c:when>
-                                            <c:when test="${dep == 'Nephrology'}">Thận học</c:when>
-                                            <c:when test="${dep == 'General'}">Tổng quát</c:when>
-                                            <c:otherwise>${dep}</c:otherwise>
-                                        </c:choose>
-                                    </option>
-                                </c:forEach>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label fw-semibold text-secondary">Ngày trực</label>
-                            <input type="date" class="form-control" name="workDate" value="${selectedWorkDate}" placeholder="Chọn ngày">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label fw-semibold text-secondary">Trạng thái</label>
-                            <select class="form-select" name="doctorStatus">
-                                <option value="" ${empty selectedDoctorStatus ? 'selected' : ''}>Tất cả trạng thái</option>
-                                <option value="Available" ${selectedDoctorStatus == 'Available' ? 'selected' : ''}>Khả dụng</option>
-                                <option value="Full" ${selectedDoctorStatus == 'Full' ? 'selected' : ''}>Đã đầy</option>
-                                <option value="Cancelled" ${selectedDoctorStatus == 'Cancelled' ? 'selected' : ''}>Đã hủy</option>
-                                <option value="Expired" ${selectedDoctorStatus == 'Expired' ? 'selected' : ''}>Đã qua</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Row 2: Hiển thị & Thao tác -->
-                        <div class="col-md-3">
-                            <label class="form-label fw-semibold text-secondary">Khoảng thời gian hiển thị</label>
-                            <select class="form-select" name="doctorViewMode">
-                                <option value="upcoming" ${selectedDoctorViewMode == 'upcoming' ? 'selected' : ''}>Lịch sắp diễn ra</option>
-                                <option value="history" ${selectedDoctorViewMode == 'history' ? 'selected' : ''}>Lịch 30 ngày</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label fw-semibold text-secondary">Số dòng</label>
-                            <select class="form-select" name="doctorPageSize">
-                                <option value="10" ${doctorPageSize == 10 ? 'selected' : ''}>10 dòng</option>
-                                <option value="20" ${doctorPageSize == 20 ? 'selected' : ''}>20 dòng</option>
-                                <option value="50" ${doctorPageSize == 50 ? 'selected' : ''}>50 dòng</option>
-                            </select>
-                            <input type="hidden" name="doctorPage" value="1">
-                        </div>
-                        <div class="col-md-3"></div>
-                        <div class="col-md-3 d-flex justify-content-end gap-2">
-                            <button type="submit" class="btn btn-primary px-4 fw-semibold w-100"><i class="fa-solid fa-filter me-2"></i>Lọc</button>
-                            <a class="btn btn-outline-secondary px-4 fw-semibold w-100" href="${pageContext.request.contextPath}/admin?action=schedule"><i class="fa-solid fa-rotate-left me-2"></i>Đặt lại</a>
-                        </div>
-                    </form>
-                </div>
-            </div>
 
             <div class="card">
                 <div class="card-header fw-semibold">Lịch trực bác sĩ khám</div>
@@ -87,11 +20,23 @@
                         </thead>
                         <tbody id="scheduleTableBody">
                             <c:if test="${empty schedules}">
+<<<<<<< Updated upstream
                                 <tr>
                                     <td colspan="9">
                                         <div class="schedule-empty-state"><span class="schedule-empty-icon"><i class="bi bi-calendar-x"></i></span><div><div class="schedule-empty-title">Chưa có lịch trực bác sĩ khám</div><p class="schedule-empty-description">Không tìm thấy lịch phù hợp với bộ lọc hiện tại. Hãy thay đổi bộ lọc hoặc tạo ca trực mới.</p></div></div>
                                     </td>
                                 </tr>
+=======
+                                        <tr>
+                                            <td colspan="10" class="text-center py-5">
+                                                <div class="schedule-empty-container text-center py-3">
+                                                    <span class="schedule-empty-icon"><i class="fa-solid fa-calendar-minus text-secondary fs-4"></i></span>
+                                                    <div class="schedule-empty-title mt-2">Chưa có lịch trực bác sĩ khám</div>
+                                                    <div class="schedule-empty-subtitle text-muted small">Không tìm thấy lịch phù hợp với bộ lọc hiện tại. Hãy thay đổi bộ lọc hoặc tạo ca trực mới.</div>
+                                                </div>
+                                            </td>
+                                        </tr>
+>>>>>>> Stashed changes
                             </c:if>
                             <c:forEach var="s" items="${schedules}">
                                 <c:set var="bookedAppointments" value="${empty s.bookedAppointments ? 0 : s.bookedAppointments}" />
@@ -100,7 +45,7 @@
                                 <c:set var="onlineBookedCount" value="${empty s.onlineBookedCount ? 0 : s.onlineBookedCount}" />
                                 <c:set var="reservedSlots" value="${empty s.reservedSlots ? (s.maxPatients - onlineQuota) : s.reservedSlots}" />
                                 <c:set var="loadPct" value="${s.maxPatients > 0 ? (bookedAppointments * 100.0 / s.maxPatients) : 0}" />
-                                <tr data-schedule-id="${s.scheduleId}" data-doctor-name="${s.doctorName}" data-department="${s.department}" data-load-pct="${loadPct}" data-active-appointments="${activeAppointments}" data-booked-appointments="${bookedAppointments}" data-online-booked-count="${onlineBookedCount}" data-max-patients="${s.maxPatients}" data-online-quota="${onlineQuota}" data-reserved-slots="${reservedSlots}">
+                                <tr data-schedule-id="${s.scheduleId}" data-doctor-name="${s.doctorName}" data-department="${s.department}" data-room-id="${s.roomId}" data-load-pct="${loadPct}" data-active-appointments="${activeAppointments}" data-booked-appointments="${bookedAppointments}" data-online-booked-count="${onlineBookedCount}" data-max-patients="${s.maxPatients}" data-online-quota="${onlineQuota}" data-reserved-slots="${reservedSlots}">
                                     <td>${s.doctorName}</td>
                                     <td>
                                         <c:choose>
@@ -113,6 +58,35 @@
                                     </td>
                                     <td><fmt:formatDate value="${s.workDate}" pattern="dd/MM/yyyy" /></td>
                                     <td>${s.timeSlot}</td>
+<<<<<<< Updated upstream
+=======
+                                    <td>
+                                        <c:choose>
+                                            <c:when test="${not empty s.roomName}">
+                                                <span class="badge bg-light text-dark border"><i class="fa-solid fa-hospital-user me-1 text-primary"></i>${s.roomName} (${s.roomId})</span>
+                                            </c:when>
+                                            <c:when test="${not empty s.roomId}">
+                                                <span class="badge bg-light text-dark border"><i class="fa-solid fa-hospital-user me-1 text-primary"></i>${s.roomId}</span>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <c:choose>
+                                                    <c:when test="${s.department == 'Nội tiết - Tiểu đường' || s.department == 'Endocrinology' || s.department == 'Khoa Nội Tiết'}">
+                                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle"><i class="fa-solid fa-hospital-user me-1"></i>Phòng Khám Nội Tiết (R102)</span>
+                                                    </c:when>
+                                                    <c:when test="${s.department == 'Tim mạch' || s.department == 'Cardiology' || s.department == 'Khoa Tim Mạch'}">
+                                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle"><i class="fa-solid fa-hospital-user me-1"></i>Phòng Khám Tim Mạch (R103)</span>
+                                                    </c:when>
+                                                    <c:when test="${s.department == 'Thận học' || s.department == 'Nephrology' || s.department == 'Khoa Thận Học'}">
+                                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle"><i class="fa-solid fa-hospital-user me-1"></i>Phòng Khám Thận (R104)</span>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle"><i class="fa-solid fa-hospital-user me-1"></i>Phòng Khám Tổng Quát 1 (R101)</span>
+                                                    </c:otherwise>
+                                                </c:choose>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </td>
+>>>>>>> Stashed changes
                                     <td class="text-center"><div class="fw-semibold">${bookedAppointments}/${s.maxPatients}</div><small class="text-muted d-block">${activeAppointments} đang khám</small></td>
                                     <td class="text-center"><div class="fw-semibold">${onlineBookedCount}/${onlineQuota}</div></td>
                                     <c:set var="displayPct" value="${loadPct gt 100 ? 100 : loadPct}" />
