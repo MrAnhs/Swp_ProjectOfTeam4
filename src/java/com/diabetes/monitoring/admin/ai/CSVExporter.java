@@ -156,7 +156,7 @@ public class CSVExporter {
                 pw.println();
             }
             if (isNewFile) {
-                pw.println("ID,No_Pation,Gender,AGE,Urea,Cr,HbA1c,Chol,TG,HDL,LDL,VLDL,BMI,CLASS");
+                pw.println("ID,PATIENT_ID,GENDER,AGE,UREA,CR,HBA1C,CHOL,TG,HDL,LDL,VLDL,BMI,CLASS");
             }
             for (String[] r : rowsToWrite) {
                 String line = String.join(",", r);
@@ -186,7 +186,7 @@ public class CSVExporter {
                             apw.println();
                         }
                         if (isNewAlt) {
-                            apw.println("ID,No_Pation,Gender,AGE,Urea,Cr,HbA1c,Chol,TG,HDL,LDL,VLDL,BMI,CLASS");
+                            apw.println("ID,PATIENT_ID,GENDER,AGE,UREA,CR,HBA1C,CHOL,TG,HDL,LDL,VLDL,BMI,CLASS");
                         }
                         for (String[] r : rowsToWrite) {
                             apw.println(String.join(",", r));

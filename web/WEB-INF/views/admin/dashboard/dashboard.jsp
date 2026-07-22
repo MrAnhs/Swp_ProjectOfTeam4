@@ -200,6 +200,13 @@
                                         </div>
                                         <span class="mini-stat-value">${appointmentStatusSummary.cancelled}</span>
                                     </div>
+                                    <div class="mini-stat" role="link" tabindex="0" onclick="openDashboardModal('todayAppointments')" style="cursor: pointer;">
+                                        <div class="mini-stat-main">
+                                            <span class="mini-stat-icon text-secondary" style="background: rgba(100, 116, 139, 0.12);"><i class="fa-solid fa-user-slash"></i></span>
+                                            <span class="mini-stat-label">Absent (Vắng mặt)</span>
+                                        </div>
+                                        <span class="mini-stat-value">${appointmentStatusSummary.absent}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -401,9 +408,10 @@
                     const st = String(status).toLowerCase();
                     if (st === 'waiting') return '<span class="badge bg-warning text-dark px-2 py-1">Waiting</span>';
                     if (st === 'confirmed') return '<span class="badge bg-primary px-2 py-1">Confirmed</span>';
-                    if (st === 'in progress') return '<span class="badge bg-info px-2 py-1">In Progress</span>';
+                    if (st === 'in progress' || st === 'in_progress') return '<span class="badge bg-info text-white px-2 py-1">In Progress</span>';
                     if (st === 'completed') return '<span class="badge bg-success px-2 py-1">Completed</span>';
                     if (st === 'cancelled') return '<span class="badge bg-danger px-2 py-1">Cancelled</span>';
+                    if (st === 'absent') return '<span class="badge bg-secondary text-white px-2 py-1">Absent</span>';
                     return '<span class="badge bg-secondary px-2 py-1">' + status + '</span>';
                 };
 

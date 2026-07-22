@@ -1090,7 +1090,7 @@
                         <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 align-items-lg-center">
                             <div>
                                 <h4 class="fw-bold mb-1"><i class="bi bi-calendar3 me-2"></i> Lịch trực cá nhân</h4>
-                                <p class="mb-0 text-white-50 small">Xem danh sách phân công lịch trực phòng xét nghiệm theo từng tuần giống định dạng FAP.</p>
+                                <p class="mb-0 text-white-50 small">Xem danh sách phân công lịch trực phòng xét nghiệm theo từng tuần.</p>
                             </div>
                             <!-- Filter Dropdowns -->
                             <div class="d-flex align-items-center gap-2 text-dark">

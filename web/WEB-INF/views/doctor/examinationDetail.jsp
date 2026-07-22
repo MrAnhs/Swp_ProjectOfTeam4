@@ -9,7 +9,7 @@
     <title>Khám chi tiết</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="${pageContext.request.contextPath}/assets/css/pages/doctor/doctor.css" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/css/pages/doctor/doctor.css?v=20260721-ui2" rel="stylesheet">
     <style>
         .exam-hero {
             overflow: hidden;
@@ -94,6 +94,25 @@
 
 <aside class="doctor-sidebar">
     <div class="doctor-brand"><span class="doctor-brand-icon"><i class="bi bi-heart-pulse"></i></span> Cổng bác sĩ</div>
+    <div class="doctor-profile-card">
+        <div class="doctor-avatar">
+            <c:choose>
+                <c:when test="${not empty sessionScope.currentUser.fullName}">
+                    <c:out value="${sessionScope.currentUser.fullName.substring(0, 1)}" />
+                </c:when>
+                <c:otherwise>D</c:otherwise>
+            </c:choose>
+        </div>
+        <div class="doctor-info">
+            <div class="doctor-name" title="<c:out value='${sessionScope.currentUser.fullName}' />">
+                <c:out value="${sessionScope.currentUser.fullName}" default="Bác sĩ" />
+            </div>
+            <div class="doctor-role-tag">Bác sĩ</div>
+        </div>
+        <a href="${pageContext.request.contextPath}/settings" class="doctor-edit-profile-btn" title="Chỉnh sửa hồ sơ">
+            <i class="bi bi-pencil-square"></i>
+        </a>
+    </div>
     <nav class="doctor-nav">
         <a href="${pageContext.request.contextPath}/doctor/dashboard"><i class="bi bi-grid"></i> Tiếp nhận bệnh nhân</a>
         <a class="${!isDetailedStage ? 'active' : ''}" href="${pageContext.request.contextPath}/doctor/general-examinations"><i class="bi bi-person-vcard"></i> Khám tổng quát</a>
@@ -102,7 +121,6 @@
         <a href="${pageContext.request.contextPath}/doctor/completed-records"><i class="bi bi-archive"></i> Đã hoàn thành</a>
         <a href="${pageContext.request.contextPath}/doctor/patients/search"><i class="bi bi-search"></i> Tra cứu</a>
         <a href="${pageContext.request.contextPath}/doctor/schedule"><i class="bi bi-calendar3"></i> Lịch trực</a>
-        <a href="${pageContext.request.contextPath}/settings"><i class="bi bi-gear"></i> Cài đặt</a>
         <a class="text-danger mt-lg-4" href="${pageContext.request.contextPath}/logout"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a>
     </nav>
 </aside>
@@ -246,7 +264,22 @@
                 <div class="doctor-muted small">Chọn loại xét nghiệm và xem giá trước khi gửi yêu cầu.</div>
             </div>
         </div>
-        <c:if test="${(record.status == 'Accepted' || record.status == 'AI_Processed' || record.status == 'Editing') && !hasPaidLaboratoryRequest}">
+        <c:set var="hasPendingPayment" value="false" />
+        <c:forEach var="lab" items="${laboratoryRequests}">
+            <c:if test="${lab.status == 'Waiting_Payment'}">
+                <c:set var="hasPendingPayment" value="true" />
+            </c:if>
+        </c:forEach>
+        <c:if test="${hasPendingPayment}">
+            <div class="alert alert-warning d-flex align-items-center gap-2 mb-3 py-2 px-3 small border-0" style="background: rgba(255, 193, 7, 0.15); color: #ffc107; border-radius: 10px;">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <div>
+                    <strong>Lưu ý:</strong> Bệnh nhân có chỉ định xét nghiệm bổ sung đang chờ thanh toán. Yêu cầu sẽ được gửi đến phòng xét nghiệm sau khi bệnh nhân hoàn tất thanh toán hóa đơn.
+                </div>
+            </div>
+        </c:if>
+
+        <c:if test="${record.status == 'Accepted' || record.status == 'AI_Processed' || record.status == 'Editing'}">
             <form class="row g-3 mb-4 lab-request-form lab-multi-form" method="post"
                   action="${pageContext.request.contextPath}/doctor/laboratory-requests/create">
                 <input type="hidden" name="record_id" value="${record.healthRecordId}">
@@ -427,7 +460,13 @@
                     <label class="form-check-label" for="canView">Cho phép bệnh nhân xem kết quả</label>
                 </div>
                 <c:if test="${canEditDiagnosis}">
-                    <button class="btn btn-doctor w-100" onclick="saveNotes('${record.healthRecordId}')">
+                    <c:if test="${hasPendingPayment}">
+                        <div class="alert alert-danger py-2 px-3 small mb-3 border-0 d-flex align-items-center gap-2" style="background: rgba(220, 53, 69, 0.1); color: #dc3545; border-radius: 8px;">
+                            <i class="bi bi-exclamation-circle-fill"></i>
+                            <span>Bệnh nhân chưa thanh toán xét nghiệm bổ sung. Bạn không thể hoàn thành hồ sơ lúc này.</span>
+                        </div>
+                    </c:if>
+                    <button class="btn btn-doctor w-100" onclick="saveNotes('${record.healthRecordId}')" ${hasPendingPayment ? 'disabled' : ''}>
                         <i class="bi bi-save"></i> Lưu và hoàn thành
                     </button>
                 </c:if>

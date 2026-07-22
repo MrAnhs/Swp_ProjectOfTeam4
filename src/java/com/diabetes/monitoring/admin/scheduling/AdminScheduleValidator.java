@@ -169,10 +169,11 @@ public class AdminScheduleValidator {
                 normalizedTimeSlot, excludeScheduleId)) {
             return "Nhân sự đã có ca trực trùng thời gian trong ngày.";
         }
-        if (countStaffSchedulesInDay(connection, accountId, workDate,
-                excludeScheduleId) >= MAX_SHIFTS_PER_STAFF_PER_DAY) {
-            return "Nhân sự đã có 2 ca trực trong ngày này.";
-        }
+        // Rule giới hạn 2 ca/ngày đã được loại bỏ theo yêu cầu
+        // if (countStaffSchedulesInDay(connection, accountId, workDate,
+        //         excludeScheduleId) >= MAX_SHIFTS_PER_STAFF_PER_DAY) {
+        //     return "Nhân sự đã có 2 ca trực trong ngày này.";
+        // }
         return null;
     }
 

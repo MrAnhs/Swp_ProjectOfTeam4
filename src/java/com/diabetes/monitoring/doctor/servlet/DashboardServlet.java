@@ -27,7 +27,7 @@ public class DashboardServlet extends DoctorServlet {
                     appointmentDAO.getWaitingAppointmentsByDoctor(doctorId));
             request.setAttribute("completedRecords", dao.getCompletedRecords(doctorId));
             request.setAttribute("doctorList", dao.getAvailableDoctors(doctorId));
-            request.setAttribute("transferHistory", dao.getTransferHistoryForDoctor(doctorId));
+            request.setAttribute("transferHistory", java.util.Collections.emptyList());
             request.getRequestDispatcher("/WEB-INF/views/doctor/doctor.jsp").forward(request, response);
         } catch (Exception e) {
             throw new ServletException("Khong the tai dashboard bac si", e);

@@ -97,6 +97,10 @@ public class AdminSchedulingService {
         return scheduleService.deleteSchedule(scheduleId);
     }
 
+    public boolean approveSchedule(int scheduleId) {
+        return scheduleService.approveSchedule(scheduleId);
+    }
+
     public boolean cancelSchedule(int scheduleId) {
         return scheduleService.cancelSchedule(scheduleId);
     }
@@ -310,6 +314,10 @@ class AdminScheduleService {
 
     public boolean deleteSchedule(int scheduleId) {
         return scheduleRepository.deleteDoctorSchedule(scheduleId);
+    }
+
+    public boolean approveSchedule(int scheduleId) {
+        return scheduleRepository.approveDoctorSchedule(scheduleId);
     }
 
     public boolean cancelSchedule(int scheduleId) {

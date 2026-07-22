@@ -11,7 +11,8 @@ public class AdminScheduleStatusUtil {
 
     public static String getEffectiveStatus(Date workDate, String timeSlot, String storedStatus) {
         if ("Cancelled".equalsIgnoreCase(storedStatus)
-                || "Completed".equalsIgnoreCase(storedStatus)) {
+                || "Completed".equalsIgnoreCase(storedStatus)
+                || "Pending".equalsIgnoreCase(storedStatus)) {
             return storedStatus;
         }
         LocalTime[] range = parseTimeSlotRange(timeSlot);

@@ -163,7 +163,8 @@ public class PatientDoctorServlet extends HttpServlet {
                     .append("\"bookedPatients\":").append(schedule.getBookedPatients()).append(',')
                     .append("\"availableSlots\":").append(schedule.getAvailableSlots()).append(',')
                     .append("\"roomId\":")
-                    .append(schedule.getRoomId() == null ? "null" : schedule.getRoomId()).append(',')
+                    .append(schedule.getRoomId() == null
+                            ? "null" : "\"" + escapeJson(schedule.getRoomId()) + "\"").append(',')
                     .append("\"roomName\":\"").append(escapeJson(schedule.getRoomName())).append("\",")
                     .append("\"roomLocation\":\"").append(escapeJson(schedule.getRoomLocation())).append("\",")
                     .append("\"status\":\"").append(escapeJson(schedule.getStatus())).append("\"")

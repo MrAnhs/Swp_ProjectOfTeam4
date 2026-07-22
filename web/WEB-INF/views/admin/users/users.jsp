@@ -149,20 +149,28 @@
             <form class="row g-3" method="post" action="${pageContext.request.contextPath}/admin">
                 <input type="hidden" name="action" value="createAccount">
                 <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
-                <div class="col-md-3"><label class="form-label">Họ và tên</label><input class="form-control" name="fullName" required></div>
-                <div class="col-md-3"><label class="form-label">Email</label><input type="email" class="form-control" name="email" required></div>
+                <div class="col-md-2"><label class="form-label">Họ và tên</label><input class="form-control" name="fullName" required></div>
+                <div class="col-md-2"><label class="form-label">Email</label><input type="email" class="form-control" name="email" required></div>
                 <div class="col-md-2"><label class="form-label">Mật khẩu</label><input type="password" class="form-control" name="password" required></div>
                 <div class="col-md-2">
                     <label class="form-label">Vai trò hệ thống</label>
-                    <select class="form-select" name="role" required>
-                        <option value="Patient">Bệnh nhân</option>
+                    <select class="form-select" name="role" id="createRole" required>
                         <option value="Doctor">Bác sĩ</option>
                         <option value="doctor_lab">Bác sĩ xét nghiệm</option>
                         <option value="Receptionist">Lễ tân</option>
                         <option value="Admin">Quản trị viên</option>
                     </select>
                 </div>
-                <div class="col-md-2 d-flex align-items-end"><button class="btn btn-primary w-100" type="submit">Tạo</button></div>
+                <div class="col-md-2 d-none" id="createDepartmentWrap">
+                    <label class="form-label">Chuyên khoa</label>
+                    <select class="form-select" name="department" id="createDepartment">
+                        <option value="Endocrinology">Nội tiết - Tiểu đường</option>
+                        <option value="Cardiology">Tim mạch</option>
+                        <option value="Nephrology">Thận học</option>
+                        <option value="General" selected>Tổng quát</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end" id="createSubmitBtnWrap"><button class="btn btn-primary w-100" type="submit">Tạo</button></div>
             </form>
         </div>
     </div>
@@ -309,12 +317,33 @@
                 </tbody>
             </table>
         </div>
-        <div class="account-table-footer" id="accountTableFooter" hidden>
-            <div class="account-page-summary" id="accountPageSummary"></div>
-            <nav aria-label="Phân trang danh sách tài khoản">
-                <ul class="pagination account-pagination" id="accountPagination"></ul>
-            </nav>
-        </div>
+        <%-- Thanh phân trang (Pagination Bar) --%>
+        <c:if test="${totalPages > 1}">
+            <div class="card-footer bg-white border-top py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="text-secondary text-sm">
+                    Hiển thị <b>${(currentPage - 1) * pageSize + 1}</b> - <b>${currentPage * pageSize > totalRecords ? totalRecords : currentPage * pageSize}</b> trên tổng số <b>${totalRecords}</b> tài khoản
+                </div>
+                <nav aria-label="Phân trang danh sách tài khoản">
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item ${currentPage == 1 ? 'disabled' : ''}">
+                            <a class="page-link" href="${pageContext.request.contextPath}/admin?action=listUsers&role=${role}&page=${currentPage - 1}">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+                        <c:forEach var="p" begin="1" end="${totalPages}">
+                            <li class="page-item ${p == currentPage ? 'active' : ''}">
+                                <a class="page-link" href="${pageContext.request.contextPath}/admin?action=listUsers&role=${role}&page=${p}">${p}</a>
+                            </li>
+                        </c:forEach>
+                        <li class="page-item ${currentPage == totalPages ? 'disabled' : ''}">
+                            <a class="page-link" href="${pageContext.request.contextPath}/admin?action=listUsers&role=${role}&page=${currentPage + 1}">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </c:if>
     </div>
         </div>
     </div>
@@ -478,6 +507,30 @@
     window.AdminConfig.loginUrl = '${pageContext.request.contextPath}/login.jsp';
 </script>
 <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/admin/users.js?v=20260709-fontfix2"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const createRoleSelect = document.getElementById('createRole');
+        const createDepartmentWrap = document.getElementById('createDepartmentWrap');
+        const createDepartmentSelect = document.getElementById('createDepartment');
+
+        function toggleCreateDepartment() {
+            if (!createRoleSelect || !createDepartmentWrap || !createDepartmentSelect) return;
+            const role = createRoleSelect.value;
+            if (role === 'Doctor') {
+                createDepartmentWrap.classList.remove('d-none');
+                createDepartmentSelect.required = true;
+            } else {
+                createDepartmentWrap.classList.add('d-none');
+                createDepartmentSelect.required = false;
+            }
+        }
+
+        if (createRoleSelect) {
+            createRoleSelect.addEventListener('change', toggleCreateDepartment);
+            toggleCreateDepartment(); // run once on load
+        }
+    });
+</script>
 </body>
 </html>
 

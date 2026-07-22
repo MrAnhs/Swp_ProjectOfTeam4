@@ -1,6 +1,7 @@
 package com.diabetes.monitoring.service;
 
 import com.diabetes.monitoring.model.AppointmentBookingResult;
+import com.diabetes.monitoring.notification.NotificationService;
 import com.diabetes.monitoring.util.DatabaseConnection;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -14,13 +15,13 @@ import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
 
 public class AppointmentService {
+    private final NotificationService notificationService = new NotificationService();
 
     public AppointmentBookingResult bookByDoctor(int accountId, int doctorId, int scheduleId)
             throws SQLException, AppointmentBookingException {
         Connection connection = null;
         try {
             connection = DatabaseConnection.getConnection();
-            connection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
             connection.setAutoCommit(false);
 
             int patientId = findPatientId(connection, accountId);
@@ -28,9 +29,10 @@ public class AppointmentService {
             schedule.doctorId = doctorId;
             schedule.scheduleId = scheduleId;
             LocalDateTime appointmentTime = toAppointmentTime(schedule.workDate, schedule.timeSlot);
+            LocalDateTime endTime = toAppointmentEndTime(schedule.workDate, schedule.timeSlot);
 
-            if (!appointmentTime.isAfter(LocalDateTime.now())) {
-                throw new AppointmentBookingException("Ca kh\u00E1m \u0111\u00E3 b\u1EAFt \u0111\u1EA7u ho\u1EB7c \u0111\u00E3 k\u1EBFt th\u00FAC.");
+            if (LocalDateTime.now().isAfter(endTime.minusMinutes(30))) {
+                throw new AppointmentBookingException("Ca khám đã kết thúc hoặc chỉ còn ít hơn 30 phút cuối ca.");
             }
 
             int bookedPatients = countBookedPatients(connection, scheduleId);
@@ -51,6 +53,7 @@ public class AppointmentService {
                 markScheduleFull(connection, scheduleId);
             }
 
+            notificationService.notifyAppointmentCreated(connection, appointmentId);
             connection.commit();
             return createResult(appointmentId, scheduleId, queueNumber, appointmentTime, schedule);
         } catch (AppointmentBookingException | SQLException e) {
@@ -69,15 +72,15 @@ public class AppointmentService {
         Connection connection = null;
         try {
             connection = DatabaseConnection.getConnection();
-            connection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
             connection.setAutoCommit(false);
 
             int patientId = findPatientId(connection, accountId);
             ScheduleSelection schedule = lockBestAvailableSchedule(connection, workDate, timeSlot);
             LocalDateTime appointmentTime = toAppointmentTime(schedule.workDate, schedule.timeSlot);
+            LocalDateTime endTime = toAppointmentEndTime(schedule.workDate, schedule.timeSlot);
 
-            if (!appointmentTime.isAfter(LocalDateTime.now())) {
-                throw new AppointmentBookingException("Ca kh\u00E1m \u0111\u00E3 b\u1EAFt \u0111\u1EA7u ho\u1EB7c \u0111\u00E3 k\u1EBFt th\u00FAC.");
+            if (LocalDateTime.now().isAfter(endTime.minusMinutes(30))) {
+                throw new AppointmentBookingException("Ca khám đã kết thúc hoặc chỉ còn ít hơn 30 phút cuối ca.");
             }
 
             int bookedPatients = countBookedPatients(connection, schedule.scheduleId);
@@ -97,6 +100,7 @@ public class AppointmentService {
                 markScheduleFull(connection, schedule.scheduleId);
             }
 
+            notificationService.notifyAppointmentCreated(connection, appointmentId);
             connection.commit();
             return createResult(appointmentId, schedule.scheduleId, queueNumber,
                     appointmentTime, schedule);
@@ -155,8 +159,7 @@ public class AppointmentService {
                 schedule.maxPatients = resultSet.getInt("max_patients");
                 schedule.doctorName = resultSet.getString("full_name");
                 schedule.department = resultSet.getString("department");
-                int roomId = resultSet.getInt("room_id");
-                schedule.roomId = resultSet.wasNull() ? null : roomId;
+                schedule.roomId = resultSet.getString("room_id");
                 schedule.roomName = resultSet.getString("room_name");
                 schedule.roomLocation = resultSet.getString("room_location");
                 return schedule;
@@ -199,8 +202,7 @@ public class AppointmentService {
                 schedule.maxPatients = resultSet.getInt("max_patients");
                 schedule.doctorName = resultSet.getString("full_name");
                 schedule.department = resultSet.getString("department");
-                int roomId = resultSet.getInt("room_id");
-                schedule.roomId = resultSet.wasNull() ? null : roomId;
+                schedule.roomId = resultSet.getString("room_id");
                 schedule.roomName = resultSet.getString("room_name");
                 schedule.roomLocation = resultSet.getString("room_location");
                 return schedule;
@@ -217,6 +219,27 @@ public class AppointmentService {
             LocalTime startTime = LocalTime.parse(timeSlot.substring(0, 5));
             return LocalDateTime.of(workDate, startTime);
         } catch (DateTimeParseException e) {
+            throw new AppointmentBookingException("Khung gi\u1EDD c\u1EE7a ca kh\u00E1m kh\u00F4ng h\u1EE3p l\u1EC7.");
+        }
+    }
+
+    private LocalDateTime toAppointmentEndTime(LocalDate workDate, String timeSlot)
+            throws AppointmentBookingException {
+        if (timeSlot == null || timeSlot.length() < 5) {
+            throw new AppointmentBookingException("Khung gi\u1EDD c\u1EE7a ca kh\u00E1m kh\u00F4ng h\u1EE3p l\u1EC7.");
+        }
+        try {
+            String stripped = timeSlot.replace(" ", "");
+            int dashIndex = stripped.indexOf('-');
+            String endTimeStr;
+            if (dashIndex != -1) {
+                endTimeStr = stripped.substring(dashIndex + 1);
+            } else {
+                endTimeStr = stripped.substring(stripped.length() - 5);
+            }
+            LocalTime endTime = LocalTime.parse(endTimeStr);
+            return LocalDateTime.of(workDate, endTime);
+        } catch (Exception e) {
             throw new AppointmentBookingException("Khung gi\u1EDD c\u1EE7a ca kh\u00E1m kh\u00F4ng h\u1EE3p l\u1EC7.");
         }
     }
@@ -319,6 +342,62 @@ public class AppointmentService {
         }
     }
 
+    public void cancelByPatient(int accountId, int appointmentId)
+            throws SQLException, AppointmentBookingException {
+        Connection connection = null;
+        try {
+            connection = DatabaseConnection.getConnection();
+            connection.setAutoCommit(false);
+
+            String sqlCheck = "SELECT a.appointment_time, a.status "
+                    + "FROM Appointment a INNER JOIN Patient p ON p.patient_id = a.patient_id "
+                    + "WHERE a.appointment_id = ? AND p.account_id = ?";
+            LocalDateTime appointmentTime = null;
+            String status = null;
+            try (PreparedStatement checkStmt = connection.prepareStatement(sqlCheck)) {
+                checkStmt.setInt(1, appointmentId);
+                checkStmt.setInt(2, accountId);
+                try (ResultSet rs = checkStmt.executeQuery()) {
+                    if (rs.next()) {
+                        Timestamp ts = rs.getTimestamp("appointment_time");
+                        appointmentTime = ts == null ? null : ts.toLocalDateTime();
+                        status = rs.getString("status");
+                    }
+                }
+            }
+
+            if (appointmentTime == null) {
+                throw new AppointmentBookingException("Không tìm thấy lịch hẹn hoặc bạn không có quyền hủy.");
+            }
+
+            if (!"Waiting".equalsIgnoreCase(status)) {
+                throw new AppointmentBookingException("Chỉ có thể hủy lịch hẹn ở trạng thái Chờ khám (Waiting).");
+            }
+
+            if (appointmentTime.isBefore(LocalDateTime.now().plusHours(24))) {
+                throw new AppointmentBookingException("Không thể tự hủy lịch hẹn trong vòng 24 giờ trước giờ khám. Vui lòng liên hệ hotline để được hỗ trợ.");
+            }
+
+            String sqlUpdate = "UPDATE Appointment SET status = 'Cancelled' WHERE appointment_id = ?";
+            try (PreparedStatement updateStmt = connection.prepareStatement(sqlUpdate)) {
+                updateStmt.setInt(1, appointmentId);
+                updateStmt.executeUpdate();
+            }
+
+            notificationService.notifyAppointmentCancelled(connection, appointmentId);
+
+            connection.commit();
+        } catch (SQLException e) {
+            rollback(connection);
+            throw e;
+        } catch (AppointmentBookingException e) {
+            rollback(connection);
+            throw e;
+        } finally {
+            close(connection);
+        }
+    }
+
     private AppointmentBookingResult createResult(int appointmentId, int scheduleId, int queueNumber,
             LocalDateTime appointmentTime, ScheduleSelection schedule) {
         AppointmentBookingResult result = new AppointmentBookingResult();
@@ -366,7 +445,7 @@ public class AppointmentService {
         private int maxPatients;
         private String doctorName;
         private String department;
-        private Integer roomId;
+        private String roomId;
         private String roomName;
         private String roomLocation;
     }

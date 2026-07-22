@@ -16,12 +16,20 @@ public class PatientAppointmentDAO {
             "SELECT a.appointment_id, ds.doctor_id AS doctor_id, a.schedule_id, CAST(NULL AS int) AS conversation_id, "
             + "a.appointment_time, a.booking_type, a.queue_number, a.status, a.created_at, "
             + "d.full_name AS doctor_name, d.department, d.phone AS doctor_phone, "
-            + "d.email AS doctor_email, ds.time_slot, ds.room_id, r.room_name, r.location AS room_location "
+            + "d.email AS doctor_email, ds.time_slot, ds.room_id, r.room_name, r.location AS room_location, "
+            + "lab.lab_rooms, lab.lab_room_locations "
             + "FROM Appointment a "
             + "INNER JOIN Patient p ON p.patient_id = a.patient_id "
             + "INNER JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
             + "INNER JOIN Doctor d ON d.doctor_id = ds.doctor_id "
-            + "LEFT JOIN Room r ON r.room_id = ds.room_id ";
+            + "LEFT JOIN Room r ON r.room_id = ds.room_id "
+            + "OUTER APPLY (SELECT "
+            + "STRING_AGG(CONVERT(NVARCHAR(MAX), rooms.room_name), N', ') AS lab_rooms, "
+            + "STRING_AGG(CONVERT(NVARCHAR(MAX), rooms.location), N', ') AS lab_room_locations "
+            + "FROM (SELECT DISTINCT lr.room_name, lr.location "
+            + "FROM Lab_Order lo JOIN Room lr ON lr.room_id = lo.room_id "
+            + "WHERE lo.appointment_id = a.appointment_id "
+            + "AND lo.status IN ('Requested','Processing','Completed')) rooms) lab ";
 
     public List<AppointmentInfo> findByPatientAccountId(int accountId) throws SQLException {
         return findByPatientAccountId(accountId, null);
@@ -99,10 +107,11 @@ public class PatientAppointmentDAO {
         appointment.setDoctorPhone(resultSet.getString("doctor_phone"));
         appointment.setDoctorEmail(resultSet.getString("doctor_email"));
         appointment.setTimeSlot(resultSet.getString("time_slot"));
-        int roomId = resultSet.getInt("room_id");
-        appointment.setRoomId(resultSet.wasNull() ? null : roomId);
+        appointment.setRoomId(resultSet.getString("room_id"));
         appointment.setRoomName(resultSet.getString("room_name"));
         appointment.setRoomLocation(resultSet.getString("room_location"));
+        appointment.setLaboratoryRooms(resultSet.getString("lab_rooms"));
+        appointment.setLaboratoryRoomLocations(resultSet.getString("lab_room_locations"));
         return appointment;
     }
 

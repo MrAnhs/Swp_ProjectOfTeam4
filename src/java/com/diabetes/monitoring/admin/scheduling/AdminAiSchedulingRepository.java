@@ -181,12 +181,14 @@ public class AdminAiSchedulingRepository {
                 + "WHERE doctor_id = ? AND work_date = ? AND time_slot = ? AND status <> 'Cancelled'";
         boolean hasOnlineQuota = hasColumn("Doctor_Schedule", "online_quota");
         String insertSql = hasOnlineQuota
-                ? "INSERT INTO Doctor_Schedule (doctor_id, work_date, time_slot, max_patients, online_quota, status) VALUES (?, ?, ?, ?, ?, 'Available')"
-                : "INSERT INTO Doctor_Schedule (doctor_id, work_date, time_slot, max_patients, status) VALUES (?, ?, ?, ?, 'Available')";
+                ? "INSERT INTO Doctor_Schedule (doctor_id, work_date, time_slot, max_patients, online_quota, room_id, status) VALUES (?, ?, ?, ?, ?, ?, 'Available')"
+                : "INSERT INTO Doctor_Schedule (doctor_id, work_date, time_slot, max_patients, room_id, status) VALUES (?, ?, ?, ?, ?, 'Available')";
 
         try (Connection connection = DatabaseConnection.getConnection()) {
             connection.setAutoCommit(false);
             try {
+                List<String> activeRooms = getActiveDoctorRooms(connection);
+                Map<String, Integer> roomAssignedCount = new HashMap<>();
                 Map<String, Integer> previousDoctorByDate = new HashMap<>();
                 Map<String, Integer> dailyShiftCount = new HashMap<>();
                 for (Map<String, Object> assignment : assignments) {
@@ -240,6 +242,11 @@ public class AdminAiSchedulingRepository {
                         }
                     }
 
+                    String dateSlotKey = workDate + "_" + timeSlot;
+                    int roomIdx = roomAssignedCount.getOrDefault(dateSlotKey, 0);
+                    String roomId = activeRooms.get(roomIdx % activeRooms.size());
+                    roomAssignedCount.put(dateSlotKey, roomIdx + 1);
+
                     try (PreparedStatement insert = connection.prepareStatement(
                             insertSql, java.sql.Statement.RETURN_GENERATED_KEYS)) {
                         insert.setInt(1, doctorId);
@@ -248,6 +255,9 @@ public class AdminAiSchedulingRepository {
                         insert.setInt(4, maxPatients);
                         if (hasOnlineQuota) {
                             insert.setInt(5, scheduleRepository.getDefaultOnlineQuota(maxPatients));
+                            insert.setString(6, roomId);
+                        } else {
+                            insert.setString(5, roomId);
                         }
                         if (insert.executeUpdate() != 1) {
                             throw new SQLException("Could not insert Gemini schedule");
@@ -269,6 +279,17 @@ public class AdminAiSchedulingRepository {
                         row.put("maxPatients", maxPatients);
                         row.put("loadPct", 0);
                         row.put("effectiveStatus", "Available");
+                        row.put("roomId", roomId);
+                        String roomName = "Phòng Khám " + roomId;
+                        try (PreparedStatement pr = connection.prepareStatement("SELECT room_name FROM Room WHERE room_id = ?")) {
+                            pr.setString(1, roomId);
+                            try (ResultSet rrs = pr.executeQuery()) {
+                                if (rrs.next()) {
+                                    roomName = rrs.getString("room_name");
+                                }
+                            }
+                        }
+                        row.put("room", roomName);
                         row.put("source", "Gemini AI");
                         row.put("reason", "Gemini tối ưu cân bằng tổng số ca, ưu tiên đúng khoa nhưng cho phép điều phối linh hoạt để chênh lệch mỗi bác sĩ không quá 1 ca.");
                         created.add(row);
@@ -453,12 +474,14 @@ public class AdminAiSchedulingRepository {
                 + "COALESCE(schedule_load.schedule_count, 0) ASC, d.full_name ASC";
         boolean hasOnlineQuota = hasColumn("Doctor_Schedule", "online_quota");
         String insertSql = hasOnlineQuota
-                ? "INSERT INTO Doctor_Schedule (doctor_id, work_date, time_slot, max_patients, online_quota, status) VALUES (?, ?, ?, ?, ?, 'Available')"
-                : "INSERT INTO Doctor_Schedule (doctor_id, work_date, time_slot, max_patients, status) VALUES (?, ?, ?, ?, 'Available')";
+                ? "INSERT INTO Doctor_Schedule (doctor_id, work_date, time_slot, max_patients, online_quota, room_id, status) VALUES (?, ?, ?, ?, ?, ?, 'Available')"
+                : "INSERT INTO Doctor_Schedule (doctor_id, work_date, time_slot, max_patients, room_id, status) VALUES (?, ?, ?, ?, ?, 'Available')";
 
         try (Connection connection = DatabaseConnection.getConnection()) {
             connection.setAutoCommit(false);
             try {
+                List<String> activeRooms = getActiveDoctorRooms(connection);
+                Map<String, Integer> roomAssignedCount = new HashMap<>();
                 for (Date sqlDate : targetDates) {
                     if (created.size() >= maxSchedules) {
                         break;
@@ -503,14 +526,22 @@ public class AdminAiSchedulingRepository {
                             continue;
                         }
 
+                        String dateSlotKey = sqlDate + "_" + timeSlot;
+                        int roomIdx = roomAssignedCount.getOrDefault(dateSlotKey, 0);
+                        String roomId = activeRooms.get(roomIdx % activeRooms.size());
+                        roomAssignedCount.put(dateSlotKey, roomIdx + 1);
+
                         try (PreparedStatement insert = connection.prepareStatement(insertSql, java.sql.Statement.RETURN_GENERATED_KEYS)) {
                             insert.setInt(1, doctorId);
                             insert.setDate(2, sqlDate);
                             insert.setString(3, timeSlot);
                             insert.setInt(4, maxPatients);
                             if (hasOnlineQuota) {
-                            insert.setInt(5, scheduleRepository.getDefaultOnlineQuota(maxPatients));
-                        }
+                                insert.setInt(5, scheduleRepository.getDefaultOnlineQuota(maxPatients));
+                                insert.setString(6, roomId);
+                            } else {
+                                insert.setString(5, roomId);
+                            }
                             if (insert.executeUpdate() > 0) {
                                 int scheduleId = 0;
                                 try (ResultSet keys = insert.getGeneratedKeys()) {
@@ -533,6 +564,17 @@ public class AdminAiSchedulingRepository {
                                 row.put("maxPatients", maxPatients);
                                 row.put("loadPct", 0);
                                 row.put("effectiveStatus", "Available");
+                                row.put("roomId", roomId);
+                                String roomName = "Phòng Khám " + roomId;
+                                try (PreparedStatement pr = connection.prepareStatement("SELECT room_name FROM Room WHERE room_id = ?")) {
+                                    pr.setString(1, roomId);
+                                    try (ResultSet rrs = pr.executeQuery()) {
+                                        if (rrs.next()) {
+                                            roomName = rrs.getString("room_name");
+                                        }
+                                    }
+                                }
+                                row.put("room", roomName);
                                 row.put("source", "Local Fallback");
                                 row.put("reason", "Thuật toán dự phòng cân bằng tổng số ca trên toàn bộ bác sĩ active, ưu tiên tải thấp và tránh hai ca liên tiếp; ca mới khởi tạo 0% tải.");
                                 created.add(row);
@@ -831,11 +873,12 @@ public class AdminAiSchedulingRepository {
         int accountId = ((Number) candidate.get("accountId")).intValue();
         List<String> assignedToday =
                 dayAssignedSlots.get(staffDayKey(accountId, workDate));
-        if (assignedToday != null
-                && assignedToday.size()
-                >= AdminScheduleValidator.MAX_SHIFTS_PER_STAFF_PER_DAY) {
-            return false;
-        }
+        // Rule giới hạn 2 ca/ngày đã được loại bỏ theo yêu cầu
+        // if (assignedToday != null
+        //         && assignedToday.size()
+        //         >= AdminScheduleValidator.MAX_SHIFTS_PER_STAFF_PER_DAY) {
+        //     return false;
+        // }
         try {
             return validator.validate(connection, accountId,
                     staffType, workDate, timeSlot, null) == null;
@@ -906,8 +949,8 @@ public class AdminAiSchedulingRepository {
         }
         boolean hasOnlineQuota = hasColumn("Doctor_Schedule", "online_quota");
         String insertSql = hasOnlineQuota
-                ? "INSERT INTO Doctor_Schedule (doctor_id, work_date, time_slot, max_patients, online_quota, status) VALUES (?, ?, ?, ?, ?, 'Available')"
-                : "INSERT INTO Doctor_Schedule (doctor_id, work_date, time_slot, max_patients, status) VALUES (?, ?, ?, ?, 'Available')";
+                ? "INSERT INTO Doctor_Schedule (doctor_id, work_date, time_slot, max_patients, online_quota, room_id, status) VALUES (?, ?, ?, ?, ?, ?, 'Available')"
+                : "INSERT INTO Doctor_Schedule (doctor_id, work_date, time_slot, max_patients, room_id, status) VALUES (?, ?, ?, ?, ?, 'Available')";
         try (Connection connection = DatabaseConnection.getConnection()) {
             connection.setAutoCommit(false);
             try {
@@ -916,6 +959,7 @@ public class AdminAiSchedulingRepository {
                     Date workDate = Date.valueOf(String.valueOf(item.get("workDate")));
                     String timeSlot = String.valueOf(item.get("timeSlot"));
                     int maxPatients = ((Number) item.get("maxPatients")).intValue();
+                    String roomId = (String) item.get("roomId");
                     try (PreparedStatement insert = connection.prepareStatement(insertSql)) {
                         insert.setInt(1, doctorId);
                         insert.setDate(2, workDate);
@@ -923,6 +967,9 @@ public class AdminAiSchedulingRepository {
                         insert.setInt(4, maxPatients);
                         if (hasOnlineQuota) {
                             insert.setInt(5, scheduleRepository.getDefaultOnlineQuota(maxPatients));
+                            insert.setString(6, roomId);
+                        } else {
+                            insert.setString(5, roomId);
                         }
                         insert.executeUpdate();
                     }
@@ -936,6 +983,28 @@ public class AdminAiSchedulingRepository {
                 connection.setAutoCommit(true);
             }
         }
+    }
+
+    private List<String> getActiveDoctorRooms(Connection conn) throws SQLException {
+        List<String> rooms = new ArrayList<>();
+        String sql = "SELECT room_id FROM Room "
+                   + "WHERE LOWER(status) = 'active' "
+                   + "  AND (room_name LIKE N'%Phòng Khám%' OR room_name LIKE N'%Clinic%') "
+                   + "  AND room_id NOT IN ('R101', 'R201') "
+                   + "ORDER BY room_id ASC";
+        try (PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                rooms.add(rs.getString("room_id"));
+            }
+        }
+        if (rooms.isEmpty()) {
+            rooms.add("R104");
+            rooms.add("R105");
+            rooms.add("R202");
+            rooms.add("R203");
+        }
+        return rooms;
     }
 }
 

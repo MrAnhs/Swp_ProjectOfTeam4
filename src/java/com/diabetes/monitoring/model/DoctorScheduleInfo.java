@@ -9,7 +9,7 @@ public class DoctorScheduleInfo {
     private int maxPatients;
     private int bookedPatients;
     private String status;
-    private Integer roomId;
+    private String roomId;
     private String roomName;
     private String roomLocation;
 
@@ -65,11 +65,11 @@ public class DoctorScheduleInfo {
         this.status = status;
     }
 
-    public Integer getRoomId() {
+    public String getRoomId() {
         return roomId;
     }
 
-    public void setRoomId(Integer roomId) {
+    public void setRoomId(String roomId) {
         this.roomId = roomId;
     }
 
