@@ -46,6 +46,25 @@
 <body class="doctor-app">
 <aside class="doctor-sidebar">
     <div class="doctor-brand"><span class="doctor-brand-icon"><i class="bi bi-heart-pulse"></i></span> Cổng bác sĩ</div>
+    <div class="doctor-profile-card">
+        <div class="doctor-avatar">
+            <c:choose>
+                <c:when test="${not empty sessionScope.currentUser.fullName}">
+                    <c:out value="${sessionScope.currentUser.fullName.substring(0, 1)}" />
+                </c:when>
+                <c:otherwise>D</c:otherwise>
+            </c:choose>
+        </div>
+        <div class="doctor-info">
+            <div class="doctor-name" title="<c:out value='${sessionScope.currentUser.fullName}' />">
+                <c:out value="${sessionScope.currentUser.fullName}" default="Bác sĩ" />
+            </div>
+            <div class="doctor-role-tag">Bác sĩ</div>
+        </div>
+        <a href="${pageContext.request.contextPath}/settings" class="doctor-edit-profile-btn" title="Chỉnh sửa hồ sơ">
+            <i class="bi bi-pencil-square"></i>
+        </a>
+    </div>
     <nav class="doctor-nav">
         <a href="${pageContext.request.contextPath}/doctor/dashboard"><i class="bi bi-grid"></i> Tiếp nhận hồ sơ</a>
         <a href="${pageContext.request.contextPath}/doctor/general-examinations"><i class="bi bi-person-vcard"></i> Khám tổng quát</a>
@@ -54,22 +73,40 @@
         <a href="${pageContext.request.contextPath}/doctor/completed-records"><i class="bi bi-archive"></i> Đã hoàn thành</a>
         <a href="${pageContext.request.contextPath}/doctor/patients/search"><i class="bi bi-search"></i> Tra cứu</a>
         <a class="active" href="${pageContext.request.contextPath}/doctor/schedule"><i class="bi bi-calendar3"></i> Lịch trực</a>
-        <a href="${pageContext.request.contextPath}/settings"><i class="bi bi-gear"></i> Cài đặt</a>
         <a class="text-danger mt-lg-4" href="${pageContext.request.contextPath}/logout"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a>
     </nav>
 </aside>
 
 <main class="doctor-main">
+    <!-- Alert Messages -->
+    <c:if test="${not empty sessionScope.successMsg}">
+        <div class="alert alert-success alert-dismissible fade show mx-4 mt-3" role="alert" style="background-color: rgba(42, 181, 163, 0.15); border-color: rgba(42, 181, 163, 0.3); color: #2AB5A3;">
+            <i class="bi bi-check-circle-fill me-2"></i> ${sessionScope.successMsg}
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <c:remove var="successMsg" scope="session" />
+    </c:if>
+    <c:if test="${not empty sessionScope.errorMsg}">
+        <div class="alert alert-danger alert-dismissible fade show mx-4 mt-3" role="alert" style="background-color: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.3); color: #f87171;">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> ${sessionScope.errorMsg}
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <c:remove var="errorMsg" scope="session" />
+    </c:if>
+
     <section class="doctor-topbar mb-4">
         <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 align-items-lg-center">
             <div>
                 <div class="doctor-muted small">LỊCH LÀM VIỆC LÂM SÀNG</div>
                 <h1 class="doctor-title h3 mb-1">Lịch trực của tôi</h1>
-                <p class="doctor-muted mb-0">Xem danh sách phân công lịch trực theo từng tuần giống định dạng FAP.</p>
+                <p class="doctor-muted mb-0">Xem danh sách phân công lịch trực theo từng tuần.</p>
             </div>
             
             <!-- Filter Dropdowns -->
             <div class="d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-sm text-white fw-bold px-3 py-2 d-flex align-items-center gap-2" style="background: linear-gradient(135deg, #2ab5a3, #0284c7); border: none; border-radius: 8px;" data-bs-toggle="modal" data-bs-target="#proposeScheduleModal">
+                    <i class="bi bi-calendar-plus"></i> Đăng ký lịch trực
+                </button>
                 <div class="d-flex align-items-center gap-1">
                     <label class="fw-bold text-uppercase small m-0" style="color: #cbd5e1;" for="yearSelect">Năm</label>
                     <select id="yearSelect" class="form-select form-select-sm doctor-filter" style="width: 90px;" onchange="generateWeekOptions(); renderScheduleGrid();">
@@ -239,6 +276,8 @@ function renderScheduleGrid() {
                     let statusText = "Sẵn sàng";
                     if (matched.status === "Full" || matched.status === "full") { badgeClass = "bg-danger-subtle text-danger"; statusText = "Đầy lịch"; }
                     else if (matched.status === "Expired" || matched.status === "expired") { badgeClass = "bg-secondary-subtle text-secondary"; statusText = "Đã qua"; }
+                    else if (matched.status === "Pending" || matched.status === "pending") { badgeClass = "bg-warning-subtle text-warning"; statusText = "Chờ duyệt"; }
+                    else if (matched.status === "Cancelled" || matched.status === "cancelled") { badgeClass = "bg-danger-subtle text-danger"; statusText = "Đã hủy"; }
                     cellHtml += '<div class="schedule-cell-card p-2 text-start w-100 shadow-xs">' +
                         '<div class="fw-bold mb-0.5" style="font-size: 0.82rem; color: #2AB5A3;">' + (matched.roomName || 'Phòng khám') + '</div>' +
                         '<div class="small mb-1" style="font-size: 0.7rem; color: #94a3b8;"><span class="fw-semibold me-1" style="color: #ffffff;"><i class="bi bi-clock me-0.5" style="color: #2AB5A3;"></i>' + matched.timeSlot + '</span><span>(' + (matched.roomId || '-') + ')</span></div>' +
@@ -259,7 +298,60 @@ document.addEventListener("DOMContentLoaded", () => {
     populateYearSelect();
     generateWeekOptions();
     renderScheduleGrid();
+    
+    // Set min date of workDate input to today
+    const workDateInput = document.getElementById("workDateInput");
+    if (workDateInput) {
+        workDateInput.min = new Date().toISOString().split('T')[0];
+    }
 });
 </script>
+
+<!-- Modal Đăng Ký Lịch Trực -->
+<div class="modal fade" id="proposeScheduleModal" tabindex="-1" aria-labelledby="proposeScheduleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background-color: #1e293b; color: #ffffff; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px;">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(255,255,255,0.08);">
+                <h5 class="modal-title fw-bold" id="proposeScheduleModalLabel"><i class="bi bi-calendar-plus me-2 text-primary"></i>Đăng ký lịch trực mới</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="${pageContext.request.contextPath}/doctor/schedule" method="POST">
+                <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="workDateInput" class="form-label small fw-bold">Ngày làm việc</label>
+                        <input type="date" id="workDateInput" name="workDate" class="form-control" style="background-color: #0f172a; border-color: rgba(255,255,255,0.1); color: #ffffff;" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="timeSlot" class="form-label small fw-bold">Ca trực</label>
+                        <select name="timeSlot" class="form-select" style="background-color: #0f172a; border-color: rgba(255,255,255,0.1); color: #ffffff;" required>
+                            <option value="07:30 - 12:00">Ca sáng (07:30 - 12:00)</option>
+                            <option value="13:30 - 16:30">Ca chiều (13:30 - 16:30)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="roomId" class="form-label small fw-bold">Phòng khám</label>
+                        <select name="roomId" class="form-select" style="background-color: #0f172a; border-color: rgba(255,255,255,0.1); color: #ffffff;" required>
+                            <option value="">-- Chọn phòng khám --</option>
+                            <c:forEach var="r" items="${rooms}">
+                                <option value="${r.roomId}">${r.roomName} (${r.roomId})</option>
+                            </c:forEach>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="maxPatients" class="form-label small fw-bold">Số lượng bệnh nhân tối đa</label>
+                        <input type="number" name="maxPatients" class="form-control" style="background-color: #0f172a; border-color: rgba(255,255,255,0.1); color: #ffffff;" min="1" max="50" value="15" required>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid rgba(255,255,255,0.08);">
+                    <button type="button" class="btn btn-secondary btn-sm px-3" style="background-color: #475569; border: none;" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-sm px-3 text-white fw-semibold" style="background: linear-gradient(135deg, #2ab5a3, #0284c7); border: none;">Gửi đăng ký</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

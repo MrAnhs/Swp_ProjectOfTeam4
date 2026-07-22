@@ -1194,26 +1194,12 @@
         
             <!-- Module 5: Lịch làm việc -->
             <div class="tab-pane fade" id="pill-schedule" role="tabpanel" aria-labelledby="pill-schedule-tab">
-                <div class="card card-custom">
-                    <div class="card-header card-header-custom py-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
-                        <div class="d-flex align-items-center gap-2">
-                            <i class="bi bi-calendar3 fs-5"></i>
-                            <span class="fw-bold fs-5">Lịch làm việc cá nhân của tôi (Weekly Timetable)</span>
-                        </div>
-                        <div class="d-flex align-items-center gap-3 flex-wrap">
-                            <div class="d-flex flex-column gap-1 bg-white p-2 rounded border shadow-sm" style="min-width: 250px;">
-                                <div class="d-flex align-items-center justify-content-between gap-2">
-                                    <span class="fw-bold text-danger small text-decoration-underline" style="letter-spacing: 0.5px;">YEAR</span>
-                                    <select id="yearSelectDropdown" class="form-select form-select-sm fw-bold border-secondary py-0" style="width: auto; min-width: 130px; font-size: 0.85rem;" onchange="onYearDropdownChange(this.value)">
-                                        <!-- Dynamically populated by JS -->
-                                    </select>
-                                </div>
-                                <div class="d-flex align-items-center justify-content-between gap-2">
-                                    <span class="fw-bold text-secondary small" style="letter-spacing: 0.5px;">WEEK</span>
-                                    <select id="weekSelectDropdown" class="form-select form-select-sm fw-bold border-primary text-primary py-0" style="width: auto; min-width: 170px; font-size: 0.85rem;" onchange="onWeekDropdownChange(this.value)">
-                                        <!-- Dynamically populated by JS: dd/MM To dd/MM -->
-                                    </select>
-                                </div>
+                <div class="dashboard-header-banner mb-4">
+                    <div class="banner-overlay p-4 rounded shadow-sm text-white" style="background: linear-gradient(135deg, #007f61 0%, #005f48 100%);">
+                        <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 align-items-lg-center">
+                            <div>
+                                <h4 class="fw-bold mb-1"><i class="bi bi-calendar3 me-2"></i> Lịch trực cá nhân</h4>
+                                <p class="mb-0 text-white-50 small">Xem danh sách phân công lịch trực phòng xét nghiệm theo từng tuần.</p>
                             </div>
                             <div class="btn-group btn-group-sm">
                                 <button type="button" class="btn btn-outline-success btn-sm" onclick="changeTimetableWeek(-1)" title="Tuần trước">

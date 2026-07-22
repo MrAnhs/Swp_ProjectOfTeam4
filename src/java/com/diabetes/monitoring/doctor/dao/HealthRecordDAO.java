@@ -1365,6 +1365,24 @@ public class HealthRecordDAO {
                 || stage == LaboratoryStage.COMPLETED;
     }
 
+    public boolean hasUnpaidLaboratoryRequest(int recordId) {
+        String sql = "SELECT COUNT(*) FROM Invoice_Detail id "
+                + "JOIN Invoice i ON i.invoice_id = id.invoice_id "
+                + "WHERE id.health_record_id = ? AND i.status <> 'Paid'";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, recordId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     public LaboratoryStage getLaboratoryStage(int recordId, int doctorId) {
         String sql = "SELECT "
                 + "COUNT(*) AS request_count, "
@@ -1706,13 +1724,7 @@ public class HealthRecordDAO {
                         ps.setInt(2, recordId);
                         ps.executeUpdate();
                     }
-                } catch (SQLException ex) {
-                    try (PreparedStatement ps = conn.prepareStatement("UPDATE Healthy_Record SET invoice_detail_id = ? WHERE health_record_id = ?")) {
-                        ps.setInt(1, invoiceId);
-                        ps.setInt(2, recordId);
-                        ps.executeUpdate();
-                    } catch (SQLException ignored) {}
-                }
+                } catch (SQLException ignored) {}
                 new com.diabetes.monitoring.notification.NotificationService().notifyInvoiceCreated(conn, invoiceId);
                 conn.commit();
                 return true;
@@ -1900,6 +1912,60 @@ public class HealthRecordDAO {
             e.printStackTrace();
         }
         return list;
+    }
+
+    public List<Map<String, String>> getActiveRooms() {
+        List<Map<String, String>> list = new ArrayList<>();
+        String sql = "SELECT room_id, room_name, location FROM Room WHERE LOWER(status) = 'active' ORDER BY room_name";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Map<String, String> map = new LinkedHashMap<>();
+                map.put("roomId", rs.getString("room_id"));
+                map.put("roomName", rs.getString("room_name"));
+                map.put("location", rs.getString("location"));
+                list.add(map);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public boolean proposeDoctorSchedule(int doctorId, java.sql.Date workDate, String timeSlot, int maxPatients, String roomId) throws SQLException {
+        String sql = "INSERT INTO Doctor_Schedule (doctor_id, work_date, time_slot, max_patients, status, room_id) VALUES (?, ?, ?, ?, 'Pending', ?)";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, doctorId);
+            ps.setDate(2, workDate);
+            ps.setString(3, timeSlot);
+            ps.setInt(4, maxPatients);
+            if (roomId != null && !roomId.trim().isEmpty()) {
+                ps.setString(5, roomId.trim());
+            } else {
+                ps.setNull(5, java.sql.Types.VARCHAR);
+            }
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    public boolean isScheduleOverlapping(int doctorId, java.sql.Date workDate, String timeSlot) {
+        String sql = "SELECT COUNT(*) FROM Doctor_Schedule WHERE doctor_id = ? AND work_date = ? AND time_slot = ? AND status <> 'Cancelled'";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, doctorId);
+            ps.setDate(2, workDate);
+            ps.setString(3, timeSlot);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }
 

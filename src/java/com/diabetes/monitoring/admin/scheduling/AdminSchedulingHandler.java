@@ -32,6 +32,7 @@ public class AdminSchedulingHandler {
     public void createSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException { scheduleHandler.createSchedule(request, response); }
     public void updateSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException { scheduleHandler.updateSchedule(request, response); }
     public void deleteSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException { scheduleHandler.deleteSchedule(request, response); }
+    public void approveSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException { scheduleHandler.approveSchedule(request, response); }
     public void cancelSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException { scheduleHandler.cancelSchedule(request, response); }
     public void transferSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException { scheduleHandler.transferSchedule(request, response); }
     public void loadTransferCandidates(HttpServletRequest request, HttpServletResponse response) throws IOException { scheduleHandler.loadTransferCandidates(request, response); }
@@ -252,6 +253,13 @@ class AdminScheduleHandler {
         boolean ok = scheduleId > 0 && scheduleService.deleteSchedule(scheduleId);
         request.getSession().setAttribute(ok ? "successMessage" : "errorMessage",
                 ok ? "Đã xóa lịch trực" : "Không thể xóa lịch trực");
+        response.sendRedirect(request.getContextPath() + "/admin?action=schedule");
+    }
+    public void approveSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        int scheduleId = parseInt(request.getParameter("scheduleId"), -1);
+        boolean ok = scheduleId > 0 && scheduleService.approveSchedule(scheduleId);
+        request.getSession().setAttribute(ok ? "successMessage" : "errorMessage",
+                ok ? "Đã duyệt ca trực thành công" : "Không thể duyệt ca trực");
         response.sendRedirect(request.getContextPath() + "/admin?action=schedule");
     }
     public void cancelSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException {
