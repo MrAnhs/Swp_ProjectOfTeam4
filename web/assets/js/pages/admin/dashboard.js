@@ -106,7 +106,7 @@ window.openDashboardModal = function openDashboardModal(type, extra, elem) {
                                                                 })
                                                                 .catch(() => {
                                                                     if (loadingEl) loadingEl.classList.add('d-none');
-                                                                    if (emptyEl) { emptyEl.classList.remove('d-none'); emptyEl.querySelector('p').textContent = 'Không thể tải dữ liệu. Vui lòng thử lại.'; }
+                                                                    if (emptyEl) { emptyEl.classList.remove('d-none'); emptyEl.querySelector('p').textContent = 'Hôm nay chưa có ca trực nào được phân công.'; }
                                                                 });
                                                             return;
                                                         }
@@ -143,6 +143,40 @@ window.openDashboardModal = function openDashboardModal(type, extra, elem) {
 
                                                             if (!modalEl) return;
 
+                                                            let roomStatusBadge = '<span class="badge bg-success-subtle text-success border border-success-subtle fw-semibold"><i class="fa-solid fa-circle-check me-1"></i>Đang mở hoạt động</span>';
+                                                            if (!staffName || staffName === 'Chưa phân bổ' || !timeSlot || timeSlot === 'Chưa xếp ca') {
+                                                                roomStatusBadge = '<span class="badge bg-warning-subtle text-warning border border-warning-subtle fw-semibold"><i class="fa-solid fa-circle-exclamation me-1"></i>Chưa phân bổ nhân sự</span>';
+                                                            } else {
+                                                                const now = new Date();
+                                                                const nowMins = now.getHours() * 60 + now.getMinutes();
+                                                                let matches = timeSlot.match(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/g);
+                                                                if (!matches) {
+                                                                    const lower = timeSlot.toLowerCase();
+                                                                    if (lower.includes('morning') || lower.includes('sáng')) matches = ['08:00-12:00'];
+                                                                    else if (lower.includes('afternoon') || lower.includes('chiều')) matches = ['13:30-17:30'];
+                                                                }
+                                                                if (matches && matches.length > 0) {
+                                                                    let active = false, allPast = true;
+                                                                    for (let m of matches) {
+                                                                        const parts = m.split('-').map(s => s.trim());
+                                                                        if (parts.length === 2) {
+                                                                            const [sH, sM] = parts[0].split(':').map(Number);
+                                                                            const [eH, eM] = parts[1].split(':').map(Number);
+                                                                            const sMins = sH * 60 + sM, eMins = eH * 60 + eM;
+                                                                            if (nowMins >= sMins && nowMins <= eMins) { active = true; allPast = false; break; }
+                                                                            if (nowMins < eMins) { allPast = false; }
+                                                                        }
+                                                                    }
+                                                                    if (active) {
+                                                                        roomStatusBadge = '<span class="badge bg-success-subtle text-success border border-success-subtle fw-semibold"><i class="fa-solid fa-circle-check me-1"></i>Đang mở hoạt động</span>';
+                                                                    } else if (allPast) {
+                                                                        roomStatusBadge = '<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle fw-semibold"><i class="fa-solid fa-moon me-1"></i>Đã kết thúc ca trực</span>';
+                                                                    } else {
+                                                                        roomStatusBadge = '<span class="badge bg-info-subtle text-info border border-info-subtle fw-semibold"><i class="fa-solid fa-clock me-1"></i>Chờ đến ca trực</span>';
+                                                                    }
+                                                                }
+                                                            }
+
                                                             if (titleEl) titleEl.innerHTML = '<i class="fa-solid fa-hospital-user text-purple me-2"></i>Thông tin phòng khám: ' + roomName;
                                                             if (contentEl) {
                                                                 contentEl.innerHTML = `
@@ -150,7 +184,7 @@ window.openDashboardModal = function openDashboardModal(type, extra, elem) {
                                                                         <div class="d-flex align-items-center justify-content-between pb-3 border-bottom mb-3">
                                                                             <div>
                                                                                 <h6 class="fw-bold text-dark mb-1">${roomName} (${roomId})</h6>
-                                                                                <span class="badge bg-success-subtle text-success border border-success-subtle fw-semibold"><i class="fa-solid fa-circle-check me-1"></i>Đang mở hoạt động</span>
+                                                                                ${roomStatusBadge}
                                                                             </div>
                                                                             <div class="text-end">
                                                                                 <div class="fs-4 fw-bold text-purple">${queueCount}</div>
