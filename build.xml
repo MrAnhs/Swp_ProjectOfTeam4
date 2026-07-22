@@ -68,10 +68,22 @@
     nbproject/build-impl.xml file. 
 
     -->
+    <target name="-post-compile">
+        <mkdir dir="${build.web.dir}/WEB-INF/classes"/>
+        <javac srcdir="${source.root}/java" destdir="${build.web.dir}/WEB-INF/classes" encoding="UTF-8" includeantruntime="false" debug="true">
+            <classpath>
+                <fileset dir="${build.web.dir}/WEB-INF/lib" includes="*.jar" erroronmissingdir="false"/>
+                <fileset dir="${j2ee.server.home}/lib" includes="*.jar" erroronmissingdir="false"/>
+            </classpath>
+        </javac>
+    </target>
     <target name="-pre-run-deploy">
         <mkdir dir="${build.web.dir}/WEB-INF/classes"/>
-        <copy todir="${build.web.dir}/WEB-INF/classes">
-            <fileset dir="${build.dir}/classes" erroronmissingdir="false"/>
-        </copy>
+        <javac srcdir="${source.root}/java" destdir="${build.web.dir}/WEB-INF/classes" encoding="UTF-8" includeantruntime="false" debug="true">
+            <classpath>
+                <fileset dir="${build.web.dir}/WEB-INF/lib" includes="*.jar" erroronmissingdir="false"/>
+                <fileset dir="${j2ee.server.home}/lib" includes="*.jar" erroronmissingdir="false"/>
+            </classpath>
+        </javac>
     </target>
 </project>
