@@ -1,4 +1,7 @@
 <%@ page pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
             <div id="labRolePane" class="schedule-role-pane staff-role-pane" role="tabpanel" aria-labelledby="lab-role-tab" tabindex="0" hidden>
             <div class="card">
                 <div class="card-header fw-semibold d-flex justify-content-between align-items-center flex-wrap gap-2">
