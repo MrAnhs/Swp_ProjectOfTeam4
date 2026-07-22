@@ -24,18 +24,30 @@
             patientEmail: params.get('patientEmail'),
             patientDob: params.get('patientDob'),
             patientGender: params.get('patientGender'),
-            patientAddress: params.get('patientAddress')
+            patientAddress: params.get('patientAddress'),
+            visitType: params.get('visitType'),
+            revisitAppointmentId: params.get('revisitAppointmentId')
         };
         let hasValue = false;
         Object.entries(values).forEach(function (entry) {
-            const input = document.getElementById(entry[0] === 'patientName' ? 'registerPatientName' : entry[0] === 'patientPhone' ? 'registerPatientPhone' : entry[0] === 'patientEmail' ? 'registerPatientEmail' : entry[0] === 'patientDob' ? 'registerPatientDob' : entry[0] === 'patientGender' ? 'registerPatientGender' : 'registerPatientAddress');
+            let inputId = '';
+            if (entry[0] === 'patientName') inputId = 'registerPatientName';
+            else if (entry[0] === 'patientPhone') inputId = 'registerPatientPhone';
+            else if (entry[0] === 'patientEmail') inputId = 'registerPatientEmail';
+            else if (entry[0] === 'patientDob') inputId = 'registerPatientDob';
+            else if (entry[0] === 'patientGender') inputId = 'registerPatientGender';
+            else if (entry[0] === 'patientAddress') inputId = 'registerPatientAddress';
+            else if (entry[0] === 'visitType') inputId = 'registerVisitType';
+            else if (entry[0] === 'revisitAppointmentId') inputId = 'registerRevisitAppointmentId';
+
+            const input = document.getElementById(inputId);
             if (input && entry[1]) {
                 input.value = entry[1];
                 hasValue = true;
             }
         });
         if (hasValue) {
-            showResult('\u0110\u00e3 t\u1ef1 \u0111\u1ed9ng \u0111i\u1ec1n th\u00f4ng tin b\u1ec7nh nh\u00e2n m\u1edbi. Vui l\u00f2ng ch\u1ecdn b\u00e1c s\u0129 v\u00e0 ca kh\u00e1m \u0111\u1ec3 ho\u00e0n t\u1ea5t.', 'info');
+            showResult('\u0110\u00e3 t\u1ef1 \u0111\u1ed9ng \u0111i\u1ec1n th\u00f4ng tin b\u1ec7nh nh\u00e2n. Vui l\u00f2ng ch\u1ecdn b\u00e1c s\u0129 v\u00e0 ca kh\u00e1m \u0111\u1ec3 ho\u00e0n t\u1ea5t.', 'info');
         }
     }
 

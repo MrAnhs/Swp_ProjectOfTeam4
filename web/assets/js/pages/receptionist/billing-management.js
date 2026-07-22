@@ -20,18 +20,25 @@
             return;
         }
         list.innerHTML = invoices.map(function (invoice) {
-            return '<div class="invoice-row">'
-                + '<div><div class="fw-bold">H\u00F3a \u0111\u01A1n #' + utils.escapeHtml(invoice.invoiceId) + ' - ' + utils.escapeHtml(invoice.patientName) + '</div>'
+            return '<div class="invoice-card" id="card-' + utils.escapeHtml(invoice.invoiceId) + '">'
+                + '<div class="invoice-row" style="cursor: pointer;" data-invoice-id="' + utils.escapeHtml(invoice.invoiceId) + '">'
+                + '<div><div class="fw-bold"><i class="bi bi-chevron-right me-2 text-primary toggle-icon" style="display: inline-block;"></i>H\u00F3a \u0111\u01A1n #' + utils.escapeHtml(invoice.invoiceId) + ' - ' + utils.escapeHtml(invoice.patientName) + '</div>'
                 + '<div class="muted-text">' + utils.escapeHtml(invoice.phone) + ' | Ng\u00E0y t\u1EA1o: ' + utils.escapeHtml(invoice.createdAt) + '</div></div>'
                 + '<div class="text-end"><div class="fw-bold">' + utils.formatCurrency(invoice.finalAmount) + '</div>'
                 + '<span class="badge ' + (invoice.status === 'Paid' ? 'text-bg-success' : 'text-bg-warning') + '">' + utils.escapeHtml(invoice.status === 'Paid' ? '\u0110\u00E3 thanh to\u00E1n' : 'Ch\u1EDD thanh to\u00E1n') + '</span>'
-                + '<div><button class="btn btn-sm btn-outline-primary mt-2 invoice-print"'
-                + ' data-invoice-id="' + utils.escapeHtml(invoice.invoiceId) + '"'
-                + ' data-patient-name="' + utils.escapeHtml(invoice.patientName) + '"'
-                + ' data-phone="' + utils.escapeHtml(invoice.phone) + '"'
-                + ' data-created-at="' + utils.escapeHtml(invoice.createdAt) + '"'
-                + ' data-final-amount="' + utils.escapeHtml(invoice.finalAmount) + '"'
-                + ' data-status="' + utils.escapeHtml(invoice.status) + '">In h\u00F3a \u0111\u01A1n</button></div></div>'
+                + (invoice.status === 'Paid'
+                    ? '<div><button class="btn btn-sm btn-outline-primary mt-2 invoice-print"'
+                        + ' data-invoice-id="' + utils.escapeHtml(invoice.invoiceId) + '"'
+                        + ' data-patient-name="' + utils.escapeHtml(invoice.patientName) + '"'
+                        + ' data-phone="' + utils.escapeHtml(invoice.phone) + '"'
+                        + ' data-created-at="' + utils.escapeHtml(invoice.createdAt) + '"'
+                        + ' data-final-amount="' + utils.escapeHtml(invoice.finalAmount) + '"'
+                        + ' data-status="' + utils.escapeHtml(invoice.status) + '">In h\u00F3a \u0111\u01A1n</button></div>'
+                    : '')
+                + '</div></div>'
+                + '<div class="invoice-details" id="details-' + utils.escapeHtml(invoice.invoiceId) + '" style="display: none;">'
+                + '<div class="text-center py-2"><div class="spinner-border spinner-border-sm text-primary" role="status"></div> \u0110ang t\u1EA3i chi ti\u1EBFt...</div>'
+                + '</div>'
                 + '</div>';
         }).join('');
     }
@@ -101,9 +108,71 @@
             loadInvoices(button.dataset.invoiceStatus);
         });
     });
-    list.addEventListener('click', function (event) {
-        const button = event.target.closest('.invoice-print');
-        if (button) printInvoice(button);
+    function renderInvoiceDetails(container, details) {
+        if (!details || details.length === 0) {
+            container.innerHTML = '<div class="text-muted p-2">Kh\u00F4ng c\u00F3 chi ti\u1EBFt d\u1ECBch v\u1EE5.</div>';
+            return;
+        }
+        let html = '<div class="invoice-details-title">Chi ti\u1EBFt d\u1ECBch v\u1EE5 thanh to\u00E1n:</div>'
+            + '<table class="invoice-details-table">'
+            + '<thead><tr>'
+            + '<th>T\u00EAn d\u1ECBch v\u1EE5</th>'
+            + '<th class="text-center" style="width: 80px;">SL</th>'
+            + '<th class="text-end" style="width: 120px;">\u0110\u01A1n gi\u00E1</th>'
+            + '<th class="text-end" style="width: 150px;">Th\u00E0nh ti\u1EC1n</th>'
+            + '</tr></thead>'
+            + '<tbody>';
+
+        details.forEach(function (item) {
+            const itemTotal = item.quantity * item.price;
+            html += '<tr>'
+                + '<td>' + utils.escapeHtml(item.serviceName) + ' <span class="badge text-bg-light text-capitalize">' + utils.escapeHtml(item.serviceType === 'Examination' ? 'Kh\u00E1m b\u1EC7nh' : 'X\u00E9t nghi\u1EC7m') + '</span></td>'
+                + '<td class="text-center">' + item.quantity + '</td>'
+                + '<td class="text-end">' + utils.formatCurrency(item.price) + '</td>'
+                + '<td class="text-end fw-semibold">' + utils.formatCurrency(itemTotal) + '</td>'
+                + '</tr>';
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    }
+
+    list.addEventListener('click', async function (event) {
+        const printBtn = event.target.closest('.invoice-print');
+        if (printBtn) {
+            printInvoice(printBtn);
+            return;
+        }
+
+        const row = event.target.closest('.invoice-row');
+        if (row) {
+            const invoiceId = row.dataset.invoiceId;
+            const detailsDiv = document.getElementById('details-' + invoiceId);
+            const toggleIcon = row.querySelector('.toggle-icon');
+
+            if (!detailsDiv) return;
+
+            if (detailsDiv.style.display === 'none') {
+                detailsDiv.style.display = 'block';
+                if (toggleIcon) {
+                    toggleIcon.style.transform = 'rotate(90deg)';
+                }
+
+                if (detailsDiv.querySelector('.spinner-border')) {
+                    try {
+                        const data = await utils.requestJson(utils.apiBase() + '/invoices/details?invoiceId=' + encodeURIComponent(invoiceId));
+                        renderInvoiceDetails(detailsDiv, data.details || []);
+                    } catch (error) {
+                        detailsDiv.innerHTML = '<div class="text-danger p-2">L\u1ED7i: ' + utils.escapeHtml(error.message) + '</div>';
+                    }
+                }
+            } else {
+                detailsDiv.style.display = 'none';
+                if (toggleIcon) {
+                    toggleIcon.style.transform = 'rotate(0deg)';
+                }
+            }
+        }
     });
     document.getElementById('reloadInvoicesBtn').addEventListener('click', function () { loadInvoices(currentStatus); });
     document.getElementById('payInvoiceBtn').addEventListener('click', payInvoice);

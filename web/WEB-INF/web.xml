@@ -95,7 +95,9 @@
         <url-pattern>/doctor-lab/*</url-pattern>
     </filter-mapping>
 
-
+    <listener>
+        <listener-class>com.diabetes.monitoring.listener.NotificationSchedulerListener</listener-class>
+    </listener>
 
     <welcome-file-list>
 
@@ -201,6 +203,10 @@
         <servlet-name>PatientPageServlet</servlet-name>
         <url-pattern>/patient/profile</url-pattern>
     </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>PatientPageServlet</servlet-name>
+        <url-pattern>/patient/notifications</url-pattern>
+    </servlet-mapping>
 
     <servlet>
         <servlet-name>ReceptionistPageServlet</servlet-name>
@@ -229,6 +235,10 @@
     <servlet-mapping>
         <servlet-name>ReceptionistPageServlet</servlet-name>
         <url-pattern>/receptionist/billing</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ReceptionistPageServlet</servlet-name>
+        <url-pattern>/receptionist/schedule</url-pattern>
     </servlet-mapping>
 
     <servlet>
@@ -507,6 +517,15 @@
     <servlet-mapping>
         <servlet-name>PatientVisitServlet</servlet-name>
         <url-pattern>/patient/api/history</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>PatientNotificationServlet</servlet-name>
+        <servlet-class>com.diabetes.monitoring.servlet.PatientNotificationServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>PatientNotificationServlet</servlet-name>
+        <url-pattern>/patient/api/notifications</url-pattern>
     </servlet-mapping>
     <mime-mapping>
         <extension>js</extension>

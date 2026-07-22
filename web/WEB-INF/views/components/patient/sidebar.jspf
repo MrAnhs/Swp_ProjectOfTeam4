@@ -48,6 +48,12 @@
             <i class="bi bi-chat-dots"></i>
             <span class="nav-text" >Chat AI</span>
         </a>
+        <a href="${pageContext.request.contextPath}/patient/notifications"
+           class="nav-item-dash${activePatientPage eq 'notifications' ? ' active' : ''}">
+            <i class="bi bi-bell"></i>
+            <span class="nav-text">Thông báo</span>
+            <span class="badge bg-danger rounded-pill ms-auto d-none" id="sidebar-notification-badge">0</span>
+        </a>
         <a href="${pageContext.request.contextPath}/settings"
            class="nav-item-dash${activePatientPage eq 'settings' ? ' active' : ''}">
             <i class="bi bi-gear"></i>
@@ -62,3 +68,22 @@
         </a>
     </div>
 </aside>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const contextPath = "${pageContext.request.contextPath}";
+        fetch(contextPath + "/patient/api/notifications")
+            .then(response => {
+                if (response.ok) return response.json();
+                throw new Error("Failed to load notifications");
+            })
+            .then(data => {
+                const badge = document.getElementById("sidebar-notification-badge");
+                if (badge && data.unreadCount > 0) {
+                    badge.textContent = data.unreadCount;
+                    badge.classList.remove("d-none");
+                }
+            })
+            .catch(err => console.error("Error loading notification count:", err));
+    });
+</script>

@@ -52,7 +52,7 @@
                 </div>
                 <div class="col-12 d-flex gap-2">
                     <button class="btn btn-primary btn-lg" type="submit">
-                        <i class="bi bi-person-plus me-1"></i>Tạo tài khoản và gửi email
+                        <i class="bi bi-person-plus me-1"></i>Tạo hồ sơ bệnh nhân
                     </button>
                     <button class="btn btn-outline-secondary btn-lg" id="resetPatientRegistrationBtn" type="button">Làm mới</button>
                 </div>
