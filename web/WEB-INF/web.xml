@@ -390,6 +390,15 @@
     </servlet-mapping>
 
     <servlet>
+        <servlet-name>DoctorSaveVitalsServlet</servlet-name>
+        <servlet-class>com.diabetes.monitoring.doctor.servlet.SaveVitalsServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>DoctorSaveVitalsServlet</servlet-name>
+        <url-pattern>/doctor/records/save-vitals</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
         <servlet-name>DoctorScheduleServlet</servlet-name>
         <servlet-class>com.diabetes.monitoring.doctor.servlet.DoctorScheduleServlet</servlet-class>
     </servlet>
