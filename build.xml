@@ -67,29 +67,22 @@
     properties which you can use check the target you are overriding in 
     nbproject/build-impl.xml file. 
 
-    -->
-    <target name="-post-compile">
-        <mkdir dir="${build.web.dir}/WEB-INF/classes"/>
-        <javac srcdir="${source.root}/java" destdir="${build.web.dir}/WEB-INF/classes" encoding="UTF-8" includeantruntime="false" debug="true">
-            <classpath>
-                <fileset dir="lib" includes="*.jar" erroronmissingdir="false"/>
-                <fileset dir="${build.web.dir}/WEB-INF/lib" includes="*.jar" erroronmissingdir="false"/>
-                <fileset dir="${j2ee.server.home}/lib" includes="*.jar" erroronmissingdir="false"/>
-            </classpath>
-        </javac>
-    </target>
-    <target name="library-inclusion-in-archive" depends="init" unless="dist.ear.dir">
+    <target name="-do-compile" depends="init, deps-jar, -pre-pre-compile, -pre-compile, -copy-manifest, -copy-persistence-xml, -copy-webdir, library-inclusion-in-archive,library-inclusion-in-manifest" if="have.sources">
         <mkdir dir="${build.web.dir}/WEB-INF/lib"/>
         <copy todir="${build.web.dir}/WEB-INF/lib">
-            <fileset dir="lib" includes="*.jar"/>
+            <fileset dir="lib" includes="*.jar" erroronmissingdir="false"/>
         </copy>
         <mkdir dir="${build.web.dir}/WEB-INF/classes"/>
-        <javac srcdir="${source.root}/java" destdir="${build.web.dir}/WEB-INF/classes" encoding="UTF-8" includeantruntime="false" debug="true">
+        <mkdir dir="${build.dir}/classes"/>
+        <javac srcdir="${src.dir}" destdir="${build.web.dir}/WEB-INF/classes" encoding="UTF-8" includeantruntime="false" debug="true" fork="true">
             <classpath>
                 <fileset dir="lib" includes="*.jar" erroronmissingdir="false"/>
                 <fileset dir="${build.web.dir}/WEB-INF/lib" includes="*.jar" erroronmissingdir="false"/>
                 <fileset dir="${j2ee.server.home}/lib" includes="*.jar" erroronmissingdir="false"/>
             </classpath>
         </javac>
+        <copy todir="${build.dir}/classes">
+            <fileset dir="${build.web.dir}/WEB-INF/classes"/>
+        </copy>
     </target>
 </project>
