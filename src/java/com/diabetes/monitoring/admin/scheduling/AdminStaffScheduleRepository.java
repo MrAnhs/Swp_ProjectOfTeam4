@@ -549,8 +549,6 @@ public class AdminStaffScheduleRepository {
         row.put("createdAt", createdAt);
         return row;
     }
-<<<<<<< Updated upstream
-=======
 
     /**
      * Lấy danh sách ca làm việc dạng Weekly Calendar (Tất cả vai trò: Doctor, Lab, Reception)
@@ -800,5 +798,4 @@ public class AdminStaffScheduleRepository {
             return false;
         }
     }
->>>>>>> Stashed changes
 }

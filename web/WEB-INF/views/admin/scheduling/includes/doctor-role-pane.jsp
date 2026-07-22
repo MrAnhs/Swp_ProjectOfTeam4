@@ -20,13 +20,6 @@
                         </thead>
                         <tbody id="scheduleTableBody">
                             <c:if test="${empty schedules}">
-<<<<<<< Updated upstream
-                                <tr>
-                                    <td colspan="9">
-                                        <div class="schedule-empty-state"><span class="schedule-empty-icon"><i class="bi bi-calendar-x"></i></span><div><div class="schedule-empty-title">Chưa có lịch trực bác sĩ khám</div><p class="schedule-empty-description">Không tìm thấy lịch phù hợp với bộ lọc hiện tại. Hãy thay đổi bộ lọc hoặc tạo ca trực mới.</p></div></div>
-                                    </td>
-                                </tr>
-=======
                                         <tr>
                                             <td colspan="10" class="text-center py-5">
                                                 <div class="schedule-empty-container text-center py-3">
@@ -36,7 +29,6 @@
                                                 </div>
                                             </td>
                                         </tr>
->>>>>>> Stashed changes
                             </c:if>
                             <c:forEach var="s" items="${schedules}">
                                 <c:set var="bookedAppointments" value="${empty s.bookedAppointments ? 0 : s.bookedAppointments}" />
@@ -58,8 +50,6 @@
                                     </td>
                                     <td><fmt:formatDate value="${s.workDate}" pattern="dd/MM/yyyy" /></td>
                                     <td>${s.timeSlot}</td>
-<<<<<<< Updated upstream
-=======
                                     <td>
                                         <c:choose>
                                             <c:when test="${not empty s.roomName}">
@@ -86,7 +76,6 @@
                                             </c:otherwise>
                                         </c:choose>
                                     </td>
->>>>>>> Stashed changes
                                     <td class="text-center"><div class="fw-semibold">${bookedAppointments}/${s.maxPatients}</div><small class="text-muted d-block">${activeAppointments} đang khám</small></td>
                                     <td class="text-center"><div class="fw-semibold">${onlineBookedCount}/${onlineQuota}</div></td>
                                     <c:set var="displayPct" value="${loadPct gt 100 ? 100 : loadPct}" />

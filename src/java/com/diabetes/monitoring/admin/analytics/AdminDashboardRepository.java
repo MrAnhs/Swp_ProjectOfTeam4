@@ -128,9 +128,6 @@ public class AdminDashboardRepository {
                 + "    COALESCE(MAX(ds.time_slot), MAX(ls.time_slot), MAX(rs_sched.time_slot), '') AS time_slot "
                 + "FROM Room r "
                 + "LEFT JOIN Doctor_Schedule ds ON ds.room_id = r.room_id AND ds.work_date = CAST(GETDATE() AS DATE) "
-<<<<<<< Updated upstream
-                + "LEFT JOIN Appointment ap ON ap.schedule_id = ds.schedule_id AND ap.status IN ('waiting', 'confirmed', 'in progress') "
-=======
                 + "LEFT JOIN Doctor d ON d.doctor_id = ds.doctor_id "
                 + "LEFT JOIN Account acc_doc ON acc_doc.account_id = d.account_id "
                 + "LEFT JOIN Lab_Schedule ls ON ls.room_id = r.room_id AND ls.work_date = CAST(GETDATE() AS DATE) "
@@ -140,7 +137,6 @@ public class AdminDashboardRepository {
                 + "LEFT JOIN Reception rec ON rec.reception_id = rs_sched.reception_id "
                 + "LEFT JOIN Account acc_rec ON acc_rec.account_id = rec.account_id "
                 + "LEFT JOIN Appointment ap ON ap.schedule_id = ds.schedule_id AND LOWER(ap.status) IN ('waiting', 'confirmed', 'in_progress') "
->>>>>>> Stashed changes
                 + "WHERE LOWER(r.status) = 'active' "
                 + "GROUP BY r.room_id, r.room_name "
                 + "ORDER BY r.room_id";

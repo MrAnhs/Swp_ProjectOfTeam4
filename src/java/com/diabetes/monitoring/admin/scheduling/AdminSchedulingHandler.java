@@ -46,14 +46,11 @@ public class AdminSchedulingHandler {
     public void cancelStaffSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException { staffScheduleHandler.cancelStaffSchedule(request, response); }
     public void deleteStaffSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException { staffScheduleHandler.deleteStaffSchedule(request, response); }
     public void aiStaffSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException { staffScheduleHandler.aiStaffSchedule(request, response); }
-<<<<<<< Updated upstream
-=======
     public void getCalendarSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException { staffScheduleHandler.getCalendarSchedule(request, response); }
-    public void getShiftDetail(HttpServletRequest request, HttpServletResponse response) throws IOException { staffScheduleHandler.getShiftDetail(request, response); }
+    public void getShiftDetail(HttpServletRequest request, HttpServletResponse response) throws IOException { staffScheduleHandler.loadStaffScheduleDetail(request, response); }
     public void resolveScheduleConflict(HttpServletRequest request, HttpServletResponse response) throws IOException { staffScheduleHandler.resolveScheduleConflict(request, response); }
     public void autoResolveAllConflicts(HttpServletRequest request, HttpServletResponse response) throws IOException { staffScheduleHandler.autoResolveAllConflicts(request, response); }
-    public void confirmAISchedule(HttpServletRequest request, HttpServletResponse response) throws IOException { staffScheduleHandler.confirmAISchedule(request, response); }
->>>>>>> Stashed changes
+    public void confirmAISchedule(HttpServletRequest request, HttpServletResponse response) throws IOException { aiSchedulingHandler.aiSaveProposedSchedules(request, response); }
 }
 
 /**
@@ -472,7 +469,31 @@ class AdminScheduleHandler {
  */
 class AdminStaffScheduleHandler {
     private final AdminStaffScheduleService staffScheduleService = new AdminStaffScheduleService();
+    private final AdminStaffScheduleRepository staffScheduleRepository = new AdminStaffScheduleRepository();
     private final AdminSchedulingService schedulingService = new AdminSchedulingService();
+
+    public void getCalendarSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setContentType("application/json;charset=UTF-8");
+        String weekDateStr = request.getParameter("weekDate");
+        String roleFilter = request.getParameter("role");
+        String roomFilter = request.getParameter("room");
+
+        Date startDate = nullableDate(weekDateStr);
+        if (startDate == null) startDate = new java.sql.Date(System.currentTimeMillis());
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        cal.setTime(startDate);
+        cal.add(java.util.Calendar.DAY_OF_MONTH, 6);
+        Date endDate = new java.sql.Date(cal.getTimeInMillis());
+
+        List<Map<String, Object>> rows = staffScheduleRepository.getWeeklyCalendarSchedules(startDate, endDate, roleFilter, roomFilter);
+        try (PrintWriter out = response.getWriter()) {
+            out.print(AdminJsonUtil.toJsonSimpleRows(rows));
+        } catch (Exception ex) {
+            try (PrintWriter out = response.getWriter()) {
+                out.print("[]");
+            }
+        }
+    }
 
     public void loadStaffForSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException {
         response.setContentType("application/json;charset=UTF-8");

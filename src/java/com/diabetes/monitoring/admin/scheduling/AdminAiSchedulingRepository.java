@@ -919,8 +919,6 @@ public class AdminAiSchedulingRepository {
                     Date workDate = Date.valueOf(String.valueOf(item.get("workDate")));
                     String timeSlot = String.valueOf(item.get("timeSlot"));
                     int maxPatients = ((Number) item.get("maxPatients")).intValue();
-<<<<<<< Updated upstream
-=======
                     String roomId = (String) item.get("roomId");
 
                     // 1. Kiểm tra ca trực cũ đã tồn tại chưa (chuẩn hóa khoảng trắng trong time_slot)
@@ -969,7 +967,6 @@ public class AdminAiSchedulingRepository {
                     }
 
                     // 2. Chèn ca trực mới
->>>>>>> Stashed changes
                     try (PreparedStatement insert = connection.prepareStatement(insertSql)) {
                         insert.setInt(1, doctorId);
                         insert.setDate(2, workDate);
@@ -991,8 +988,6 @@ public class AdminAiSchedulingRepository {
             }
         }
     }
-<<<<<<< Updated upstream
-=======
 
     private List<String> getActiveDoctorRooms(Connection conn) throws SQLException {
         List<String> rooms = new ArrayList<>();
@@ -1015,6 +1010,5 @@ public class AdminAiSchedulingRepository {
         }
         return rooms;
     }
->>>>>>> Stashed changes
 }
 
