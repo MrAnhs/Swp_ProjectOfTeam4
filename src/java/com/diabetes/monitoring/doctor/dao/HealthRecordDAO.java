@@ -1724,13 +1724,7 @@ public class HealthRecordDAO {
                         ps.setInt(2, recordId);
                         ps.executeUpdate();
                     }
-                } catch (SQLException ex) {
-                    try (PreparedStatement ps = conn.prepareStatement("UPDATE Healthy_Record SET invoice_detail_id = ? WHERE health_record_id = ?")) {
-                        ps.setInt(1, invoiceId);
-                        ps.setInt(2, recordId);
-                        ps.executeUpdate();
-                    } catch (SQLException ignored) {}
-                }
+                } catch (SQLException ignored) {}
                 new com.diabetes.monitoring.notification.NotificationService().notifyInvoiceCreated(conn, invoiceId);
                 conn.commit();
                 return true;
