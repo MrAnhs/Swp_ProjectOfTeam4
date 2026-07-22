@@ -562,16 +562,30 @@ public class DoctorLabServlet extends HttpServlet {
                 // 2. Fetch invoice_id and check if Healthy_Record already exists for this invoice
                 int healthRecordId = -1;
                 int invoiceId = -1;
-                 if (waitingIdStr != null && !waitingIdStr.trim().isEmpty()) {
+                int invoiceDetailId = -1;
+                int appointmentId = 0;
+
+                if (waitingIdStr != null && !waitingIdStr.trim().isEmpty()) {
+                    // Try to resolve appointment_id from Lab_Order
+                    String sqlGetAppt = "SELECT appointment_id FROM Lab_Order WHERE order_id = ?";
+                    try (PreparedStatement ps = conn.prepareStatement(sqlGetAppt)) {
+                        ps.setString(1, waitingIdStr.trim());
+                        try (ResultSet rs = ps.executeQuery()) {
+                            if (rs.next()) {
+                                appointmentId = rs.getInt("appointment_id");
+                            }
+                        }
+                    }
+
                     String cleanWaitingId = waitingIdStr.trim();
                     if (cleanWaitingId.startsWith("LAB-")) {
                         cleanWaitingId = cleanWaitingId.substring(4);
                     }
                     if (cleanWaitingId.matches("\\d+")) {
-                        int waitingId = Integer.parseInt(cleanWaitingId);
+                        invoiceDetailId = Integer.parseInt(cleanWaitingId);
                         String sqlGetInvoice = "SELECT invoice_id FROM Invoice_Detail WHERE invoice_detail_id = ?";
                         try (PreparedStatement ps = conn.prepareStatement(sqlGetInvoice)) {
-                            ps.setInt(1, waitingId);
+                            ps.setInt(1, invoiceDetailId);
                             try (ResultSet rs = ps.executeQuery()) {
                                 if (rs.next()) {
                                     invoiceId = rs.getInt("invoice_id");
@@ -581,24 +595,61 @@ public class DoctorLabServlet extends HttpServlet {
                     }
                 }
 
-                if (invoiceId > 0) {
+                // Step A: If we have a valid invoiceDetailId, check if Invoice_Detail already has health_record_id
+                if (invoiceDetailId > 0) {
+                    String sqlCheckDetail = "SELECT health_record_id FROM Invoice_Detail WHERE invoice_detail_id = ?";
+                    try (PreparedStatement ps = conn.prepareStatement(sqlCheckDetail)) {
+                        ps.setInt(1, invoiceDetailId);
+                        try (ResultSet rs = ps.executeQuery()) {
+                            if (rs.next()) {
+                                int hrId = rs.getInt("health_record_id");
+                                if (!rs.wasNull() && hrId > 0) {
+                                    healthRecordId = hrId;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Step B: If not found, look up via Medical_record using appointmentId
+                if (healthRecordId <= 0 && appointmentId > 0) {
+                    String sqlGetHR = "SELECT health_record_id FROM Medical_record WHERE appointment_id = ?";
+                    try (PreparedStatement ps = conn.prepareStatement(sqlGetHR)) {
+                        ps.setInt(1, appointmentId);
+                        try (ResultSet rs = ps.executeQuery()) {
+                            if (rs.next()) {
+                                int hrId = rs.getInt("health_record_id");
+                                if (!rs.wasNull() && hrId > 0) {
+                                    healthRecordId = hrId;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Step C: If not found, check Healthy_Record by invoiceDetailId
+                if (healthRecordId <= 0 && invoiceDetailId > 0) {
                     String sqlFindRecord = "SELECT health_record_id FROM Healthy_Record WHERE invoice_detail_id = ?";
                     try (PreparedStatement ps = conn.prepareStatement(sqlFindRecord)) {
-                        ps.setInt(1, invoiceId);
+                        ps.setInt(1, invoiceDetailId);
                         try (ResultSet rs = ps.executeQuery()) {
                             if (rs.next()) {
                                 healthRecordId = rs.getInt("health_record_id");
                             }
                         }
-                    } catch (SQLException ex) {
-                        try (PreparedStatement ps = conn.prepareStatement("SELECT health_record_id FROM Healthy_Record WHERE invoice_id = ?")) {
-                            ps.setInt(1, invoiceId);
-                            try (ResultSet rs = ps.executeQuery()) {
-                                if (rs.next()) {
-                                    healthRecordId = rs.getInt("health_record_id");
-                                }
+                    }
+                }
+
+                // Step D: Fallback to the latest active Healthy_Record for this patient
+                if (healthRecordId <= 0) {
+                    String sqlFindLatest = "SELECT TOP 1 health_record_id FROM Healthy_Record WHERE patient_id = ? AND status <> 'Completed' ORDER BY created_at DESC";
+                    try (PreparedStatement ps = conn.prepareStatement(sqlFindLatest)) {
+                        ps.setInt(1, patientId);
+                        try (ResultSet rs = ps.executeQuery()) {
+                            if (rs.next()) {
+                                healthRecordId = rs.getInt("health_record_id");
                             }
-                        } catch (SQLException ignored) {}
+                        }
                     }
                 }
 
@@ -651,7 +702,8 @@ public class DoctorLabServlet extends HttpServlet {
                             "height = COALESCE(?, height), " +
                             "other_information = CASE WHEN ? IS NOT NULL AND LTRIM(RTRIM(?)) <> '' THEN ? ELSE other_information END, " +
                             "status = 'Accepted', " +
-                            "doctor_id = COALESCE(doctor_id, ?) " +
+                            "doctor_id = COALESCE(doctor_id, ?), " +
+                            "invoice_detail_id = COALESCE(invoice_detail_id, ?) " +
                             "WHERE health_record_id = ?";
                     try (PreparedStatement stmt = conn.prepareStatement(sqlUpdate)) {
                         stmt.setBigDecimal(1, urea);
@@ -673,7 +725,12 @@ public class DoctorLabServlet extends HttpServlet {
                         } else {
                             stmt.setNull(15, java.sql.Types.INTEGER);
                         }
-                        stmt.setInt(16, healthRecordId);
+                        if (invoiceDetailId > 0) {
+                            stmt.setInt(16, invoiceDetailId);
+                        } else {
+                            stmt.setNull(16, java.sql.Types.INTEGER);
+                        }
+                        stmt.setInt(17, healthRecordId);
                         stmt.executeUpdate();
                     }
                 } else {
@@ -694,8 +751,8 @@ public class DoctorLabServlet extends HttpServlet {
                         stmt.setBigDecimal(11, weight);
                         stmt.setBigDecimal(12, height);
                         stmt.setString(13, otherInfo);
-                        if (invoiceId > 0) {
-                            stmt.setInt(14, invoiceId);
+                        if (invoiceDetailId > 0) {
+                            stmt.setInt(14, invoiceDetailId);
                         } else {
                             stmt.setNull(14, java.sql.Types.INTEGER);
                         }
@@ -713,6 +770,16 @@ public class DoctorLabServlet extends HttpServlet {
                     }
                 }
 
+                // Step E: Ensure new/existing Healthy_Record is linked back to Medical_record
+                if (appointmentId > 0 && healthRecordId > 0) {
+                    String sqlLinkRecord = "UPDATE Medical_record SET health_record_id = ? WHERE appointment_id = ? AND health_record_id IS NULL";
+                    try (PreparedStatement stmtLink = conn.prepareStatement(sqlLinkRecord)) {
+                        stmtLink.setInt(1, healthRecordId);
+                        stmtLink.setInt(2, appointmentId);
+                        stmtLink.executeUpdate();
+                    }
+                }
+
                 // 2.5 Update Invoice_Detail if this was ordered via an invoice
                 if (waitingIdStr != null && !waitingIdStr.trim().isEmpty()) {
                     String cleanWaitingId = waitingIdStr.trim();
@@ -720,7 +787,7 @@ public class DoctorLabServlet extends HttpServlet {
                         cleanWaitingId = cleanWaitingId.substring(4);
                     }
                     if (cleanWaitingId.matches("\\d+")) {
-                        int invoiceDetailId = Integer.parseInt(cleanWaitingId);
+                        int invoiceDetailId_local = Integer.parseInt(cleanWaitingId);
                         String sqlUpdateInvoiceDetail = "UPDATE Invoice_Detail SET " +
                                 "lab_status = 'Completed', " +
                                 "completed_at = GETDATE(), " +
@@ -730,7 +797,7 @@ public class DoctorLabServlet extends HttpServlet {
                         try (PreparedStatement stmtDetail = conn.prepareStatement(sqlUpdateInvoiceDetail)) {
                             stmtDetail.setString(1, "Hoàn thành xét nghiệm");
                             stmtDetail.setInt(2, healthRecordId);
-                            stmtDetail.setInt(3, invoiceDetailId);
+                            stmtDetail.setInt(3, invoiceDetailId_local);
                             stmtDetail.executeUpdate();
                         }
                     }
