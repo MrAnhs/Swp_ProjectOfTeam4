@@ -1,8 +1,8 @@
 @import '../../components/forms.css';
 
 body {
-    background: #0B0F19 !important;
-    color: #e2e8f0 !important;
+    background: #f5f7fa !important;
+    color: #1a202c !important;
     font-family: "Inter", sans-serif;
 }
 
@@ -18,12 +18,12 @@ body {
     margin: 0 0 0.35rem;
     font-size: 2rem;
     font-weight: 700;
-    color: #ffffff !important;
+    color: #1a202c !important;
 }
 
 .page-header p {
     margin: 0;
-    color: #94a3b8 !important;
+    color: #64748b !important;
 }
 
 .page-eyebrow {
@@ -56,9 +56,9 @@ body {
 }
 
 .btn-page-secondary {
-    background: rgba(30, 41, 59, 0.6) !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
-    color: #e2e8f0 !important;
+    background: #f1f5f9 !important;
+    border-color: #e2e8f0 !important;
+    color: #475569 !important;
 }
 
 .btn-page-danger {
@@ -83,18 +83,18 @@ body {
 
 .shortcut-card,
 .page-card {
-    background: rgba(30, 41, 59, 0.45) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    background: #ffffff !important;
+    border: 1px solid #e8ecf0 !important;
     border-radius: 16px !important;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2) !important;
-    backdrop-filter: blur(12px) !important;
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06) !important;
+    backdrop-filter: none !important;
 }
 
 .shortcut-card {
     display: grid;
     gap: 0.45rem;
     padding: 1.5rem;
-    color: #ffffff !important;
+    color: #1a202c !important;
     text-decoration: none;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
@@ -113,9 +113,9 @@ body {
 
 .shortcut-card:hover {
     transform: translateY(-5px) !important;
-    border-color: rgba(42, 181, 163, 0.4) !important;
-    box-shadow: 0 15px 35px rgba(42, 181, 163, 0.15) !important;
-    background: rgba(30, 41, 59, 0.7) !important;
+    border-color: rgba(0, 127, 97, 0.3) !important;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1) !important;
+    background: #f0faf7 !important;
 }
 
 .shortcut-card:hover::before {
@@ -128,13 +128,13 @@ body {
 }
 
 .shortcut-card strong {
-    color: #ffffff !important;
+    color: #1a202c !important;
     font-weight: 700 !important;
 }
 
 .shortcut-card span,
 .page-card__header p {
-    color: #94a3b8 !important;
+    color: #64748b !important;
     font-size: 0.875rem !important;
 }
 
@@ -143,7 +143,7 @@ body {
 }
 
 .page-card__header h2 {
-    color: #ffffff !important;
+    color: #1a202c !important;
 }
 
 .page-card__header a {
@@ -1622,8 +1622,8 @@ body {
 .filter-row select option,
 .stack-form select option,
 .booking-filter-control select option {
-    background-color: #0F172A !important;
-    color: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #1a202c !important;
 }
 
 .filter-row input:focus,
