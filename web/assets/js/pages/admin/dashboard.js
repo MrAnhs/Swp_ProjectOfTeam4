@@ -300,15 +300,12 @@ window.openDashboardModal = function openDashboardModal(type, extra, elem) {
     modal.show();
 };
 
-                                                        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-                                                        modal.show();
-                                                    }
-                                                    if (document.readyState === 'loading') {
-                                                        document.addEventListener('DOMContentLoaded', revealKpiCards);
-                                                    } else {
-                                                        // DOM is already ready, call immediately with a small delay to ensure rendering
-                                                        window.setTimeout(revealKpiCards, 100);
-                                                    }
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', revealKpiCards);
+} else {
+    // DOM is already ready, call immediately with a small delay to ensure rendering
+    window.setTimeout(revealKpiCards, 100);
+}
 
                                                     function formatCurrency(value) {
                                                         return Number(value || 0).toLocaleString('vi-VN', {
