@@ -627,11 +627,11 @@ public class DoctorLabServlet extends HttpServlet {
                     }
                 }
 
-                // Step C: If not found, check Healthy_Record by invoiceDetailId
-                if (healthRecordId <= 0 && invoiceDetailId > 0) {
-                    String sqlFindRecord = "SELECT health_record_id FROM Healthy_Record WHERE invoice_detail_id = ?";
+                // Step C: If not found, check Healthy_Record by invoiceId
+                if (healthRecordId <= 0 && invoiceId > 0) {
+                    String sqlFindRecord = "SELECT health_record_id FROM Healthy_Record WHERE invoice_id = ?";
                     try (PreparedStatement ps = conn.prepareStatement(sqlFindRecord)) {
-                        ps.setInt(1, invoiceDetailId);
+                        ps.setInt(1, invoiceId);
                         try (ResultSet rs = ps.executeQuery()) {
                             if (rs.next()) {
                                 healthRecordId = rs.getInt("health_record_id");
@@ -703,7 +703,7 @@ public class DoctorLabServlet extends HttpServlet {
                             "other_information = CASE WHEN ? IS NOT NULL AND LTRIM(RTRIM(?)) <> '' THEN ? ELSE other_information END, " +
                             "status = 'Accepted', " +
                             "doctor_id = COALESCE(doctor_id, ?), " +
-                            "invoice_detail_id = COALESCE(invoice_detail_id, ?) " +
+                            "invoice_id = COALESCE(invoice_id, ?) " +
                             "WHERE health_record_id = ?";
                     try (PreparedStatement stmt = conn.prepareStatement(sqlUpdate)) {
                         stmt.setBigDecimal(1, urea);
@@ -725,8 +725,8 @@ public class DoctorLabServlet extends HttpServlet {
                         } else {
                             stmt.setNull(15, java.sql.Types.INTEGER);
                         }
-                        if (invoiceDetailId > 0) {
-                            stmt.setInt(16, invoiceDetailId);
+                        if (invoiceId > 0) {
+                            stmt.setInt(16, invoiceId);
                         } else {
                             stmt.setNull(16, java.sql.Types.INTEGER);
                         }
@@ -735,7 +735,7 @@ public class DoctorLabServlet extends HttpServlet {
                     }
                 } else {
                     // Insert a new Healthy_Record
-                    String sqlInsert = "INSERT INTO Healthy_Record (urea, cr, hba1c, chol, tg, hdl, ldl, vldl, bmi, patient_id, weight, height, other_information, status, created_at, invoice_detail_id, doctor_id) " +
+                    String sqlInsert = "INSERT INTO Healthy_Record (urea, cr, hba1c, chol, tg, hdl, ldl, vldl, bmi, patient_id, weight, height, other_information, status, created_at, invoice_id, doctor_id) " +
                             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Accepted', GETDATE(), ?, ?)";
                     try (PreparedStatement stmt = conn.prepareStatement(sqlInsert, PreparedStatement.RETURN_GENERATED_KEYS)) {
                         stmt.setBigDecimal(1, urea);
@@ -751,8 +751,8 @@ public class DoctorLabServlet extends HttpServlet {
                         stmt.setBigDecimal(11, weight);
                         stmt.setBigDecimal(12, height);
                         stmt.setString(13, otherInfo);
-                        if (invoiceDetailId > 0) {
-                            stmt.setInt(14, invoiceDetailId);
+                        if (invoiceId > 0) {
+                            stmt.setInt(14, invoiceId);
                         } else {
                             stmt.setNull(14, java.sql.Types.INTEGER);
                         }

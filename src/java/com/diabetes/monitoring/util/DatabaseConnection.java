@@ -15,20 +15,20 @@ public class DatabaseConnection {
             Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
             try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
                  Statement stmt = conn.createStatement()) {
-                // Tự động thêm cột invoice_detail_id vào Healthy_Record nếu chưa tồn tại
+                // Tự động thêm cột invoice_id vào Healthy_Record nếu chưa tồn tại
                 String sqlAddCol = 
-                    "IF COL_LENGTH('Healthy_Record', 'invoice_detail_id') IS NULL " +
+                    "IF COL_LENGTH('Healthy_Record', 'invoice_id') IS NULL " +
                     "BEGIN " +
-                    "    ALTER TABLE Healthy_Record ADD invoice_detail_id INT NULL; " +
+                    "    ALTER TABLE Healthy_Record ADD invoice_id INT NULL; " +
                     "END";
                 stmt.execute(sqlAddCol);
 
                 // Tự động thêm khóa ngoại nếu chưa tồn tại
                 String sqlAddFK = 
-                    "IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_HealthyRecord_InvoiceDetail') " +
+                    "IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_HealthyRecord_Invoice') " +
                     "BEGIN " +
-                    "    ALTER TABLE Healthy_Record ADD CONSTRAINT FK_HealthyRecord_InvoiceDetail " +
-                    "    FOREIGN KEY (invoice_detail_id) REFERENCES Invoice_Detail(invoice_detail_id); " +
+                    "    ALTER TABLE Healthy_Record ADD CONSTRAINT FK_HealthyRecord_Invoice " +
+                    "    FOREIGN KEY (invoice_id) REFERENCES Invoice(invoice_id); " +
                     "END";
                 stmt.execute(sqlAddFK);
 
