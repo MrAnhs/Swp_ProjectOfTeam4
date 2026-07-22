@@ -369,10 +369,41 @@ public class DoctorLabServlet extends HttpServlet {
                 return;
             }
 
-            // 2. Validate phone (10 digits starting with 0)
+            // 2. Validate phone format – Vietnam mobile numbers (2024 number plan)
             phone = phone.trim();
-            if (!phone.matches("^0\\d{9}$")) {
-                session.setAttribute("errorMsg", "Số điện thoại không hợp lệ! Vui lòng nhập số điện thoại gồm đúng 10 chữ số bắt đầu bằng số 0 (Ví dụ: 0987654321).");
+            // Accepted prefixes: 03x(Viettel), 05x(VM/Reddi/Gmobile), 07x(Mobifone),
+            //                    08x(Vinaphone/Viettel/MBF), 09x(all carriers)
+            String vnPhoneRegex = "^(03[2-9]|05[25689]|07[06-9]|08[1-9]|09[0-9])\\d{7}$";
+            if (!phone.matches(vnPhoneRegex)) {
+                session.setAttribute("errorMsg",
+                    "Số điện thoại không hợp lệ! Vui lòng nhập số điện thoại Việt Nam đúng định dạng "
+                    + "(10 số, bắt đầu bằng đầu số: 03x, 05x, 07x, 08x, 09x). "
+                    + "Ví dụ: 0987654321 (Viettel), 0912345678 (Vinaphone).");
+                response.sendRedirect(request.getContextPath() + "/doctor-lab/dashboard");
+                return;
+            }
+
+            // 3. Check duplicate phone – reject if another doctor already uses this number
+            try (Connection connCheck = DatabaseConnection.getConnection()) {
+                String sqlCheckPhone = "SELECT account_id, full_name FROM Doctor_Lab WHERE phone = ? AND account_id <> ?";
+                try (PreparedStatement stmtCheck = connCheck.prepareStatement(sqlCheckPhone)) {
+                    stmtCheck.setString(1, phone);
+                    stmtCheck.setInt(2, currentUser.getId());
+                    try (java.sql.ResultSet rs = stmtCheck.executeQuery()) {
+                        if (rs.next()) {
+                            String existingName = rs.getString("full_name");
+                            session.setAttribute("errorMsg",
+                                "Số điện thoại " + phone + " đã được sử dụng bởi tài khoản khác"
+                                + (existingName != null && !existingName.isEmpty() ? " (" + existingName + ")" : "")
+                                + ". Vui lòng sử dụng số điện thoại khác.");
+                            response.sendRedirect(request.getContextPath() + "/doctor-lab/dashboard");
+                            return;
+                        }
+                    }
+                }
+            } catch (Exception exCheck) {
+                exCheck.printStackTrace();
+                session.setAttribute("errorMsg", "Lỗi kiểm tra số điện thoại: " + exCheck.getMessage());
                 response.sendRedirect(request.getContextPath() + "/doctor-lab/dashboard");
                 return;
             }

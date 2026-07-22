@@ -2,10 +2,11 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" style="color-scheme: light;">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
     <title>Phòng Xét nghiệm - DiabetesCare</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
@@ -14,35 +15,37 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/layouts/patient-shell.css">
     <style>
         :root {
+            color-scheme: light;
             --primary:     #00a67e;
             --primary-dark:#007f61;
             --primary-deep:#005f48;
-            --primary-pale:#e6f6f3;
-            --primary-soft:#f0faf8;
-            --bg-app:      #eef6f4;
+            --primary-pale:#e8f5f1;
+            --primary-soft:#f5faf9;
+            --bg-app:      #f5f7fa;
             --sidebar-w:   264px;
             --radius-card: 16px;
-            --shadow-card: 0 4px 24px rgba(0,127,97,.07);
-            --shadow-hover: 0 12px 36px rgba(0,127,97,.13);
+            --shadow-card: 0 2px 16px rgba(0,0,0,.06);
+            --shadow-hover: 0 10px 32px rgba(0,0,0,.12);
         }
 
         /* ===== GLOBAL ===== */
+        html { color-scheme: light !important; background: #f5f7fa !important; }
         *, *::before, *::after { box-sizing: border-box; }
         body {
             font-family: 'Inter', sans-serif;
-            background: var(--bg-app);
-            color: #1e2d2b;
+            background: #f5f7fa !important;
+            color: #1a202c !important;
             font-size: 0.93rem;
         }
 
         /* ===== SIDEBAR ===== */
         .sidebar-modern {
-            background: linear-gradient(180deg, #ffffff 0%, #f7fdfc 100%);
-            border-right: 1px solid rgba(0,127,97,.1);
+            background: #ffffff !important;
+            border-right: 1px solid #e8ecf0 !important;
             padding-top: 0.5rem;
             overflow-y: auto;
             scrollbar-width: thin;
-            scrollbar-color: #b2dfdb transparent;
+            scrollbar-color: #c5d1d0 transparent;
         }
         .sidebar-modern::-webkit-scrollbar { width: 4px; }
         .sidebar-modern::-webkit-scrollbar-track { background: transparent; }
@@ -60,26 +63,31 @@
         }
         .brand-text { font-size: 1.05rem; font-weight: 800; letter-spacing: -.3px; }
 
-        /* Nav items */
+        /* Nav items - optimized for light theme */
         .sidebar-modern .nav-item-dash {
             width: auto; text-align: left; border: none; background: transparent;
             font-family: inherit; font-size: 0.875rem; font-weight: 500; cursor: pointer;
-            outline: none; display: flex; align-items: center; gap: 0.7rem;
-            padding: 0.65rem 1.1rem;
-            color: #4a6360; text-decoration: none;
-            transition: all 0.22s cubic-bezier(.4,0,.2,1);
+            outline: none; display: flex; align-items: center; gap: 0.65rem;
+            padding: 0.65rem 0.9rem;
+            color: #4a5568 !important; text-decoration: none;
+            transition: all 0.18s ease;
             border-radius: 10px;
-            margin: 1px 0.6rem;
+            margin: 1px 0.5rem;
         }
-        .sidebar-modern .nav-item-dash i { font-size: 1.05rem; transition: transform 0.2s ease; }
-        .sidebar-modern .nav-item-dash:hover i { transform: scale(1.12) translateX(1px); }
-        .sidebar-modern .nav-item-dash:hover,
+        .sidebar-modern .nav-item-dash i { font-size: 1rem; transition: transform 0.18s ease; color: #64748b; }
+        .sidebar-modern .nav-item-dash:hover i { transform: scale(1.1) translateX(1px); color: #007f61; }
+        .sidebar-modern .nav-item-dash:hover {
+            background: #f0faf7;
+            color: #007f61 !important;
+        }
         .sidebar-modern .nav-item-dash.active {
-            background: linear-gradient(90deg, var(--primary-pale) 0%, var(--primary-soft) 100%);
-            color: var(--primary-dark);
-            font-weight: 600;
-            box-shadow: 0 2px 8px rgba(0,127,97,.08);
+            background: #e6f7f2 !important;
+            color: #007f61 !important;
+            font-weight: 700;
+            border-left: 3px solid #007f61;
+            padding-left: calc(0.9rem - 3px);
         }
+        .sidebar-modern .nav-item-dash.active i { color: #007f61 !important; }
 
         /* Sub-menus */
         .sidebar-modern .sub-menu {
@@ -123,11 +131,12 @@
 
         /* Logout button */
         .sidebar-modern .btn-logout {
-            color: #c0392b; border-left: 4px solid transparent;
-            border-radius: 10px; margin-right: 0.6rem;
+            color: #dc2626 !important; border: none;
+            border-radius: 10px; margin: 0 0.5rem;
+            font-weight: 600;
         }
         .sidebar-modern .btn-logout:hover {
-            background: #fff5f5; color: #c0392b; border-left-color: #e74c3c;
+            background: #fef2f2 !important; color: #b91c1c !important;
         }
 
         /* Badge pulse */
@@ -145,7 +154,7 @@
         .main-content-dash {
             margin-left: var(--sidebar-w);
             padding: 1.5rem 2rem;
-            background: var(--bg-app);
+            background: #f5f7fa !important;
             min-height: 100vh;
         }
         @media (max-width: 900px) {
@@ -174,16 +183,16 @@
 
         /* ===== CARDS (generic) ===== */
         .card-custom {
-            border: none;
+            border: 1px solid #e8ecf0;
             border-radius: var(--radius-card);
-            box-shadow: var(--shadow-card);
+            box-shadow: 0 2px 12px rgba(0,0,0,.05);
             background: #ffffff;
             margin-bottom: 1.5rem;
             overflow: hidden;
         }
         .card-header-custom {
-            background: linear-gradient(90deg, #f0faf8 0%, #e6f6f3 100%);
-            border-bottom: 1px solid #cceae3;
+            background: #f8fafb;
+            border-bottom: 1px solid #e8ecf0;
             color: var(--primary-dark);
             font-weight: 700;
             font-size: 0.88rem;
@@ -245,7 +254,8 @@
 
         /* ===== DASHBOARD HEADER BANNER ===== */
         .dashboard-header-banner .banner-overlay {
-            background: linear-gradient(135deg, #007f61 0%, #005f48 60%, #003d33 100%) !important;
+            background: linear-gradient(135deg, #e8f5f0 0%, #d4eee7 60%, #c2e5dc 100%) !important;
+            border: 1px solid #b8dfd4 !important;
             border-radius: var(--radius-card);
             position: relative; overflow: hidden;
         }
@@ -253,14 +263,14 @@
             content: '';
             position: absolute; top: -40%; right: -5%;
             width: 320px; height: 320px;
-            background: radial-gradient(circle, rgba(255,255,255,.08) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(0,166,126,.06) 0%, transparent 70%);
             border-radius: 50%;
         }
         .dashboard-header-banner .banner-overlay::after {
             content: '';
             position: absolute; bottom: -30%; left: -3%;
             width: 220px; height: 220px;
-            background: radial-gradient(circle, rgba(0,184,135,.12) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(0,127,97,.08) 0%, transparent 70%);
             border-radius: 50%;
         }
 
@@ -277,12 +287,40 @@
         .badge-status-approved { background: #e0f5ee; color: #007f61; }
         .badge-status-pending  { background: #fff8e1; color: #d97706; }
         .table-custom th {
-            font-weight: 700; color: #4a6360;
-            background: #f5fbf9;
-            border-bottom: 2px solid #d5ede7;
+            font-weight: 700; color: #5a6a78;
+            background: #f8fafb;
+            border-bottom: 2px solid #e2e8f0;
             font-size: 0.8rem; text-transform: uppercase; letter-spacing: .04em;
         }
         .table-custom td { vertical-align: middle; font-size: 0.875rem; }
+
+        /* ===== MODAL SCROLLABLE FIX - footer always visible ===== */
+        /* NOTE: form wraps modal-body + modal-footer, need form to also be flex */
+        #editProfileModal .modal-dialog { max-height: 92vh; }
+        #editProfileModal .modal-content {
+            max-height: 90vh;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+        }
+        #editProfileModal .modal-content form {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-height: 0;
+        }
+        #editProfileModal .modal-body {
+            overflow-y: auto !important;
+            flex: 1 1 auto !important;
+            min-height: 0 !important;
+        }
+        #editProfileModal .modal-footer {
+            flex-shrink: 0 !important;
+            position: sticky;
+            bottom: 0;
+            z-index: 10;
+        }
 
         /* ===== NAV TABS ===== */
         .nav-tabs-custom .nav-link {
@@ -315,14 +353,14 @@
         /* ===== TIMELINE ACTIVITY CARDS ===== */
         .timeline-card-hover {
             border-radius: 12px !important;
-            border: 1px solid #e8f4f0 !important;
-            background: #fdfffe !important;
+            border: 1px solid #e8ecf0 !important;
+            background: #ffffff !important;
             transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
         }
         .timeline-card-hover:hover {
             transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0,127,97,.1) !important;
-            border-color: #a7ddd0 !important;
+            box-shadow: 0 8px 20px rgba(0,0,0,.08) !important;
+            border-color: #c5d9d4 !important;
         }
 
         /* ===== FAP SCHEDULE ===== */
@@ -366,12 +404,28 @@
 
         /* ===== ALERTS (improved) ===== */
         .alert { border-radius: 12px; }
-        .alert-success { background: linear-gradient(90deg, #e6f6f3 0%, #d0efe8 100%); color: #005f48; border: none; }
-        .alert-warning { background: linear-gradient(90deg, #fffbeb 0%, #fef3c7 100%); color: #78350f; border: none; }
-        .alert-danger  { background: linear-gradient(90deg, #fef2f2 0%, #fee2e2 100%); color: #991b1b; border: none; }
+        .alert-success { background: #f0faf6; color: #065f46; border: 1px solid #a7f3d0; }
+        .alert-warning { background: #fffbeb; color: #78350f; border: 1px solid #fde68a; }
+        .alert-danger  { background: #fef2f2; color: #991b1b; border: 1px solid #fca5a5; }
+
+        /* ===== FORCE LIGHT THEME ===== */
+        .sidebar-modern, .main-content-dash, .card, .card-custom,
+        .card-summary, .modal-content, .modal-body, .table,
+        .nav-tabs-custom, .form-control, .form-select {
+            color-scheme: light !important;
+        }
+        /* Ensure all sidebar text is dark (prevent dark mode color inheritance) */
+        .sidebar-modern { color: #1a202c !important; }
+        .sidebar-modern .user-profile-card h6,
+        .sidebar-modern .user-profile-card .user-doctor-name {
+            color: #1a202c !important;
+            display: block !important;
+            font-weight: 700 !important;
+        }
+        .sidebar-modern .sidebar-section-label { color: #9eb5b0 !important; }
     </style>
 </head>
-<body>
+<body style="color-scheme: light; background: #f5f7fa;">
 
     <!-- Sidebar Modern Layout -->
     <aside class="sidebar-modern">
@@ -388,7 +442,7 @@
         <div class="user-profile-card position-relative rounded-3 border shadow-sm"
              data-bs-toggle="modal" data-bs-target="#editProfileModal"
              role="button" tabindex="0" title="Nhấn để chỉnh sửa thông tin cá nhân"
-             style="background: linear-gradient(135deg, #ffffff 0%, #f4fbf9 100%); margin: 0.5rem 0.75rem 1rem 0.75rem; border-color: #ccebe3 !important; cursor: pointer; padding: 0.75rem 0.85rem; transition: box-shadow 0.2s ease, border-color 0.2s ease;">
+             style="background: #ffffff; margin: 0.5rem 0.75rem 1rem 0.75rem; border-color: #e2e8f0 !important; cursor: pointer; padding: 0.75rem 0.85rem; transition: box-shadow 0.2s ease, border-color 0.2s ease;">
 
             <!-- Edit icon overlay (top-right corner) -->
             <span class="position-absolute top-0 end-0 me-2 mt-2 text-success" style="font-size: 0.8rem; opacity: 0.5;">
@@ -396,10 +450,10 @@
             </span>
 
             <div class="d-flex align-items-center gap-2">
-                <div class="user-avatar text-white shadow-sm flex-shrink-0" style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #007f61, #00b887) !important; font-weight: 700; font-size: 1.15rem; display: flex; align-items: center; justify-content: center;">${sessionScope.currentUser.fullName.charAt(0)}</div>
-                <div class="user-info overflow-hidden" style="flex: 1; min-width: 0;">
-                    <h6 class="fw-bold text-dark mb-0" style="font-size: 0.88rem; line-height: 1.25; word-break: break-word;" title="${sessionScope.currentUser.fullName}">${sessionScope.currentUser.fullName}</h6>
-                    <span class="badge font-monospace mt-1" style="background: rgba(0, 127, 97, 0.1); color: #007f61; border: 1px solid rgba(0, 127, 97, 0.25); font-size: 0.65rem; font-weight: 700; padding: 2px 7px; border-radius: 8px;">LAB SYSTEM</span>
+                <div class="flex-shrink-0" style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#007f61,#00b887);font-weight:800;font-size:1.15rem;display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 3px 10px rgba(0,127,97,.3);">${sessionScope.currentUser.fullName.charAt(0)}</div>
+                <div style="flex:1;min-width:0;overflow:hidden;">
+                    <div class="user-doctor-name" style="font-size:0.88rem;font-weight:700;color:#1a202c !important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3;margin-bottom:3px;" title="${sessionScope.currentUser.fullName}">${sessionScope.currentUser.fullName}</div>
+                    <span style="display:inline-block;background:rgba(0,127,97,0.1);color:#007f61;border:1px solid rgba(0,127,97,0.25);font-size:0.62rem;font-weight:700;padding:1px 7px;border-radius:6px;font-family:monospace;letter-spacing:.04em;">LAB SYSTEM</span>
                 </div>
             </div>
             <div class="mt-2 pt-2 border-top d-flex justify-content-between align-items-center">
@@ -422,15 +476,23 @@
         </div>
         <style>
             .user-profile-card:hover {
-                box-shadow: 0 6px 20px rgba(0, 127, 97, 0.15) !important;
-                border-color: #00b887 !important;
+                box-shadow: 0 6px 20px rgba(0, 127, 97, 0.12) !important;
+                border-color: #a7d9d0 !important;
+                background: #f8fdfb !important;
             }
             .user-profile-card:hover .bi-pencil-fill {
                 opacity: 1 !important;
+                color: #007f61 !important;
             }
             .user-profile-card:focus {
                 outline: 2px solid #00b887;
                 outline-offset: 2px;
+            }
+            /* Brand section */
+            .sidebar-header { background: #ffffff; }
+            .brand-icon-dash.bg-success {
+                background: linear-gradient(135deg, #00a67e, #007f61) !important;
+                box-shadow: 0 3px 10px rgba(0,127,97,.2);
             }
         </style>
 
@@ -546,17 +608,17 @@
             <div class="tab-pane fade show active" id="pill-overview" role="tabpanel" aria-labelledby="pill-overview-tab">
                 <!-- Overview / Summary Dashboard Content -->
                 <div class="dashboard-header-banner mb-4">
-                    <div class="banner-overlay p-4 rounded-4 shadow text-white position-relative" style="background: linear-gradient(135deg, #007f61 0%, #005f48 60%, #003d33 100%); overflow:hidden;">
+                    <div class="banner-overlay p-4 rounded-4 position-relative" style="overflow:hidden;">
                         <!-- decorative circles -->
-                        <div style="position:absolute;top:-40%;right:-4%;width:280px;height:280px;background:radial-gradient(circle,rgba(255,255,255,.07) 0%,transparent 70%);border-radius:50%;pointer-events:none;"></div>
-                        <div style="position:absolute;bottom:-30%;left:-2%;width:200px;height:200px;background:radial-gradient(circle,rgba(0,184,135,.12) 0%,transparent 70%);border-radius:50%;pointer-events:none;"></div>
+                        <div style="position:absolute;top:-40%;right:-4%;width:280px;height:280px;background:radial-gradient(circle,rgba(0,127,97,.06) 0%,transparent 70%);border-radius:50%;pointer-events:none;"></div>
+                        <div style="position:absolute;bottom:-30%;left:-2%;width:200px;height:200px;background:radial-gradient(circle,rgba(0,127,97,.08) 0%,transparent 70%);border-radius:50%;pointer-events:none;"></div>
                         <div class="d-flex align-items-center gap-3 position-relative">
-                            <div style="width:48px;height:48px;border-radius:14px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;">
+                            <div style="width:48px;height:48px;border-radius:14px;background:rgba(0,127,97,.12);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;color:#007f61;">
                                 <i class="bi bi-grid-1x2-fill"></i>
                             </div>
                             <div>
-                                <h4 class="fw-bold mb-0" style="font-size:1.2rem;letter-spacing:-.01em;">Báo cáo Tổng quan &amp; Thống kê Lâm sàng</h4>
-                                <p class="mb-0 small" style="opacity:.7;margin-top:2px;">Tổng hợp chỉ số xét nghiệm, phân bố phòng chức năng, và phân tích sức khỏe đường huyết thời gian thực.</p>
+                                <h4 class="fw-bold mb-0" style="font-size:1.2rem;letter-spacing:-.01em;color:#004d3a;">Báo cáo Tổng quan &amp; Thống kê Lâm sàng</h4>
+                                <p class="mb-0 small" style="color:#4a7a68;margin-top:2px;">Tổng hợp chỉ số xét nghiệm, phân bố phòng chức năng, và phân tích sức khỏe đường huyết thời gian thực.</p>
                             </div>
                         </div>
                     </div>
@@ -1215,15 +1277,15 @@
                         <div class="table-responsive">
                             <table class="table table-bordered text-center align-middle m-0" style="width: 100%; border-color: #dee2e6; table-layout: fixed;">
                                 <thead>
-                                    <tr style="background: linear-gradient(135deg, #007f61, #009672); color: white; border: none;">
-                                        <th class="py-2" style="width: 12%; font-size: 0.85rem; background: transparent; color: white;">Ca làm việc</th>
-                                        <th class="py-2" id="th-day-0" style="width: 12.57%; font-size: 0.8rem; background: transparent; color: white;">MON<br><span class="small text-white-50">27/07</span></th>
-                                        <th class="py-2" id="th-day-1" style="width: 12.57%; font-size: 0.8rem; background: transparent; color: white;">TUE<br><span class="small text-white-50">28/07</span></th>
-                                        <th class="py-2" id="th-day-2" style="width: 12.57%; font-size: 0.8rem; background: transparent; color: white;">WED<br><span class="small text-white-50">29/07</span></th>
-                                        <th class="py-2" id="th-day-3" style="width: 12.57%; font-size: 0.8rem; background: transparent; color: white;">THU<br><span class="small text-white-50">30/07</span></th>
-                                        <th class="py-2" id="th-day-4" style="width: 12.57%; font-size: 0.8rem; background: transparent; color: white;">FRI<br><span class="small text-white-50">31/07</span></th>
-                                        <th class="py-2" id="th-day-5" style="width: 12.57%; font-size: 0.8rem; background: transparent; color: white;">SAT<br><span class="small text-white-50">01/08</span></th>
-                                        <th class="py-2" id="th-day-6" style="width: 12.57%; font-size: 0.8rem; background: transparent; color: white;">SUN<br><span class="small text-white-50">02/08</span></th>
+                                    <tr style="background: #edf7f3; color: #004d3a; border: none;">
+                                        <th class="py-2" style="width: 12%; font-size: 0.85rem; background: transparent; color: #004d3a;">Ca làm việc</th>
+                                        <th class="py-2" id="th-day-0" style="width: 12.57%; font-size: 0.8rem; background: transparent; color: #004d3a;">MON<br><span class="small" style="color:#5a9080;">27/07</span></th>
+                                        <th class="py-2" id="th-day-1" style="width: 12.57%; font-size: 0.8rem; background: transparent; color: #004d3a;">TUE<br><span class="small" style="color:#5a9080;">28/07</span></th>
+                                        <th class="py-2" id="th-day-2" style="width: 12.57%; font-size: 0.8rem; background: transparent; color: #004d3a;">WED<br><span class="small" style="color:#5a9080;">29/07</span></th>
+                                        <th class="py-2" id="th-day-3" style="width: 12.57%; font-size: 0.8rem; background: transparent; color: #004d3a;">THU<br><span class="small" style="color:#5a9080;">30/07</span></th>
+                                        <th class="py-2" id="th-day-4" style="width: 12.57%; font-size: 0.8rem; background: transparent; color: #004d3a;">FRI<br><span class="small" style="color:#5a9080;">31/07</span></th>
+                                        <th class="py-2" id="th-day-5" style="width: 12.57%; font-size: 0.8rem; background: transparent; color: #004d3a;">SAT<br><span class="small" style="color:#5a9080;">01/08</span></th>
+                                        <th class="py-2" id="th-day-6" style="width: 12.57%; font-size: 0.8rem; background: transparent; color: #004d3a;">SUN<br><span class="small" style="color:#5a9080;">02/08</span></th>
                                     </tr>
                                 </thead>
                                 <tbody id="fap-timetable-body">
@@ -1318,15 +1380,15 @@
                         <div class="table-responsive">
                             <table class="table table-bordered text-center align-middle m-0" style="width: 100%; border-color: #dee2e6; table-layout: fixed;">
                                 <thead>
-                                    <tr style="background: linear-gradient(135deg, #007f61, #009672); color: white; border: none;">
-                                        <th class="py-1.5" style="width: 11%; font-size: 0.8rem; background: transparent; color: white;">Ca làm việc</th>
-                                        <th class="py-1.5" id="th-reg-day-0" style="width: 12.71%; font-size: 0.78rem; background: transparent; color: white;">MON<br><span class="small text-white-50">27/07</span></th>
-                                        <th class="py-1.5" id="th-reg-day-1" style="width: 12.71%; font-size: 0.78rem; background: transparent; color: white;">TUE<br><span class="small text-white-50">28/07</span></th>
-                                        <th class="py-1.5" id="th-reg-day-2" style="width: 12.71%; font-size: 0.78rem; background: transparent; color: white;">WED<br><span class="small text-white-50">29/07</span></th>
-                                        <th class="py-1.5" id="th-reg-day-3" style="width: 12.71%; font-size: 0.78rem; background: transparent; color: white;">THU<br><span class="small text-white-50">30/07</span></th>
-                                        <th class="py-1.5" id="th-reg-day-4" style="width: 12.71%; font-size: 0.78rem; background: transparent; color: white;">FRI<br><span class="small text-white-50">31/07</span></th>
-                                        <th class="py-1.5" id="th-reg-day-5" style="width: 12.71%; font-size: 0.78rem; background: transparent; color: white;">SAT<br><span class="small text-white-50">01/08</span></th>
-                                        <th class="py-1.5" id="th-reg-day-6" style="width: 12.71%; font-size: 0.78rem; background: transparent; color: white;">SUN<br><span class="small text-white-50">02/08</span></th>
+                                    <tr style="background: #edf7f3; color: #004d3a; border: none;">
+                                        <th class="py-1.5" style="width: 11%; font-size: 0.8rem; background: transparent; color: #004d3a;">Ca làm việc</th>
+                                        <th class="py-1.5" id="th-reg-day-0" style="width: 12.71%; font-size: 0.78rem; background: transparent; color: #004d3a;">MON<br><span class="small" style="color:#5a9080;">27/07</span></th>
+                                        <th class="py-1.5" id="th-reg-day-1" style="width: 12.71%; font-size: 0.78rem; background: transparent; color: #004d3a;">TUE<br><span class="small" style="color:#5a9080;">28/07</span></th>
+                                        <th class="py-1.5" id="th-reg-day-2" style="width: 12.71%; font-size: 0.78rem; background: transparent; color: #004d3a;">WED<br><span class="small" style="color:#5a9080;">29/07</span></th>
+                                        <th class="py-1.5" id="th-reg-day-3" style="width: 12.71%; font-size: 0.78rem; background: transparent; color: #004d3a;">THU<br><span class="small" style="color:#5a9080;">30/07</span></th>
+                                        <th class="py-1.5" id="th-reg-day-4" style="width: 12.71%; font-size: 0.78rem; background: transparent; color: #004d3a;">FRI<br><span class="small" style="color:#5a9080;">31/07</span></th>
+                                        <th class="py-1.5" id="th-reg-day-5" style="width: 12.71%; font-size: 0.78rem; background: transparent; color: #004d3a;">SAT<br><span class="small" style="color:#5a9080;">01/08</span></th>
+                                        <th class="py-1.5" id="th-reg-day-6" style="width: 12.71%; font-size: 0.78rem; background: transparent; color: #004d3a;">SUN<br><span class="small" style="color:#5a9080;">02/08</span></th>
                                     </tr>
                                 </thead>
                                 <tbody id="reg-timetable-body">
@@ -1669,11 +1731,11 @@
         <div class="modal fade" id="recordModal${r.recordId}" tabindex="-1" aria-labelledby="recordModalLabel${r.recordId}" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
-                    <div class="modal-header bg-success text-white">
-                        <h5 class="modal-title fw-bold" id="recordModalLabel${r.recordId}">
-                            <i class="bi bi-file-earmark-medical me-2"></i>Chi tiết kết quả xét nghiệm
+                    <div class="modal-header" style="background: linear-gradient(135deg, #e8f5f0 0%, #d4eee7 100%); border-bottom: 1px solid #b8dfd4;">
+                        <h5 class="modal-title fw-bold" id="recordModalLabel${r.recordId}" style="color:#004d3a;">
+                            <i class="bi bi-file-earmark-medical me-2" style="color:#007f61;"></i>Chi tiết kết quả xét nghiệm
                         </h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <div class="patient-modal-info mb-3 pb-3 border-bottom">
@@ -1869,11 +1931,11 @@
     <div class="modal fade" id="registerScheduleModal" tabindex="-1" aria-labelledby="registerScheduleModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow">
-                <div class="modal-header bg-success text-white">
-                    <h5 class="modal-title fw-bold" id="registerScheduleModalLabel">
-                        <i class="bi bi-calendar-plus-fill me-2"></i>Đăng ký lịch làm việc
+                <div class="modal-header" style="background: linear-gradient(135deg, #e8f5f0 0%, #d4eee7 100%); border-bottom: 1px solid #b8dfd4;">
+                    <h5 class="modal-title fw-bold" id="registerScheduleModalLabel" style="color:#004d3a;">
+                        <i class="bi bi-calendar-plus-fill me-2" style="color:#007f61;"></i>Đăng ký lịch làm việc
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form action="${pageContext.request.contextPath}/doctor-lab/dashboard" method="POST">
                     <input type="hidden" name="action" value="registerSchedule">
@@ -2109,11 +2171,11 @@
 
                 const thEl = document.getElementById('th-day-' + i);
                 if (thEl) {
-                    thEl.innerHTML = dayNames[i] + '<br><span class="small text-white-50">' + dt + '/' + m + '</span>';
+                    thEl.innerHTML = dayNames[i] + '<br><span class="small" style="color:#5a9080;">' + dt + '/' + m + '</span>';
                 }
                 const thRegEl = document.getElementById('th-reg-day-' + i);
                 if (thRegEl) {
-                    thRegEl.innerHTML = dayNames[i] + '<br><span class="small text-white-50">' + dt + '/' + m + '</span>';
+                    thRegEl.innerHTML = dayNames[i] + '<br><span class="small" style="color:#5a9080;">' + dt + '/' + m + '</span>';
                 }
             }
 
@@ -2254,6 +2316,46 @@
             }
         }
 
+        // ===== Vietnam phone real-time validator =====
+        const VN_PHONE_RE = /^(03[2-9]|05[25689]|07[06-9]|08[1-9]|09[0-9])\d{7}$/;
+        const VN_CARRIERS = {
+            '03': 'Viettel', '086': 'Viettel', '096': 'Viettel', '097': 'Viettel', '098': 'Viettel',
+            '07': 'Mobifone', '089': 'Mobifone', '090': 'Mobifone', '093': 'Mobifone',
+            '081': 'Vinaphone', '082': 'Vinaphone', '083': 'Vinaphone',
+            '084': 'Vinaphone', '085': 'Vinaphone', '088': 'Vinaphone', '091': 'Vinaphone', '094': 'Vinaphone',
+            '052': 'Vietnamobile', '056': 'Vietnamobile', '058': 'Vietnamobile', '092': 'Vietnamobile',
+            '055': 'Reddi', '059': 'Gmobile', '099': 'Gmobile'
+        };
+        function getCarrier(phone) {
+            if (!phone || phone.length < 3) return null;
+            return VN_CARRIERS[phone.substring(0,3)]
+                || VN_CARRIERS[phone.substring(0,2)]
+                || null;
+        }
+        function validateVnPhone(el) {
+            const hint = document.getElementById('phoneHint');
+            const val  = (el.value || '').trim();
+            if (!val) {
+                el.classList.remove('is-valid','is-invalid');
+                if (hint) hint.innerHTML = '<span class="text-muted">Số điện thoại Việt Nam: 03x, 05x, 07x, 08x, 09x</span>';
+                return;
+            }
+            if (VN_PHONE_RE.test(val)) {
+                el.classList.add('is-valid'); el.classList.remove('is-invalid');
+                const carrier = getCarrier(val);
+                if (hint) hint.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Hợp lệ'
+                    + (carrier ? ' · Mạng: <strong>' + carrier + '</strong>' : '') + '</span>';
+            } else {
+                el.classList.add('is-invalid'); el.classList.remove('is-valid');
+                let msg = 'Số không hợp lệ';
+                if (val.length > 0 && !/^0/.test(val)) msg = 'Phải bắt đầu bằng số 0';
+                else if (val.length > 0 && val.length < 10) msg = 'Cần đủ 10 chữ số (' + val.length + '/10)';
+                else if (val.length === 10) msg = 'Đầu số không đúng (dùng: 03x, 05x, 07x, 08x, 09x)';
+                else if (val.length > 10) msg = 'Quá 10 chữ số';
+                if (hint) hint.innerHTML = '<span class="text-danger"><i class="bi bi-x-circle-fill me-1"></i>' + msg + '</span>';
+            }
+        }
+
         function validateProfileForm(event) {
             const nameEl = document.getElementById('profFullName');
             const phoneEl = document.getElementById('profPhone');
@@ -2278,8 +2380,22 @@
                 return false;
             }
 
-            if (!phone || !/^0\d{9}$/.test(phone)) {
-                if (jsAlert) { jsAlert.innerHTML = '<i class="bi bi-exclamation-circle-fill me-1"></i><strong>Số điện thoại không hợp lệ!</strong> Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0 (Ví dụ: 0987654321).'; jsAlert.classList.remove('d-none'); }
+            // ---- Vietnam phone validation (2024 number plan) ----
+            // Đầu số hợp lệ: 032-039, 086, 096-098 (Viettel)
+            //                070, 076-079, 089, 090, 093 (Mobifone)
+            //                081-085, 088, 091, 094 (Vinaphone)
+            //                052, 055-056, 058, 092 (Vietnamobile/Reddi)
+            //                059, 099 (Gmobile)
+            const VN_PHONE_REGEX = /^(03[2-9]|05[25689]|07[06-9]|08[1-9]|09[0-9])\d{7}$/;
+
+            if (!phone || !VN_PHONE_REGEX.test(phone)) {
+                if (jsAlert) {
+                    jsAlert.innerHTML = '<i class="bi bi-telephone-x-fill me-1"></i>'
+                        + '<strong>Số điện thoại không hợp lệ!</strong> '
+                        + 'Vui lòng nhập số điện thoại Việt Nam hợp lệ (10 số, bắt đầu bằng đầu số mạng: 03x, 05x, 07x, 08x, 09x).<br>'
+                        + '<small class="text-muted">Ví dụ hợp lệ: 0987654321 (Viettel), 0912345678 (Vinaphone), 0765432109 (Mobifone)</small>';
+                    jsAlert.classList.remove('d-none');
+                }
                 if (phoneEl) phoneEl.focus();
                 if (event) event.preventDefault();
                 return false;
@@ -2377,53 +2493,51 @@
             <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
 
                 <!-- Modal Header -->
-                <div class="modal-header text-white" style="background: linear-gradient(135deg, #007f61 0%, #005f48 100%); padding: 1.1rem 1.4rem;">
+                <div class="modal-header" style="background: linear-gradient(135deg, #e8f5f0 0%, #d4eee7 100%); border-bottom: 1px solid #b8dfd4; padding: 1.1rem 1.4rem;">
                     <div class="d-flex align-items-center gap-3">
-                        <div style="width:42px;height:42px;border-radius:10px;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;font-size:1.2rem;">
+                        <div style="width:42px;height:42px;border-radius:10px;background:rgba(0,127,97,0.12);display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:#007f61;">
                             <i class="bi bi-person-gear"></i>
                         </div>
                         <div>
-                            <h5 class="modal-title fw-bold mb-0" id="editProfileModalLabel">Chỉnh sửa thông tin bác sĩ</h5>
-                            <small style="opacity:0.8;font-size:0.78rem;">Phòng Xét nghiệm – ${sessionScope.currentUser.fullName}</small>
+                            <h5 class="modal-title fw-bold mb-0" id="editProfileModalLabel" style="color:#004d3a;">Chỉnh sửa thông tin bác sĩ</h5>
+                            <small style="color:#4a7a68;font-size:0.78rem;">Phòng Xét nghiệm – ${sessionScope.currentUser.fullName}</small>
                         </div>
                     </div>
                     <c:if test="${isProfileComplete}">
-                        <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal" aria-label="Close"></button>
                     </c:if>
                 </div>
 
                 <form action="${pageContext.request.contextPath}/doctor-lab/dashboard" method="POST" accept-charset="UTF-8" onsubmit="return validateProfileForm(event)">
                     <input type="hidden" name="action" value="updateProfile">
 
-                    <div class="modal-body" style="padding: 1.5rem; background: #f8fffe;">
+                    <div class="modal-body" style="padding: 1rem 1.2rem; background: #f8fffe;">
 
                         <!-- JS validation alert -->
                         <div id="profJsAlert" class="alert alert-danger border-0 shadow-sm mb-3 py-2 px-3 small d-none" role="alert"></div>
 
                         <!-- Incomplete warning banner -->
                         <c:if test="${not isProfileComplete}">
-                            <div class="alert alert-warning border-0 rounded-3 shadow-sm mb-4 py-2 px-3 small d-flex gap-2 align-items-start" role="alert">
-                                <i class="bi bi-exclamation-triangle-fill text-warning mt-0" style="font-size:1rem;flex-shrink:0;"></i>
-                                <div>
-                                    <strong>Tài khoản do Admin cấp:</strong> Vui lòng bổ sung đầy đủ thông tin cá nhân bắt buộc
-                                    (<span class="text-danger">*</span> Họ tên, SĐT, Ngày sinh &ge;18 tuổi, Giới tính, Địa chỉ)
-                                    để kích hoạt tài khoản và mở khóa các tính năng.
+                            <div class="alert alert-warning border-0 rounded-3 shadow-sm mb-3 py-1 px-3 small d-flex gap-2 align-items-start" role="alert">
+                                <i class="bi bi-exclamation-triangle-fill text-warning mt-0" style="font-size:0.9rem;flex-shrink:0;"></i>
+                                <div><strong>Tài khoản do Admin cấp:</strong> Vui lòng bổ sung
+                                    (<span class="text-danger">*</span> Họ tên, SĐT, Ngày sinh &ge;18 tuổi, Giới tính, Địa chỉ) để kích hoạt tài khoản.
                                 </div>
                             </div>
                         </c:if>
 
                         <!-- ── Section 1: Thông tin cơ bản ── -->
-                        <div class="mb-3">
-                            <p class="text-uppercase fw-bold small mb-3" style="color:#007f61;letter-spacing:.6px;font-size:0.7rem;">
+                        <div class="mb-2">
+                            <p class="text-uppercase fw-bold small mb-2" style="color:#007f61;letter-spacing:.6px;font-size:0.7rem;">
                                 <i class="bi bi-person-lines-fill me-1"></i>Thông tin cơ bản
                             </p>
-                            <div class="row g-3">
+                            <div class="row g-2">
                                 <!-- Họ và tên -->
                                 <div class="col-md-6">
                                     <label for="profFullName" class="form-label fw-semibold text-dark small mb-1">
                                         <i class="bi bi-person-fill text-success me-1"></i>Họ và tên bác sĩ <span class="text-danger">*</span>
                                     </label>
-                                    <input type="text" class="form-control shadow-sm border-success-subtle fw-semibold"
+                                    <input type="text" class="form-control form-control-sm border-success-subtle fw-semibold"
                                            id="profFullName" name="fullName" required
                                            placeholder="Nhập họ và tên đầy đủ..."
                                            value="${doctorProfile.fullName}">
@@ -2434,13 +2548,16 @@
                                     <label for="profPhone" class="form-label fw-semibold text-dark small mb-1">
                                         <i class="bi bi-telephone-fill text-success me-1"></i>Số điện thoại <span class="text-danger">*</span>
                                     </label>
-                                    <input type="tel" class="form-control shadow-sm border-success-subtle fw-semibold"
+                                    <input type="tel" class="form-control form-control-sm border-success-subtle fw-semibold"
                                            id="profPhone" name="phone" required
-                                           pattern="^0\d{9}$"
-                                           title="10 chữ số bắt đầu bằng 0, ví dụ: 0987654321"
-                                           placeholder="09xxxxxxxx"
+                                           pattern="^(03[2-9]|05[25689]|07[06-9]|08[1-9]|09[0-9])\d{7}$"
+                                           title="Số điện thoại Việt Nam hợp lệ: 10 số, bắt đầu bằng 03x/05x/07x/08x/09x"
+                                           placeholder="VD: 0987654321"
+                                           oninput="validateVnPhone(this)"
                                            value="${doctorProfile.phone}">
-                                    <span class="form-text text-muted" style="font-size:0.72rem;">10 chữ số bắt đầu bằng 0</span>
+                                    <div id="phoneHint" class="form-text" style="font-size:0.7rem;">
+                                        <span class="text-muted">Số điện thoại Việt Nam: 03x, 05x, 07x, 08x, 09x</span>
+                                    </div>
                                 </div>
 
                                 <!-- Ngày sinh -->
@@ -2448,11 +2565,11 @@
                                     <label for="profDob" class="form-label fw-semibold text-dark small mb-1">
                                         <i class="bi bi-calendar-event text-success me-1"></i>Ngày sinh <span class="text-danger">*</span>
                                     </label>
-                                    <input type="date" class="form-control shadow-sm border-success-subtle fw-semibold"
+                                    <input type="date" class="form-control form-control-sm border-success-subtle fw-semibold"
                                            id="profDob" name="dob" required
                                            max="${maxDobStr}"
                                            value="${doctorProfile.dob}">
-                                    <span class="form-text text-muted" style="font-size:0.72rem;">Tuổi &ge; 18</span>
+                                    <span class="form-text text-muted" style="font-size:0.7rem;">Tuổi &ge; 18</span>
                                 </div>
 
                                 <!-- Giới tính -->
@@ -2460,7 +2577,7 @@
                                     <label for="profGender" class="form-label fw-semibold text-dark small mb-1">
                                         <i class="bi bi-gender-ambiguous text-success me-1"></i>Giới tính <span class="text-danger">*</span>
                                     </label>
-                                    <select class="form-select shadow-sm border-success-subtle fw-semibold" id="profGender" name="gender" required>
+                                    <select class="form-select form-select-sm border-success-subtle fw-semibold" id="profGender" name="gender" required>
                                         <option value="Nam" ${doctorProfile.gender == 'Nam' || doctorProfile.gender == '' || empty doctorProfile.gender ? 'selected' : ''}>Nam</option>
                                         <option value="Nu" ${doctorProfile.gender == 'Nu' || doctorProfile.gender == 'Nữ' ? 'selected' : ''}>Nữ</option>
                                         <option value="Khac" ${doctorProfile.gender == 'Khac' || doctorProfile.gender == 'Khác' ? 'selected' : ''}>Khác</option>
@@ -2472,7 +2589,7 @@
                                     <label for="profAddress" class="form-label fw-semibold text-dark small mb-1">
                                         <i class="bi bi-geo-alt-fill text-success me-1"></i>Địa chỉ <span class="text-danger">*</span>
                                     </label>
-                                    <input type="text" class="form-control shadow-sm border-success-subtle fw-semibold"
+                                    <input type="text" class="form-control form-control-sm border-success-subtle fw-semibold"
                                            id="profAddress" name="address" required
                                            placeholder="Hà Nội, Việt Nam"
                                            value="${doctorProfile.address}">
@@ -2483,20 +2600,20 @@
                         <hr class="my-3" style="border-color:#d4edda;">
 
                         <!-- ── Section 2: Thông tin tài khoản (readonly) ── -->
-                        <div class="mb-3">
-                            <p class="text-uppercase fw-bold small mb-3" style="color:#6c757d;letter-spacing:.6px;font-size:0.7rem;">
+                        <div class="mb-2">
+                            <p class="text-uppercase fw-bold small mb-2" style="color:#6c757d;letter-spacing:.6px;font-size:0.7rem;">
                                 <i class="bi bi-shield-lock me-1"></i>Thông tin tài khoản (cố định)
                             </p>
-                            <div class="row g-3">
+                            <div class="row g-2">
                                 <!-- Email (Readonly) -->
                                 <div class="col-md-6">
                                     <label for="profEmail" class="form-label fw-semibold text-dark small mb-1">
                                         <i class="bi bi-envelope-fill text-secondary me-1"></i>Email đăng nhập
                                     </label>
-                                    <input type="email" class="form-control bg-light text-secondary fw-bold border-secondary-subtle"
+                                    <input type="email" class="form-control form-control-sm bg-light text-secondary fw-bold border-secondary-subtle"
                                            id="profEmail" name="email" readonly
                                            value="${not empty doctorProfile.email ? doctorProfile.email : sessionScope.currentUser.email}">
-                                    <span class="form-text text-muted" style="font-size:0.72rem;"><i class="bi bi-lock-fill me-1"></i>Do Admin khởi tạo – không thể thay đổi</span>
+                                    <span class="form-text text-muted" style="font-size:0.7rem;"><i class="bi bi-lock-fill me-1"></i>Do Admin khởi tạo – không thể thay đổi</span>
                                 </div>
 
                                 <!-- Bộ phận (Readonly) -->
@@ -2504,19 +2621,19 @@
                                     <label for="profLabName" class="form-label fw-semibold text-dark small mb-1">
                                         <i class="bi bi-building-fill text-secondary me-1"></i>Bộ phận / Chuyên khoa
                                     </label>
-                                    <input type="text" class="form-control bg-light text-secondary fw-bold border-secondary-subtle"
+                                    <input type="text" class="form-control form-control-sm bg-light text-secondary fw-bold border-secondary-subtle"
                                            id="profLabName" name="labName" readonly
                                            value="Phòng xét nghiệm">
-                                    <span class="form-text text-muted" style="font-size:0.72rem;"><i class="bi bi-lock-fill me-1"></i>Đơn vị cố định</span>
+                                    <span class="form-text text-muted" style="font-size:0.7rem;"><i class="bi bi-lock-fill me-1"></i>Đơn vị cố định</span>
                                 </div>
                             </div>
                         </div>
 
-                        <hr class="my-3" style="border-color:#d4edda;">
+                        <hr class="my-2" style="border-color:#d4edda;">
 
                         <!-- ── Section 3: Đổi mật khẩu ── -->
                         <div>
-                            <p class="text-uppercase fw-bold small mb-3" style="color:#856404;letter-spacing:.6px;font-size:0.7rem;">
+                            <p class="text-uppercase fw-bold small mb-2" style="color:#856404;letter-spacing:.6px;font-size:0.7rem;">
                                 <i class="bi bi-key-fill me-1"></i>Bảo mật
                             </p>
                             <div class="col-md-8">
@@ -2524,28 +2641,28 @@
                                     Đổi mật khẩu đăng nhập
                                     <span class="text-muted fw-normal">(bỏ trống = giữ nguyên)</span>
                                 </label>
-                                <div class="input-group">
+                                <div class="input-group input-group-sm">
                                     <span class="input-group-text bg-warning-subtle border-warning-subtle">
                                         <i class="bi bi-key-fill text-warning"></i>
                                     </span>
-                                    <input type="password" class="form-control shadow-sm"
+                                    <input type="password" class="form-control"
                                            id="profNewPassword" name="newPassword"
                                            placeholder="Nhập mật khẩu mới nếu muốn thay đổi...">
                                 </div>
-                                <span class="form-text text-muted" style="font-size:0.72rem;">Khuyến nghị đổi mật khẩu cá nhân mới để tăng bảo mật.</span>
+                                <span class="form-text text-muted" style="font-size:0.7rem;">Khuyến nghị đổi mật khẩu cá nhân mới để tăng bảo mật.</span>
                             </div>
                         </div>
 
                     </div><!-- /modal-body -->
 
-                    <div class="modal-footer bg-white border-top" style="gap:.5rem;">
+                    <div class="modal-footer" style="background:#f0faf7;border-top:2px solid #c8ede4;padding:0.9rem 1.2rem;gap:0.6rem;flex-shrink:0;">
                         <c:if test="${isProfileComplete}">
                             <button type="button" class="btn btn-outline-secondary btn-sm px-4 fw-bold" data-bs-dismiss="modal">
                                 <i class="bi bi-x-circle me-1"></i>Hủy bỏ
                             </button>
                         </c:if>
-                        <button type="submit" class="btn btn-success btn-sm px-4 fw-bold shadow-sm">
-                            <i class="bi bi-check-circle-fill me-1"></i>Lưu thông tin
+                        <button type="submit" class="btn fw-bold px-5" style="background:linear-gradient(135deg,#00a67e,#007f61);color:#fff;border:none;border-radius:10px;box-shadow:0 4px 14px rgba(0,127,97,.3);font-size:0.95rem;padding:.6rem 2rem;">
+                            <i class="bi bi-check-circle-fill me-2"></i>Lưu thông tin
                         </button>
                     </div>
                 </form>
