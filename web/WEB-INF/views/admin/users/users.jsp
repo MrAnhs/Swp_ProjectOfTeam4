@@ -146,7 +146,7 @@
     <div class="card mb-4">
         <div class="card-header fw-semibold">Tạo tài khoản nhân sự</div>
         <div class="card-body">
-            <form class="row g-3" method="post" action="${pageContext.request.contextPath}/admin">
+            <form class="row g-3" method="post" action="${pageContext.request.contextPath}/admin" id="createAccountForm">
                 <input type="hidden" name="action" value="createAccount">
                 <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
                 <div class="col-md-3"><label class="form-label">Họ và tên</label><input class="form-control" name="fullName" required></div>
@@ -154,18 +154,43 @@
                 <div class="col-md-2"><label class="form-label">Mật khẩu</label><input type="password" class="form-control" name="password" required></div>
                 <div class="col-md-2">
                     <label class="form-label">Vai trò hệ thống</label>
-                    <select class="form-select" name="role" required>
-                        <option value="Patient">Bệnh nhân</option>
-                        <option value="Doctor">Bác sĩ</option>
+                    <select class="form-select" name="role" id="createRoleSelect" required>
+                        <option value="Doctor">Bác sĩ khám</option>
                         <option value="doctor_lab">Bác sĩ xét nghiệm</option>
-                        <option value="Receptionist">Lễ tân</option>
+                        <option value="Receptionist">Nhân viên Lễ tân</option>
                         <option value="Admin">Quản trị viên</option>
                     </select>
                 </div>
-                <div class="col-md-2 d-flex align-items-end"><button class="btn btn-primary w-100" type="submit">Tạo</button></div>
+                <div class="col-md-2" id="specializationContainer">
+                    <label class="form-label">Chuyên khoa</label>
+                    <input class="form-control" name="specialization" id="specializationInput" placeholder="VD: Nội tiết, Xét nghiệm,...">
+                </div>
+                <div class="col-md-2 d-flex align-items-end" id="createSubmitBtnCol"><button class="btn btn-primary w-100" type="submit">Tạo</button></div>
             </form>
         </div>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const roleSelect = document.getElementById('createRoleSelect');
+            const specContainer = document.getElementById('specializationContainer');
+            const specInput = document.getElementById('specializationInput');
+            function toggleSpec() {
+                if (!roleSelect || !specContainer) return;
+                const val = roleSelect.value;
+                if (val === 'Doctor' || val === 'doctor_lab') {
+                    specContainer.style.display = 'block';
+                    if (specInput) specInput.required = true;
+                } else {
+                    specContainer.style.display = 'none';
+                    if (specInput) { specInput.required = false; specInput.value = ''; }
+                }
+            }
+            if (roleSelect) {
+                roleSelect.addEventListener('change', toggleSpec);
+                toggleSpec();
+            }
+        });
+    </script>
 
     <div class="card">
         <div class="card-header fw-semibold">Danh sách tài khoản</div>
