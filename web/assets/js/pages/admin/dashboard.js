@@ -47,63 +47,69 @@ window.openDashboardModal = function openDashboardModal(type, extra, elem) {
         const titleEl = document.getElementById('quickScheduleModalTitle');
         const subtitleEl = document.getElementById('quickScheduleModalSubtitle');
         const fullLinkEl = document.getElementById('quickScheduleModalFullLink');
+        if (fullLinkEl) fullLinkEl.style.display = 'none';
+
         let roleFilter = 'Doctor';
-                                                            let titleText = '<i class="fa-solid fa-user-doctor text-teal me-2"></i>Bác sĩ khám - Lịch hôm nay';
-                                                            if (type === 'receptionistSchedule') {
-                                                                roleFilter = 'Receptionist';
-                                                                titleText = '<i class="fa-solid fa-headset text-primary me-2"></i>Lễ tân - Lịch hôm nay';
-                                                            } else if (type === 'labSchedule') {
-                                                                roleFilter = 'doctor_lab';
-                                                                titleText = '<i class="fa-solid fa-flask-vial text-warning me-2"></i>Bác sĩ xét nghiệm - Lịch hôm nay';
-                                                            }
-                                                            if (titleEl) titleEl.innerHTML = titleText;
-                                                            if (subtitleEl) subtitleEl.textContent = new Date().toLocaleDateString('vi-VN', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
-                                                            if (fullLinkEl) fullLinkEl.href = ctx + '/admin?action=schedule&viewTab=list&roleFilter=' + roleFilter;
+        let titleText = '<i class="fa-solid fa-user-doctor text-teal me-2"></i>Bác sĩ khám - Lịch hôm nay';
+        if (type === 'receptionistSchedule') {
+            roleFilter = 'Receptionist';
+            titleText = '<i class="fa-solid fa-headset text-primary me-2"></i>Lễ tân - Lịch hôm nay';
+        } else if (type === 'labSchedule') {
+            roleFilter = 'doctor_lab';
+            titleText = '<i class="fa-solid fa-flask-vial text-warning me-2"></i>Bác sĩ xét nghiệm - Lịch hôm nay';
+        }
+        if (titleEl) titleEl.innerHTML = titleText;
+        if (subtitleEl) subtitleEl.textContent = new Date().toLocaleDateString('vi-VN', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
 
-                                                            // Reset and show loading
-                                                            const loadingEl = document.getElementById('quickScheduleModalLoading');
-                                                            const emptyEl = document.getElementById('quickScheduleModalEmpty');
-                                                            const listEl = document.getElementById('quickScheduleModalList');
-                                                            const tbody = document.getElementById('quickScheduleModalTbody');
-                                                            if (loadingEl) loadingEl.classList.remove('d-none');
-                                                            if (emptyEl) emptyEl.classList.add('d-none');
-                                                            if (listEl) listEl.classList.add('d-none');
-                                                            if (tbody) tbody.innerHTML = '';
+        // Reset and show loading
+        const loadingEl = document.getElementById('quickScheduleModalLoading');
+        const emptyEl = document.getElementById('quickScheduleModalEmpty');
+        const listEl = document.getElementById('quickScheduleModalList');
+        const tbody = document.getElementById('quickScheduleModalTbody');
+        if (loadingEl) loadingEl.classList.remove('d-none');
+        if (emptyEl) emptyEl.classList.add('d-none');
+        if (listEl) listEl.classList.add('d-none');
+        if (tbody) tbody.innerHTML = '';
 
-                                                            const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-                                                            modal.show();
+        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modal.show();
 
-                                                            // Load today's schedules via AJAX
-                                                            const today = new Date().toISOString().slice(0, 10);
-                                                            fetch(ctx + '/admin?action=getCalendarSchedule&weekDate=' + today + '&role=' + roleFilter, {headers:{'X-Requested-With':'XMLHttpRequest'}})
-                                                                .then(r => r.json())
-                                                                .then(rows => {
-                                                                    if (loadingEl) loadingEl.classList.add('d-none');
-                                                                    // Filter only today
-                                                                    const todayRows = Array.isArray(rows) ? rows.filter(r => {
-                                                                        const d = r.date || r.workDate || r.work_date || '';
-                                                                        return String(d).substring(0, 10) === today;
-                                                                    }) : [];
-                                                                    if (todayRows.length === 0) {
-                                                                        if (emptyEl) emptyEl.classList.remove('d-none');
-                                                                        return;
-                                                                    }
-                                                                    if (listEl) listEl.classList.remove('d-none');
-                                                                    const statusBadge = s => {
-                                                                        if (!s) return '<span class="badge bg-secondary">-</span>';
-                                                                        const m = {Confirmed:'bg-success',Active:'bg-success','Available':'bg-success','Đang diễn ra':'bg-success',Pending:'bg-warning text-dark',Cancelled:'bg-danger',Canceled:'bg-danger'};
-                                                                        return '<span class="badge ' + (m[s] || 'bg-success') + '">' + s + '</span>';
-                                                                    };
-                                                                    if (tbody) {
-                                                                        tbody.innerHTML = todayRows.map(r => `<tr>
-                                                                            <td class="fw-semibold">${r.staff || r.staffName || r.doctorName || '-'}</td>
-                                                                            <td class="text-muted">${r.role || r.department || '-'}</td>
-                                                                            <td><span class="badge bg-primary-subtle text-primary fw-bold">${r.timeSlot || r.time_slot || (r.start ? r.start + '-' + r.end : '-')}</span></td>
-                                                                            <td><i class="bi bi-geo-alt text-danger me-1"></i>${r.room || r.roomName || r.roomId || 'Chưa xếp'}</td>
-                                                                            <td>${statusBadge(r.status)}</td>
-                                                                        </tr>`).join('');
-                                                                    }
-                                                                })
+        const nowDate = new Date();
+        const todayStr = nowDate.getFullYear() + '-' + String(nowDate.getMonth() + 1).padStart(2, '0') + '-' + String(nowDate.getDate()).padStart(2, '0');
+
+        fetch(ctx + '/admin?action=getCalendarSchedule&weekDate=' + todayStr + '&role=' + roleFilter, {headers:{'X-Requested-With':'XMLHttpRequest'}})
+            .then(r => r.json())
+            .then(rows => {
+                if (loadingEl) loadingEl.classList.add('d-none');
+                let displayRows = Array.isArray(rows) ? rows.filter(r => {
+                    const d = String(r.date || r.workDate || r.work_date || '');
+                    return d.includes(todayStr) || d.substring(0, 10) === todayStr;
+                }) : [];
+
+                if (displayRows.length === 0 && Array.isArray(rows) && rows.length > 0) {
+                    displayRows = rows;
+                }
+
+                if (displayRows.length === 0) {
+                    if (emptyEl) emptyEl.classList.remove('d-none');
+                    return;
+                }
+                if (listEl) listEl.classList.remove('d-none');
+                const statusBadge = s => {
+                    if (!s) return '<span class="badge bg-secondary">-</span>';
+                    const m = {Confirmed:'bg-success',Active:'bg-success','Available':'bg-success','Đang diễn ra':'bg-success',Pending:'bg-warning text-dark',Cancelled:'bg-danger',Canceled:'bg-danger'};
+                    return '<span class="badge ' + (m[s] || 'bg-success') + '">' + s + '</span>';
+                };
+                if (tbody) {
+                    tbody.innerHTML = displayRows.map(r => `<tr>
+                        <td class="fw-semibold">${r.staff || r.staffName || r.doctorName || '-'}</td>
+                        <td class="text-muted">${r.role || r.department || '-'}</td>
+                        <td><span class="badge bg-primary-subtle text-primary fw-bold">${r.timeSlot || r.time_slot || (r.start ? r.start + '-' + r.end : '-')}</span></td>
+                        <td><i class="bi bi-geo-alt text-danger me-1"></i>${r.room || r.roomName || r.roomId || 'Chưa xếp'}</td>
+                        <td>${statusBadge(r.status)}</td>
+                    </tr>`).join('');
+                }
+            })
                                                                 .catch(() => {
                                                                     if (loadingEl) loadingEl.classList.add('d-none');
                                                                     if (emptyEl) { emptyEl.classList.remove('d-none'); emptyEl.querySelector('p').textContent = 'Hôm nay chưa có ca trực nào được phân công.'; }
@@ -210,9 +216,7 @@ window.openDashboardModal = function openDashboardModal(type, extra, elem) {
                                                                 `;
                                                             }
                                                             if (actionLink) {
-                                                                actionLink.style.display = 'inline-block';
-                                                                actionLink.href = ctx + '/admin?action=room&roomId=' + roomId;
-                                                                actionLink.innerHTML = 'Quản lý chi tiết phòng này <i class="fa-solid fa-arrow-right ms-1"></i>';
+                                                                actionLink.style.display = 'none';
                                                             }
 
                                                             const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
@@ -229,24 +233,19 @@ window.openDashboardModal = function openDashboardModal(type, extra, elem) {
 
                                                         let title = 'Chi tiết chỉ số';
                                                         let html = '';
-                                                        let linkUrl = '#';
 
                                                         if (type === 'todayPatients') {
                                                             title = 'Tổng bệnh nhân hôm nay';
                                                             html = '<div class="p-3 text-center"><i class="fa-solid fa-users fs-1 text-primary mb-2 d-block"></i><p class="text-muted">Theo dõi tổng số lượng bệnh nhân đã đăng ký và đến khám tại bệnh viện hôm nay.</p></div>';
-                                                            linkUrl = dashboardBasePath + '/admin?action=user';
                                                         } else if (type === 'todayAppointments') {
                                                             title = 'Lịch hẹn hôm nay';
                                                             html = '<div class="p-3 text-center"><i class="fa-solid fa-calendar-check fs-1 text-info mb-2 d-block"></i><p class="text-muted">Danh sách toàn bộ các lượt đặt khám được ghi nhận trong ngày.</p></div>';
-                                                            linkUrl = dashboardBasePath + '/admin?action=schedule';
                                                         } else if (type === 'sumRevenueToday') {
                                                             title = 'Doanh thu hôm nay';
                                                             html = '<div class="p-3 text-center"><i class="fa-solid fa-wallet fs-1 text-success mb-2 d-block"></i><p class="text-muted">Tổng doanh thu từ dịch vụ khám & xét nghiệm được ghi nhận hôm nay.</p></div>';
-                                                            linkUrl = dashboardBasePath + '/admin?action=analytics';
                                                         } else if (type === 'waiting') {
                                                             title = 'Hàng đợi bệnh nhân chờ khám';
                                                             html = '<div class="p-3 text-center"><i class="fa-solid fa-clock fs-1 text-warning mb-2 d-block"></i><p class="text-muted">Danh sách bệnh nhân đang ở trạng thái chờ khám tại các phòng.</p></div>';
-                                                            linkUrl = dashboardBasePath + '/admin?action=schedule';
                                                         } else {
                                                             title = 'Chi tiết hoạt động hệ thống';
                                                             html = '<div class="p-3 text-center"><p class="text-muted">Thông tin chi tiết vận hành hệ thống S-COMS.</p></div>';
@@ -255,8 +254,7 @@ window.openDashboardModal = function openDashboardModal(type, extra, elem) {
                                                         if (titleEl) titleEl.textContent = title;
                                                         if (contentEl) contentEl.innerHTML = html;
                                                         if (actionLink) {
-                                                            actionLink.href = linkUrl;
-                                                            actionLink.style.display = 'inline-block';
+                                                            actionLink.style.display = 'none';
                                                         }
 
                                                         const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);

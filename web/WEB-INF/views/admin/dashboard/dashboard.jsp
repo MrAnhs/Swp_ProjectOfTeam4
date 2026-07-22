@@ -328,9 +328,9 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" id="dashboardQuickModalContent"></div>
-                <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-                    <a href="#" id="dashboardQuickModalActionLink" class="btn btn-primary fw-bold" style="display: none;">Xem quản lý chi tiết <i class="fa-solid fa-arrow-right ms-1"></i></a>
+                <div class="modal-footer border-0 justify-content-end">
+                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal" style="border-radius: 8px;">Đóng</button>
+                    <a href="#" id="dashboardQuickModalActionLink" style="display: none!important;"></a>
                 </div>
             </div>
         </div>
@@ -343,27 +343,27 @@
                 <div class="modal-header border-0 pb-0 px-4 pt-4">
                     <div>
                         <h5 class="modal-title fw-bold text-dark mb-0" id="quickScheduleModalTitle">
-                            <i class="fa-solid fa-calendar-day text-purple me-2"></i>Lich truc hom nay
+                            <i class="fa-solid fa-calendar-day text-purple me-2"></i>Lịch trực hôm nay
                         </h5>
-                        <p class="text-muted small mb-0 mt-1" id="quickScheduleModalSubtitle">Danh sach nhan su dang truc</p>
+                        <p class="text-muted small mb-0 mt-1" id="quickScheduleModalSubtitle">Danh sách nhân sự đang trực</p>
                     </div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body px-4 py-3">
                     <div id="quickScheduleModalLoading" class="text-center py-4">
                         <div class="spinner-border text-purple" role="status"></div>
-                        <p class="text-muted mt-2 mb-0">Dang tai du lieu...</p>
+                        <p class="text-muted mt-2 mb-0">Đang tải dữ liệu...</p>
                     </div>
                     <div id="quickScheduleModalEmpty" class="text-center py-4 d-none">
                         <i class="fa-solid fa-calendar-xmark fs-1 text-muted mb-2 d-block"></i>
-                        <p class="text-muted mb-0">Khong co lich truc nao hom nay.</p>
+                        <p class="text-muted mb-0">Không có lịch trực nào hôm nay.</p>
                     </div>
                     <div id="quickScheduleModalList" class="d-none">
                         <div class="table-responsive" style="max-height: 380px; overflow-y: auto;">
                             <table class="table table-hover align-middle mb-0" style="font-size: 0.88rem;">
                                 <thead class="table-light sticky-top">
                                     <tr>
-                                        <th>Nhan su</th><th>Chuyen khoa</th><th>Khung gio</th><th>Phong</th><th>Trang thai</th>
+                                        <th>Nhân sự</th><th>Chuyên khoa</th><th>Khung giờ</th><th>Phòng</th><th>Trạng thái</th>
                                     </tr>
                                 </thead>
                                 <tbody id="quickScheduleModalTbody"></tbody>
@@ -371,11 +371,9 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer border-0 px-4 pb-4 pt-2 d-flex justify-content-between">
-                    <a id="quickScheduleModalFullLink" href="${pageContext.request.contextPath}/admin?action=schedule" class="btn btn-outline-primary fw-semibold" style="border-radius:10px;">
-                        <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>Xem day du
-                    </a>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius:10px;">Dong</button>
+                <div class="modal-footer border-0 px-4 pb-4 pt-2 justify-content-end">
+                    <a id="quickScheduleModalFullLink" style="display: none!important;"></a>
+                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal" style="border-radius:10px;">Đóng</button>
                 </div>
             </div>
         </div>
