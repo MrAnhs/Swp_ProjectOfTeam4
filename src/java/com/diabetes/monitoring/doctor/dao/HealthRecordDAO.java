@@ -690,7 +690,7 @@ public class HealthRecordDAO {
                 + "(MONTH(p.date_of_birth) = MONTH(GETDATE()) AND DAY(p.date_of_birth) > DAY(GETDATE())) "
                 + "THEN 1 ELSE 0 END as calculated_age, "
                 + "r.urea, r.cr, r.hba1c, r.chol, r.tg, r.hdl, "
-                + "r.ldl AS ldl_value, r.vldl, r.bmi, "
+                + "r.ldl AS ldl_value, r.vldl, r.bmi, r.weight, r.height, "
                 + "ai.diabetes_probability, "
                 + "ai.pre_diabetes_probability, "
                 + "ai.normal_probability "
@@ -727,6 +727,8 @@ public class HealthRecordDAO {
 
                 hr.setPatientId(rs.getInt("patient_id"));
                 hr.setDoctorId(rs.getInt("doctor_id"));
+                hr.setWeight(rs.getDouble("weight"));
+                hr.setHeight(rs.getDouble("height"));
                 hr.setCreatedAt(rs.getTimestamp("created_at"));
                 hr.setProcessedAt(rs.getTimestamp("processed_at"));
 
@@ -1966,6 +1968,21 @@ public class HealthRecordDAO {
             e.printStackTrace();
         }
         return false;
+    }
+
+    public boolean updateVitals(int recordId, int doctorId, double weight, double height, double bmi) throws SQLException {
+        String sql = "UPDATE Healthy_Record SET weight = ?, height = ?, bmi = ? "
+                + "WHERE health_record_id = ? AND doctor_id = ? "
+                + "AND status IN ('Accepted', 'AI_Processed', 'Editing')";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setBigDecimal(1, BigDecimal.valueOf(weight));
+            ps.setBigDecimal(2, BigDecimal.valueOf(height));
+            ps.setBigDecimal(3, BigDecimal.valueOf(bmi));
+            ps.setInt(4, recordId);
+            ps.setInt(5, doctorId);
+            return ps.executeUpdate() == 1;
+        }
     }
 }
 

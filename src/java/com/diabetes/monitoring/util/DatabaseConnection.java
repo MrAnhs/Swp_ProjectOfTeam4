@@ -49,6 +49,12 @@ public class DatabaseConnection {
     }
 
     public static Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(URL, USER, PASSWORD);
+        Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute("SET QUOTED_IDENTIFIER ON");
+        } catch (SQLException e) {
+            System.err.println("Loi khi set QUOTED_IDENTIFIER ON: " + e.getMessage());
+        }
+        return conn;
     }
 }
