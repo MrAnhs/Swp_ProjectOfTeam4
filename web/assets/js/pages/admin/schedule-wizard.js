@@ -1248,11 +1248,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
     window.resolveSingleConflict = async function (id, staffType, actionType) {
         try {
+            const csrfTokenInput = document.querySelector('input[name="csrfToken"]');
+            const csrfToken = csrfTokenInput ? csrfTokenInput.value : '';
+
             const formData = new URLSearchParams();
             formData.append('action', 'resolveScheduleConflict');
             formData.append('id', id);
             formData.append('staffType', staffType);
             formData.append('type', actionType);
+            if (csrfToken) {
+                formData.append('csrfToken', csrfToken);
+            }
 
             const resp = await fetch(`${adminContextPath}/admin`, {
                 method: 'POST',
@@ -1279,8 +1285,14 @@ document.addEventListener('DOMContentLoaded', function () {
     if (autoResolveBtn) {
         autoResolveBtn.addEventListener('click', async () => {
             try {
+                const csrfTokenInput = document.querySelector('input[name="csrfToken"]');
+                const csrfToken = csrfTokenInput ? csrfTokenInput.value : '';
+
                 const formData = new URLSearchParams();
                 formData.append('action', 'autoResolveAllConflicts');
+                if (csrfToken) {
+                    formData.append('csrfToken', csrfToken);
+                }
 
                 const resp = await fetch(`${adminContextPath}/admin`, {
                     method: 'POST',
