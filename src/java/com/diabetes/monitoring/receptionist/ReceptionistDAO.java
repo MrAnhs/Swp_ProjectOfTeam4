@@ -148,12 +148,13 @@ public class ReceptionistDAO {
 
     public List<Map<String, Object>> findAvailableSchedules(int doctorId) throws SQLException {
         String sql = "SELECT ds.schedule_id, ds.work_date, ds.time_slot, ds.max_patients, "
-                + "COUNT(a.appointment_id) AS booked "
+                + "COUNT(a.appointment_id) AS booked, r.room_name, r.location AS room_location "
                 + "FROM Doctor_Schedule ds "
                 + "LEFT JOIN Appointment a ON a.schedule_id = ds.schedule_id AND a.status <> 'Cancelled' "
+                + "LEFT JOIN Room r ON r.room_id = ds.room_id "
                 + "WHERE ds.doctor_id = ? AND ds.work_date >= CAST(GETDATE() AS date) "
                 + "AND ds.status = 'Available' "
-                + "GROUP BY ds.schedule_id, ds.work_date, ds.time_slot, ds.max_patients "
+                + "GROUP BY ds.schedule_id, ds.work_date, ds.time_slot, ds.max_patients, r.room_name, r.location "
                 + "HAVING COUNT(a.appointment_id) < ds.max_patients "
                 + "ORDER BY ds.work_date, ds.time_slot";
         try (Connection connection = openConnection();
@@ -172,6 +173,8 @@ public class ReceptionistDAO {
                     schedule.put("timeSlot", timeSlot);
                     schedule.put("label", formatScheduleLabel(workDate, timeSlot));
                     schedule.put("available", Math.max(0, maxPatients - booked));
+                    schedule.put("roomName", resultSet.getString("room_name"));
+                    schedule.put("roomLocation", resultSet.getString("room_location"));
                     schedules.add(schedule);
                 }
                 return schedules;
@@ -321,6 +324,12 @@ public class ReceptionistDAO {
     }
 
     public List<Map<String, Object>> findInvoicesByStatus(String status, String invoiceType) throws SQLException {
+        return findInvoicesByStatus(status, invoiceType, null);
+    }
+
+    public List<Map<String, Object>> findInvoicesByStatus(String status, String invoiceType, String keyword) throws SQLException {
+        String normalizedKeyword = keyword == null ? "" : keyword.trim();
+        boolean hasKeyword = !normalizedKeyword.isEmpty();
         StringBuilder sql = new StringBuilder(
                 "SELECT TOP 20 i.invoice_id, i.patient_id, p.full_name, p.phone, "
                 + "i.final_amount, i.status, i.created_at, "
@@ -330,6 +339,9 @@ public class ReceptionistDAO {
                 + "THEN 'Examination' ELSE 'Service' END AS invoice_type "
                 + "FROM Invoice i LEFT JOIN Patient p ON i.patient_id = p.patient_id "
                 + "WHERE i.status = ? ");
+        if (hasKeyword) {
+            sql.append("AND (p.phone = ? OR p.full_name LIKE ?) ");
+        }
         if ("Examination".equalsIgnoreCase(invoiceType)) {
             sql.append("AND EXISTS (SELECT 1 FROM Invoice_Detail id2 INNER JOIN Medical_Service ms2 ON ms2.service_id = id2.service_id WHERE id2.invoice_id = i.invoice_id AND ms2.service_type = 'Examination') ");
         } else if ("Service".equalsIgnoreCase(invoiceType)) {
@@ -339,6 +351,10 @@ public class ReceptionistDAO {
         try (Connection connection = openConnection();
              PreparedStatement statement = connection.prepareStatement(sql.toString())) {
             statement.setString(1, status);
+            if (hasKeyword) {
+                statement.setString(2, normalizedKeyword);
+                statement.setString(3, "%" + normalizedKeyword + "%");
+            }
             try (ResultSet resultSet = statement.executeQuery()) {
                 List<Map<String, Object>> invoices = new ArrayList<>();
                 while (resultSet.next()) {
@@ -360,6 +376,9 @@ public class ReceptionistDAO {
 
     public int payPendingInvoice(String patientKeyword, String paymentMethod, int receptionistAccountId)
             throws SQLException, ReceptionistException {
+        if (patientKeyword == null || patientKeyword.trim().isEmpty()) {
+            throw new ReceptionistException("Vui lòng nhập tên hoặc số điện thoại bệnh nhân để thanh toán.");
+        }
         Connection connection = null;
         try {
             connection = openConnection();

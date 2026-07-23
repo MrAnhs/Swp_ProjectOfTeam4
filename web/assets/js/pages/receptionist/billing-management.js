@@ -34,7 +34,14 @@
                         + ' data-created-at="' + utils.escapeHtml(invoice.createdAt) + '"'
                         + ' data-final-amount="' + utils.escapeHtml(invoice.finalAmount) + '"'
                         + ' data-status="' + utils.escapeHtml(invoice.status) + '">In h\u00F3a \u0111\u01A1n</button></div>'
-                    : '<div><button class="btn btn-sm btn-success mt-2 invoice-pay-btn"'
+                    : '<div class="d-flex justify-content-end align-items-center gap-2 mt-2">'
+                        + '<select class="form-select form-select-sm payment-method-select" style="width: 140px;" id="pm-' + utils.escapeHtml(invoice.invoiceId) + '">'
+                        + '<option value="Cash">Ti\u1EC1n m\u1EB7t</option>'
+                        + '<option value="Momo">Momo</option>'
+                        + '<option value="VNPay">VNPay</option>'
+                        + '<option value="Bank_Transfer">Chuy\u1EC3n kho\u1EA3n</option>'
+                        + '</select>'
+                        + '<button class="btn btn-sm btn-success invoice-pay-btn"'
                         + ' data-invoice-id="' + utils.escapeHtml(invoice.invoiceId) + '"'
                         + ' data-patient-name="' + utils.escapeHtml(invoice.patientName) + '"'
                         + ' data-final-amount="' + utils.escapeHtml(invoice.finalAmount) + '">X\u00E1c nh\u1EADn thanh to\u00E1n</button></div>')
@@ -46,47 +53,34 @@
         }).join('');
     }
 
-    async function loadInvoices(status) {
+    async function loadInvoices(status, keyword) {
         currentStatus = status || currentStatus;
         document.getElementById('invoiceListTitle').textContent = currentStatus === 'Paid'
             ? 'H\u00F3a \u0111\u01A1n \u0111\u00E3 thanh to\u00E1n'
             : 'H\u00F3a \u0111\u01A1n ch\u1EDD thanh to\u00E1n';
         list.innerHTML = '<div class="empty-state">\u0110ang t\u1EA3i h\u00F3a \u0111\u01A1n...</div>';
         try {
-            const data = await utils.requestJson(utils.apiBase() + '/invoices?status=' + encodeURIComponent(currentStatus));
+            let url = utils.apiBase() + '/invoices?status=' + encodeURIComponent(currentStatus);
+            if (keyword) {
+                url += '&keyword=' + encodeURIComponent(keyword);
+            }
+            const data = await utils.requestJson(url);
             renderInvoices(data.invoices || []);
         } catch (error) {
             list.innerHTML = '<div class="empty-state text-danger">' + utils.escapeHtml(error.message) + '</div>';
         }
     }
 
-    async function payInvoice() {
-        const patientKeyword = document.getElementById('billingPatientKeyword').value.trim();
-        const paymentMethod = document.getElementById('paymentMethod').value;
-        const body = new URLSearchParams();
-        body.set('patientKeyword', patientKeyword);
-        body.set('paymentMethod', paymentMethod);
-        try {
-            const data = await utils.requestJson(utils.apiBase() + '/invoices/pay', {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: body.toString()
-            });
-            setMessage(data.message || 'Thanh to\u00E1n th\u00E0nh c\u00F4ng.', 'success');
-            await loadStats();
-            await loadInvoices(currentStatus);
-        } catch (error) {
-            setMessage(error.message, 'danger');
-        }
+    function searchInvoices() {
+        setMessage('');
+        const keyword = document.getElementById('billingPatientKeyword').value.trim();
+        loadInvoices(currentStatus, keyword);
     }
 
     async function payInvoiceById(invoiceId, patientName, amount) {
-        const paymentMethod = document.getElementById('paymentMethod').value;
-        const methodOption = document.querySelector('#paymentMethod option[value="' + paymentMethod + '"]');
+        const select = document.getElementById('pm-' + invoiceId);
+        const paymentMethod = select ? select.value : 'Cash';
+        const methodOption = select ? select.options[select.selectedIndex] : null;
         const methodText = methodOption ? methodOption.textContent : paymentMethod;
         const confirmMsg = 'X\u00E1c nh\u1EADn thanh to\u00E1n h\u00F3a \u0111\u01A1n #' + invoiceId 
             + ' cho b\u1EC7nh nh\u00E2n ' + patientName 
@@ -173,6 +167,9 @@
     }
 
     list.addEventListener('click', async function (event) {
+        if (event.target.closest('.payment-method-select')) {
+            return;
+        }
         const payBtn = event.target.closest('.invoice-pay-btn');
         if (payBtn) {
             const invoiceId = payBtn.dataset.invoiceId;
@@ -219,7 +216,12 @@
         }
     });
     document.getElementById('reloadInvoicesBtn').addEventListener('click', function () { loadInvoices(currentStatus); });
-    document.getElementById('payInvoiceBtn').addEventListener('click', payInvoice);
+    document.getElementById('searchInvoiceBtn').addEventListener('click', searchInvoices);
+    document.getElementById('billingPatientKeyword').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            searchInvoices();
+        }
+    });
     document.addEventListener('DOMContentLoaded', async function () {
         await loadStats().catch(console.error);
         await loadInvoices('Pending');
