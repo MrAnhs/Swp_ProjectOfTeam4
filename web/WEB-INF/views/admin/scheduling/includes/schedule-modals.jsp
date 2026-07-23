@@ -628,3 +628,42 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal Xem Chi Tiết Ca Trực (Shift Detail Modal) -->
+    <div class="modal fade" id="shiftDetailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold text-dark"><i class="bi bi-info-circle text-primary me-2"></i>Chi tiết ca trực</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body py-3">
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span class="text-muted"><i class="bi bi-person me-2"></i>Bác sĩ / Nhân sự:</span>
+                            <span class="fw-semibold text-dark" id="shiftDetailStaff">-</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span class="text-muted"><i class="bi bi-tag me-2"></i>Chuyên khoa / Vai trò:</span>
+                            <span class="fw-semibold text-dark" id="shiftDetailRole">-</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span class="text-muted"><i class="bi bi-geo-alt me-2"></i>Phòng / Khu vực:</span>
+                            <span class="fw-semibold text-dark" id="shiftDetailRoom">-</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span class="text-muted"><i class="bi bi-calendar-event me-2"></i>Ngày trực:</span>
+                            <span class="fw-semibold text-dark" id="shiftDetailDate">-</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span class="text-muted"><i class="bi bi-clock me-2"></i>Khung giờ:</span>
+                            <span class="fw-semibold text-dark" id="shiftDetailTime">-</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal" style="border-radius: 8px;">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>

@@ -589,28 +589,25 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // 4.7 Lắng nghe sự kiện click nút Xem chi tiết ca trực
     document.addEventListener('click', function (e) {
-        const btn = e.target.closest('.schedule-detail-action');
+        const btn = e.target.closest('.schedule-detail-action, .staff-schedule-detail-action');
         if (!btn) return;
 
         e.preventDefault();
         const row = btn.closest('tr');
         if (!row) return;
 
-        const doctorName = row.getAttribute('data-doctor-name') || (row.cells[0] ? row.cells[0].textContent.trim() : '-');
-        const department = row.getAttribute('data-department') || (row.cells[1] ? row.cells[1].textContent.trim() : '-');
-        const workDate = row.cells[2] ? row.cells[2].textContent.trim() : '-';
-        const timeSlot = row.cells[3] ? row.cells[3].textContent.trim() : '-';
-        const roomName = row.cells[4] ? row.cells[4].textContent.trim() : 'Chưa xếp';
+        const doctorName = row.getAttribute('data-doctor-name') || row.getAttribute('data-staff-name') || (row.cells[0] ? row.cells[0].textContent.trim() : '-');
+        const department = row.getAttribute('data-department') || row.getAttribute('data-work-area') || (row.cells[1] ? row.cells[1].textContent.trim() : '-');
+        const workDate = row.getAttribute('data-work-date') || (row.cells[2] ? row.cells[2].textContent.trim() : '-');
+        const timeSlot = row.getAttribute('data-time-slot') || (row.cells[3] ? row.cells[3].textContent.trim() : '-');
+        const roomName = row.getAttribute('data-room-name') || (row.cells[4] ? row.cells[4].textContent.trim() : 'Chưa xếp');
 
         const shiftObj = {
             staff: doctorName,
             role: department,
             room: roomName,
             date: workDate,
-            start: timeSlot.split('-')[0] || '13:30',
-            end: timeSlot.split('-')[1] || '17:00',
-            timeSlot: timeSlot,
-            status: 'Confirmed'
+            timeSlot: timeSlot
         };
 
         const modalEl = document.getElementById('shiftDetailModal');
