@@ -355,6 +355,17 @@ class AdminReportHandler {
         List<ReportSeriesDTO> revenueSeries = reportService.getRevenueSeries(granularity, year, month, day, reportStartDate, reportEndDate);
         List<ReportSeriesDTO> visitSeries = reportService.getVisitSeries(granularity, year, month, day, reportStartDate, reportEndDate);
 
+        String initialPeriod = "";
+        if (revenueSeries != null && !revenueSeries.isEmpty()) {
+            initialPeriod = revenueSeries.get(revenueSeries.size() - 1).getPeriod();
+        } else if (visitSeries != null && !visitSeries.isEmpty()) {
+            initialPeriod = visitSeries.get(visitSeries.size() - 1).getPeriod();
+        }
+
+        Map<String, Object> initialDetails = reportService.getReportDetailByPeriod(initialPeriod);
+        List<Map<String, Object>> initialInvoices = castList(initialDetails.get("invoices"));
+        List<Map<String, Object>> initialAppointments = castList(initialDetails.get("appointments"));
+
         request.setAttribute("granularity", granularity);
         request.setAttribute("year", year);
         request.setAttribute("month", month);
@@ -365,6 +376,9 @@ class AdminReportHandler {
         request.setAttribute("visitSeries", visitSeries);
         request.setAttribute("revenueJson", toJsonSeries(revenueSeries));
         request.setAttribute("visitJson", toJsonSeries(visitSeries));
+        request.setAttribute("initialPeriod", initialPeriod);
+        request.setAttribute("initialInvoicesJson", AdminJsonUtil.toJsonInvoices(initialInvoices));
+        request.setAttribute("initialAppointmentsJson", AdminJsonUtil.toJsonAppointments(initialAppointments));
 
         RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/views/admin/reports.jsp");
         dispatcher.forward(request, response);

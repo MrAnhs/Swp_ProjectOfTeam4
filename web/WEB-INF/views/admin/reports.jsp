@@ -321,8 +321,11 @@
     window.AdminConfig.loginUrl = '${pageContext.request.contextPath}/login.jsp';
     window.AdminConfig.revenueSeries = ${empty revenueJson ? '[]' : revenueJson};
     window.AdminConfig.visitSeries = ${empty visitJson ? '[]' : visitJson};
+    window.AdminConfig.initialPeriod = '${initialPeriod}';
+    window.AdminConfig.initialInvoices = ${empty initialInvoicesJson ? '[]' : initialInvoicesJson};
+    window.AdminConfig.initialAppointments = ${empty initialAppointmentsJson ? '[]' : initialAppointmentsJson};
 </script>
-<script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/admin/reports.js?v=20260709-fontfix2"></script>
+<script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/admin/reports.js?v=20260723-v3"></script>
 </body>
 </html>
 

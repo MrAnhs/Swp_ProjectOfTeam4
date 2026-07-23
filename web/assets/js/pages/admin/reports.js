@@ -22,9 +22,17 @@ let revenueChart = null;
         visitValues: visitValues
     };
 
-    const initialPeriod = revenueLabels.length > 0
-        ? revenueLabels[revenueLabels.length - 1]
-        : (visitLabels.length > 0 ? visitLabels[visitLabels.length - 1] : '');
+    const initialInvoices = window.AdminConfig && Array.isArray(window.AdminConfig.initialInvoices) ? window.AdminConfig.initialInvoices : [];
+    const initialAppointments = window.AdminConfig && Array.isArray(window.AdminConfig.initialAppointments) ? window.AdminConfig.initialAppointments : [];
+    const initialPeriod = (window.AdminConfig && window.AdminConfig.initialPeriod)
+        ? window.AdminConfig.initialPeriod
+        : (revenueLabels.length > 0 ? revenueLabels[revenueLabels.length - 1] : (visitLabels.length > 0 ? visitLabels[visitLabels.length - 1] : ''));
+
+    if (initialPeriod) {
+        currentSelectedPeriod = initialPeriod;
+        currentDetailData.invoices = initialInvoices;
+        currentDetailData.appointments = initialAppointments;
+    }
 
     function createChartConfig(labels, values, chartLabel, activeColor, inactiveColor, onPick) {
         return {
@@ -393,6 +401,11 @@ let revenueChart = null;
 
         if (initialPeriod) {
             syncSelectedPeriodUI(initialPeriod);
-            fetchReportDetail(initialPeriod);
+            if (currentDetailData.invoices.length > 0 || currentDetailData.appointments.length > 0) {
+                renderInvoiceTable(currentDetailData.invoices);
+                renderAppointmentTable(currentDetailData.appointments);
+            } else {
+                fetchReportDetail(initialPeriod);
+            }
         }
     });
