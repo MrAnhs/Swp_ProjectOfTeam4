@@ -745,7 +745,7 @@ class AdminAiSchedulingService {
 
         maxSchedules = expectedScheduleCount;
         List<Map<String, Object>> doctors = aiSchedulingRepository.getDoctorsForAiScheduling(startDate,
-                endDate);
+                endDate, request.selectedDepartments);
         GeminiSchedulingService.SchedulingResult geminiResult = geminiSchedulingService.generate(targetDates,
                 shiftsPerDay,
                 doctors);
@@ -875,6 +875,7 @@ class AdminAiSchedulingService {
         public int maxSchedules;
         public int doctorsPerShift;
         public String department;
+        public List<String> selectedDepartments = new ArrayList<>();
         public List<Map<String, String>> shiftsPerDay;
         public List<Integer> selectedWeekdays;
         public boolean preview;

@@ -930,12 +930,16 @@ class AdminAiSchedulingHandler {
             aiRequest.maxSchedules = parseInt(request.getParameter("maxSchedules"), 12);
             aiRequest.doctorsPerShift = parseInt(request.getParameter("doctorsPerShift"), 1);
             aiRequest.department = request.getParameter("department");
+            String[] reqDepts = request.getParameterValues("department");
+            if (reqDepts != null && reqDepts.length > 0) {
+                aiRequest.selectedDepartments = java.util.Arrays.asList(reqDepts);
+            }
             aiRequest.shiftsPerDay = parseShiftTemplates(request.getParameter("shiftTemplates"));
             aiRequest.selectedWeekdays = parseSelectedWeekdays(request.getParameterValues("selectedWeekdays"));
             aiRequest.preview = "true".equalsIgnoreCase(request.getParameter("preview"));
 
             AiSchedulingResult result = aiSchedulingService.createSchedules(aiRequest);
-            List<Map<String, Object>> doctors = aiSchedulingRepository.getDoctorsForAiScheduling(aiRequest.startDate, aiRequest.endDate);
+            List<Map<String, Object>> doctors = aiSchedulingRepository.getDoctorsForAiScheduling(aiRequest.startDate, aiRequest.endDate, aiRequest.selectedDepartments);
             try (PrintWriter out = response.getWriter()) {
                 out.print("{\"success\":");
                 out.print(result.success);

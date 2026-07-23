@@ -47,6 +47,10 @@ public class AdminAiSchedulingRepository {
     }
 
     public List<Map<String, Object>> getDoctorsForAiScheduling(Date startDate, Date endDate) {
+        return getDoctorsForAiScheduling(startDate, endDate, null);
+    }
+
+    public List<Map<String, Object>> getDoctorsForAiScheduling(Date startDate, Date endDate, List<String> selectedDepartments) {
         List<Map<String, Object>> doctors = new ArrayList<>();
         String sql = "SELECT d.doctor_id, d.full_name, d.department, LOWER(a.status) AS account_status, "
                 + "COALESCE(active_load.active_count, 0) AS active_count, "
@@ -85,11 +89,27 @@ public class AdminAiSchedulingRepository {
                     } else {
                         currentLoad = (int) Math.round(activeCount * 100.0 / totalCapacity);
                     }
+                    String rawDepartment = rs.getString("department");
+                    String normalizedDepartment = normalizeDepartmentForAi(rawDepartment);
+
+                    if (selectedDepartments != null && !selectedDepartments.isEmpty()) {
+                        boolean match = false;
+                        for (String selDept : selectedDepartments) {
+                            String normSel = normalizeDepartmentForAi(selDept);
+                            if (normSel.equalsIgnoreCase(normalizedDepartment)
+                                    || (rawDepartment != null && rawDepartment.equalsIgnoreCase(selDept))) {
+                                match = true;
+                                break;
+                            }
+                        }
+                        if (!match) {
+                            continue;
+                        }
+                    }
+
                     Map<String, Object> doctor = new HashMap<>();
                     doctor.put("doctorId", rs.getInt("doctor_id"));
                     doctor.put("doctorName", rs.getString("full_name"));
-                    String rawDepartment = rs.getString("department");
-                    String normalizedDepartment = normalizeDepartmentForAi(rawDepartment);
                     doctor.put("department", normalizedDepartment);
                     doctor.put("status", rs.getString("account_status"));
                     doctor.put("activeCount", activeCount);
@@ -191,7 +211,7 @@ public class AdminAiSchedulingRepository {
         try (Connection connection = DatabaseConnection.getConnection()) {
             connection.setAutoCommit(false);
             try {
-                List<String> activeRooms = getActiveDoctorRooms(connection);
+                List<Map<String, String>> activeRoomDetails = getActiveDoctorRoomDetails(connection);
                 Set<String> usedRoomSlotKeys = new HashSet<>();
                 Map<String, Integer> previousDoctorByDate = new HashMap<>();
                 Map<String, Integer> dailyShiftCount = new HashMap<>();
@@ -246,23 +266,11 @@ public class AdminAiSchedulingRepository {
                         }
                     }
 
-                    String assignedRoomId = null;
-                    for (String candidate : activeRooms) {
-                        String slotRoomKey = workDate + "_" + timeSlot + "_" + candidate;
-                        if (usedRoomSlotKeys.contains(slotRoomKey)) {
-                            continue;
-                        }
-                        if (roomRepository.hasRoomOverlap(connection, candidate, workDate, timeSlot, null, null)) {
-                            continue;
-                        }
-                        assignedRoomId = candidate;
-                        usedRoomSlotKeys.add(slotRoomKey);
-                        break;
-                    }
-
+                    String assignedRoomId = findBestMatchingRoom(connection, activeRoomDetails, actualDepartment, workDate, timeSlot, usedRoomSlotKeys, null);
                     if (assignedRoomId == null) {
                         throw new SQLException("Không đủ phòng khám khả dụng cho ca trực " + timeSlot + " ngày " + workDate + ". Quy định: Mỗi phòng chỉ chứa tối đa 1 bác sĩ / 1 ca.");
                     }
+                    usedRoomSlotKeys.add(workDate + "_" + timeSlot + "_" + assignedRoomId);
                     String roomId = assignedRoomId;
 
                     try (PreparedStatement insert = connection.prepareStatement(
@@ -498,8 +506,8 @@ public class AdminAiSchedulingRepository {
         try (Connection connection = DatabaseConnection.getConnection()) {
             connection.setAutoCommit(false);
             try {
-                List<String> activeRooms = getActiveDoctorRooms(connection);
-                Map<String, Integer> roomAssignedCount = new HashMap<>();
+                List<Map<String, String>> activeRoomDetails = getActiveDoctorRoomDetails(connection);
+                Set<String> usedRoomSlotKeys = new HashSet<>();
                 for (Date sqlDate : targetDates) {
                     if (created.size() >= maxSchedules) {
                         break;
@@ -544,10 +552,13 @@ public class AdminAiSchedulingRepository {
                             continue;
                         }
 
-                        String dateSlotKey = sqlDate + "_" + timeSlot;
-                        int roomIdx = roomAssignedCount.getOrDefault(dateSlotKey, 0);
-                        String roomId = activeRooms.get(roomIdx % activeRooms.size());
-                        roomAssignedCount.put(dateSlotKey, roomIdx + 1);
+                        String doctorDept = doctor.get("department") == null ? targetDepartment : String.valueOf(doctor.get("department"));
+                        String roomId = findBestMatchingRoom(connection, activeRoomDetails, doctorDept, sqlDate, timeSlot, usedRoomSlotKeys, null);
+                        if (roomId == null) {
+                            LOGGER.log(Level.WARNING, "No free matching room for doctor {0} shift {1}", new Object[]{doctorId, timeSlot});
+                            continue;
+                        }
+                        usedRoomSlotKeys.add(sqlDate + "_" + timeSlot + "_" + roomId);
 
                         try (PreparedStatement insert = connection.prepareStatement(insertSql, java.sql.Statement.RETURN_GENERATED_KEYS)) {
                             insert.setInt(1, doctorId);
@@ -1012,16 +1023,19 @@ public class AdminAiSchedulingRepository {
                     }
 
                     if (!isValidRoom) {
-                        List<String> activeDoctorRooms = getActiveDoctorRooms(connection);
-                        for (String candidate : activeDoctorRooms) {
-                            String key = workDate + "_" + timeSlot + "_" + candidate;
-                            if (!usedRoomSlotKeysInSave.contains(key) 
-                                && !roomRepository.hasRoomOverlap(connection, candidate, workDate, timeSlot, oldScheduleId, null)) {
-                                roomId = candidate;
-                                usedRoomSlotKeysInSave.add(key);
-                                isValidRoom = true;
-                                break;
+                        List<Map<String, String>> activeRoomDetails = getActiveDoctorRoomDetails(connection);
+                        String docDept = (String) item.get("department");
+                        if (docDept == null) {
+                            Map<String, Object> docSnap = getDoctorSnapshotById(connection, doctorId);
+                            if (docSnap != null) {
+                                docDept = (String) docSnap.get("department");
                             }
+                        }
+                        String candidate = findBestMatchingRoom(connection, activeRoomDetails, docDept, workDate, timeSlot, usedRoomSlotKeysInSave, oldScheduleId);
+                        if (candidate != null) {
+                            roomId = candidate;
+                            usedRoomSlotKeysInSave.add(workDate + "_" + timeSlot + "_" + candidate);
+                            isValidRoom = true;
                         }
                     }
 
@@ -1102,6 +1116,84 @@ public class AdminAiSchedulingRepository {
             rooms.add("R103");
         }
         return rooms;
+    }
+
+    private List<Map<String, String>> getActiveDoctorRoomDetails(Connection conn) throws SQLException {
+        List<Map<String, String>> roomList = new ArrayList<>();
+        String sql = "SELECT room_id, room_name FROM Room "
+                   + "WHERE LOWER(status) = 'active' "
+                   + "  AND room_id NOT IN ('R101') "
+                   + "  AND LOWER(room_name) NOT LIKE N'%xét nghiệm%' "
+                   + "  AND LOWER(room_name) NOT LIKE N'%lab%' "
+                   + "  AND LOWER(room_name) NOT LIKE N'%quầy%' "
+                   + "ORDER BY room_id ASC";
+        try (PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Map<String, String> map = new HashMap<>();
+                map.put("roomId", rs.getString("room_id"));
+                map.put("roomName", rs.getString("room_name"));
+                roomList.add(map);
+            }
+        }
+        if (roomList.isEmpty()) {
+            Map<String, String> r1 = new HashMap<>();
+            r1.put("roomId", "R102"); r1.put("roomName", "Phòng Khám Nội Tiết");
+            roomList.add(r1);
+            Map<String, String> r2 = new HashMap<>();
+            r2.put("roomId", "R103"); r2.put("roomName", "Phòng Khám Tim Mạch");
+            roomList.add(r2);
+        }
+        return roomList;
+    }
+
+    private String findBestMatchingRoom(Connection conn,
+                                        List<Map<String, String>> activeRooms,
+                                        String doctorDepartment,
+                                        Date workDate,
+                                        String timeSlot,
+                                        Set<String> usedRoomSlotKeys,
+                                        Integer excludeScheduleId) throws SQLException {
+        String doctorDeptNorm = normalizeDepartmentForAi(doctorDepartment);
+
+        // Pass 1: Match room name by doctor's specialty
+        for (Map<String, String> room : activeRooms) {
+            String roomId = room.get("roomId");
+            String roomName = room.get("roomName") == null ? "" : room.get("roomName").toLowerCase();
+
+            boolean isSpecialtyMatch = false;
+            if ("Endocrinology".equalsIgnoreCase(doctorDeptNorm)) {
+                isSpecialtyMatch = roomName.contains("nội tiết") || roomName.contains("endocrin");
+            } else if ("Cardiology".equalsIgnoreCase(doctorDeptNorm)) {
+                isSpecialtyMatch = roomName.contains("tim mạch") || roomName.contains("cardio");
+            } else if ("Nephrology".equalsIgnoreCase(doctorDeptNorm)) {
+                isSpecialtyMatch = roomName.contains("thận") || roomName.contains("nephro");
+            } else if ("General".equalsIgnoreCase(doctorDeptNorm)) {
+                isSpecialtyMatch = roomName.contains("tổng quát") || roomName.contains("general");
+            } else if (doctorDepartment != null && !doctorDepartment.isBlank()) {
+                isSpecialtyMatch = roomName.contains(doctorDepartment.toLowerCase());
+            }
+
+            if (isSpecialtyMatch) {
+                String slotRoomKey = workDate + "_" + timeSlot + "_" + roomId;
+                if (!usedRoomSlotKeys.contains(slotRoomKey)
+                        && !roomRepository.hasRoomOverlap(conn, roomId, workDate, timeSlot, excludeScheduleId, null)) {
+                    return roomId;
+                }
+            }
+        }
+
+        // Pass 2: Fallback to General rooms or any active unassigned room
+        for (Map<String, String> room : activeRooms) {
+            String roomId = room.get("roomId");
+            String slotRoomKey = workDate + "_" + timeSlot + "_" + roomId;
+            if (!usedRoomSlotKeys.contains(slotRoomKey)
+                    && !roomRepository.hasRoomOverlap(conn, roomId, workDate, timeSlot, excludeScheduleId, null)) {
+                return roomId;
+            }
+        }
+
+        return null;
     }
 }
 

@@ -274,24 +274,24 @@
                                                 id="aiDoctorDeptCheckboxes">
                                                 <div class="form-check">
                                                     <input class="form-check-input ai-dept-cb" type="checkbox"
-                                                        value="Nội tiết" id="aiDeptEndo" checked>
+                                                        name="department" value="Endocrinology" id="aiDeptEndo" checked>
                                                     <label class="form-check-label small" for="aiDeptEndo">Nội tiết</label>
                                                 </div>
                                                 <div class="form-check">
                                                     <input class="form-check-input ai-dept-cb" type="checkbox"
-                                                        value="Tim mạch" id="aiDeptCardio" checked>
+                                                        name="department" value="Cardiology" id="aiDeptCardio" checked>
                                                     <label class="form-check-label small" for="aiDeptCardio">Tim
                                                         mạch</label>
                                                 </div>
                                                 <div class="form-check">
                                                     <input class="form-check-input ai-dept-cb" type="checkbox"
-                                                        value="Thận học" id="aiDeptNephro" checked>
+                                                        name="department" value="Nephrology" id="aiDeptNephro" checked>
                                                     <label class="form-check-label small" for="aiDeptNephro">Thận
                                                         học</label>
                                                 </div>
                                                 <div class="form-check">
                                                     <input class="form-check-input ai-dept-cb" type="checkbox"
-                                                        value="Tổng quát" id="aiDeptGen" checked>
+                                                        name="department" value="General" id="aiDeptGen" checked>
                                                     <label class="form-check-label small" for="aiDeptGen">Tổng
                                                         quát</label>
                                                 </div>
