@@ -1,0 +1,93 @@
+<%@ page pageEncoding="UTF-8" %>
+<aside class="sidebar-modern">
+    <div class="sidebar-header">
+        <a href="${pageContext.request.contextPath}/patient/dashboard" class="brand-dashboard">
+            <div class="brand-icon-dash">
+                <i class="bi bi-heart-pulse-fill"></i>
+            </div>
+            <span class="brand-text">DiabetesCare</span>
+        </a>
+    </div>
+
+    <div class="user-profile" onclick="window.location.href='${pageContext.request.contextPath}/settings'" role="button" tabindex="0">
+        <div class="user-avatar">${sessionScope.currentUser.fullName.charAt(0)}</div>
+        <div class="user-info">
+            <h6>${sessionScope.currentUser.fullName}</h6>
+            <small>${sessionScope.currentUser.email}</small>
+        </div>
+    </div>
+    <nav class="sidebar-nav">
+        <a href="${pageContext.request.contextPath}/patient/dashboard"
+           class="nav-item-dash${activePatientPage eq 'dashboard' ? ' active' : ''}">
+            <i class="bi bi-grid-1x2"></i>
+            <span class="nav-text">T&#7893;ng quan</span>
+        </a>
+        <a href="${pageContext.request.contextPath}/patient/appointments/new"
+           class="nav-item-dash${activePatientPage eq 'book-appointment' ? ' active' : ''}">
+            <i class="bi bi-calendar-plus"></i>
+            <span class="nav-text">&#272;&#7863;t l&#7883;ch kh&#225;m</span>
+        </a>
+        <a href="${pageContext.request.contextPath}/patient/appointments"
+           class="nav-item-dash${activePatientPage eq 'appointments' ? ' active' : ''}">
+            <i class="bi bi-calendar-check"></i>
+            <span class="nav-text">L&#7883;ch h&#7865;n c&#7911;a t&#244;i</span>
+        </a>
+        <a href="${pageContext.request.contextPath}/patient/invoices"
+           class="nav-item-dash${activePatientPage eq 'invoices' ? ' active' : ''}">
+            <i class="bi bi-receipt"></i>
+            <span class="nav-text">H&#243;a &#273;&#417;n</span>
+        </a>
+        <a href="${pageContext.request.contextPath}/patient/history"
+           class="nav-item-dash${activePatientPage eq 'history' ? ' active' : ''}">
+            <i class="bi bi-file-medical"></i>
+            <span class="nav-text">L&#7883;ch s&#7917; kh&#225;m</span>
+        </a>
+        <a href="${pageContext.request.contextPath}/patient/ai-chat"
+           class="nav-item-dash${activePatientPage eq 'ai-chat' ? ' active' : ''}">
+            <i class="bi bi-chat-dots"></i>
+            <span class="nav-text" >Chat AI</span>
+        </a>
+        <a href="${pageContext.request.contextPath}/patient/notifications"
+           class="nav-item-dash${activePatientPage eq 'notifications' ? ' active' : ''}">
+            <i class="bi bi-bell"></i>
+            <span class="nav-text">Th&#244;ng b&#225;o</span>
+            <span class="sidebar-notification-badge${empty unreadNotificationCount or unreadNotificationCount == 0 ? ' is-hidden' : ''}">${empty unreadNotificationCount ? 0 : unreadNotificationCount}</span>
+        </a>
+        <a href="${pageContext.request.contextPath}/patient/family-sharing"
+           class="nav-item-dash${activePatientPage eq 'family-sharing' ? ' active' : ''}">
+            <i class="bi bi-people"></i>
+            <span class="nav-text">H&#7891; s&#417; gia &#273;&#236;nh</span>
+        </a>
+        <a href="${pageContext.request.contextPath}/settings"
+           class="nav-item-dash${activePatientPage eq 'settings' ? ' active' : ''}">
+            <i class="bi bi-gear"></i>
+            <span class="nav-text">C&#224;i &#273;&#7863;t</span>
+        </a>
+    </nav>
+
+    <div class="sidebar-footer">
+        <a href="${pageContext.request.contextPath}/login.jsp" class="btn-logout">
+            <i class="bi bi-box-arrow-left"></i>
+            <span class="nav-text" >Đăng xuất</span>
+        </a>
+    </div>
+</aside>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const contextPath = "${pageContext.request.contextPath}";
+        fetch(contextPath + "/patient/api/notifications")
+            .then(response => {
+                if (response.ok) return response.json();
+                throw new Error("Failed to load notifications");
+            })
+            .then(data => {
+                const badge = document.getElementById("sidebar-notification-badge");
+                if (badge && data.unreadCount > 0) {
+                    badge.textContent = data.unreadCount;
+                    badge.classList.remove("d-none");
+                }
+            })
+            .catch(err => console.error("Error loading notification count:", err));
+    });
+</script>
