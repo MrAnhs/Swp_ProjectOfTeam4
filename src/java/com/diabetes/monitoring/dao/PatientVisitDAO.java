@@ -15,7 +15,7 @@ public class PatientVisitDAO {
     private static final String SELECT =
             "SELECT a.appointment_id, a.appointment_time, a.status appointment_status, "
             + "d.full_name doctor_name, d.department, mr.record_id, mr.result_visibility, "
-            + "mr.final_diagnosis, mr.doctor_note, mr.processed_at, "
+            + "mr.final_diagnosis, mr.doctor_note, mr.processed_at, mr.revisit_date, "
             + "hr.health_record_id, hr.status health_record_status, hr.urea, hr.cr, hr.hba1c, "
             + "hr.chol, hr.tg, hr.hdl, hr.ldl, hr.vldl, hr.bmi, hr.weight, hr.height, "
             + "hr.other_information "
@@ -95,27 +95,28 @@ public class PatientVisitDAO {
         visit.recordId = rs.wasNull() ? null : recordId;
         visit.resultVisible = visit.recordId != null && rs.getBoolean("result_visibility");
         visit.processedAt = time(rs.getTimestamp("processed_at"));
+        visit.revisitDate = time(rs.getTimestamp("revisit_date"));
 
         int healthRecordId = rs.getInt("health_record_id");
         visit.healthRecordId = rs.wasNull() ? null : healthRecordId;
         visit.healthRecordStatus = rs.getString("health_record_status");
 
-        if (visit.resultVisible) {
-            visit.finalDiagnosis = rs.getString("final_diagnosis");
-            visit.doctorNote = rs.getString("doctor_note");
-            visit.urea = rs.getBigDecimal("urea");
-            visit.cr = rs.getBigDecimal("cr");
-            visit.hba1c = rs.getBigDecimal("hba1c");
-            visit.chol = rs.getBigDecimal("chol");
-            visit.tg = rs.getBigDecimal("tg");
-            visit.hdl = rs.getBigDecimal("hdl");
-            visit.ldl = rs.getBigDecimal("ldl");
-            visit.vldl = rs.getBigDecimal("vldl");
-            visit.bmi = rs.getBigDecimal("bmi");
-            visit.weight = rs.getBigDecimal("weight");
-            visit.height = rs.getBigDecimal("height");
-            visit.otherInformation = rs.getString("other_information");
-        }
+        // Metrics are ALWAYS loaded regardless of resultVisible
+        visit.urea = rs.getBigDecimal("urea");
+        visit.cr = rs.getBigDecimal("cr");
+        visit.hba1c = rs.getBigDecimal("hba1c");
+        visit.chol = rs.getBigDecimal("chol");
+        visit.tg = rs.getBigDecimal("tg");
+        visit.hdl = rs.getBigDecimal("hdl");
+        visit.ldl = rs.getBigDecimal("ldl");
+        visit.vldl = rs.getBigDecimal("vldl");
+        visit.bmi = rs.getBigDecimal("bmi");
+        visit.weight = rs.getBigDecimal("weight");
+        visit.height = rs.getBigDecimal("height");
+        visit.otherInformation = rs.getString("other_information");
+
+        visit.finalDiagnosis = rs.getString("final_diagnosis");
+        visit.doctorNote = rs.getString("doctor_note");
         return visit;
     }
 

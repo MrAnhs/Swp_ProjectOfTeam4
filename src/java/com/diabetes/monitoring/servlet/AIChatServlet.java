@@ -12,7 +12,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
+import java.util.UUID;
 
 public class AIChatServlet extends HttpServlet {
     private final GeminiIntegration geminiIntegration = new GeminiIntegration();
@@ -21,26 +21,28 @@ public class AIChatServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
-        response.setContentType("application/json");
+        response.setContentType("application/json; charset=UTF-8");
         response.setCharacterEncoding("UTF-8");
 
         User currentUser = (User) request.getSession().getAttribute("currentUser");
         if (currentUser == null) {
-            writeError(response, HttpServletResponse.SC_UNAUTHORIZED, "Bạn chưa đăng nhập.");
+            writeError(response, HttpServletResponse.SC_UNAUTHORIZED,
+                    "\u0422\u1ea1i kho\u1ea3n ch\u01b0a \u0111\u0103ng nh\u1eadp.");
             return;
         }
 
         try {
-            ChatContext context = resolveContext(currentUser.getId(),
-                    parseOptionalPositiveId(request.getParameter("appointmentId")));
+            int patientId = resolvePatientId(currentUser.getId());
             String action = request.getParameter("action");
+
             if ("finish".equals(action)) {
-                finishConversation(response, context);
+                finishConversation(request, response, patientId);
                 return;
             }
 
             String message = requireMessage(request.getParameter("message"));
-            continueConversation(response, currentUser, context, message);
+            continueConversation(response, currentUser, patientId, message);
+
         } catch (IllegalArgumentException e) {
             writeError(response, HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
         } catch (ChatAccessException e) {
@@ -48,260 +50,134 @@ public class AIChatServlet extends HttpServlet {
         } catch (SQLException e) {
             e.printStackTrace();
             writeError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    "Không thể lưu cuộc trò chuyện.");
+                    "Kh\u00f4ng th\u1ec3 x\u1eed l\u00fd y\u00eau c\u1ea7u.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            writeError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    "L\u1ed7i h\u1ec7 th\u1ed1ng. Vui l\u00f2ng th\u1eed l\u1ea1i.");
         }
     }
 
+    // ──────────────────────────────────────────────────────────────
+    //  CONTINUE CONVERSATION  (mỗi lượt chat)
+    // ──────────────────────────────────────────────────────────────
     private void continueConversation(HttpServletResponse response, User currentUser,
-            ChatContext context, String message) throws SQLException, IOException {
-        String history = getConversationHistory(context);
-        String prompt = "Patient: " + currentUser.getFullName()
-                + "\nAppointment ID: " + (context.appointmentId == null ? "none" : context.appointmentId)
-                + "\nDoctor: " + nullToEmpty(context.doctorName)
-                + "\nPrevious conversation:\n" + history
-                + "\nCurrent patient message: " + message
-                + "\nInstruction: Continue asking useful questions about symptoms, duration, severity, "
-                + "medical history and current medication so the assigned doctor can understand the patient.";
+            int patientId, String message) throws IOException {
 
-        String aiJson = normalizeAiJson(geminiIntegration.getChatResponse(prompt));
+        // Lấy lịch sử chat từ session (memory)
+        String history = nullToEmpty((String) getServletContext()
+                .getAttribute("chatHistory_" + patientId));
+
+        String prompt = "B\u1ec7nh nh\u00e2n: " + currentUser.getFullName()
+                + "\nL\u1ecbch s\u1eed h\u1ed9i tho\u1ea1i:\n" + history
+                + "\nTin nh\u1eafn hi\u1ec7n t\u1ea1i: " + message;
+
+        String rawResponse = geminiIntegration.getChatResponse(prompt);
+        String aiJson = normalizeAiJson(rawResponse);
+
+        // Extract reply text
         String reply = extractJsonString(aiJson, "reply");
-        if (reply.isEmpty()) {
-            reply = "Tôi chưa thể xử lý thông tin này. Bạn vui lòng mô tả rõ hơn.";
+        if (reply.isEmpty() && rawResponse != null && !rawResponse.isBlank()) {
+            // Fallback: nếu AI trả về plain text thay vì JSON
+            reply = rawResponse.startsWith("{") ? 
+                    "Xin h\u00e3y ti\u1ebfp t\u1ee5c chia s\u1ebb tri\u1ec7u ch\u1ee9ng c\u1ee7a b\u1ea1n." :
+                    rawResponse.trim();
         }
 
-        String newHistory = trimHistory(history + "\nPatient: " + message + "\nAI: " + reply);
-        int conversationId = saveConversation(context, newHistory);
-        response.getWriter().print("{\"reply\":\"" + escapeJson(reply)
-                + "\",\"conversationId\":" + conversationId + "}");
+        // Extract symptoms từ healthData (nếu có) — KHÔNG nhúng raw JSON
+        String symptoms = extractJsonString(aiJson, "symptoms");
+
+        // Cập nhật lịch sử chat trong memory
+        String newHistory = trimHistory(history + "\nB\u1ec7nh nh\u00e2n: " + message + "\nAI: " + reply);
+        getServletContext().setAttribute("chatHistory_" + patientId, newHistory);
+
+        // Trả về JSON đơn giản, an toàn — không nhúng raw JSON
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"reply\":\"").append(escapeJson(reply)).append("\"");
+        if (symptoms != null && !symptoms.isEmpty() && !symptoms.equals("0")) {
+            sb.append(",\"symptoms\":\"").append(escapeJson(symptoms)).append("\"");
+        }
+        sb.append("}");
+        response.getWriter().print(sb.toString());
     }
 
-    private void finishConversation(HttpServletResponse response, ChatContext context)
+    // ──────────────────────────────────────────────────────────────
+    //  FINISH → lưu vào AI_Summary
+    // ──────────────────────────────────────────────────────────────
+    private void finishConversation(HttpServletRequest request,
+            HttpServletResponse response, int patientId)
             throws SQLException, IOException, ChatAccessException {
-        String history = getConversationHistory(context);
-        if (context.conversationId == null || history.isBlank()) {
+
+        String symptoms = nullToEmpty(request.getParameter("symptoms"));
+        String history = nullToEmpty((String) getServletContext()
+                .getAttribute("chatHistory_" + patientId));
+
+        if (history.isBlank()) {
             throw new ChatAccessException(HttpServletResponse.SC_CONFLICT,
-                    "Cuộc trò chuyện chưa có nội dung để tổng hợp.");
+                    "Cu\u1ed9c tr\u00f2 chuy\u1ec7n ch\u01b0a c\u00f3 n\u1ed9i dung.");
         }
 
-        String summaryPrompt = "Hãy tóm tắt ngắn gọn cuộc trò chuyện sau cho bác sĩ phụ trách. "
-                + "Chỉ nêu triệu chứng, thời điểm, mức độ, tiền sử, thuốc đang dùng và thông tin quan trọng "
-                + "mà bệnh nhân đã cung cấp. Không tự đưa ra chẩn đoán.\n\n" + history;
+        // AI tóm tắt triệu chứng
+        String summaryPrompt = "H\u00e3y t\u00f3m t\u1eaft ng\u1eafn g\u1ecdn c\u00e1c tri\u1ec7u ch\u1ee9ng ch\u00ednh b\u1ec7nh nh\u00e2n \u0111\u00e3 chia s\u1ebb trong cu\u1ed9c tr\u00f2 chuy\u1ec7n sau "
+                + "(ch\u1ec9 li\u1ec7t k\u00ea tri\u1ec7u ch\u1ee9ng, kh\u00f4ng ch\u1ea9n \u0111o\u00e1n):\n\n" + history;
         String summaryJson = normalizeAiJson(geminiIntegration.getChatResponse(summaryPrompt));
-        String summary = extractJsonString(summaryJson, "reply");
-        if (summary.isEmpty()) {
-            summary = fallbackSummary(history);
+        String aiSummary = extractJsonString(summaryJson, "reply");
+        if (aiSummary.isEmpty()) {
+            // Fallback: dùng symptoms do user cung cấp
+            aiSummary = symptoms.isEmpty() ? fallbackSummary(history) : symptoms;
         }
 
-        String sql = "UPDATE AI_Conversation SET ai_summary = ? WHERE conversation_id = ? AND patient_id = ?";
-        try (Connection connection = DatabaseConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, summary);
-            statement.setInt(2, context.conversationId);
-            statement.setInt(3, context.patientId);
-            statement.executeUpdate();
+        // Lưu vào AI_Summary
+        String summaryId = UUID.randomUUID().toString().replace("-", "").substring(0, 20);
+        String sql = "INSERT INTO AI_Summary (summary_id, patient_id, appointment_id, ai_summary, created_at) "
+                + "VALUES (?, ?, NULL, ?, GETDATE())";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, summaryId);
+            ps.setInt(2, patientId);
+            ps.setString(3, aiSummary);
+            ps.executeUpdate();
         }
+
+        // Xóa lịch sử chat trong memory
+        getServletContext().removeAttribute("chatHistory_" + patientId);
 
         response.getWriter().print("{\"success\":true,\"summary\":\""
-                + escapeJson(summary) + "\"}");
+                + escapeJson(aiSummary) + "\"}");
     }
 
-    private ChatContext resolveContext(int accountId, Integer appointmentId)
-            throws SQLException, ChatAccessException {
-        String patientSql = "SELECT patient_id FROM Patient WHERE account_id = ?";
-        ChatContext context = new ChatContext();
-
-        try (Connection connection = DatabaseConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(patientSql)) {
-            statement.setInt(1, accountId);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                if (!resultSet.next()) {
+    // ──────────────────────────────────────────────────────────────
+    //  HELPERS
+    // ──────────────────────────────────────────────────────────────
+    private int resolvePatientId(int accountId) throws SQLException, ChatAccessException {
+        String sql = "SELECT patient_id FROM Patient WHERE account_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, accountId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
                     throw new ChatAccessException(HttpServletResponse.SC_NOT_FOUND,
-                            "Không tìm thấy hồ sơ bệnh nhân.");
+                            "Kh\u00f4ng t\u00ecm th\u1ea5y h\u1ed3 s\u01a1 b\u1ec7nh nh\u00e2n.");
                 }
-                context.patientId = resultSet.getInt("patient_id");
+                return rs.getInt("patient_id");
             }
         }
-
-        context.appointmentId = appointmentId;
-        try (Connection connection = DatabaseConnection.getConnection()) {
-            boolean hasAppointmentConversation = hasColumn(connection, "Appointment", "conversation_id");
-            if (appointmentId == null) {
-                String generalConversationSql = hasAppointmentConversation
-                        ? "SELECT TOP 1 c.conversation_id "
-                        + "FROM AI_Conversation c "
-                        + "WHERE c.patient_id = ? "
-                        + "AND NOT EXISTS (SELECT 1 FROM Appointment a "
-                        + "WHERE a.conversation_id = c.conversation_id) "
-                        + "ORDER BY c.created_at DESC, c.conversation_id DESC"
-                        : "SELECT TOP 1 c.conversation_id "
-                        + "FROM AI_Conversation c "
-                        + "WHERE c.patient_id = ? "
-                        + "ORDER BY c.created_at DESC, c.conversation_id DESC";
-                try (PreparedStatement statement = connection.prepareStatement(generalConversationSql)) {
-                    statement.setInt(1, context.patientId);
-                    try (ResultSet resultSet = statement.executeQuery()) {
-                        if (resultSet.next()) {
-                            context.conversationId = resultSet.getInt("conversation_id");
-                        }
-                    }
-                }
-                return context;
-            }
-
-            String appointmentSql = "SELECT "
-                    + (hasAppointmentConversation ? "a.conversation_id" : "CAST(NULL AS int) AS conversation_id")
-                    + ", d.full_name "
-                    + "FROM Appointment a "
-                    + "INNER JOIN Patient p ON p.patient_id = a.patient_id "
-                    + "INNER JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
-                    + "INNER JOIN Doctor d ON d.doctor_id = ds.doctor_id "
-                    + "WHERE a.appointment_id = ? AND p.account_id = ? AND a.status <> 'Cancelled'";
-            try (PreparedStatement statement = connection.prepareStatement(appointmentSql)) {
-                statement.setInt(1, appointmentId);
-                statement.setInt(2, accountId);
-                try (ResultSet resultSet = statement.executeQuery()) {
-                    if (!resultSet.next()) {
-                        throw new ChatAccessException(HttpServletResponse.SC_NOT_FOUND,
-                                "Không tìm thấy lịch hẹn hoặc lịch đã bị hủy.");
-                    }
-                    int conversationId = resultSet.getInt("conversation_id");
-                    context.conversationId = resultSet.wasNull() ? null : conversationId;
-                    context.doctorName = resultSet.getString("full_name");
-                }
-            }
-        }
-        return context;
-    }
-
-    private String getConversationHistory(ChatContext context) throws SQLException {
-        if (context.conversationId == null) {
-            return "";
-        }
-        String sql = "SELECT chat_history FROM AI_Conversation "
-                + "WHERE conversation_id = ? AND patient_id = ?";
-        try (Connection connection = DatabaseConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setInt(1, context.conversationId);
-            statement.setInt(2, context.patientId);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                return resultSet.next() ? nullToEmpty(resultSet.getString("chat_history")) : "";
-            }
-        }
-    }
-
-    private int saveConversation(ChatContext context, String history) throws SQLException {
-        Connection connection = null;
-        try {
-            connection = DatabaseConnection.getConnection();
-            connection.setAutoCommit(false);
-
-            if (context.conversationId != null) {
-                String updateSql = "UPDATE AI_Conversation SET chat_history = ? "
-                        + "WHERE conversation_id = ? AND patient_id = ?";
-                try (PreparedStatement statement = connection.prepareStatement(updateSql)) {
-                    statement.setString(1, history);
-                    statement.setInt(2, context.conversationId);
-                    statement.setInt(3, context.patientId);
-                    if (statement.executeUpdate() == 0) {
-                        throw new SQLException("Conversation not found");
-                    }
-                }
-                connection.commit();
-                return context.conversationId;
-            }
-
-            String insertSql = "INSERT INTO AI_Conversation "
-                    + "(patient_id, chat_history, ai_summary, created_at) "
-                    + "VALUES (?, ?, NULL, GETDATE())";
-            int conversationId;
-            try (PreparedStatement statement = connection.prepareStatement(insertSql,
-                    Statement.RETURN_GENERATED_KEYS)) {
-                statement.setInt(1, context.patientId);
-                statement.setString(2, history);
-                statement.executeUpdate();
-                try (ResultSet keys = statement.getGeneratedKeys()) {
-                    if (!keys.next()) {
-                        throw new SQLException("Unable to retrieve conversation ID");
-                    }
-                    conversationId = keys.getInt(1);
-                }
-            }
-
-            if (context.appointmentId != null && hasColumn(connection, "Appointment", "conversation_id")) {
-                String appointmentSql = "UPDATE Appointment SET conversation_id = ? "
-                        + "WHERE appointment_id = ? AND patient_id = ? AND conversation_id IS NULL";
-                try (PreparedStatement statement = connection.prepareStatement(appointmentSql)) {
-                    statement.setInt(1, conversationId);
-                    statement.setInt(2, context.appointmentId);
-                    statement.setInt(3, context.patientId);
-                    if (statement.executeUpdate() == 0) {
-                        throw new SQLException("Appointment conversation was changed concurrently");
-                    }
-                }
-            }
-
-            connection.commit();
-            context.conversationId = conversationId;
-            return conversationId;
-        } catch (SQLException e) {
-            if (connection != null) {
-                try {
-                    connection.rollback();
-                } catch (SQLException rollbackError) {
-                    rollbackError.printStackTrace();
-                }
-            }
-            throw e;
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException closeError) {
-                    closeError.printStackTrace();
-                }
-            }
-        }
-    }
-
-    private boolean hasColumn(Connection connection, String tableName, String columnName)
-            throws SQLException {
-        String sql = "SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS "
-                + "WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME = ? AND COLUMN_NAME = ?";
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, tableName);
-            statement.setString(2, columnName);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                return resultSet.next();
-            }
-        }
-    }
-    private Integer parseOptionalPositiveId(String value) {
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-        int id = Integer.parseInt(value);
-        if (id <= 0) {
-            throw new IllegalArgumentException("Mã lịch hẹn không hợp lệ.");
-        }
-        return id;
     }
 
     private String requireMessage(String value) {
         if (value == null || value.trim().isEmpty()) {
-            throw new IllegalArgumentException("Tin nhắn không được để trống.");
+            throw new IllegalArgumentException("Tin nh\u1eafn kh\u00f4ng \u0111\u01b0\u1ee3c \u0111\u1ec3 tr\u1ed1ng.");
         }
-        String message = value.trim();
-        if (message.length() > 2000) {
-            throw new IllegalArgumentException("Tin nhắn không được vượt quá 2000 ký tự.");
+        String msg = value.trim();
+        if (msg.length() > 2000) {
+            throw new IllegalArgumentException("Tin nh\u1eafn kh\u00f4ng \u0111\u01b0\u1ee3c v\u01b0\u1ee3t qu\u00e1 2000 k\u00fd t\u1ef1.");
         }
-        return message;
+        return msg;
     }
 
     private String normalizeAiJson(String aiResponse) {
         String clean = nullToEmpty(aiResponse).trim();
-        if (clean.startsWith("{") && clean.endsWith("}")) {
-            return clean;
-        }
+        if (clean.startsWith("{") && clean.endsWith("}")) return clean;
         return "{\"reply\":\"" + escapeJson(clean) + "\"}";
     }
 
@@ -315,20 +191,20 @@ public class AIChatServlet extends HttpServlet {
 
         StringBuilder value = new StringBuilder();
         boolean escaped = false;
-        for (int index = startQuote + 1; index < json.length(); index++) {
-            char current = json.charAt(index);
+        for (int i = startQuote + 1; i < json.length(); i++) {
+            char c = json.charAt(i);
             if (escaped) {
-                if (current == 'n') value.append('\n');
-                else if (current == 'r') value.append('\r');
-                else if (current == 't') value.append('\t');
-                else value.append(current);
+                if (c == 'n') value.append('\n');
+                else if (c == 'r') value.append('\r');
+                else if (c == 't') value.append('\t');
+                else value.append(c);
                 escaped = false;
-            } else if (current == '\\') {
+            } else if (c == '\\') {
                 escaped = true;
-            } else if (current == '"') {
+            } else if (c == '"') {
                 break;
             } else {
-                value.append(current);
+                value.append(c);
             }
         }
         return value.toString().trim();
@@ -343,7 +219,8 @@ public class AIChatServlet extends HttpServlet {
         return compact.length() > 1500 ? compact.substring(compact.length() - 1500) : compact;
     }
 
-    private void writeError(HttpServletResponse response, int status, String message) throws IOException {
+    private void writeError(HttpServletResponse response, int status, String message)
+            throws IOException {
         response.setStatus(status);
         response.getWriter().print("{\"error\":\"" + escapeJson(message) + "\"}");
     }
@@ -363,16 +240,8 @@ public class AIChatServlet extends HttpServlet {
         return value == null ? "" : value;
     }
 
-    private static class ChatContext {
-        private int patientId;
-        private Integer appointmentId;
-        private Integer conversationId;
-        private String doctorName;
-    }
-
     private static class ChatAccessException extends Exception {
         private final int status;
-
         private ChatAccessException(int status, String message) {
             super(message);
             this.status = status;

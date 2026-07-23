@@ -70,26 +70,30 @@ public class PatientVisitServlet extends HttpServlet {
                 .append("\"recordId\":").append(v.recordId == null ? "null" : v.recordId).append(',')
                 .append("\"resultVisible\":").append(v.resultVisible).append(',')
                 .append("\"processedAt\":\"").append(value(v.processedAt)).append("\",")
+                .append("\"revisitDate\":\"").append(value(v.revisitDate)).append("\",")
                 .append("\"healthRecordId\":")
                 .append(v.healthRecordId == null ? "null" : v.healthRecordId).append(',')
                 .append("\"healthRecordStatus\":\"").append(escape(v.healthRecordStatus)).append("\"");
 
+        json.append(",\"metrics\":{")
+                .append("\"urea\":").append(number(v.urea)).append(',')
+                .append("\"cr\":").append(number(v.cr)).append(',')
+                .append("\"hba1c\":").append(number(v.hba1c)).append(',')
+                .append("\"chol\":").append(number(v.chol)).append(',')
+                .append("\"tg\":").append(number(v.tg)).append(',')
+                .append("\"hdl\":").append(number(v.hdl)).append(',')
+                .append("\"ldl\":").append(number(v.ldl)).append(',')
+                .append("\"vldl\":").append(number(v.vldl)).append(',')
+                .append("\"bmi\":").append(number(v.bmi)).append(',')
+                .append("\"weight\":").append(number(v.weight)).append(',')
+                .append("\"height\":").append(number(v.height))
+                .append("},\"otherInformation\":\"").append(escape(v.otherInformation)).append("\"");
+
         if (v.resultVisible) {
             json.append(",\"finalDiagnosis\":\"").append(escape(v.finalDiagnosis)).append("\",")
-                    .append("\"doctorNote\":\"").append(escape(v.doctorNote)).append("\",")
-                    .append("\"metrics\":{")
-                    .append("\"urea\":").append(number(v.urea)).append(',')
-                    .append("\"cr\":").append(number(v.cr)).append(',')
-                    .append("\"hba1c\":").append(number(v.hba1c)).append(',')
-                    .append("\"chol\":").append(number(v.chol)).append(',')
-                    .append("\"tg\":").append(number(v.tg)).append(',')
-                    .append("\"hdl\":").append(number(v.hdl)).append(',')
-                    .append("\"ldl\":").append(number(v.ldl)).append(',')
-                    .append("\"vldl\":").append(number(v.vldl)).append(',')
-                    .append("\"bmi\":").append(number(v.bmi)).append(',')
-                    .append("\"weight\":").append(number(v.weight)).append(',')
-                    .append("\"height\":").append(number(v.height))
-                    .append("},\"otherInformation\":\"").append(escape(v.otherInformation)).append("\"");
+                    .append("\"doctorNote\":\"").append(escape(v.doctorNote)).append("\"");
+        } else {
+            json.append(",\"finalDiagnosis\":null,\"doctorNote\":null");
         }
         return json.append('}').toString();
     }

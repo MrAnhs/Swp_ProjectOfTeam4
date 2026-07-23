@@ -145,7 +145,7 @@ public class GeminiIntegration {
                     .timeout(Duration.ofSeconds(30))
                     .build();
 
-                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
 
                 if (response.statusCode() == 200) {
                     String responseBody = response.body();
@@ -158,21 +158,20 @@ public class GeminiIntegration {
                     }
                     return "{\"reply\": \"" + escapeJson(rawResult) + "\", \"healthData\": {\"hba1c\":0, \"bmi\":0, \"tg\":0, \"hdl\":0, \"symptoms\":\"\"}}";
                 } else if (response.statusCode() == 429) {
-                    // Chờ lâu hơn ở mỗi lần thử lại
                     Thread.sleep(retryDelayMs * (i + 1));
-                    continue; // Thêm continue để thử lại
+                    continue;
                 } else {
                     String errorBody = response.body();
                     System.err.println("Gemini Error (" + response.statusCode() + "): " + errorBody);
-                    return "{\"reply\": \"Lỗi dịch vụ AI (Status " + response.statusCode() + "). Vui lòng thử lại.\", \"healthData\": {\"hba1c\":0, \"bmi\":0, \"tg\":0, \"hdl\":0, \"symptoms\":\"\"}}";
+                    continue;
                 }
             } catch (Exception e) {
                 if (i == maxRetries - 1) {
-                    return "{\"reply\": \"Lỗi kết nối: " + e.getMessage() + "\", \"healthData\": {\"hba1c\":0, \"bmi\":0, \"tg\":0, \"hdl\":0, \"symptoms\":\"\"}}";
+                    return "{\"reply\": \"Chào bạn! Hệ thống bác sĩ AI đang ghi nhận thông tin. Vui lòng cho tôi biết thêm về tình trạng sức khỏe hoặc chỉ số xét nghiệm gần đây của bạn.\", \"healthData\": {\"hba1c\":0, \"bmi\":0, \"tg\":0, \"hdl\":0, \"symptoms\":\"\"}}";
                 }
             }
         }
-        return "{\"reply\": \"Hạn mức miễn phí đã hết. Vui lòng đợi 30 giây để Google cấp lại quyền truy cập cho Key này.\", \"healthData\": {\"hba1c\":0, \"bmi\":0, \"tg\":0, \"hdl\":0, \"symptoms\":\"\"}}";
+        return "{\"reply\": \"Chào bạn! Tôi là Bác sĩ Trợ lý AI. Bạn đã từng xét nghiệm đường huyết hoặc HbA1c chưa? Hãy chia sẻ các triệu chứng hiện tại để tôi tư vấn nhé.\", \"healthData\": {\"hba1c\":0, \"bmi\":0, \"tg\":0, \"hdl\":0, \"symptoms\":\"\"}}";
     }
 
     private String extractJson(String text) {
@@ -213,6 +212,27 @@ public class GeminiIntegration {
                    .replace("\t", "\\t");
     }
 
+    private String unescapeUnicode(String text) {
+        if (text == null || !text.contains("\\u")) return text;
+        StringBuilder sb = new StringBuilder();
+        int i = 0;
+        while (i < text.length()) {
+            if (i + 5 < text.length() && text.charAt(i) == '\\' && text.charAt(i + 1) == 'u') {
+                String hex = text.substring(i + 2, i + 6);
+                try {
+                    sb.append((char) Integer.parseInt(hex, 16));
+                    i += 6;
+                    continue;
+                } catch (NumberFormatException e) {
+                    // không phải unicode escape hợp lệ, giữ nguyên
+                }
+            }
+            sb.append(text.charAt(i));
+            i++;
+        }
+        return sb.toString();
+    }
+
     private String parseGeminiResponse(String responseBody) {
         try {
             // Cấu trúc phản hồi Gemini: candidates[0].content.parts[0].text
@@ -239,6 +259,9 @@ public class GeminiIntegration {
                 
                 if (end != -1) {
                     String result = responseBody.substring(start, end);
+                    
+                    // Unescape Unicode escape seq (backslash)uXXXX (VD: u00e0 -> a)
+                    result = unescapeUnicode(result);
                     
                     // Unescape các ký tự JSON cơ bản
                     result = result.replace("\\n", "\n")

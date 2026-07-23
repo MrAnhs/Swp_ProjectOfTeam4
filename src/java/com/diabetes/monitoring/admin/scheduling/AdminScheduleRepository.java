@@ -51,6 +51,7 @@ public class AdminScheduleRepository {
         ALLOWED_SCHEDULE_STATUS.add("Full");
         ALLOWED_SCHEDULE_STATUS.add("Cancelled");
         ALLOWED_SCHEDULE_STATUS.add("Expired");
+        ALLOWED_SCHEDULE_STATUS.add("Pending");
     }
 
     public List<Map<String, Object>> getDoctorsForSchedule() {
@@ -678,6 +679,9 @@ public class AdminScheduleRepository {
         if ("Cancelled".equalsIgnoreCase(storedStatus)) {
             return "Cancelled";
         }
+        if ("Pending".equalsIgnoreCase(storedStatus)) {
+            return "Pending";
+        }
         LocalTime[] range = parseTimeSlotRange(timeSlot);
         if (workDate == null || range == null) {
             return bookedCount >= maxPatients ? "Full" : "Upcoming";
@@ -840,6 +844,17 @@ public class AdminScheduleRepository {
             return statement.executeUpdate() > 0;
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Failed to delete doctor schedule", e);
+            return false;
+        }
+    }
+
+    public boolean approveDoctorSchedule(int scheduleId) {
+        String sql = "UPDATE Doctor_Schedule SET status = 'Available' WHERE schedule_id = ? AND status = 'Pending'";
+        try (Connection connection = DatabaseConnection.getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, scheduleId);
+            return statement.executeUpdate() > 0;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to approve doctor schedule", e);
             return false;
         }
     }
@@ -1073,7 +1088,7 @@ public class AdminScheduleRepository {
                 + "   FROM Appointment ap "
                 + "   WHERE ap.schedule_id = ds.schedule_id "
                 + ") counts "
-                + "WHERE LOWER(ds.status) <> 'cancelled'";
+                + "WHERE LOWER(ds.status) NOT IN ('cancelled', 'pending')";
 
         try (Connection connection = DatabaseConnection.getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
             return statement.executeUpdate();
@@ -1181,10 +1196,11 @@ public class AdminScheduleRepository {
             return "Bác sĩ đã có ca trực trùng thời gian trong ngày.";
         }
 
-        int shiftCount = countNonCancelledSchedulesInDay(connection, doctorId, workDate, excludeScheduleId);
-        if (shiftCount >= MAX_SHIFTS_PER_DOCTOR_PER_DAY) {
-            return "Bác sĩ đã có 2 ca trực trong ngày này.";
-        }
+        // Rule giới hạn 2 ca/ngày đã được loại bỏ theo yêu cầu
+        // int shiftCount = countNonCancelledSchedulesInDay(connection, doctorId, workDate, excludeScheduleId);
+        // if (shiftCount >= MAX_SHIFTS_PER_DOCTOR_PER_DAY) {
+        //     return "Bác sĩ đã có 2 ca trực trong ngày này.";
+        // }
 
         return null;
     }

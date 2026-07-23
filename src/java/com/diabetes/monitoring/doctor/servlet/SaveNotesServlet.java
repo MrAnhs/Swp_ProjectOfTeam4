@@ -59,22 +59,13 @@ public class SaveNotesServlet extends HttpServlet {
                 return;
             }
 
-            if (!dao.updateHealthMetricsForDoctor(
-                    recordId,
-                    doctorId,
-                    parseNullableDouble(request.getParameter("urea")),
-                    parseNullableDouble(request.getParameter("cr")),
-                    parseNullableDouble(request.getParameter("hba1c")),
-                    parseNullableDouble(request.getParameter("chol")),
-                    parseNullableDouble(request.getParameter("tg")),
-                    parseNullableDouble(request.getParameter("hdl")),
-                    parseNullableDouble(request.getParameter("ldl")),
-                    parseNullableDouble(request.getParameter("vldl")),
-                    parseNullableDouble(request.getParameter("bmi")))) {
-                sendJson(response, HttpServletResponse.SC_FORBIDDEN, false,
-                        "Khong the cap nhat chi so xet nghiem.");
+            if (dao.hasUnpaidLaboratoryRequest(recordId)) {
+                sendJson(response, HttpServletResponse.SC_BAD_REQUEST, false,
+                        "Bệnh nhân chưa thanh toán đầy đủ các chỉ định xét nghiệm bổ sung. Vui lòng yêu cầu bệnh nhân thanh toán hóa đơn trước khi hoàn thành.");
                 return;
             }
+
+
 
             String revisitDateStr = request.getParameter("revisit_date");
             java.sql.Timestamp revisitDate = null;
@@ -102,6 +93,13 @@ public class SaveNotesServlet extends HttpServlet {
                     canView,
                     revisitDate
             );
+
+            try (java.sql.Connection conn = com.diabetes.monitoring.util.DatabaseConnection.getConnection()) {
+                new com.diabetes.monitoring.notification.NotificationService()
+                        .notifyMedicalRecordDiagnosisCompleted(conn, recordId);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
 
             sendJson(response, HttpServletResponse.SC_OK, true, "Luu ho so thanh cong");
         } catch (NumberFormatException e) {

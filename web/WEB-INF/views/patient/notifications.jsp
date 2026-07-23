@@ -5,125 +5,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="app-context-path" content="${pageContext.request.contextPath}">
-    <title>Thông báo của tôi - DiabetesCare</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/base/variables.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/layouts/patient-shell.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/pages/patient/patient-pages.css">
-    <style>
-        .notification-list {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-        .notification-card {
-            display: flex;
-            align-items: flex-start;
-            gap: 1rem;
-            padding: 1.25rem;
-            border-radius: var(--radius-md, 12px);
-            border: 1px solid var(--color-border, #e2e8f0);
-            background: #fff;
-            transition: all 0.2s ease;
-            position: relative;
-            cursor: pointer;
-        }
-        .notification-card:hover {
-            border-color: var(--color-primary, #0d9488);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        }
-        .notification-card.unread {
-            background: #f0fdfa;
-            border-left: 4px solid var(--color-primary, #0d9488);
-        }
-        .notification-icon-wrapper {
-            display: grid;
-            place-items: center;
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
-            background: #f1f5f9;
-            color: #475569;
-            flex-shrink: 0;
-            font-size: 1.25rem;
-        }
-        .notification-card.unread .notification-icon-wrapper {
-            background: #ccfbf1;
-            color: var(--color-primary-dark, #115e59);
-        }
-        .notification-body {
-            flex-grow: 1;
-            min-width: 0;
-        }
-        .notification-title {
-            font-size: 1rem;
-            font-weight: 600;
-            color: var(--color-text-dark, #0f172a);
-            margin: 0 0 0.25rem 0;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .notification-content {
-            font-size: 0.875rem;
-            color: var(--color-text-muted, #475569);
-            margin: 0;
-            line-height: 1.5;
-        }
-        .notification-time {
-            font-size: 0.75rem;
-            color: var(--color-muted, #94a3b8);
-            margin-top: 0.5rem;
-            display: block;
-        }
-        .unread-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--color-primary, #0d9488);
-            display: inline-block;
-        }
-        .empty-notifications {
-            text-align: center;
-            padding: 3rem 1.5rem;
-            color: var(--color-muted, #94a3b8);
-        }
-        .empty-notifications i {
-            font-size: 3.5rem;
-            margin-bottom: 1rem;
-            display: block;
-            color: #cbd5e1;
-        }
-    </style>
+    <title>Th&#244;ng b&#225;o - DiabetesCare</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/base/variables.css?v=20260721-ui2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/layouts/patient-shell.css?v=20260721-ui2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/pages/patient/patient-pages.css?v=20260721-ui2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/pages/patient/notifications.css?v=20260721-ui2">
 </head>
 <body>
     <c:set var="activePatientPage" value="notifications" />
     <%@ include file="/WEB-INF/views/components/patient/sidebar.jspf" %>
 
-    <main class="main-content-dash">
-        <header class="page-header">
+    <main class="main-content-dash notification-page" data-notification-page data-context-path="${pageContext.request.contextPath}">
+        <header class="page-header notification-page-header">
             <div>
-                <p class="page-eyebrow">Hệ thống</p>
-                <h1>Thông báo của tôi</h1>
-                <p>Xem các cập nhật sức khỏe, lịch tái khám và nhắc nhở từ bác sĩ.</p>
+                <p class="page-eyebrow">TRUNG T&#194;M TH&#212;NG B&#193;O</p>
+                <h1>Th&#244;ng b&#225;o c&#7911;a t&#244;i</h1>
+                <p>Theo d&#245;i c&#225;c c&#7853;p nh&#7853;t quan tr&#7885;ng t&#7915; h&#7879; th&#7889;ng DiabetesCare.</p>
             </div>
-            <button id="btnMarkAllRead" class="btn-page-secondary d-none">
-                <i class="bi bi-check-all"></i> Đánh dấu tất cả đã đọc
+            <button type="button" class="notification-refresh-button" data-notification-refresh>
+                <i class="bi bi-arrow-clockwise"></i><span>L&#224;m m&#7899;i</span>
             </button>
         </header>
 
-        <section class="page-card">
-            <div id="notificationsContainer" class="loading-state">
-                Đang tải danh sách thông báo...
+        <section class="notification-overview" aria-label="T&#7893;ng quan th&#244;ng b&#225;o">
+            <article class="notification-stat-card">
+                <span class="notification-stat-icon"><i class="bi bi-bell"></i></span>
+                <div><strong data-notification-total>0</strong><span>T&#7893;ng th&#244;ng b&#225;o</span></div>
+            </article>
+            <article class="notification-stat-card unread">
+                <span class="notification-stat-icon"><i class="bi bi-envelope-exclamation"></i></span>
+                <div><strong data-notification-unread>0</strong><span>Ch&#432;a &#273;&#7885;c</span></div>
+            </article>
+        </section>
+
+        <section class="notification-panel">
+            <div class="notification-panel-header">
+                <div>
+                    <h2>Th&#244;ng b&#225;o g&#7847;n &#273;&#226;y</h2>
+                    <p data-notification-description>Hi&#7875;n th&#7883; 5 th&#244;ng b&#225;o m&#7899;i nh&#7845;t.</p>
+                </div>
+                <div class="notification-filter-group" role="group" aria-label="B&#7897; l&#7885;c th&#244;ng b&#225;o">
+                    <button type="button" class="notification-filter active" data-notification-filter="recent">G&#7847;n &#273;&#226;y</button>
+                    <button type="button" class="notification-filter" data-notification-filter="all">T&#7845;t c&#7843;</button>
+                </div>
+            </div>
+            <div class="patient-notification-list" data-notification-list aria-live="polite">
+                <div class="notification-page-loading"><span class="notification-spinner"></span>&#272;ang t&#7843;i th&#244;ng b&#225;o...</div>
+            </div>
+            <div class="notification-panel-footer" data-notification-footer hidden>
+                <button type="button" class="notification-view-more" data-notification-view-all>
+                    Xem t&#7845;t c&#7843; th&#244;ng b&#225;o <i class="bi bi-arrow-right"></i>
+                </button>
             </div>
         </section>
     </main>
 
-    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/app-config.js?v=20260710-patient-fontfix-all2"></script>
-    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/api-client.js?v=20260710-patient-fontfix-all2"></script>
-    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/patient/notifications.js?v=20260710-patient-fontfix-all2"></script>
+<script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/app-config.js?v=20260710-patient-fontfix-all2"></script>
+<script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/api-client.js?v=20260710-patient-fontfix-all2"></script>
+<script defer src="${pageContext.request.contextPath}/assets/js/pages/patient/notifications.js?v=20260721-ui2"></script>
 </body>
 </html>

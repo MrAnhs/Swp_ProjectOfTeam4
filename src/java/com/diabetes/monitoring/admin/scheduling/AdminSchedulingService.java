@@ -97,6 +97,10 @@ public class AdminSchedulingService {
         return scheduleService.deleteSchedule(scheduleId);
     }
 
+    public boolean approveSchedule(int scheduleId) {
+        return scheduleService.approveSchedule(scheduleId);
+    }
+
     public boolean cancelSchedule(int scheduleId) {
         return scheduleService.cancelSchedule(scheduleId);
     }
@@ -231,7 +235,7 @@ class AdminScheduleService {
     }
 
     public List<Map<String, Object>> getRoomsForSchedule() {
-        return roomRepository.getActiveRooms();
+        return roomRepository.getActiveDoctorRooms();
     }
 
     public List<Map<String, Object>> getLabRoomsForSchedule() {
@@ -310,6 +314,10 @@ class AdminScheduleService {
 
     public boolean deleteSchedule(int scheduleId) {
         return scheduleRepository.deleteDoctorSchedule(scheduleId);
+    }
+
+    public boolean approveSchedule(int scheduleId) {
+        return scheduleRepository.approveDoctorSchedule(scheduleId);
     }
 
     public boolean cancelSchedule(int scheduleId) {
@@ -539,6 +547,29 @@ class AdminStaffScheduleService {
             setValidationMessage("Không thể hủy lịch nhân sự do lỗi hệ thống.");
             return false;
         }
+    }
+
+    public boolean deleteStaffSchedule(int id, String staffType) {
+        if ("Doctor".equalsIgnoreCase(staffType)) {
+            return staffRepository.deleteDoctorSchedule(id);
+        } else if ("Lab".equalsIgnoreCase(staffType)) {
+            return staffRepository.deleteLabSchedule(id);
+        } else if ("Reception".equalsIgnoreCase(staffType) || "Receptionist".equalsIgnoreCase(staffType)) {
+            return staffRepository.deleteReceptionSchedule(id);
+        }
+        try {
+            return staffRepository.delete(id);
+        } catch (java.sql.SQLException e) {
+            return false;
+        }
+    }
+
+    public boolean autoReassignConflictRoom(int id, String staffType) {
+        return staffRepository.autoReassignConflictRoom(id, staffType);
+    }
+
+    public boolean autoResolveAllConflicts() {
+        return staffRepository.autoResolveAllConflicts();
     }
 
     public boolean deleteStaffSchedule(int staffScheduleId) {

@@ -28,6 +28,34 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 
     <link href="${pageContext.request.contextPath}/assets/css/pages/admin/admin-ui.css" rel="stylesheet">
+    <style>
+        .table-responsive {
+            overflow: visible !important;
+        }
+        .table-actions .dropdown-menu {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(15, 118, 110, 0.12), 0 1px 8px rgba(0, 0, 0, 0.05);
+            padding: 6px;
+            min-width: 170px;
+            z-index: 1050;
+        }
+        .table-actions .dropdown-item {
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            width: 100%;
+            background: none;
+            border: none;
+            text-align: left;
+        }
+        .table-actions .dropdown-item:hover {
+            background-color: #f1f5f9;
+        }
+    </style>
 </head>
 <body class="bg-light">
 <div class="container py-4">
@@ -112,31 +140,48 @@
                             </span>
                         </td>
                         <td>
-                            <div class="d-flex gap-2">
-                                <button type="button"
-                                        class="btn btn-sm btn-outline-primary btn-edit-service"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#editServiceModal"
-                                        data-service-id="${s.serviceId}"
-                                        data-service-name="${s.serviceName}"
-                                        data-service-type="${s.serviceType}"
-                                        data-price="${s.price}"
-                                        data-status="${s.status}">
-                                    Chỉnh sửa
+                            <div class="dropdown table-actions">
+                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Thao tác dịch vụ">
+                                    <i class="bi bi-three-dots-vertical"></i>
                                 </button>
-                                <form method="post" action="${pageContext.request.contextPath}/admin" class="d-inline-flex gap-2">
-                                    <input type="hidden" name="action" value="updateServiceStatus">
-                                    <input type="hidden" name="serviceId" value="${s.serviceId}">
-                                    <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
-                                    <input type="hidden" name="status" value="${s.status == 'Active' ? 'Inactive' : 'Active'}">
-                                    <button type="submit" class="btn btn-sm btn-outline-warning">${s.status == 'Active' ? 'Ngừng hoạt động' : 'Hoạt động'}</button>
-                                </form>
-                                <form method="post" action="${pageContext.request.contextPath}/admin" onsubmit="return confirm('Xóa dịch vụ này?');">
-                                    <input type="hidden" name="action" value="deleteService">
-                                    <input type="hidden" name="serviceId" value="${s.serviceId}">
-                                    <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger">Xóa</button>
-                                </form>
+                                <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                    <li>
+                                        <button type="button"
+                                                class="dropdown-item btn-edit-service"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#editServiceModal"
+                                                data-service-id="${s.serviceId}"
+                                                data-service-name="${s.serviceName}"
+                                                data-service-type="${s.serviceType}"
+                                                data-price="${s.price}"
+                                                data-status="${s.status}">
+                                            <i class="bi bi-pencil-square me-2 text-primary"></i>Chỉnh sửa
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <form method="post" action="${pageContext.request.contextPath}/admin" class="d-inline">
+                                            <input type="hidden" name="action" value="updateServiceStatus">
+                                            <input type="hidden" name="serviceId" value="${s.serviceId}">
+                                            <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
+                                            <input type="hidden" name="status" value="${s.status == 'Active' ? 'Inactive' : 'Active'}">
+                                            <button type="submit" class="dropdown-item ${s.status == 'Active' ? 'text-warning' : 'text-success'}">
+                                                <i class="bi ${s.status == 'Active' ? 'bi-pause-circle me-2 text-warning' : 'bi-play-circle me-2 text-success'}"></i>
+                                                ${s.status == 'Active' ? 'Ngừng hoạt động' : 'Kích hoạt lại'}
+                                            </button>
+                                        </form>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form method="post" action="${pageContext.request.contextPath}/admin" onsubmit="return confirm('Bạn có chắc muốn xóa dịch vụ này?');" class="d-inline">
+                                            <input type="hidden" name="action" value="deleteService">
+                                            <input type="hidden" name="serviceId" value="${s.serviceId}">
+                                            <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
+                                            <button type="submit" class="dropdown-item text-danger">
+                                                <i class="bi bi-trash me-2 text-danger"></i>Xóa dịch vụ
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
                             </div>
                         </td>
                     </tr>

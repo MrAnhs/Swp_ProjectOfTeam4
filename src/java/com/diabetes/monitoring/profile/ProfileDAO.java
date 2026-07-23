@@ -78,7 +78,27 @@ public class ProfileDAO {
                 statement.setString(i++, profile.getAddress());
             }
             statement.setInt(i, profile.getAccountId());
-            if (statement.executeUpdate() == 0) throw new SQLException("Hồ sơ role không tồn tại");
+            if (statement.executeUpdate() == 0) {
+                String sqlInsert;
+                if (supportsBirthDetails(role)) {
+                    sqlInsert = "INSERT INTO " + table + " (full_name, email, phone, date_of_birth, gender, address, account_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
+                } else {
+                    sqlInsert = "INSERT INTO " + table + " (full_name, email, phone, account_id) VALUES (?, ?, ?, ?)";
+                }
+                try (PreparedStatement insertStatement = connection.prepareStatement(sqlInsert)) {
+                    int j = 1;
+                    insertStatement.setString(j++, profile.getFullName());
+                    insertStatement.setString(j++, profile.getEmail());
+                    insertStatement.setString(j++, profile.getPhone());
+                    if (supportsBirthDetails(role)) {
+                        setDate(insertStatement, j++, profile.getDateOfBirth());
+                        insertStatement.setString(j++, profile.getGender());
+                        insertStatement.setString(j++, profile.getAddress());
+                    }
+                    insertStatement.setInt(j, profile.getAccountId());
+                    insertStatement.executeUpdate();
+                }
+            }
         }
     }
 

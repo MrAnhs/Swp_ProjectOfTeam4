@@ -10,9 +10,9 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/base/variables.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/layouts/patient-shell.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/pages/patient/patient-pages.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/base/variables.css?v=20260721-ui2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/layouts/patient-shell.css?v=20260721-ui2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/pages/patient/patient-pages.css?v=20260721-ui2">
 </head>
 <body>
     <c:set var="activePatientPage" value="dashboard" />
@@ -46,7 +46,7 @@
             <a class="shortcut-card" href="${pageContext.request.contextPath}/patient/history">
                 <i class="bi bi-file-medical"></i>
                 <strong>L&#7883;ch s&#7917; kh&#225;m</strong>
-                <span>Xem c&#225;c l&#7847;n kh&#225;m v&#224; k&#7871;t qu&#7843; &#273;&#432;&#7907;c b&#225;c s&#297; c&#244;ng b&#7889;.</span>
+                <span>Xem c&#225;c l&#7847;n kh&#225;m v&#224; k&#7871;t qu&#7843; &#273;&#432;&#7907;c b&#225;c s&#297; c&#444;ng b&#7889;.</span>
             </a>
             <a class="shortcut-card" href="${pageContext.request.contextPath}/patient/ai-chat">
                 <i class="bi bi-robot"></i>

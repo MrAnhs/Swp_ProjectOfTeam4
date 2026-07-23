@@ -138,6 +138,21 @@ public class AdminServlet extends HttpServlet {
             return;
         }
 
+        if ("getCalendarSchedule".equals(action)) {
+            schedulingHandler.getCalendarSchedule(request, response);
+            return;
+        }
+
+        if ("getShiftDetail".equals(action)) {
+            schedulingHandler.getShiftDetail(request, response);
+            return;
+        }
+
+        if ("confirmAISchedule".equals(action)) {
+            schedulingHandler.confirmAISchedule(request, response);
+            return;
+        }
+
         if ("getSchedule".equals(action)) {
             schedulingHandler.loadScheduleDetail(request, response);
             return;
@@ -296,6 +311,10 @@ public class AdminServlet extends HttpServlet {
             schedulingHandler.deleteSchedule(request, response);
             return;
         }
+        if ("approveSchedule".equals(action)) {
+            schedulingHandler.approveSchedule(request, response);
+            return;
+        }
         if ("cancelSchedule".equals(action)) {
             schedulingHandler.cancelSchedule(request, response);
             return;
@@ -319,6 +338,15 @@ public class AdminServlet extends HttpServlet {
         }
         if ("delete-staff-schedule".equals(action)) {
             schedulingHandler.deleteStaffSchedule(request, response);
+            return;
+        }
+
+        if ("resolveScheduleConflict".equals(action)) {
+            schedulingHandler.resolveScheduleConflict(request, response);
+            return;
+        }
+        if ("autoResolveAllConflicts".equals(action)) {
+            schedulingHandler.autoResolveAllConflicts(request, response);
             return;
         }
 

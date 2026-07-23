@@ -22,12 +22,18 @@ public class LaboratoryDAO {
                 + "id.requested_at, id.completed_at, i.status AS invoice_status, "
                 + "p.full_name AS patient_name, hr.urea, hr.cr, hr.hba1c, "
                 + "hr.chol, hr.tg, hr.hdl, hr.ldl, hr.vldl, hr.bmi, "
-                + "hr.weight, hr.height "
+                + "hr.weight, hr.height, "
+                + "id.lab_id, dl.full_name AS lab_doctor_name, "
+                + "COALESCE((SELECT TOP 1 r.room_name + ' - ' + r.room_id FROM Lab_Schedule ls "
+                + "JOIN Room r ON ls.room_id = r.room_id "
+                + "WHERE ls.lab_id = id.lab_id AND ls.work_date = CAST(GETDATE() AS date) "
+                + "AND LOWER(ls.status) = 'scheduled' ORDER BY ls.lab_sched_id DESC), dl.lab_name) AS lab_room_name "
                 + "FROM Invoice_Detail id "
                 + "JOIN Invoice i ON i.invoice_id = id.invoice_id "
                 + "JOIN Medical_Service ms ON ms.service_id = id.service_id "
                 + "JOIN Healthy_Record hr ON hr.health_record_id = id.health_record_id "
                 + "LEFT JOIN Patient p ON p.patient_id = i.patient_id "
+                + "LEFT JOIN Doctor_Lab dl ON dl.lab_id = id.lab_id "
                 + "WHERE id.lab_status IS NOT NULL AND i.status = 'Paid' "
                 + (filtered ? "AND id.lab_status = ? " : "")
                 + "ORDER BY CASE id.lab_status WHEN 'Requested' THEN 1 "
@@ -130,7 +136,7 @@ public class LaboratoryDAO {
                     setNullable(ps, 4, result.getChol());
                     setNullable(ps, 5, result.getTg());
                     setNullable(ps, 6, result.getHdl());
-                    setNullable(ps, 7, result.getIdl());
+                    setNullable(ps, 7, result.getLdl());
                     setNullable(ps, 8, result.getVldl());
                     setNullable(ps, 9, result.getBmi());
                     setNullable(ps, 10, result.getWeight());
@@ -174,11 +180,15 @@ public class LaboratoryDAO {
         item.setChol(nullableDouble(rs, "chol"));
         item.setTg(nullableDouble(rs, "tg"));
         item.setHdl(nullableDouble(rs, "hdl"));
-        item.setIdl(nullableDouble(rs, "ldl"));
+        item.setLdl(nullableDouble(rs, "ldl"));
         item.setVldl(nullableDouble(rs, "vldl"));
         item.setBmi(nullableDouble(rs, "bmi"));
         item.setWeight(nullableDouble(rs, "weight"));
         item.setHeight(nullableDouble(rs, "height"));
+        int labIdVal = rs.getInt("lab_id");
+        item.setLabId(rs.wasNull() ? null : labIdVal);
+        item.setLabDoctorName(rs.getString("lab_doctor_name"));
+        item.setLabName(rs.getString("lab_room_name"));
         return item;
     }
 

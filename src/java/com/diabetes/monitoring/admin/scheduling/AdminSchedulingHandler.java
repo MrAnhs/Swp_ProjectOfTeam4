@@ -32,6 +32,7 @@ public class AdminSchedulingHandler {
     public void createSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException { scheduleHandler.createSchedule(request, response); }
     public void updateSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException { scheduleHandler.updateSchedule(request, response); }
     public void deleteSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException { scheduleHandler.deleteSchedule(request, response); }
+    public void approveSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException { scheduleHandler.approveSchedule(request, response); }
     public void cancelSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException { scheduleHandler.cancelSchedule(request, response); }
     public void transferSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException { scheduleHandler.transferSchedule(request, response); }
     public void loadTransferCandidates(HttpServletRequest request, HttpServletResponse response) throws IOException { scheduleHandler.loadTransferCandidates(request, response); }
@@ -46,6 +47,11 @@ public class AdminSchedulingHandler {
     public void cancelStaffSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException { staffScheduleHandler.cancelStaffSchedule(request, response); }
     public void deleteStaffSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException { staffScheduleHandler.deleteStaffSchedule(request, response); }
     public void aiStaffSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException { staffScheduleHandler.aiStaffSchedule(request, response); }
+    public void getCalendarSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException { staffScheduleHandler.getCalendarSchedule(request, response); }
+    public void getShiftDetail(HttpServletRequest request, HttpServletResponse response) throws IOException { staffScheduleHandler.loadStaffScheduleDetail(request, response); }
+    public void resolveScheduleConflict(HttpServletRequest request, HttpServletResponse response) throws IOException { staffScheduleHandler.resolveScheduleConflict(request, response); }
+    public void autoResolveAllConflicts(HttpServletRequest request, HttpServletResponse response) throws IOException { staffScheduleHandler.autoResolveAllConflicts(request, response); }
+    public void confirmAISchedule(HttpServletRequest request, HttpServletResponse response) throws IOException { aiSchedulingHandler.aiSaveProposedSchedules(request, response); }
 }
 
 /**
@@ -249,6 +255,13 @@ class AdminScheduleHandler {
         boolean ok = scheduleId > 0 && scheduleService.deleteSchedule(scheduleId);
         request.getSession().setAttribute(ok ? "successMessage" : "errorMessage",
                 ok ? "Đã xóa lịch trực" : "Không thể xóa lịch trực");
+        response.sendRedirect(request.getContextPath() + "/admin?action=schedule");
+    }
+    public void approveSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        int scheduleId = parseInt(request.getParameter("scheduleId"), -1);
+        boolean ok = scheduleId > 0 && scheduleService.approveSchedule(scheduleId);
+        request.getSession().setAttribute(ok ? "successMessage" : "errorMessage",
+                ok ? "Đã duyệt ca trực thành công" : "Không thể duyệt ca trực");
         response.sendRedirect(request.getContextPath() + "/admin?action=schedule");
     }
     public void cancelSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -464,7 +477,31 @@ class AdminScheduleHandler {
  */
 class AdminStaffScheduleHandler {
     private final AdminStaffScheduleService staffScheduleService = new AdminStaffScheduleService();
+    private final AdminStaffScheduleRepository staffScheduleRepository = new AdminStaffScheduleRepository();
     private final AdminSchedulingService schedulingService = new AdminSchedulingService();
+
+    public void getCalendarSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setContentType("application/json;charset=UTF-8");
+        String weekDateStr = request.getParameter("weekDate");
+        String roleFilter = request.getParameter("role");
+        String roomFilter = request.getParameter("room");
+
+        Date startDate = nullableDate(weekDateStr);
+        if (startDate == null) startDate = new java.sql.Date(System.currentTimeMillis());
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        cal.setTime(startDate);
+        cal.add(java.util.Calendar.DAY_OF_MONTH, 6);
+        Date endDate = new java.sql.Date(cal.getTimeInMillis());
+
+        List<Map<String, Object>> rows = staffScheduleRepository.getWeeklyCalendarSchedules(startDate, endDate, roleFilter, roomFilter);
+        try (PrintWriter out = response.getWriter()) {
+            out.print(AdminJsonUtil.toJsonSimpleRows(rows));
+        } catch (Exception ex) {
+            try (PrintWriter out = response.getWriter()) {
+                out.print("[]");
+            }
+        }
+    }
 
     public void loadStaffForSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException {
         response.setContentType("application/json;charset=UTF-8");
@@ -808,6 +845,36 @@ class AdminStaffScheduleHandler {
         }
     }
 
+    public void resolveScheduleConflict(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setContentType("application/json;charset=UTF-8");
+        int id = parseInt(request.getParameter("id"), -1);
+        String staffType = request.getParameter("staffType");
+        String type = request.getParameter("type");
+        try (PrintWriter out = response.getWriter()) {
+            if (id <= 0) {
+                out.print("{\"success\":false,\"message\":\"ID ca trực không hợp lệ\"}");
+                return;
+            }
+            if ("delete".equalsIgnoreCase(type)) {
+                boolean ok = staffScheduleService.deleteStaffSchedule(id, staffType);
+                out.print("{\"success\":" + ok + ",\"message\":\"" + (ok ? "Đã hủy ca trực bị trùng thành công!" : "Không thể hủy ca trực.") + "\"}");
+            } else if ("reassign".equalsIgnoreCase(type)) {
+                boolean ok = staffScheduleService.autoReassignConflictRoom(id, staffType);
+                out.print("{\"success\":" + ok + ",\"message\":\"" + (ok ? "Đã tự động chuyển sang phòng trống khác!" : "Không tìm thấy phòng trống thích hợp.") + "\"}");
+            } else {
+                out.print("{\"success\":false,\"message\":\"Hành động không hợp lệ\"}");
+            }
+        }
+    }
+
+    public void autoResolveAllConflicts(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setContentType("application/json;charset=UTF-8");
+        boolean ok = staffScheduleService.autoResolveAllConflicts();
+        try (PrintWriter out = response.getWriter()) {
+            out.print("{\"success\":" + ok + ",\"message\":\"" + (ok ? "Đã tự động sửa tất cả ca trùng!" : "Không tìm thấy ca trùng hoặc lỗi xử lý.") + "\"}");
+        }
+    }
+
     private Date nullableDate(String raw) {
         if (raw == null || raw.isBlank()) {
             return null;
@@ -896,6 +963,7 @@ class AdminAiSchedulingHandler {
             String[] workDates = request.getParameterValues("workDate");
             String[] timeSlots = request.getParameterValues("timeSlot");
             String[] maxPatientsArr = request.getParameterValues("maxPatients");
+            String conflictHandling = request.getParameter("conflictHandling");
 
             if (doctorIds == null || workDates == null || timeSlots == null || maxPatientsArr == null
                     || doctorIds.length == 0 || workDates.length != doctorIds.length 
@@ -914,7 +982,7 @@ class AdminAiSchedulingHandler {
                 schedules.add(item);
             }
 
-            boolean ok = aiSchedulingRepository.saveSchedules(schedules);
+            boolean ok = aiSchedulingRepository.saveSchedules(schedules, conflictHandling);
             try (PrintWriter out = response.getWriter()) {
                 if (ok) {
                     out.print("{\"success\":true,\"message\":\"Đã lưu thành công " + schedules.size() + " ca lịch trực bác sĩ khám đề xuất bằng AI!\"}");
@@ -926,6 +994,10 @@ class AdminAiSchedulingHandler {
             response.getWriter().print("{\"success\":false,\"message\":\"Lỗi lưu lịch trực đề xuất: " + AdminJsonUtil.escapeJson(ex.getMessage()) + "\"}");
         }
     }
+    private List<Map<String, String>> parseShiftTemplates(String rawTemplates) {
+        return parseStaffShiftTemplates(rawTemplates);
+    }
+
     private void writeAiScheduleError(HttpServletResponse response, String message) throws IOException {
         response.setStatus(HttpServletResponse.SC_OK);
         try (PrintWriter out = response.getWriter()) {
@@ -934,7 +1006,8 @@ class AdminAiSchedulingHandler {
             out.print("\",\"items\":[]}");
         }
     }
-    private List<Map<String, String>> parseShiftTemplates(String rawTemplates) {
+
+    private List<Map<String, String>> parseStaffShiftTemplates(String rawTemplates) {
         List<Map<String, String>> shifts = new ArrayList<>();
         if (rawTemplates == null || rawTemplates.isBlank()) {
             return shifts;
@@ -990,6 +1063,7 @@ class AdminAiSchedulingHandler {
             return null;
         }
     }
+
 }
 
 
