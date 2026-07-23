@@ -639,8 +639,8 @@ public class AdminAiSchedulingRepository {
                                 new Object[]{createdToday, slotsForDay, sqlDate});
                     }
                 }
-                if (created.size() < maxSchedules) {
-                    throw new SQLException("AI scheduling could not create exact required slot count: " + created.size() + "/" + maxSchedules);
+                if (created.isEmpty() && maxSchedules > 0) {
+                    throw new SQLException("Không thể tạo thêm ca trực mới. Tất cả các ca trong khoảng thời gian và chuyên khoa đã chọn đều đã có lịch hoặc không đủ phòng trống.");
                 }
                 if (!isBalancedScheduleBatch(connection, created)) {
                     throw new SQLException("Fallback schedule is not balanced across doctors");
