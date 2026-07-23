@@ -12,6 +12,11 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 public class AIChatServlet extends HttpServlet {
@@ -150,63 +155,122 @@ public class AIChatServlet extends HttpServlet {
                 + escapeJson(aiSummary) + "\"}");
     }
 
-    private void saveAiSummaryToDatabase(int patientId, String aiSummary, String symptoms, String history) {
-        // Attempt 1: Ensure appointment_id is nullable if AI_Summary table exists
-        try (Connection conn = DatabaseConnection.getConnection();
-             java.sql.Statement stmt = conn.createStatement()) {
-            stmt.execute("IF OBJECT_ID('dbo.AI_Summary', 'U') IS NOT NULL " +
-                         "AND EXISTS (SELECT 1 FROM sys.columns c JOIN sys.objects o ON c.object_id = o.object_id " +
-                         "WHERE o.name = 'AI_Summary' AND c.name = 'appointment_id' AND c.is_nullable = 0) " +
-                         "BEGIN ALTER TABLE dbo.AI_Summary ALTER COLUMN appointment_id INT NULL; END");
+    private void saveAiSummaryToDatabase(int patientId, String aiSummary, String symptoms, String history) throws SQLException {
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            boolean hasAiSummaryTable = false;
+            boolean hasAiConvTable = false;
+
+            try (ResultSet rs = conn.getMetaData().getTables(null, null, "AI_Summary", null)) {
+                if (rs.next()) hasAiSummaryTable = true;
+            }
+            try (ResultSet rs = conn.getMetaData().getTables(null, null, "AI_Conversation", null)) {
+                if (rs.next()) hasAiConvTable = true;
+            }
+
+            if (!hasAiSummaryTable && !hasAiConvTable) {
+                try (Statement stmt = conn.createStatement()) {
+                    stmt.execute("CREATE TABLE AI_Summary (" +
+                                 "summary_id INT IDENTITY(1,1) PRIMARY KEY, " +
+                                 "patient_id INT NOT NULL, " +
+                                 "ai_summary NVARCHAR(MAX) NULL, " +
+                                 "created_at DATETIME DEFAULT GETDATE())");
+                    hasAiSummaryTable = true;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            String targetTable = hasAiSummaryTable ? "AI_Summary" : "AI_Conversation";
+
+            Set<String> existingColumns = new HashSet<>();
+            try (ResultSet rs = conn.getMetaData().getColumns(null, null, targetTable, null)) {
+                while (rs.next()) {
+                    existingColumns.add(rs.getString("COLUMN_NAME").toLowerCase());
+                }
+            }
+
+            List<String> colNames = new ArrayList<>();
+            List<Object> values = new ArrayList<>();
+
+            if (existingColumns.contains("summary_id") && isVarcharColumn(conn, targetTable, "summary_id")) {
+                colNames.add("summary_id");
+                values.add(UUID.randomUUID().toString().replace("-", "").substring(0, 20));
+            }
+
+            if (existingColumns.contains("patient_id")) {
+                colNames.add("patient_id");
+                values.add(patientId);
+            }
+
+            if (existingColumns.contains("ai_summary")) {
+                colNames.add("ai_summary");
+                values.add(aiSummary);
+            } else if (existingColumns.contains("symptoms")) {
+                colNames.add("symptoms");
+                values.add(aiSummary);
+            }
+
+            if (existingColumns.contains("symptoms") && !colNames.contains("symptoms") && !symptoms.isBlank()) {
+                colNames.add("symptoms");
+                values.add(symptoms);
+            }
+
+            if (existingColumns.contains("chat_history") && !history.isBlank()) {
+                colNames.add("chat_history");
+                values.add(history);
+            }
+
+            if (existingColumns.contains("created_at")) {
+                colNames.add("created_at");
+                values.add("GETDATE()");
+            }
+
+            StringBuilder sql = new StringBuilder("INSERT INTO ").append(targetTable).append(" (");
+            StringBuilder valPlaceholders = new StringBuilder();
+
+            int paramCount = 0;
+            for (int i = 0; i < colNames.size(); i++) {
+                if (i > 0) {
+                    sql.append(", ");
+                    valPlaceholders.append(", ");
+                }
+                sql.append(colNames.get(i));
+                if ("created_at".equalsIgnoreCase(colNames.get(i))) {
+                    valPlaceholders.append("GETDATE()");
+                } else {
+                    valPlaceholders.append("?");
+                    paramCount++;
+                }
+            }
+            sql.append(") VALUES (").append(valPlaceholders).append(")");
+
+            try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+                int paramIdx = 1;
+                for (int i = 0; i < colNames.size(); i++) {
+                    if (!"created_at".equalsIgnoreCase(colNames.get(i))) {
+                        ps.setObject(paramIdx++, values.get(i));
+                    }
+                }
+                int rows = ps.executeUpdate();
+                if (rows > 0) {
+                    System.out.println("[AIChatServlet] Summary inserted successfully into " + targetTable);
+                    return;
+                }
+            } catch (SQLException ex) {
+                System.err.println("[AIChatServlet] Dynamic insert into " + targetTable + " failed: " + ex.getMessage());
+                throw ex;
+            }
+        }
+    }
+
+    private boolean isVarcharColumn(Connection conn, String tableName, String colName) {
+        try (ResultSet rs = conn.getMetaData().getColumns(null, null, tableName, colName)) {
+            if (rs.next()) {
+                String typeName = rs.getString("TYPE_NAME");
+                return typeName != null && (typeName.toLowerCase().contains("char") || typeName.toLowerCase().contains("text"));
+            }
         } catch (Exception ignored) {}
-
-        // Attempt 2: Ensure AI_Summary table exists if missing
-        try (Connection conn = DatabaseConnection.getConnection();
-             java.sql.Statement stmt = conn.createStatement()) {
-            stmt.execute("IF OBJECT_ID('dbo.AI_Summary', 'U') IS NULL " +
-                         "BEGIN CREATE TABLE dbo.AI_Summary (" +
-                         "summary_id VARCHAR(50) PRIMARY KEY, " +
-                         "patient_id INT NOT NULL, " +
-                         "appointment_id INT NULL, " +
-                         "ai_summary NVARCHAR(MAX) NOT NULL, " +
-                         "created_at DATETIME DEFAULT GETDATE()); END");
-        } catch (Exception ignored) {}
-
-        // Attempt 3: Insert into AI_Summary with UUID summary_id
-        String summaryId = UUID.randomUUID().toString().replace("-", "").substring(0, 20);
-        String sql1 = "INSERT INTO AI_Summary (summary_id, patient_id, appointment_id, ai_summary, created_at) "
-                + "VALUES (?, ?, NULL, ?, GETDATE())";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql1)) {
-            ps.setString(1, summaryId);
-            ps.setInt(2, patientId);
-            ps.setString(3, aiSummary);
-            ps.executeUpdate();
-            return;
-        } catch (Exception e1) {
-            System.err.println("Notice: AI_Summary insert with summary_id failed: " + e1.getMessage());
-        }
-
-        // Attempt 4: Insert into AI_Summary without summary_id (in case summary_id is identity int)
-        String sql2 = "INSERT INTO AI_Summary (patient_id, appointment_id, ai_summary, created_at) "
-                + "VALUES (?, NULL, ?, GETDATE())";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql2)) {
-            ps.setInt(1, patientId);
-            ps.setString(2, aiSummary);
-            ps.executeUpdate();
-            return;
-        } catch (Exception e2) {
-            System.err.println("Notice: AI_Summary insert without summary_id failed: " + e2.getMessage());
-        }
-
-        // Attempt 5: Fallback to AI_Conversation table if present
-        try {
-            com.diabetes.monitoring.doctor.dao.AIConversationDAO dao = new com.diabetes.monitoring.doctor.dao.AIConversationDAO();
-            dao.saveLatestConversation(patientId, history, aiSummary);
-        } catch (Exception e3) {
-            System.err.println("Notice: AIConversationDAO fallback failed: " + e3.getMessage());
-        }
+        return false;
     }
 
     // ──────────────────────────────────────────────────────────────

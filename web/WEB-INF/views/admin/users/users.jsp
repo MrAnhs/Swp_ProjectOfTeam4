@@ -319,14 +319,6 @@
                                                                     </button>
                                                                 </li>
                                                                 <li>
-                                                                    <button type="button"
-                                                                        class="dropdown-item edit-specialty-btn"
-                                                                        data-account-id="${u.id}"
-                                                                        data-account-name="${u.fullName}">
-                                                                        <i class="bi bi-tag me-2 text-info"></i>Sửa chuyên khoa
-                                                                    </button>
-                                                                </li>
-                                                                <li>
                                                                     <hr class="dropdown-divider">
                                                                 </li>
                                                                 <c:choose>
@@ -593,6 +585,16 @@
                                             <input class="form-control" name="phone" id="editPhone">
                                         </div>
 
+                                        <div class="col-md-6 d-none" id="editDepartmentWrap">
+                                            <label class="form-label">Chuyên khoa (Bác sĩ)</label>
+                                            <select class="form-select" name="department" id="editDepartment">
+                                                <option value="Endocrinology">Nội tiết - Tiểu đường</option>
+                                                <option value="Cardiology">Tim mạch</option>
+                                                <option value="Nephrology">Thận học</option>
+                                                <option value="General">Tổng quát</option>
+                                            </select>
+                                        </div>
+
                                         <div class="col-12 d-none" id="editAddressWrap">
                                             <label class="form-label">Địa chỉ (Bệnh nhân)</label>
                                             <input class="form-control" name="address" id="editAddress">
@@ -604,51 +606,6 @@
                                     <button type="button" class="btn btn-secondary"
                                         data-bs-dismiss="modal">Đóng</button>
                                     <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="modal fade" id="editSpecialtyModal" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
-                            <form method="post" action="${pageContext.request.contextPath}/admin" id="editSpecialtyForm">
-                                <input type="hidden" name="action" value="updateAccountProfile">
-                                <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
-                                <input type="hidden" name="accountId" id="specAccountId">
-                                <input type="hidden" name="fullName" id="specFullNameHidden">
-                                <input type="hidden" name="email" id="specEmailHidden">
-                                <input type="hidden" name="phone" id="specPhoneHidden">
-
-                                <div class="modal-header border-0 pb-0">
-                                    <h5 class="modal-title fw-bold text-dark"><i class="bi bi-tag-fill text-info me-2"></i>Chỉnh sửa chuyên khoa nhân sự</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-
-                                <div class="modal-body py-3">
-                                    <div class="alert alert-info py-2 mb-3" style="border-radius: 10px;">
-                                        <i class="bi bi-person-badge me-2"></i>Nhân sự: <strong id="specAccountName">-</strong>
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold">Chuyên khoa / Khoa công tác</label>
-                                        <select class="form-select mb-2" id="specDepartmentSelect" style="border-radius: 8px;">
-                                            <option value="Endocrinology">Nội tiết</option>
-                                            <option value="Cardiology">Tim mạch</option>
-                                            <option value="Nephrology">Thận học</option>
-                                            <option value="General">Tổng quát</option>
-                                            <option value="custom">-- Thêm tên chuyên khoa khác --</option>
-                                        </select>
-                                        <input type="text" class="form-control d-none mt-2" name="department" id="specDepartmentInput" placeholder="Nhập tên chuyên khoa (VD: Khoa Nhi, Khoa Mắt...)" style="border-radius: 8px;">
-                                    </div>
-                                </div>
-
-                                <div class="modal-footer border-0 pt-0">
-                                    <button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal" style="border-radius: 8px;">Đóng</button>
-                                    <button type="submit" class="btn btn-info px-4 fw-bold text-white" style="border-radius: 8px;">
-                                        <i class="bi bi-check-circle me-1"></i>Lưu thay đổi
-                                    </button>
                                 </div>
                             </form>
                         </div>

@@ -537,10 +537,10 @@ public class AdminAccountRepository {
         if (lower.contains("thận") || lower.contains("tiết niệu") || lower.contains("nephro")) {
             return "Nephrology";
         }
-        if (lower.contains("tổng quát") || lower.contains("general")) {
+        if (lower.contains("tổng quát") || lower.contains("general") || lower.contains("mắt") || lower.contains("thần kinh")) {
             return "General";
         }
-        return trimmed;
+        return "General";
     }
 
     private String toTitleCase(String value) {

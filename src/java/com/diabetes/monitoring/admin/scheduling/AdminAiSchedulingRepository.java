@@ -14,10 +14,8 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -37,8 +35,6 @@ public class AdminAiSchedulingRepository {
 
     private final AdminScheduleRepository scheduleRepository =
             new AdminScheduleRepository();
-    private final AdminRoomRepository roomRepository =
-            new AdminRoomRepository();
 
     public List<Map<String, Object>> getDoctorSchedulesByDate(int doctorId, Date workDate) {
         String sql = "SELECT schedule_id, time_slot, status FROM Doctor_Schedule "
@@ -47,10 +43,6 @@ public class AdminAiSchedulingRepository {
     }
 
     public List<Map<String, Object>> getDoctorsForAiScheduling(Date startDate, Date endDate) {
-        return getDoctorsForAiScheduling(startDate, endDate, null);
-    }
-
-    public List<Map<String, Object>> getDoctorsForAiScheduling(Date startDate, Date endDate, List<String> selectedDepartments) {
         List<Map<String, Object>> doctors = new ArrayList<>();
         String sql = "SELECT d.doctor_id, d.full_name, d.department, LOWER(a.status) AS account_status, "
                 + "COALESCE(active_load.active_count, 0) AS active_count, "
@@ -89,28 +81,11 @@ public class AdminAiSchedulingRepository {
                     } else {
                         currentLoad = (int) Math.round(activeCount * 100.0 / totalCapacity);
                     }
-                    String docName = rs.getString("full_name");
-                    String rawDepartment = rs.getString("department");
-                    String normalizedDepartment = deriveDepartmentFromDoctor(rawDepartment, docName);
-
-                    if (selectedDepartments != null && !selectedDepartments.isEmpty()) {
-                        boolean match = false;
-                        for (String selDept : selectedDepartments) {
-                            String normSel = normalizeDepartmentForAi(selDept);
-                            if (normSel.equalsIgnoreCase(normalizedDepartment)
-                                    || (rawDepartment != null && rawDepartment.equalsIgnoreCase(selDept))) {
-                                match = true;
-                                break;
-                            }
-                        }
-                        if (!match) {
-                            continue;
-                        }
-                    }
-
                     Map<String, Object> doctor = new HashMap<>();
                     doctor.put("doctorId", rs.getInt("doctor_id"));
                     doctor.put("doctorName", rs.getString("full_name"));
+                    String rawDepartment = rs.getString("department");
+                    String normalizedDepartment = normalizeDepartmentForAi(rawDepartment);
                     doctor.put("department", normalizedDepartment);
                     doctor.put("status", rs.getString("account_status"));
                     doctor.put("activeCount", activeCount);
@@ -143,33 +118,10 @@ public class AdminAiSchedulingRepository {
         if (lower.contains("thận") || lower.contains("tiết niệu") || lower.contains("nephro")) {
             return "Nephrology";
         }
-        if (lower.contains("da liễu") || lower.contains("da lieu") || lower.contains("dermatol")) {
-            return "Da liễu";
-        }
-        if (lower.contains("tổng quát") || lower.contains("general")) {
+        if (lower.contains("tổng quát") || lower.contains("general") || lower.contains("mắt") || lower.contains("thần kinh")) {
             return "General";
         }
-        return trimmed;
-    }
-
-    private String deriveDepartmentFromDoctor(String rawDepartment, String doctorName) {
-        String norm = normalizeDepartmentForAi(rawDepartment);
-        if (("General".equalsIgnoreCase(norm) || rawDepartment == null || rawDepartment.isBlank()) && doctorName != null) {
-            String lowerName = doctorName.toLowerCase();
-            if (lowerName.contains("da liễu") || lowerName.contains("da lieu")) {
-                return "Da liễu";
-            }
-            if (lowerName.contains("nội tiết") || lowerName.contains("noi tiet") || lowerName.contains("endocrin")) {
-                return "Endocrinology";
-            }
-            if (lowerName.contains("tim mạch") || lowerName.contains("tim mach") || lowerName.contains("cardio")) {
-                return "Cardiology";
-            }
-            if (lowerName.contains("thận") || lowerName.contains("than hoc") || lowerName.contains("nephro")) {
-                return "Nephrology";
-            }
-        }
-        return norm;
+        return "General";
     }
 
     public List<Map<String, Object>> createGeminiSchedules(List<Map<String, Object>> assignments,
@@ -235,8 +187,8 @@ public class AdminAiSchedulingRepository {
         try (Connection connection = DatabaseConnection.getConnection()) {
             connection.setAutoCommit(false);
             try {
-                List<Map<String, String>> activeRoomDetails = getActiveDoctorRoomDetails(connection);
-                Set<String> usedRoomSlotKeys = new HashSet<>();
+                List<String> activeRooms = getActiveDoctorRooms(connection);
+                Map<String, Integer> roomAssignedCount = new HashMap<>();
                 Map<String, Integer> previousDoctorByDate = new HashMap<>();
                 Map<String, Integer> dailyShiftCount = new HashMap<>();
                 for (Map<String, Object> assignment : assignments) {
@@ -290,12 +242,10 @@ public class AdminAiSchedulingRepository {
                         }
                     }
 
-                    String assignedRoomId = findBestMatchingRoom(connection, activeRoomDetails, actualDepartment, workDate, timeSlot, usedRoomSlotKeys, null);
-                    if (assignedRoomId == null) {
-                        throw new SQLException("Không đủ phòng khám khả dụng cho ca trực " + timeSlot + " ngày " + workDate + ". Quy định: Mỗi phòng chỉ chứa tối đa 1 bác sĩ / 1 ca.");
-                    }
-                    usedRoomSlotKeys.add(workDate + "_" + timeSlot + "_" + assignedRoomId);
-                    String roomId = assignedRoomId;
+                    String dateSlotKey = workDate + "_" + timeSlot;
+                    int roomIdx = roomAssignedCount.getOrDefault(dateSlotKey, 0);
+                    String roomId = activeRooms.get(roomIdx % activeRooms.size());
+                    roomAssignedCount.put(dateSlotKey, roomIdx + 1);
 
                     try (PreparedStatement insert = connection.prepareStatement(
                             insertSql, java.sql.Statement.RETURN_GENERATED_KEYS)) {
@@ -530,8 +480,8 @@ public class AdminAiSchedulingRepository {
         try (Connection connection = DatabaseConnection.getConnection()) {
             connection.setAutoCommit(false);
             try {
-                List<Map<String, String>> activeRoomDetails = getActiveDoctorRoomDetails(connection);
-                Set<String> usedRoomSlotKeys = new HashSet<>();
+                List<String> activeRooms = getActiveDoctorRooms(connection);
+                Map<String, Integer> roomAssignedCount = new HashMap<>();
                 for (Date sqlDate : targetDates) {
                     if (created.size() >= maxSchedules) {
                         break;
@@ -576,13 +526,10 @@ public class AdminAiSchedulingRepository {
                             continue;
                         }
 
-                        String doctorDept = doctor.get("department") == null ? targetDepartment : String.valueOf(doctor.get("department"));
-                        String roomId = findBestMatchingRoom(connection, activeRoomDetails, doctorDept, sqlDate, timeSlot, usedRoomSlotKeys, null);
-                        if (roomId == null) {
-                            LOGGER.log(Level.WARNING, "No free matching room for doctor {0} shift {1}", new Object[]{doctorId, timeSlot});
-                            continue;
-                        }
-                        usedRoomSlotKeys.add(sqlDate + "_" + timeSlot + "_" + roomId);
+                        String dateSlotKey = sqlDate + "_" + timeSlot;
+                        int roomIdx = roomAssignedCount.getOrDefault(dateSlotKey, 0);
+                        String roomId = activeRooms.get(roomIdx % activeRooms.size());
+                        roomAssignedCount.put(dateSlotKey, roomIdx + 1);
 
                         try (PreparedStatement insert = connection.prepareStatement(insertSql, java.sql.Statement.RETURN_GENERATED_KEYS)) {
                             insert.setInt(1, doctorId);
@@ -639,8 +586,8 @@ public class AdminAiSchedulingRepository {
                                 new Object[]{createdToday, slotsForDay, sqlDate});
                     }
                 }
-                if (created.isEmpty() && maxSchedules > 0) {
-                    throw new SQLException("Không thể tạo thêm ca trực mới. Tất cả các ca trong khoảng thời gian và chuyên khoa đã chọn đều đã có lịch hoặc không đủ phòng trống.");
+                if (created.size() < maxSchedules) {
+                    throw new SQLException("AI scheduling could not create exact required slot count: " + created.size() + "/" + maxSchedules);
                 }
                 if (!isBalancedScheduleBatch(connection, created)) {
                     throw new SQLException("Fallback schedule is not balanced across doctors");
@@ -1010,14 +957,10 @@ public class AdminAiSchedulingRepository {
         try (Connection connection = DatabaseConnection.getConnection()) {
             connection.setAutoCommit(false);
             try {
-                Set<String> usedRoomSlotKeysInSave = new HashSet<>();
                 for (Map<String, Object> item : list) {
                     int doctorId = ((Number) item.get("doctorId")).intValue();
                     Date workDate = Date.valueOf(String.valueOf(item.get("workDate")));
-                    String timeSlot = scheduleRepository.normalizeTimeSlot(String.valueOf(item.get("timeSlot")));
-                    if (timeSlot == null) {
-                        timeSlot = String.valueOf(item.get("timeSlot"));
-                    }
+                    String timeSlot = String.valueOf(item.get("timeSlot"));
                     int maxPatients = ((Number) item.get("maxPatients")).intValue();
                     String roomId = (String) item.get("roomId");
 
@@ -1032,34 +975,6 @@ public class AdminAiSchedulingRepository {
                             if (rs.next()) {
                                 oldScheduleId = rs.getInt("schedule_id");
                             }
-                        }
-                    }
-
-                    boolean isValidRoom = false;
-                    if (roomId != null && !roomId.trim().isEmpty()) {
-                        String key = workDate + "_" + timeSlot + "_" + roomId.trim();
-                        if (!usedRoomSlotKeysInSave.contains(key) 
-                            && !roomRepository.hasRoomOverlap(connection, roomId.trim(), workDate, timeSlot, oldScheduleId, null)) {
-                            isValidRoom = true;
-                            usedRoomSlotKeysInSave.add(key);
-                            roomId = roomId.trim();
-                        }
-                    }
-
-                    if (!isValidRoom) {
-                        List<Map<String, String>> activeRoomDetails = getActiveDoctorRoomDetails(connection);
-                        String docDept = (String) item.get("department");
-                        if (docDept == null) {
-                            Map<String, Object> docSnap = getDoctorSnapshotById(connection, doctorId);
-                            if (docSnap != null) {
-                                docDept = (String) docSnap.get("department");
-                            }
-                        }
-                        String candidate = findBestMatchingRoom(connection, activeRoomDetails, docDept, workDate, timeSlot, usedRoomSlotKeysInSave, oldScheduleId);
-                        if (candidate != null) {
-                            roomId = candidate;
-                            usedRoomSlotKeysInSave.add(workDate + "_" + timeSlot + "_" + candidate);
-                            isValidRoom = true;
                         }
                     }
 
@@ -1140,77 +1055,6 @@ public class AdminAiSchedulingRepository {
             rooms.add("R103");
         }
         return rooms;
-    }
-
-    private List<Map<String, String>> getActiveDoctorRoomDetails(Connection conn) throws SQLException {
-        List<Map<String, String>> roomList = new ArrayList<>();
-        String sql = "SELECT room_id, room_name FROM Room "
-                   + "WHERE LOWER(status) = 'active' "
-                   + "  AND room_id NOT IN ('R101') "
-                   + "  AND LOWER(room_name) NOT LIKE N'%xét nghiệm%' "
-                   + "  AND LOWER(room_name) NOT LIKE N'%lab%' "
-                   + "  AND LOWER(room_name) NOT LIKE N'%quầy%' "
-                   + "ORDER BY room_id ASC";
-        try (PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                Map<String, String> map = new HashMap<>();
-                map.put("roomId", rs.getString("room_id"));
-                map.put("roomName", rs.getString("room_name"));
-                roomList.add(map);
-            }
-        }
-        if (roomList.isEmpty()) {
-            Map<String, String> r1 = new HashMap<>();
-            r1.put("roomId", "R102"); r1.put("roomName", "Phòng Khám Nội Tiết");
-            roomList.add(r1);
-            Map<String, String> r2 = new HashMap<>();
-            r2.put("roomId", "R103"); r2.put("roomName", "Phòng Khám Tim Mạch");
-            roomList.add(r2);
-        }
-        return roomList;
-    }
-
-    private String findBestMatchingRoom(Connection conn,
-                                        List<Map<String, String>> activeRooms,
-                                        String doctorDepartment,
-                                        Date workDate,
-                                        String timeSlot,
-                                        Set<String> usedRoomSlotKeys,
-                                        Integer excludeScheduleId) throws SQLException {
-        String doctorDeptNorm = normalizeDepartmentForAi(doctorDepartment);
-
-        // Pass 1: Match room name by doctor's specialty
-        for (Map<String, String> room : activeRooms) {
-            String roomId = room.get("roomId");
-            String roomName = room.get("roomName") == null ? "" : room.get("roomName").toLowerCase();
-
-            boolean isSpecialtyMatch = false;
-            if ("Endocrinology".equalsIgnoreCase(doctorDeptNorm)) {
-                isSpecialtyMatch = roomName.contains("nội tiết") || roomName.contains("endocrin");
-            } else if ("Cardiology".equalsIgnoreCase(doctorDeptNorm)) {
-                isSpecialtyMatch = roomName.contains("tim mạch") || roomName.contains("cardio");
-            } else if ("Nephrology".equalsIgnoreCase(doctorDeptNorm)) {
-                isSpecialtyMatch = roomName.contains("thận") || roomName.contains("nephro");
-            } else if ("General".equalsIgnoreCase(doctorDeptNorm)) {
-                isSpecialtyMatch = roomName.contains("tổng quát") || roomName.contains("general");
-            } else if ("Da liễu".equalsIgnoreCase(doctorDeptNorm) || (doctorDepartment != null && doctorDepartment.toLowerCase().contains("da liễu"))) {
-                isSpecialtyMatch = roomName.contains("da liễu") || roomName.contains("dermatol");
-            } else if (doctorDepartment != null && !doctorDepartment.isBlank()) {
-                isSpecialtyMatch = roomName.contains(doctorDepartment.toLowerCase());
-            }
-
-            if (isSpecialtyMatch) {
-                String slotRoomKey = workDate + "_" + timeSlot + "_" + roomId;
-                if (!usedRoomSlotKeys.contains(slotRoomKey)
-                        && !roomRepository.hasRoomOverlap(conn, roomId, workDate, timeSlot, excludeScheduleId, null)) {
-                    return roomId;
-                }
-            }
-        }
-
-        // STRICT ENFORCEMENT: Never assign a room of a different specialty
-        return null;
     }
 }
 

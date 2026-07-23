@@ -60,8 +60,8 @@ public class DoctorLabServlet extends HttpServlet {
                     "       COALESCE((SELECT COUNT(*) FROM Healthy_Record WHERE patient_id = p.patient_id), 0) as record_count " +
                     "FROM Patient p " +
                     "JOIN Invoice i ON p.patient_id = i.patient_id " +
-                    "JOIN Invoice_Detail id ON i.invoice_id = id.invoice_id AND id.lab_status IS NOT NULL " +
-                    "JOIN Medical_Service ms ON ms.service_id = id.service_id AND ms.service_type = 'Lab_Test' " +
+                    "JOIN Invoice_Detail id ON i.invoice_id = id.invoice_id AND id.lab_status IS NOT NULL AND id.service_id IN (1, 2, 3, 4, 5) " +
+                    "JOIN Medical_Service ms ON ms.service_id = id.service_id " +
                     "ORDER BY p.full_name ASC, id.invoice_detail_id DESC";
             try (PreparedStatement stmt = conn.prepareStatement(sqlPatients);
                  ResultSet rs = stmt.executeQuery()) {
