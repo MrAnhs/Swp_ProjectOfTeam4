@@ -284,33 +284,10 @@ async function openEditScheduleModal(scheduleId) {
             });
             if (resp.ok) {
                 bsModal.hide();
-                // Cập nhật giá trị trực tiếp trên dòng của bảng
-                const row = document.querySelector('tr[data-schedule-id="' + payload.scheduleId + '"]');
-                if (row) {
-                    row.querySelector('td:nth-child(4)').textContent = payload.timeSlot;
-                    row.setAttribute('data-max-patients', payload.maxPatients);
-                    const resolvedOnlineQuota = payload.onlineQuota
-                        ? Number(payload.onlineQuota)
-                        : calculateDefaultOnlineQuota(Number(payload.maxPatients || 0));
-                    const reservedSlots = Math.max(0, Number(payload.maxPatients || 0) - resolvedOnlineQuota);
-                    row.setAttribute('data-online-quota', resolvedOnlineQuota);
-                    row.setAttribute('data-reserved-slots', reservedSlots);
-                    row.querySelector('td:nth-child(5) div').textContent = (row.dataset.bookedAppointments || 0) + ' / ' + payload.maxPatients;
-                    const reserveText = row.querySelector('td:nth-child(5) small:nth-of-type(2)');
-                    if (reserveText) reserveText.textContent = 'Dự phòng: ' + reservedSlots + ' slot';
-                    
-                    const onlineQuota = Number(row.dataset.onlineQuota || 0);
-                    const onlineBooked = Number(row.dataset.onlineBookedCount || 0);
-                    const quotaCell = row.querySelector('td:nth-child(6)');
-                    if (quotaCell) {
-                        quotaCell.innerHTML = '<div class="fw-semibold">' + onlineBooked + ' / ' + onlineQuota + '</div>'
-                            + '<small class="text-muted d-block">Slot online</small>'
-                            + getOnlineQuotaBadge(onlineBooked, onlineQuota);
-                    }
-                    const statusCell = row.querySelector('td:nth-child(8)');
-                    if (statusCell) statusCell.innerHTML = '<span class="badge text-bg-' + (payload.status === 'Available' ? 'success' : (payload.status === 'Full' ? 'danger' : 'dark')) + '">' + (payload.status === 'Available' ? '<i class="bi bi-check-circle"></i> Khả dụng' : (payload.status === 'Full' ? '<i class="bi bi-exclamation-circle"></i> Đã đầy' : '<i class="bi bi-x-circle"></i> Đã hủy')) + '</span>';
-                }
-                showTempAlert('Cập nhật ca trực thành công.', 'success');
+                showTempAlert('Cập nhật ca trực thành công. Đang tải lại dữ liệu...', 'success');
+                setTimeout(function () {
+                    window.location.reload();
+                }, 500);
             } else {
                 const alertEl = container.querySelector('#editScheduleAlert');
                 if (alertEl) {
