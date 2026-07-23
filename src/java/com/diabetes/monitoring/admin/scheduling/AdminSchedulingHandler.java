@@ -963,6 +963,7 @@ class AdminAiSchedulingHandler {
             String[] workDates = request.getParameterValues("workDate");
             String[] timeSlots = request.getParameterValues("timeSlot");
             String[] maxPatientsArr = request.getParameterValues("maxPatients");
+            String[] roomIds = request.getParameterValues("roomId");
             String conflictHandling = request.getParameter("conflictHandling");
 
             if (doctorIds == null || workDates == null || timeSlots == null || maxPatientsArr == null
@@ -979,6 +980,9 @@ class AdminAiSchedulingHandler {
                 item.put("workDate", workDates[i]);
                 item.put("timeSlot", timeSlots[i]);
                 item.put("maxPatients", Integer.parseInt(maxPatientsArr[i]));
+                if (roomIds != null && i < roomIds.length && roomIds[i] != null && !roomIds[i].isBlank()) {
+                    item.put("roomId", roomIds[i]);
+                }
                 schedules.add(item);
             }
 

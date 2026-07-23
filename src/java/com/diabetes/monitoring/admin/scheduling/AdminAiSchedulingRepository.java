@@ -35,6 +35,8 @@ public class AdminAiSchedulingRepository {
 
     private final AdminScheduleRepository scheduleRepository =
             new AdminScheduleRepository();
+    private final AdminRoomRepository roomRepository =
+            new AdminRoomRepository();
 
     public List<Map<String, Object>> getDoctorSchedulesByDate(int doctorId, Date workDate) {
         String sql = "SELECT schedule_id, time_slot, status FROM Doctor_Schedule "
@@ -957,12 +959,34 @@ public class AdminAiSchedulingRepository {
         try (Connection connection = DatabaseConnection.getConnection()) {
             connection.setAutoCommit(false);
             try {
+                Map<String, Integer> roomAssignedCount = new HashMap<>();
                 for (Map<String, Object> item : list) {
                     int doctorId = ((Number) item.get("doctorId")).intValue();
                     Date workDate = Date.valueOf(String.valueOf(item.get("workDate")));
-                    String timeSlot = String.valueOf(item.get("timeSlot"));
+                    String timeSlot = scheduleRepository.normalizeTimeSlot(String.valueOf(item.get("timeSlot")));
+                    if (timeSlot == null) {
+                        timeSlot = String.valueOf(item.get("timeSlot"));
+                    }
                     int maxPatients = ((Number) item.get("maxPatients")).intValue();
                     String roomId = (String) item.get("roomId");
+
+                    if (roomId == null || roomId.trim().isEmpty()) {
+                        List<String> activeDoctorRooms = getActiveDoctorRooms(connection);
+                        String dateSlotKey = workDate + "_" + timeSlot;
+                        int roomIdx = roomAssignedCount.getOrDefault(dateSlotKey, 0);
+                        for (int k = 0; k < activeDoctorRooms.size(); k++) {
+                            String candidate = activeDoctorRooms.get((roomIdx + k) % activeDoctorRooms.size());
+                            if (!roomRepository.hasRoomOverlap(connection, candidate, workDate, timeSlot, null, null)) {
+                                roomId = candidate;
+                                roomAssignedCount.put(dateSlotKey, roomIdx + k + 1);
+                                break;
+                            }
+                        }
+                        if (roomId == null || roomId.trim().isEmpty()) {
+                            roomId = activeDoctorRooms.isEmpty() ? "R102" : activeDoctorRooms.get(roomIdx % activeDoctorRooms.size());
+                            roomAssignedCount.put(dateSlotKey, roomIdx + 1);
+                        }
+                    }
 
                     // 1. Kiểm tra ca trực cũ đã tồn tại chưa (chuẩn hóa khoảng trắng trong time_slot)
                     String checkExistSql = "SELECT schedule_id FROM Doctor_Schedule WHERE doctor_id = ? AND work_date = ? AND REPLACE(time_slot, ' ', '') = REPLACE(?, ' ', '') AND status <> 'Cancelled'";

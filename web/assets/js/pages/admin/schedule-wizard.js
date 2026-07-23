@@ -822,6 +822,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 params.append('workDate', item.workDate);
                 params.append('timeSlot', item.timeSlot);
                 params.append('maxPatients', maxPatientsInput.value);
+                params.append('roomId', item.roomId || item.room || '');
             });
 
             setAiScheduleBusy(true);
