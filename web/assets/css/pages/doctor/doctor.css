@@ -1,0 +1,353 @@
+@import '../../components/forms.css';
+
+:root {
+    --doctor-bg: #0B0F19;
+    --doctor-surface: rgba(30, 41, 59, 0.45);
+    --doctor-primary: #2AB5A3;
+    --doctor-primary-dark: #208A7C;
+    --doctor-accent: #00d2d3;
+    --doctor-text: #ffffff;
+    --doctor-muted: #94a3b8;
+    --doctor-border: rgba(255, 255, 255, 0.08);
+    --doctor-sidebar: #0F172A;
+}
+
+body.doctor-app {
+    min-height: 100vh;
+    margin: 0;
+    background: #0B0F19 !important;
+    color: #e2e8f0 !important;
+    font-family: 'Inter', "Segoe UI", system-ui, sans-serif;
+}
+
+.doctor-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: 264px;
+    padding: 26px 20px;
+    background: #0F172A !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
+    color: #fff;
+    z-index: 1030;
+}
+
+.doctor-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #ffffff !important;
+}
+
+.doctor-brand-icon {
+    display: grid;
+    width: 42px;
+    height: 42px;
+    place-items: center;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #2AB5A3, #208A7C) !important;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(42, 181, 163, 0.3);
+}
+
+.doctor-nav a {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    margin-bottom: 7px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    color: #94a3b8 !important;
+    text-decoration: none;
+    transition: .2s ease;
+}
+
+.doctor-nav a:hover,
+.doctor-nav a.active {
+    color: #2AB5A3 !important;
+    background: rgba(42, 181, 163, 0.12) !important;
+    font-weight: 700;
+    transform: translateX(2px);
+}
+
+.doctor-main {
+    margin-left: 264px;
+    padding: 30px;
+    background-color: #0B0F19 !important;
+}
+
+.doctor-topbar,
+.doctor-card,
+.doctor-stat {
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 18px;
+    background: rgba(30, 41, 59, 0.45) !important;
+    backdrop-filter: blur(12px) !important;
+    color: #ffffff !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2) !important;
+}
+
+.doctor-topbar,
+.doctor-card {
+    padding: 24px;
+}
+
+.doctor-stat {
+    height: 100%;
+    padding: 20px;
+}
+
+.doctor-stat-icon {
+    display: grid;
+    width: 46px;
+    height: 46px;
+    place-items: center;
+    border-radius: 14px;
+    font-size: 1.25rem;
+    background: rgba(42, 181, 163, 0.15) !important;
+    color: #2AB5A3 !important;
+}
+
+.doctor-muted { color: #94a3b8 !important; }
+.doctor-title { color: #ffffff !important; font-weight: 800; }
+.doctor-section-title { font-weight: 800; color: #ffffff !important; }
+
+.doctor-table {
+    --bs-table-bg: transparent;
+    --bs-table-color: #e2e8f0;
+    --bs-table-border-color: rgba(255, 255, 255, 0.06);
+}
+
+.doctor-table thead th {
+    padding-block: 14px;
+    color: #94a3b8 !important;
+    font-size: .76rem;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.doctor-table tbody td { padding-block: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important; color: #e2e8f0 !important; }
+.doctor-table tbody tr:hover { background: rgba(30, 41, 59, 0.7) !important; }
+
+.doctor-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: .78rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.badge-assigned { background: rgba(148, 163, 184, 0.2); color: #cbd5e1; }
+.badge-accepted { background: rgba(42, 181, 163, 0.2); color: #2AB5A3; }
+.badge-ai { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+.badge-editing, .badge-requested { background: rgba(234, 179, 8, 0.2); color: #facc15; }
+.badge-processing { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+.badge-completed { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+.badge-danger { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+
+.doctor-filter {
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 12px;
+    background: rgba(15, 23, 42, 0.6) !important;
+    color: #ffffff !important;
+}
+
+.doctor-filter option {
+    background-color: #0F172A !important;
+    color: #ffffff !important;
+}
+
+.doctor-empty {
+    padding: 48px 20px;
+    border: 1px dashed rgba(255, 255, 255, 0.15) !important;
+    border-radius: 16px;
+    text-align: center;
+    color: #94a3b8 !important;
+    background: rgba(15, 23, 42, 0.4) !important;
+}
+
+.search-info-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 88px;
+    height: 100%;
+    padding: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 15px;
+    background: rgba(15, 23, 42, 0.4) !important;
+    color: #ffffff !important;
+}
+
+.search-info-icon {
+    display: grid;
+    flex: 0 0 auto;
+    width: 42px;
+    height: 42px;
+    place-items: center;
+    border-radius: 13px;
+    background: rgba(42, 181, 163, 0.2) !important;
+    color: #2AB5A3 !important;
+    font-size: 1.1rem;
+}
+
+.btn-doctor {
+    border: none !important;
+    background: linear-gradient(135deg, #2AB5A3, #208A7C) !important;
+    color: #fff !important;
+    box-shadow: 0 4px 12px rgba(42, 181, 163, 0.25) !important;
+}
+
+.btn-doctor:hover {
+    transform: translateY(-1px);
+}
+
+.lab-service-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 76px;
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 14px;
+    background: rgba(15, 23, 42, 0.5) !important;
+    color: #ffffff !important;
+    cursor: pointer;
+    transition: border-color .2s, background-color .2s, transform .2s;
+}
+
+.lab-service-option:hover {
+    border-color: #2AB5A3 !important;
+    background: rgba(42, 181, 163, 0.15) !important;
+    transform: translateY(-1px);
+}
+
+.lab-service-option.is-selected {
+    border-color: #2AB5A3 !important;
+    background: rgba(42, 181, 163, 0.2) !important;
+    box-shadow: 0 0 0 2px rgba(42, 181, 163, .2);
+}
+
+.lab-service-option input {
+    flex: 0 0 auto;
+    width: 1.15rem;
+    height: 1.15rem;
+}
+
+.lab-service-option span {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.lab-service-option small {
+    color: #94a3b8 !important;
+}
+
+@media (max-width: 991px) {
+    .doctor-sidebar {
+        position: static;
+        width: 100%;
+        min-height: auto;
+    }
+    .doctor-main {
+        margin-left: 0;
+        padding: 18px;
+    }
+    .doctor-nav {
+        display: flex;
+        gap: 6px;
+        overflow-x: auto;
+    }
+    .doctor-nav a {
+        flex: 0 0 auto;
+        margin: 0;
+    }
+}
+
+/* Doctor Profile Card in Sidebar */
+.doctor-profile-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    margin-bottom: 24px;
+    transition: all 0.2s ease;
+}
+
+.doctor-profile-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(42, 181, 163, 0.2);
+}
+
+.doctor-avatar {
+    display: grid;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2AB5A3, #208A7C) !important;
+    color: #ffffff !important;
+    font-weight: 700;
+    font-size: 1.05rem;
+    box-shadow: 0 4px 10px rgba(42, 181, 163, 0.2);
+}
+
+.doctor-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.doctor-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 2px;
+}
+
+.doctor-role-tag {
+    font-size: 0.72rem;
+    color: #2AB5A3 !important;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.doctor-edit-profile-btn {
+    display: grid;
+    width: 30px;
+    height: 30px;
+    place-items: center;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #94a3b8 !important;
+    text-decoration: none !important;
+    transition: all 0.2s ease;
+}
+
+.doctor-edit-profile-btn:hover {
+    background: #2AB5A3 !important;
+    color: #ffffff !important;
+    transform: scale(1.05);
+}
+
+@media (max-width: 991px) {
+    .doctor-profile-card {
+        margin-bottom: 16px;
+        max-width: 350px;
+    }
+}

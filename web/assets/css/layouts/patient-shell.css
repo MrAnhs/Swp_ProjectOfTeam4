@@ -1,0 +1,304 @@
+/* ============================================================
+   patient-shell.css — LIGHT THEME (DiabetesCare)
+   ============================================================ */
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    color-scheme: light !important;
+}
+
+body {
+    margin: 0;
+    background-color: #f5f7fa !important;
+    color: #1a202c !important;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar-modern {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 1000;
+    display: flex;
+    width: var(--sidebar-width, 264px);
+    flex-direction: column;
+    background: #ffffff !important;
+    border-right: 1px solid #e8ecf0 !important;
+    color: #1a202c !important;
+}
+
+/* ===== SIDEBAR HEADER / BRAND ===== */
+.sidebar-header {
+    padding: 1.1rem 1.2rem 0.8rem;
+    border-bottom: 1px solid #f0f4f8 !important;
+}
+
+.brand-dashboard {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #1a202c !important;
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.brand-icon-dash {
+    display: grid;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    place-items: center;
+    background: linear-gradient(135deg, #00a67e, #007f61) !important;
+    border-radius: 10px;
+    color: #fff !important;
+    font-size: 1rem;
+    box-shadow: 0 3px 10px rgba(0, 127, 97, 0.25);
+}
+
+/* ===== USER PROFILE CARD ===== */
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0.75rem 0.9rem;
+    padding: 0.75rem 0.9rem;
+    background: #f8fafb !important;
+    border: 1px solid #e8ecf0 !important;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.user-profile:hover {
+    border-color: #b2dfdb !important;
+    box-shadow: 0 4px 12px rgba(0, 127, 97, 0.1) !important;
+}
+
+.user-avatar {
+    display: grid;
+    width: 38px;
+    height: 38px;
+    flex: 0 0 auto;
+    place-items: center;
+    background: linear-gradient(135deg, #00a67e, #007f61) !important;
+    border-radius: 10px !important;
+    color: #ffffff !important;
+    font-weight: 800;
+    font-size: 1.1rem;
+    box-shadow: 0 2px 8px rgba(0, 127, 97, 0.3);
+}
+
+.user-info {
+    min-width: 0;
+    flex: 1;
+}
+
+/* ===== CRITICAL FIX: Doctor name must be dark and visible ===== */
+.user-info h6,
+.user-info .user-doctor-name {
+    color: #1a202c !important;
+    font-weight: 700 !important;
+    display: block !important;
+    font-size: 0.88rem !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0 0 3px !important;
+    line-height: 1.3;
+}
+
+.user-info small,
+.user-info .user-role-badge {
+    display: block;
+    overflow: hidden;
+    margin: 0;
+    color: #64748b !important;
+    font-size: 0.73rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ===== SIDEBAR NAVIGATION ===== */
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 0.5rem 0.75rem;
+    flex: 1;
+}
+
+.nav-item-dash,
+.btn-logout {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.65rem 0.9rem;
+    border-radius: 10px;
+    color: #4a5568 !important;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.18s ease;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.nav-item-dash i {
+    font-size: 1rem;
+    flex-shrink: 0;
+    color: #64748b;
+    transition: color 0.18s ease;
+}
+
+.nav-item-dash:hover {
+    background: #f0faf7 !important;
+    color: #007f61 !important;
+}
+
+.nav-item-dash:hover i {
+    color: #007f61 !important;
+}
+
+.nav-item-dash.active {
+    background: #e6f7f2 !important;
+    color: #007f61 !important;
+    font-weight: 700 !important;
+    border-left: 3px solid #007f61 !important;
+    padding-left: calc(0.9rem - 3px);
+}
+
+.nav-item-dash.active i {
+    color: #007f61 !important;
+}
+
+/* ===== NAV POSITION ===== */
+.nav-item-dash { position: relative; }
+
+/* ===== NOTIFICATION BADGE ===== */
+.sidebar-notification-badge {
+    min-width: 20px;
+    height: 20px;
+    margin-left: auto;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: #ef4444;
+    color: #fff !important;
+    font-size: .7rem;
+    font-weight: 700;
+    line-height: 20px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.sidebar-notification-badge.is-hidden { display: none; }
+
+/* ===== SIDEBAR SECTION LABEL ===== */
+.sidebar-section-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #9eb5b0 !important;
+    padding: 0.5rem 1rem 0.25rem;
+    margin-top: 0.25rem;
+}
+
+/* ===== SIDEBAR FOOTER / LOGOUT ===== */
+.sidebar-footer {
+    margin-top: auto;
+    padding: 0.75rem;
+    border-top: 1px solid #f0f4f8 !important;
+}
+
+.btn-logout {
+    color: #dc2626 !important;
+    font-weight: 600;
+}
+
+.btn-logout:hover {
+    background: #fff5f5 !important;
+    color: #b91c1c !important;
+}
+
+/* ===== MAIN CONTENT ===== */
+.main-content-dash {
+    min-height: 100vh;
+    margin-left: var(--sidebar-width, 264px);
+    padding: 1.75rem 2rem;
+    background-color: #f5f7fa !important;
+    color: #1a202c !important;
+}
+
+/* ===== PAGE HEADER ===== */
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.page-header h1 {
+    margin: 0 0 0.35rem;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1a202c !important;
+}
+
+.page-header p {
+    margin: 0;
+    color: #64748b !important;
+}
+
+.page-eyebrow {
+    margin-bottom: 0.35rem !important;
+    color: #007f61 !important;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 900px) {
+    .sidebar-modern {
+        width: 72px;
+    }
+
+    .sidebar-modern .brand-text,
+    .sidebar-modern .user-info,
+    .sidebar-modern .nav-text,
+    .sidebar-modern .sidebar-section-label {
+        display: none;
+    }
+
+    .user-profile,
+    .nav-item-dash,
+    .btn-logout {
+        justify-content: center;
+        padding: 0.65rem;
+    }
+
+    .sidebar-notification-badge {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        min-width: 16px;
+        height: 16px;
+        font-size: 0.6rem;
+        line-height: 16px;
+    }
+
+    .main-content-dash {
+        margin-left: 72px;
+        padding: 1rem;
+    }
+}

@@ -1,0 +1,45 @@
+.role-shell {
+    min-height: 100vh;
+    background: var(--color-background);
+}
+
+.role-shell__sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: var(--sidebar-width);
+    overflow-y: auto;
+    background: #fff;
+    border-right: 1px solid var(--color-border);
+}
+
+.role-shell__main {
+    min-height: 100vh;
+    margin-left: var(--sidebar-width);
+}
+
+.role-shell__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background: #fff;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.role-shell__content {
+    padding: 1.5rem;
+}
+
+@media (max-width: 900px) {
+    .role-shell__sidebar {
+        transform: translateX(-100%);
+    }
+
+    .role-shell__sidebar.is-open {
+        transform: translateX(0);
+    }
+
+    .role-shell__main {
+        margin-left: 0;
+    }
+}
