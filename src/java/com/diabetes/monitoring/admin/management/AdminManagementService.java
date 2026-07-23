@@ -35,10 +35,13 @@ public class AdminManagementService {
     }
 
     public boolean createAccount(String fullName, String email, String passwordHash, String role, String status) {
-        return new AdminAccountService().createAccount(fullName, email, passwordHash, role, status);
+        return new AdminAccountService().createAccount(fullName, email, passwordHash, role, status, null);
     }
     public boolean createAccount(String fullName, String email, String passwordHash, String role, String status, User currentUser) {
-        return createAccount(fullName, email, passwordHash, role, status);
+        return createAccount(fullName, email, passwordHash, role, status, null, currentUser);
+    }
+    public boolean createAccount(String fullName, String email, String passwordHash, String role, String status, String specialization, User currentUser) {
+        return new AdminAccountService().createAccount(fullName, email, passwordHash, role, status, specialization);
     }
 
     public boolean updateAccountRole(int accountId, String role) {
@@ -169,11 +172,15 @@ class AdminAccountService {
     }
 
     public boolean createAccount(String fullName, String email, String passwordHash, String role, String status) {
+        return createAccount(fullName, email, passwordHash, role, status, null);
+    }
+
+    public boolean createAccount(String fullName, String email, String passwordHash, String role, String status, String specialization) {
         validateAccountInput(fullName, email, null);
         if (isAccountEmailExists(email)) {
             throw new IllegalArgumentException("Email đã tồn tại, không thể tạo tài khoản trùng.");
         }
-        return accountRepository.createAccount(fullName, email, passwordHash, role, status);
+        return accountRepository.createAccount(fullName, email, passwordHash, role, status, specialization);
     }
 
     public boolean updateAccountRole(int accountId, String role) {

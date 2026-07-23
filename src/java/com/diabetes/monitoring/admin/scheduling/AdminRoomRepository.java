@@ -38,6 +38,17 @@ public class AdminRoomRepository {
         return rawRooms;
     }
 
+    public List<Map<String, Object>> getActiveDoctorRooms() {
+        List<Map<String, Object>> docRooms = new ArrayList<>();
+        for (Map<String, Object> room : getActiveRooms()) {
+            String id = String.valueOf(room.getOrDefault("roomId", ""));
+            if (!"R101".equalsIgnoreCase(id) && !looksLikeLabRoom(room) && !looksLikeReceptionRoom(room)) {
+                docRooms.add(room);
+            }
+        }
+        return docRooms;
+    }
+
     public List<Map<String, Object>> getActiveLabRooms() {
         List<Map<String, Object>> labRooms = new ArrayList<>();
         for (Map<String, Object> room : getActiveRooms()) {
@@ -170,6 +181,17 @@ public class AdminRoomRepository {
                 || normalized.contains("laboratory")
                 || normalized.contains("phong xn")
                 || normalized.matches(".*\\bxn\\b.*");
+    }
+
+    private boolean looksLikeReceptionRoom(Map<String, Object> room) {
+        String text = String.valueOf(room.getOrDefault("roomId", ""))
+                + " " + String.valueOf(room.getOrDefault("roomNumber", ""))
+                + " " + String.valueOf(room.getOrDefault("roomName", ""))
+                + " " + String.valueOf(room.getOrDefault("location", ""));
+        String normalized = normalizeSearchText(text);
+        return normalized.contains("quay")
+                || normalized.contains("reception")
+                || "r101".equalsIgnoreCase(String.valueOf(room.getOrDefault("roomId", "")));
     }
 
     private String normalizeSearchText(String value) {

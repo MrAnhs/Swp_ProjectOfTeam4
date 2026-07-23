@@ -137,6 +137,10 @@ public class AdminAccountRepository {
     }
 
     public boolean createAccount(String fullName, String email, String passwordHash, String role, String status) {
+        return createAccount(fullName, email, passwordHash, role, status, null);
+    }
+
+    public boolean createAccount(String fullName, String email, String passwordHash, String role, String status, String specialization) {
         String normalizedRole = normalizeRole(role);
         String normalizedStatus = normalizeAccountStatus(status);
 
@@ -149,17 +153,43 @@ public class AdminAccountRepository {
         }
 
         String sql = "INSERT INTO Account (full_name, email, password_hash, role, status) VALUES (?, ?, ?, ?, ?)";
-        try (Connection connection = DatabaseConnection.getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql, java.sql.Statement.RETURN_GENERATED_KEYS)) {
             statement.setString(1, fullName);
             statement.setString(2, email);
             statement.setString(3, passwordHash);
             statement.setString(4, normalizedRole);
             statement.setString(5, normalizedStatus);
-            return statement.executeUpdate() > 0;
+            int affected = statement.executeUpdate();
+            if (affected > 0) {
+                int newAccountId = -1;
+                try (ResultSet rs = statement.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        newAccountId = rs.getInt(1);
+                    }
+                }
+
+                if ("Doctor".equalsIgnoreCase(normalizedRole) || "doctor_lab".equalsIgnoreCase(normalizedRole)) {
+                    String spec = (specialization != null && !specialization.isBlank()) 
+                                    ? specialization.trim() 
+                                    : ("doctor_lab".equalsIgnoreCase(normalizedRole) ? "Xét nghiệm" : "Nội tiết");
+                    String sqlDoctor = "INSERT INTO Doctor (full_name, email, department, account_id) VALUES (?, ?, ?, ?)";
+                    try (PreparedStatement psDoc = connection.prepareStatement(sqlDoctor)) {
+                        psDoc.setString(1, fullName);
+                        psDoc.setString(2, email);
+                        psDoc.setString(3, spec);
+                        psDoc.setInt(4, newAccountId);
+                        psDoc.executeUpdate();
+                    } catch (SQLException exDoc) {
+                        LOGGER.log(Level.WARNING, "Failed to insert Doctor row for new account: " + newAccountId, exDoc);
+                    }
+                }
+                return true;
+            }
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Failed to create account", e);
-            return false;
         }
+        return false;
     }
 
     public boolean isAccountEmailExists(String email) {

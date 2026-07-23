@@ -41,7 +41,12 @@ body {
     max-width: 1480px;
 }
 
-h1, h2, h3, h4, h5, h6,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
 .card-title,
 .modal-title,
 .fw-semibold {
@@ -49,7 +54,8 @@ h1, h2, h3, h4, h5, h6,
     letter-spacing: -0.015em;
 }
 
-h2, h3 {
+h2,
+h3 {
     font-weight: 750;
 }
 
@@ -63,8 +69,8 @@ h2, h3 {
 }
 
 .admin-page-header,
-.container > .d-flex.justify-content-between.align-items-center.mb-3,
-.container > .d-flex.justify-content-between.align-items-center.mb-4 {
+.container>.d-flex.justify-content-between.align-items-center.mb-3,
+.container>.d-flex.justify-content-between.align-items-center.mb-4 {
     background: rgba(255, 255, 255, 0.82);
     border: 1px solid var(--admin-border);
     border-radius: var(--admin-radius);
@@ -181,7 +187,7 @@ h2, h3 {
     vertical-align: middle;
 }
 
-.table > :not(caption) > * > * {
+.table> :not(caption)>*>* {
     padding: 0.85rem 0.95rem;
     border-bottom-color: var(--admin-border);
 }
@@ -197,7 +203,7 @@ h2, h3 {
     white-space: nowrap;
 }
 
-.table-hover > tbody > tr:hover > * {
+.table-hover>tbody>tr:hover>* {
     background-color: #f8fbff;
 }
 
@@ -336,6 +342,46 @@ canvas {
 
 .admin-dark-menu .btn-close {
     opacity: 0.75;
+}
+
+.schedule-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    min-height: 200px;
+    padding: 1.8rem 1rem;
+    color: #64748b;
+    text-align: center;
+    width: 100%;
+    margin: 0 auto;
+    grid-column: 1 / -1;
+}
+
+.schedule-empty-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f5f9;
+    color: #64748b;
+    margin-bottom: 0.25rem;
+}
+
+.schedule-empty-title {
+    font-weight: 700;
+    color: #1f2a44;
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+}
+
+.schedule-empty-description {
+    margin: 0;
+    font-size: 0.84rem;
+    color: #64748b;
 }
 
 .admin-dark-menu-brand {
@@ -537,19 +583,136 @@ a:hover {
     }
 
     .admin-page-header,
-    .container > .d-flex.justify-content-between.align-items-center.mb-3,
-    .container > .d-flex.justify-content-between.align-items-center.mb-4 {
+    .container>.d-flex.justify-content-between.align-items-center.mb-3,
+    .container>.d-flex.justify-content-between.align-items-center.mb-4 {
         align-items: flex-start !important;
         flex-direction: column;
         gap: 0.85rem;
     }
 
-    .container > .d-flex.justify-content-between.align-items-center.mb-3 > .d-flex,
-    .container > .d-flex.justify-content-between.align-items-center.mb-4 > .d-flex {
+    .container>.d-flex.justify-content-between.align-items-center.mb-3>.d-flex,
+    .container>.d-flex.justify-content-between.align-items-center.mb-4>.d-flex {
         flex-wrap: wrap;
     }
 
-    .table > :not(caption) > * > * {
+    .table> :not(caption)>*>* {
         padding: 0.7rem;
     }
+}
+/* ==========================================
+ * CUSTOM SCHEDULE MANAGEMENT PAGE STYLES
+ * ========================================== */
+.admin-page-header,
+.schedule-page-header,
+.admin-page-header.schedule-page-header {
+    overflow: visible !important;
+    position: relative !important;
+    z-index: 1000 !important;
+    backdrop-filter: none !important;
+}
+
+.custom-dropdown-container {
+    position: relative;
+    display: inline-block;
+    overflow: visible !important;
+}
+
+.custom-dropdown-menu-list {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background: #ffffff;
+    min-width: 250px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25) !important;
+    padding: 6px 0;
+    z-index: 99999 !important;
+    border: 1px solid #e2e8f0;
+    overflow: visible !important;
+}
+
+.custom-dropdown-menu-list.show {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.custom-dropdown-menu-list .dropdown-item {
+    display: flex !important;
+    align-items: center;
+    visibility: visible !important;
+    opacity: 1 !important;
+    padding: 10px 16px !important;
+    font-size: 0.9rem;
+    color: #1f2937;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.custom-dropdown-menu-list .dropdown-item:hover {
+    background-color: #f1f5f9;
+    color: #7c3aed;
+}
+
+/* DatePicker width fix for date & week picker input */
+#filterWeekPickerGroup {
+    flex-wrap: nowrap !important;
+    display: flex !important;
+}
+
+#filterWeekPickerGroup .btn {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+    white-space: nowrap !important;
+    flex: 0 0 auto !important;
+}
+
+#unifiedWeekPicker,
+#unifiedDatePicker,
+input[type="date"].form-control {
+    min-width: 120px !important;
+    padding-left: 4px !important;
+    padding-right: 2px !important;
+    font-size: 0.86rem !important;
+}
+
+/* Detailed List 1-Click Role Switcher */
+#detailedListRoleSwitch .btn-group .btn {
+    border: none !important;
+    transition: all 0.2s ease-in-out;
+}
+
+#detailedListRoleSwitch .btn-group .btn.active {
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.22) !important;
+}
+
+/* Hiệu ứng khi hover vào ô trống trong lịch tuần */
+.cal-cell {
+    position: relative;
+    transition: background-color 0.18s ease;
+}
+
+.cal-cell:hover {
+    background-color: #f1f5f9 !important;
+    cursor: pointer;
+}
+
+.cal-cell:empty:hover::after,
+.cal-cell:hover:empty::after {
+    content: "+ Tạo ca";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.78rem;
+    color: #7c3aed;
+    font-weight: 700;
+    opacity: 0.85;
+    background: #ffffff;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px dashed #7c3aed;
+    box-shadow: 0 4px 10px rgba(124, 58, 237, 0.15);
+    pointer-events: none;
 }

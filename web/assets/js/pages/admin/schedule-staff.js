@@ -88,12 +88,12 @@ async function openStaffScheduleDetailModal(staffScheduleId) {
         if (!resp.ok) throw new Error('HTTP ' + resp.status);
         const data = await resp.json();
         if (!data || !data.schedule) throw new Error('Không tìm thấy lịch trực');
-        
+
         const schedule = data.schedule;
         const cfg = getStaffRoleConfig(schedule.staffType);
         const roomLine = cfg.isLab ? '<div class="col-md-6"><div class="text-muted small">Phòng xét nghiệm</div><div class="fw-semibold">' + escapeHtml(schedule.roomName || '-') + '</div></div>'
             + '<div class="col-md-6"><div class="text-muted small">Số phòng</div><div class="fw-semibold">' + escapeHtml(schedule.roomNumber || schedule.roomId || '-') + '</div></div>' : '';
-        
+
         container.innerHTML = '<div class="modal-dialog modal-dialog-centered"><div class="modal-content">'
             + '<div class="modal-header"><h5 class="modal-title">Chi tiết lịch trực ' + cfg.title + '</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>'
             + '<div class="modal-body"><div class="row g-3">'
@@ -124,7 +124,7 @@ async function openEditStaffScheduleModal(staffScheduleId) {
         if (!resp.ok) throw new Error('HTTP ' + resp.status);
         const data = await resp.json();
         if (!data || !data.schedule) throw new Error('Không tìm thấy lịch trực');
-        
+
         const schedule = data.schedule;
         const cfg = getStaffRoleConfig(schedule.staffType);
         const finalStatus = isFinalStaffStatus(schedule.status);
@@ -132,37 +132,37 @@ async function openEditStaffScheduleModal(staffScheduleId) {
         const startTime = timeParts[0] || '';
         const endTime = timeParts[1] || '';
         const labGroups = ['Huyết học', 'Sinh hóa', 'Miễn dịch', 'Vi sinh', 'Nước tiểu', 'Tổng quát'];
-        
+
         if (cfg.isLab && schedule.department && !labGroups.includes(schedule.department)) {
             labGroups.push(schedule.department);
         }
-        
+
         const staffOptions = (data.staff || []).map(function (item) {
             const id = item.accountId || item.id || item.staffId || '';
             const selected = String(id) === String(schedule.accountId) ? ' selected' : '';
             const dept = item.department ? ' - ' + escapeHtml(item.department) : '';
             return '<option value="' + escapeHtml(id) + '"' + selected + '>' + escapeHtml(item.fullName || item.staffName || item.email || id) + dept + '</option>';
         }).join('');
-        
+
         const roomOptions = (data.rooms || []).map(function (room) {
             const roomId = room.roomId || room.roomNumber || '';
             const selected = String(roomId) === String(schedule.roomId || '') ? ' selected' : '';
             const name = room.roomName ? ' - ' + escapeHtml(room.roomName) : '';
             return '<option value="' + escapeHtml(roomId) + '"' + selected + '>' + escapeHtml(roomId) + name + '</option>';
         }).join('');
-        
+
         const timeControls = cfg.isLab
             ? '<input type="hidden" name="timeSlot" data-lab-time-slot value="' + escapeHtml(schedule.timeSlot || '') + '">'
             + '<div class="col-md-6"><label class="form-label">Giờ bắt đầu</label><input type="time" class="form-control" name="startTime" value="' + escapeHtml(startTime) + '" required ' + (finalStatus ? 'disabled' : '') + '><div class="invalid-feedback">Vui lòng chọn giờ bắt đầu.</div></div>'
             + '<div class="col-md-6"><label class="form-label">Giờ kết thúc</label><input type="time" class="form-control" name="endTime" value="' + escapeHtml(endTime) + '" required ' + (finalStatus ? 'disabled' : '') + '><div class="invalid-feedback">Giờ kết thúc phải sau giờ bắt đầu.</div></div>'
             : '<div class="col-md-6"><label class="form-label">Khung giờ</label><input type="text" class="form-control" name="timeSlot" value="' + escapeHtml(schedule.timeSlot || '') + '" placeholder="07:00-11:00" pattern="\\d{2}:\\d{2}-\\d{2}:\\d{2}" required ' + (finalStatus ? 'disabled' : '') + '></div>';
-        
+
         const departmentControl = '<input type="hidden" name="department" value="' + escapeHtml(schedule.department || 'Xét nghiệm') + '">';
         const areaControl = '<input type="hidden" name="workArea" value="' + escapeHtml(schedule.workArea || '') + '">';
         const roomControl = cfg.isLab
             ? '<div class="col-md-6"><label class="form-label">Phòng xét nghiệm</label><select class="form-select" name="roomId" required ' + (finalStatus ? 'disabled' : '') + '><option value="">-- Chọn phòng xét nghiệm --</option>' + roomOptions + '</select><div class="invalid-feedback">Vui lòng chọn phòng xét nghiệm.</div></div>'
             : '';
-            
+
         container.innerHTML = '<div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content">'
             + '<form method="post" action="' + adminContextPath + '/admin" class="lab-schedule-form" novalidate>'
             + '<div class="modal-header"><h5 class="modal-title">Chỉnh sửa lịch trực ' + cfg.title + '</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>'
@@ -179,7 +179,7 @@ async function openEditStaffScheduleModal(staffScheduleId) {
             + '<div class="col-md-6"><label class="form-label">Trạng thái</label><select class="form-select" name="status" ' + (finalStatus ? 'disabled' : '') + '><option value="Scheduled"' + (schedule.status === 'Scheduled' ? ' selected' : '') + '>Đã xếp lịch</option><option value="Cancelled"' + (schedule.status === 'Cancelled' ? ' selected' : '') + '>Đã hủy</option></select></div>'
             + '</div></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>' + (finalStatus ? '' : '<button type="submit" class="btn btn-primary">Lưu thay đổi</button>') + '</div>'
             + '</form></div></div>';
-            
+
         attachLabScheduleValidation(container.querySelector('form'));
     } catch (err) {
         container.innerHTML = '<div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Chỉnh sửa lịch trực</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body text-danger">Không tải được dữ liệu lịch trực.</div></div></div>';
@@ -201,14 +201,14 @@ function attachLabScheduleValidation(form) {
     if (!form || form.dataset.labValidationBound === 'true') return;
     form.dataset.labValidationBound = 'true';
     const today = new Date().toISOString().slice(0, 10);
-    
+
     const setInvalid = function (field, message) {
         if (!field) return;
         field.setCustomValidity(message || '');
         const feedback = field.parentElement ? field.parentElement.querySelector('.invalid-feedback') : null;
         if (feedback && message) feedback.textContent = message;
     };
-    
+
     const validate = function () {
         if (form.staffType && form.staffType.value !== 'doctor_lab') return true;
         let ok = true;
@@ -216,12 +216,12 @@ function attachLabScheduleValidation(form) {
         const start = form.startTime;
         const end = form.endTime;
         const workload = form.maxWorkload;
-        
+
         setInvalid(workDate, '');
         setInvalid(start, '');
         setInvalid(end, '');
         setInvalid(workload, '');
-        
+
         if (workDate && workDate.value && workDate.value < today) {
             setInvalid(workDate, 'Ngày trực không được ở quá khứ.');
             ok = false;
@@ -258,14 +258,14 @@ function attachLabScheduleValidation(form) {
             return;
         }
         e.preventDefault();
-        
+
         const payload = new URLSearchParams();
         Array.from(form.elements).forEach(el => {
             if (el.name && !el.disabled) {
                 payload.set(el.name, el.value);
             }
         });
-        
+
         try {
             const resp = await fetch(form.action, {
                 method: 'POST',
@@ -274,7 +274,7 @@ function attachLabScheduleValidation(form) {
             });
             const text = await resp.text();
             let json = null;
-            try { json = JSON.parse(text); } catch (err) {}
+            try { json = JSON.parse(text); } catch (err) { }
             if (json && json.success) {
                 const modalEl = form.closest('.modal');
                 if (modalEl) {

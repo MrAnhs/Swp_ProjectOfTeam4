@@ -598,8 +598,14 @@ public class AdminStaffScheduleRepository {
         params.add(endDate);
 
         if (roleFilter != null && !roleFilter.trim().isEmpty() && !"all".equalsIgnoreCase(roleFilter)) {
+            String targetRole = roleFilter.trim().toLowerCase();
+            if ("receptionist".equals(targetRole)) {
+                targetRole = "reception";
+            } else if ("doctor_lab".equals(targetRole)) {
+                targetRole = "lab";
+            }
             sql += " AND LOWER(cal.role) = ?";
-            params.add(roleFilter.trim().toLowerCase());
+            params.add(targetRole);
         }
         if (roomFilter != null && !roomFilter.trim().isEmpty() && !"all".equalsIgnoreCase(roomFilter)) {
             sql += " AND (CAST(cal.room_id AS VARCHAR) = ? OR cal.room LIKE ?)";
@@ -648,16 +654,19 @@ public class AdminStaffScheduleRepository {
 
         for (Map<String, Object> item : list) {
             String date = (String) item.get("date");
-            String start = (String) item.get("start");
+            String timeSlot = (String) item.get("timeSlot");
+            if (timeSlot == null || timeSlot.trim().isEmpty()) {
+                timeSlot = (String) item.get("start");
+            }
             Integer accountId = (Integer) item.get("accountId");
             Object roomId = item.get("roomId");
 
             if (accountId != null) {
-                String key = date + "_" + start + "_ACC_" + accountId;
+                String key = date + "_" + timeSlot.trim() + "_ACC_" + accountId;
                 staffTimeMap.computeIfAbsent(key, k -> new ArrayList<>()).add(item);
             }
             if (roomId != null && !String.valueOf(roomId).trim().isEmpty()) {
-                String key = date + "_" + start + "_ROOM_" + roomId;
+                String key = date + "_" + timeSlot.trim() + "_ROOM_" + roomId;
                 roomTimeMap.computeIfAbsent(key, k -> new ArrayList<>()).add(item);
             }
         }
@@ -667,7 +676,7 @@ public class AdminStaffScheduleRepository {
                 for (Map<String, Object> item : group) {
                     item.put("conflict", true);
                     String msg = (String) item.get("conflictMessage");
-                    msg = (msg == null || msg.isEmpty()) ? "⚠ Nhân viên " + item.get("staff") + " bị xếp trùng 2 ca cùng thời gian (" + item.get("date") + " " + item.get("start") + ")" : msg;
+                    msg = (msg == null || msg.isEmpty()) ? "⚠ Nhân viên " + item.get("staff") + " bị xếp trùng 2 ca cùng thời gian (" + item.get("date") + " " + item.get("timeSlot") + ")" : msg;
                     item.put("conflictMessage", msg);
                 }
             }
@@ -678,10 +687,115 @@ public class AdminStaffScheduleRepository {
                 for (Map<String, Object> item : group) {
                     item.put("conflict", true);
                     String msg = (String) item.get("conflictMessage");
-                    msg = (msg == null || msg.isEmpty()) ? "⚠ Phòng " + item.get("room") + " bị xếp trùng 2 ca cùng lúc (" + item.get("date") + " " + item.get("start") + ")" : msg + " | ⚠ Trùng phòng khám";
+                    msg = (msg == null || msg.isEmpty()) ? "⚠ Phòng " + item.get("room") + " bị xếp trùng 2 ca cùng lúc (" + item.get("date") + " " + item.get("timeSlot") + ")" : msg + " | ⚠ Trùng phòng khám";
                     item.put("conflictMessage", msg);
                 }
             }
+        }
+    }
+
+    public boolean deleteDoctorSchedule(int id) {
+        String sql = "DELETE FROM Doctor_Schedule WHERE schedule_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to delete doctor schedule", e);
+            return false;
+        }
+    }
+
+    public boolean deleteLabSchedule(int id) {
+        String sql = "DELETE FROM Lab_Schedule WHERE lab_sched_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to delete lab schedule", e);
+            return false;
+        }
+    }
+
+    public boolean deleteReceptionSchedule(int id) {
+        String sql = "DELETE FROM Reception_Schedule WHERE reception_sched_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to delete reception schedule", e);
+            return false;
+        }
+    }
+
+    public boolean autoReassignConflictRoom(int id, String staffType) {
+        // Tự động tìm phòng rỗng trong cùng ca trực và cập nhật
+        String table = "Doctor_Schedule";
+        String idCol = "schedule_id";
+        if ("Lab".equalsIgnoreCase(staffType)) {
+            table = "Lab_Schedule";
+            idCol = "lab_sched_id";
+        }
+        
+        String selectSql = "SELECT work_date, time_slot FROM " + table + " WHERE " + idCol + " = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(selectSql)) {
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Date date = rs.getDate("work_date");
+                    String slot = rs.getString("time_slot");
+                    
+                    // Tìm phòng rỗng
+                    String findEmptyRoom = "SELECT TOP 1 room_id FROM Room WHERE is_active = 1 AND room_id NOT IN ("
+                            + "SELECT room_id FROM Doctor_Schedule WHERE work_date = ? AND time_slot = ? AND room_id IS NOT NULL "
+                            + "UNION ALL "
+                            + "SELECT room_id FROM Lab_Schedule WHERE work_date = ? AND time_slot = ? AND room_id IS NOT NULL"
+                            + ")";
+                    try (PreparedStatement ps2 = conn.prepareStatement(findEmptyRoom)) {
+                        ps2.setDate(1, date);
+                        ps2.setString(2, slot);
+                        ps2.setDate(3, date);
+                        ps2.setString(4, slot);
+                        try (ResultSet rs2 = ps2.executeQuery()) {
+                            if (rs2.next()) {
+                                String emptyRoomId = rs2.getString("room_id");
+                                String updateSql = "UPDATE " + table + " SET room_id = ? WHERE " + idCol + " = ?";
+                                try (PreparedStatement ps3 = conn.prepareStatement(updateSql)) {
+                                    ps3.setString(1, emptyRoomId);
+                                    ps3.setInt(2, id);
+                                    return ps3.executeUpdate() > 0;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to auto reassign conflict room", e);
+        }
+        return false;
+    }
+
+    public boolean autoResolveAllConflicts() {
+        // Dọn dẹp tất cả ca trùng trùng doctor/time_slot
+        String sqlDoctor = "DELETE FROM Doctor_Schedule WHERE schedule_id NOT IN ("
+                + "  SELECT MIN(schedule_id) FROM Doctor_Schedule GROUP BY doctor_id, work_date, time_slot"
+                + ")";
+        String sqlReception = "DELETE FROM Reception_Schedule WHERE reception_sched_id NOT IN ("
+                + "  SELECT MIN(reception_sched_id) FROM Reception_Schedule GROUP BY reception_id, work_date, time_slot"
+                + ")";
+        String sqlLab = "DELETE FROM Lab_Schedule WHERE lab_sched_id NOT IN ("
+                + "  SELECT MIN(lab_sched_id) FROM Lab_Schedule GROUP BY lab_id, work_date, time_slot"
+                + ")";
+
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            try (PreparedStatement ps = conn.prepareStatement(sqlDoctor)) { ps.executeUpdate(); }
+            try (PreparedStatement ps = conn.prepareStatement(sqlReception)) { ps.executeUpdate(); }
+            try (PreparedStatement ps = conn.prepareStatement(sqlLab)) { ps.executeUpdate(); }
+            return true;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to auto resolve all conflicts", e);
+            return false;
         }
     }
 }

@@ -48,8 +48,10 @@ public class AdminSchedulingHandler {
     public void deleteStaffSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException { staffScheduleHandler.deleteStaffSchedule(request, response); }
     public void aiStaffSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException { staffScheduleHandler.aiStaffSchedule(request, response); }
     public void getCalendarSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException { staffScheduleHandler.getCalendarSchedule(request, response); }
-    public void getShiftDetail(HttpServletRequest request, HttpServletResponse response) throws IOException { staffScheduleHandler.getShiftDetail(request, response); }
-    public void confirmAISchedule(HttpServletRequest request, HttpServletResponse response) throws IOException { staffScheduleHandler.confirmAISchedule(request, response); }
+    public void getShiftDetail(HttpServletRequest request, HttpServletResponse response) throws IOException { staffScheduleHandler.loadStaffScheduleDetail(request, response); }
+    public void resolveScheduleConflict(HttpServletRequest request, HttpServletResponse response) throws IOException { staffScheduleHandler.resolveScheduleConflict(request, response); }
+    public void autoResolveAllConflicts(HttpServletRequest request, HttpServletResponse response) throws IOException { staffScheduleHandler.autoResolveAllConflicts(request, response); }
+    public void confirmAISchedule(HttpServletRequest request, HttpServletResponse response) throws IOException { aiSchedulingHandler.aiSaveProposedSchedules(request, response); }
 }
 
 /**
@@ -475,56 +477,29 @@ class AdminScheduleHandler {
  */
 class AdminStaffScheduleHandler {
     private final AdminStaffScheduleService staffScheduleService = new AdminStaffScheduleService();
+    private final AdminStaffScheduleRepository staffScheduleRepository = new AdminStaffScheduleRepository();
     private final AdminSchedulingService schedulingService = new AdminSchedulingService();
-    private final AdminStaffScheduleRepository repository = new AdminStaffScheduleRepository();
 
     public void getCalendarSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException {
         response.setContentType("application/json;charset=UTF-8");
-        String dateStr = request.getParameter("weekDate");
-        if (dateStr == null || dateStr.isBlank()) {
-            dateStr = request.getParameter("date");
-        }
-        LocalDate baseDate = LocalDate.now();
-        if (dateStr != null && !dateStr.isBlank()) {
-            try {
-                baseDate = LocalDate.parse(dateStr.trim());
-            } catch (Exception ignored) {}
-        }
+        String weekDateStr = request.getParameter("weekDate");
+        String roleFilter = request.getParameter("role");
+        String roomFilter = request.getParameter("room");
 
-        LocalDate monday = baseDate.with(java.time.DayOfWeek.MONDAY);
-        LocalDate sunday = baseDate.with(java.time.DayOfWeek.SUNDAY);
+        Date startDate = nullableDate(weekDateStr);
+        if (startDate == null) startDate = new java.sql.Date(System.currentTimeMillis());
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        cal.setTime(startDate);
+        cal.add(java.util.Calendar.DAY_OF_MONTH, 6);
+        Date endDate = new java.sql.Date(cal.getTimeInMillis());
 
-        String role = request.getParameter("role");
-        String room = request.getParameter("room");
-
-        List<Map<String, Object>> list = repository.getWeeklyCalendarSchedules(
-                Date.valueOf(monday), Date.valueOf(sunday), role, room);
-
-        response.getWriter().print(AdminJsonUtil.toJsonSimpleRows(list));
-    }
-
-    public void getShiftDetail(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        response.setContentType("application/json;charset=UTF-8");
-        int id = parseInt(request.getParameter("id"), -1);
-        String staffType = request.getParameter("staffType");
-
-        Map<String, Object> detail = new java.util.HashMap<>();
-        if (id <= 0) {
-            response.getWriter().print("{\"success\":false,\"message\":\"ID ca làm việc không hợp lệ\"}");
-            return;
-        }
-
-        detail.put("success", true);
-        detail.put("id", id);
-        detail.put("staffType", staffType != null ? staffType : "Doctor");
-        detail.put("staff", "Chi tiết ca " + id);
-        response.getWriter().print(AdminJsonUtil.toJsonSimpleRows(java.util.Arrays.asList(detail)));
-    }
-
-    public void confirmAISchedule(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        response.setContentType("application/json;charset=UTF-8");
+        List<Map<String, Object>> rows = staffScheduleRepository.getWeeklyCalendarSchedules(startDate, endDate, roleFilter, roomFilter);
         try (PrintWriter out = response.getWriter()) {
-            out.print("{\"success\":true,\"message\":\"Đã xác nhận và lưu chính thức lịch làm việc AI gợi ý vào CSDL thành công!\"}");
+            out.print(AdminJsonUtil.toJsonSimpleRows(rows));
+        } catch (Exception ex) {
+            try (PrintWriter out = response.getWriter()) {
+                out.print("[]");
+            }
         }
     }
 
@@ -870,6 +845,36 @@ class AdminStaffScheduleHandler {
         }
     }
 
+    public void resolveScheduleConflict(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setContentType("application/json;charset=UTF-8");
+        int id = parseInt(request.getParameter("id"), -1);
+        String staffType = request.getParameter("staffType");
+        String type = request.getParameter("type");
+        try (PrintWriter out = response.getWriter()) {
+            if (id <= 0) {
+                out.print("{\"success\":false,\"message\":\"ID ca trực không hợp lệ\"}");
+                return;
+            }
+            if ("delete".equalsIgnoreCase(type)) {
+                boolean ok = staffScheduleService.deleteStaffSchedule(id, staffType);
+                out.print("{\"success\":" + ok + ",\"message\":\"" + (ok ? "Đã hủy ca trực bị trùng thành công!" : "Không thể hủy ca trực.") + "\"}");
+            } else if ("reassign".equalsIgnoreCase(type)) {
+                boolean ok = staffScheduleService.autoReassignConflictRoom(id, staffType);
+                out.print("{\"success\":" + ok + ",\"message\":\"" + (ok ? "Đã tự động chuyển sang phòng trống khác!" : "Không tìm thấy phòng trống thích hợp.") + "\"}");
+            } else {
+                out.print("{\"success\":false,\"message\":\"Hành động không hợp lệ\"}");
+            }
+        }
+    }
+
+    public void autoResolveAllConflicts(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setContentType("application/json;charset=UTF-8");
+        boolean ok = staffScheduleService.autoResolveAllConflicts();
+        try (PrintWriter out = response.getWriter()) {
+            out.print("{\"success\":" + ok + ",\"message\":\"" + (ok ? "Đã tự động sửa tất cả ca trùng!" : "Không tìm thấy ca trùng hoặc lỗi xử lý.") + "\"}");
+        }
+    }
+
     private Date nullableDate(String raw) {
         if (raw == null || raw.isBlank()) {
             return null;
@@ -958,6 +963,7 @@ class AdminAiSchedulingHandler {
             String[] workDates = request.getParameterValues("workDate");
             String[] timeSlots = request.getParameterValues("timeSlot");
             String[] maxPatientsArr = request.getParameterValues("maxPatients");
+            String conflictHandling = request.getParameter("conflictHandling");
 
             if (doctorIds == null || workDates == null || timeSlots == null || maxPatientsArr == null
                     || doctorIds.length == 0 || workDates.length != doctorIds.length 
@@ -976,7 +982,7 @@ class AdminAiSchedulingHandler {
                 schedules.add(item);
             }
 
-            boolean ok = aiSchedulingRepository.saveSchedules(schedules);
+            boolean ok = aiSchedulingRepository.saveSchedules(schedules, conflictHandling);
             try (PrintWriter out = response.getWriter()) {
                 if (ok) {
                     out.print("{\"success\":true,\"message\":\"Đã lưu thành công " + schedules.size() + " ca lịch trực bác sĩ khám đề xuất bằng AI!\"}");
@@ -1057,6 +1063,7 @@ class AdminAiSchedulingHandler {
             return null;
         }
     }
+
 }
 
 

@@ -75,6 +75,7 @@ class AdminAccountHandler {
         String email = request.getParameter("email");
         String password = request.getParameter("password");
         String role = request.getParameter("role");
+        String specialization = request.getParameter("specialization");
         String normalizedEmail = email == null ? "" : email.trim();
 
         if (fullName == null || fullName.isBlank() || normalizedEmail.isBlank() || password == null || password.isBlank()) {
@@ -97,9 +98,9 @@ class AdminAccountHandler {
 
         try {
             User currentUser = (User) request.getSession().getAttribute("currentUser");
-            boolean created = accountService.createAccount(fullName, normalizedEmail, PasswordUtil.hashPassword(password), role, "active", currentUser);
+            boolean created = accountService.createAccount(fullName, normalizedEmail, PasswordUtil.hashPassword(password), role, "active", specialization, currentUser);
             request.getSession().setAttribute(created ? "successMessage" : "errorMessage",
-                    created ? "Đã tạo tài khoản thành công" : "Không thể tạo tài khoản");
+                    created ? "Đã tạo tài khoản thành công" : "Không thể tạo tài khoản (Email đã tồn tại hoặc thông tin không hợp lệ)");
         } catch (IllegalArgumentException | SecurityException ex) {
             request.getSession().setAttribute("errorMessage", ex.getMessage());
         }
@@ -234,7 +235,7 @@ class AdminAccountHandler {
         return role != null && ("admin".equalsIgnoreCase(role)
                 || "receptionist".equalsIgnoreCase(role)
                 || "doctor".equalsIgnoreCase(role)
-                || "patient".equalsIgnoreCase(role));
+                || "doctor_lab".equalsIgnoreCase(role));
     }
     private int parseInt(String raw, int fallback) {
         try {

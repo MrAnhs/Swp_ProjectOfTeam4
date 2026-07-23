@@ -943,9 +943,12 @@ public class AdminAiSchedulingRepository {
         validationMessage.remove();
     }
 
-    public boolean saveSchedules(List<Map<String, Object>> list) throws SQLException {
+    public boolean saveSchedules(List<Map<String, Object>> list, String conflictHandling) throws SQLException {
         if (list == null || list.isEmpty()) {
             return true;
+        }
+        if (conflictHandling == null || conflictHandling.trim().isEmpty()) {
+            conflictHandling = "overwrite";
         }
         boolean hasOnlineQuota = hasColumn("Doctor_Schedule", "online_quota");
         String insertSql = hasOnlineQuota
@@ -960,6 +963,53 @@ public class AdminAiSchedulingRepository {
                     String timeSlot = String.valueOf(item.get("timeSlot"));
                     int maxPatients = ((Number) item.get("maxPatients")).intValue();
                     String roomId = (String) item.get("roomId");
+
+                    // 1. Kiểm tra ca trực cũ đã tồn tại chưa (chuẩn hóa khoảng trắng trong time_slot)
+                    String checkExistSql = "SELECT schedule_id FROM Doctor_Schedule WHERE doctor_id = ? AND work_date = ? AND REPLACE(time_slot, ' ', '') = REPLACE(?, ' ', '') AND status <> 'Cancelled'";
+                    Integer oldScheduleId = null;
+                    try (PreparedStatement checkExist = connection.prepareStatement(checkExistSql)) {
+                        checkExist.setInt(1, doctorId);
+                        checkExist.setDate(2, workDate);
+                        checkExist.setString(3, timeSlot);
+                        try (ResultSet rs = checkExist.executeQuery()) {
+                            if (rs.next()) {
+                                oldScheduleId = rs.getInt("schedule_id");
+                            }
+                        }
+                    }
+
+                    if (oldScheduleId != null) {
+                        if ("overwrite".equalsIgnoreCase(conflictHandling)) {
+                            // Kiểm tra xem ca cũ đã có cuộc hẹn nào chưa
+                            String checkApptSql = "SELECT COUNT(*) FROM Appointment WHERE schedule_id = ?";
+                            int apptCount = 0;
+                            try (PreparedStatement checkAppt = connection.prepareStatement(checkApptSql)) {
+                                checkAppt.setInt(1, oldScheduleId);
+                                try (ResultSet rs = checkAppt.executeQuery()) {
+                                    if (rs.next()) {
+                                        apptCount = rs.getInt(1);
+                                    }
+                                }
+                            }
+                            
+                            if (apptCount == 0) {
+                                // Không có cuộc hẹn -> Xóa ca cũ một cách an toàn
+                                String deleteSql = "DELETE FROM Doctor_Schedule WHERE schedule_id = ?";
+                                try (PreparedStatement delete = connection.prepareStatement(deleteSql)) {
+                                    delete.setInt(1, oldScheduleId);
+                                    delete.executeUpdate();
+                                }
+                            } else {
+                                // Có cuộc hẹn -> Bỏ qua không chèn dòng mới để bảo toàn dữ liệu bệnh nhân
+                                continue;
+                            }
+                        } else {
+                            // conflictHandling là "skip" -> Bỏ qua
+                            continue;
+                        }
+                    }
+
+                    // 2. Chèn ca trực mới
                     try (PreparedStatement insert = connection.prepareStatement(insertSql)) {
                         insert.setInt(1, doctorId);
                         insert.setDate(2, workDate);
@@ -989,8 +1039,10 @@ public class AdminAiSchedulingRepository {
         List<String> rooms = new ArrayList<>();
         String sql = "SELECT room_id FROM Room "
                    + "WHERE LOWER(status) = 'active' "
-                   + "  AND (room_name LIKE N'%Phòng Khám%' OR room_name LIKE N'%Clinic%') "
-                   + "  AND room_id NOT IN ('R101', 'R201') "
+                   + "  AND room_id NOT IN ('R101') "
+                   + "  AND LOWER(room_name) NOT LIKE N'%xét nghiệm%' "
+                   + "  AND LOWER(room_name) NOT LIKE N'%lab%' "
+                   + "  AND LOWER(room_name) NOT LIKE N'%quầy%' "
                    + "ORDER BY room_id ASC";
         try (PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -999,10 +1051,8 @@ public class AdminAiSchedulingRepository {
             }
         }
         if (rooms.isEmpty()) {
-            rooms.add("R104");
-            rooms.add("R105");
-            rooms.add("R202");
-            rooms.add("R203");
+            rooms.add("R102");
+            rooms.add("R103");
         }
         return rooms;
     }
