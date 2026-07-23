@@ -109,17 +109,6 @@
                 min-height: 280px;
             }
         }
-
-        .report-detail-scroll-wrap {
-            max-height: 480px;
-            overflow-y: auto;
-        }
-        .report-detail-scroll-wrap table thead th {
-            position: sticky;
-            top: 0;
-            background-color: #f8f9fa;
-            z-index: 2;
-        }
     </style>
 </head>
 <body class="bg-light">
@@ -233,7 +222,7 @@
     <div class="card mt-4">
         <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
             <span>Danh sách chi tiết hóa đơn &amp; lượt khám trong kỳ</span>
-            <span id="selectedPeriodBadge" class="badge ${not empty initialPeriod ? 'bg-primary' : 'bg-secondary'}">${not empty initialPeriod ? 'Đang xem kỳ: '.concat(initialPeriod) : 'Chưa chọn kỳ'}</span>
+            <span id="selectedPeriodBadge" class="badge bg-secondary">Chưa chọn kỳ</span>
         </div>
         <div class="card-body">
             <ul class="nav nav-tabs" role="tablist">
@@ -246,43 +235,28 @@
             </ul>
             <div class="tab-content mt-3">
                 <div class="tab-pane fade show active" id="invoicePane" role="tabpanel" aria-labelledby="invoiceTab">
-                    <div class="table-responsive report-detail-scroll-wrap">
-                        <table class="table table-hover table-sm align-middle mb-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm">
                             <thead class="table-light">
                             <tr>
                                 <th>ID Hóa đơn</th>
                                 <th>Bệnh nhân</th>
                                 <th class="text-end">Tổng tiền</th>
+                                <th class="text-end">Khấu trừ BHYT</th>
                                 <th class="text-end">Tiền thanh toán</th>
                                 <th>Ngày thanh toán</th>
                                 <th>Hành động</th>
                             </tr>
                             </thead>
                             <tbody id="invoiceTableBody">
-                            <c:choose>
-                                <c:when test="${not empty initialInvoices}">
-                                    <c:forEach var="item" items="${initialInvoices}">
-                                        <tr>
-                                            <td><c:out value="${item.invoiceId}" /></td>
-                                            <td><c:out value="${item.patientName}" /></td>
-                                            <td class="text-end"><fmt:formatNumber value="${item.totalAmount}" type="number" maxFractionDigits="0" groupingUsed="true" /> VNĐ</td>
-                                            <td class="text-end fw-semibold"><fmt:formatNumber value="${item.finalAmount}" type="number" maxFractionDigits="0" groupingUsed="true" /> VNĐ</td>
-                                            <td><c:out value="${item.paymentDate}" /></td>
-                                            <td><button class="btn btn-sm btn-outline-primary" onclick="viewInvoiceDetail('${item.invoiceId}')">Xem chi tiết</button></td>
-                                        </tr>
-                                    </c:forEach>
-                                </c:when>
-                                <c:otherwise>
-                                    <tr><td colspan="6" class="text-center text-muted py-3">Không có dữ liệu</td></tr>
-                                </c:otherwise>
-                            </c:choose>
+                            <tr><td colspan="7" class="text-center text-muted py-3">Đang tải dữ liệu kỳ gần nhất...</td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
                 <div class="tab-pane fade" id="appointmentPane" role="tabpanel" aria-labelledby="appointmentTab">
-                    <div class="table-responsive report-detail-scroll-wrap">
-                        <table class="table table-hover table-sm align-middle mb-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm">
                             <thead class="table-light">
                             <tr>
                                 <th>Mã lượt khám</th>
@@ -294,32 +268,7 @@
                             </tr>
                             </thead>
                             <tbody id="appointmentTableBody">
-                            <c:choose>
-                                <c:when test="${not empty initialAppointments}">
-                                    <c:forEach var="item" items="${initialAppointments}">
-                                        <tr>
-                                            <td><c:out value="${item.appointmentId}" /></td>
-                                            <td><c:out value="${item.patientName}" /></td>
-                                            <td><c:out value="${item.doctorName}" /></td>
-                                            <td><c:out value="${item.timeSlot}" /></td>
-                                            <td>
-                                                <c:choose>
-                                                    <c:when test="${item.status == 'Completed'}"><span class="badge bg-success">Hoàn tất</span></c:when>
-                                                    <c:when test="${item.status == 'In Progress' or item.status == 'In_Progress'}"><span class="badge bg-info text-dark">Đang khám</span></c:when>
-                                                    <c:when test="${item.status == 'Waiting'}"><span class="badge bg-warning text-dark">Chờ đợi</span></c:when>
-                                                    <c:when test="${item.status == 'Confirmed'}"><span class="badge bg-primary">Đã xác nhận</span></c:when>
-                                                    <c:when test="${item.status == 'Cancelled'}"><span class="badge bg-danger">Đã hủy</span></c:when>
-                                                    <c:otherwise><span class="badge bg-secondary"><c:out value="${item.status}" /></span></c:otherwise>
-                                                </c:choose>
-                                            </td>
-                                            <td><c:out value="${item.appointmentDate}" /></td>
-                                        </tr>
-                                    </c:forEach>
-                                </c:when>
-                                <c:otherwise>
-                                    <tr><td colspan="6" class="text-center text-muted py-3">Không có dữ liệu</td></tr>
-                                </c:otherwise>
-                            </c:choose>
+                            <tr><td colspan="6" class="text-center text-muted py-3">Đang tải dữ liệu kỳ gần nhất...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -372,11 +321,8 @@
     window.AdminConfig.loginUrl = '${pageContext.request.contextPath}/login.jsp';
     window.AdminConfig.revenueSeries = ${empty revenueJson ? '[]' : revenueJson};
     window.AdminConfig.visitSeries = ${empty visitJson ? '[]' : visitJson};
-    window.AdminConfig.initialPeriod = '${initialPeriod}';
-    window.AdminConfig.initialInvoices = ${empty initialInvoicesJson ? '[]' : initialInvoicesJson};
-    window.AdminConfig.initialAppointments = ${empty initialAppointmentsJson ? '[]' : initialAppointmentsJson};
 </script>
-<script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/admin/reports.js?v=20260723-v4"></script>
+<script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/admin/reports.js?v=20260709-fontfix2"></script>
 </body>
 </html>
 

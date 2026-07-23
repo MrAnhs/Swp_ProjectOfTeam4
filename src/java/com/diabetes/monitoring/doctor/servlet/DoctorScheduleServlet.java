@@ -18,7 +18,6 @@ public class DoctorScheduleServlet extends DoctorServlet {
             }
 
             request.setAttribute("schedules", dao.getDoctorSchedulesByAccountId(currentUser.getId()));
-            request.setAttribute("rooms", dao.getActiveRooms());
             request.getRequestDispatcher("/WEB-INF/views/doctor/schedule.jsp").forward(request, response);
         } catch (Exception e) {
             e.printStackTrace();
@@ -42,7 +41,6 @@ public class DoctorScheduleServlet extends DoctorServlet {
             if (timeSlot != null) {
                 timeSlot = timeSlot.trim().replaceAll("\\s+", "");
             }
-            String roomId = request.getParameter("roomId");
             String maxPatientsStr = request.getParameter("maxPatients");
 
             if (workDateStr == null || workDateStr.trim().isEmpty() ||
@@ -71,7 +69,8 @@ public class DoctorScheduleServlet extends DoctorServlet {
                 return;
             }
 
-            boolean success = dao.proposeDoctorSchedule(doctorId, workDate, timeSlot, maxPatients, roomId);
+            // Không còn chọn phòng khi đăng ký lịch — room_id được để NULL
+            boolean success = dao.proposeDoctorSchedule(doctorId, workDate, timeSlot, maxPatients, null);
             if (success) {
                 request.getSession().setAttribute("successMsg", "Gửi yêu cầu đăng ký lịch trực thành công. Vui lòng chờ Admin duyệt.");
             } else {

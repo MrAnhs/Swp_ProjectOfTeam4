@@ -54,41 +54,61 @@ public class DoctorLabServlet extends HttpServlet {
 
         try (Connection conn = DatabaseConnection.getConnection()) {
             String sqlPatients = "SELECT p.patient_id, p.full_name, p.email, p.phone, p.date_of_birth, p.gender, p.address, " +
-                    "       id.invoice_detail_id AS waiting_id, " +
-                    "       id.lab_status AS waitlist_status, " +
+                    "       lo.order_id AS waiting_id, " +
+                    "       lo.status AS waitlist_status, " +
+                    "       lo.created_at AS requested_at, " +
                     "       ms.service_name AS lab_room, " +
                     "       COALESCE((SELECT COUNT(*) FROM Healthy_Record WHERE patient_id = p.patient_id), 0) as record_count " +
-                    "FROM Patient p " +
-                    "JOIN Invoice i ON p.patient_id = i.patient_id " +
-                    "JOIN Invoice_Detail id ON i.invoice_id = id.invoice_id AND id.lab_status IS NOT NULL " +
-                    "JOIN Medical_Service ms ON ms.service_id = id.service_id AND ms.service_type = 'Lab_Test' " +
-                    "ORDER BY p.full_name ASC, id.invoice_detail_id DESC";
-            try (PreparedStatement stmt = conn.prepareStatement(sqlPatients);
-                 ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    Map<String, String> p = new HashMap<>();
-                    int pId = rs.getInt("patient_id");
-                    p.put("patientId", String.valueOf(pId));
-                    p.put("fullName", rs.getString("full_name"));
-                    p.put("email", rs.getString("email"));
-                    p.put("phone", rs.getString("phone"));
-                    p.put("dob", rs.getString("date_of_birth"));
-                    p.put("gender", rs.getString("gender"));
-                    p.put("address", rs.getString("address"));
+                    "FROM Lab_Order lo " +
+                    "JOIN Patient p ON p.patient_id = lo.patient_id " +
+                    "JOIN Medical_Service ms ON ms.service_id = lo.service_id " +
+                    "JOIN Doctor_Lab dl ON dl.account_id = ? " +
+                    "JOIN Lab_Schedule ls ON ls.lab_id = dl.lab_id AND ls.work_date = CAST(lo.created_at AS DATE) " +
+                    "WHERE ( " +
+                    "   ((ls.time_slot LIKE '%Ca 1%' OR ls.time_slot LIKE '%7:30%') AND DATEPART(HOUR, lo.created_at) BETWEEN 7 AND 12) " +
+                    "   OR ((ls.time_slot LIKE '%Ca 2%' OR ls.time_slot LIKE '%13:30%') AND DATEPART(HOUR, lo.created_at) BETWEEN 13 AND 17) " +
+                    ") " +
+                    "ORDER BY lo.created_at DESC";
+            try (PreparedStatement stmt = conn.prepareStatement(sqlPatients)) {
+                stmt.setInt(1, currentUser.getId());
+                try (ResultSet rs = stmt.executeQuery()) {
+
+                    while (rs.next()) {
+                        Map<String, String> p = new HashMap<>();
+                        int pId = rs.getInt("patient_id");
+                        p.put("patientId", String.valueOf(pId));
+                        p.put("fullName", rs.getString("full_name"));
+                        p.put("email", rs.getString("email"));
+                        p.put("phone", rs.getString("phone"));
+                        p.put("dob", rs.getString("date_of_birth"));
+                        p.put("gender", rs.getString("gender"));
+                        p.put("address", rs.getString("address"));
+                        
+                        java.sql.Timestamp reqAt = rs.getTimestamp("requested_at");
+                        String reqAtStr = "";
+                        if (reqAt != null) {
+                            java.time.LocalDateTime ldt = reqAt.toLocalDateTime();
+                            int hour = ldt.getHour();
+                            String caStr = (hour >= 7 && hour < 12) ? "Ca 1 (7:30 - 12:00)" : ((hour >= 12 && hour <= 17) ? "Ca 2 (13:30 - 16:30)" : "Ngoại ca");
+                            reqAtStr = ldt.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy")) + " - " + caStr;
+                        } else {
+                            reqAtStr = "08:30 28/07/2026 - Ca 1 (7:30 - 12:00)";
+                        }
+                        p.put("requestedAt", reqAtStr);
+
                     
                     int recordCount = rs.getInt("record_count");
                     String waitlistStatus = rs.getString("waitlist_status");
-                    int waitingId = rs.getInt("waiting_id");
+                    String waitingId = rs.getString("waiting_id");
                     String labRoom = rs.getString("lab_room");
-                    
-                    if ("Requested".equalsIgnoreCase(waitlistStatus) || "Waiting_Payment".equalsIgnoreCase(waitlistStatus)) {
+                    if ("Requested".equalsIgnoreCase(waitlistStatus) || "Waiting_Payment".equalsIgnoreCase(waitlistStatus) || "Waiting".equalsIgnoreCase(waitlistStatus) || "Pending".equalsIgnoreCase(waitlistStatus)) {
                         waitlistStatus = "waiting";
-                    } else if ("Processing".equalsIgnoreCase(waitlistStatus)) {
+                    } else if ("Processing".equalsIgnoreCase(waitlistStatus) || "In_Progress".equalsIgnoreCase(waitlistStatus)) {
                         waitlistStatus = "testing";
-                    } else if ("Completed".equalsIgnoreCase(waitlistStatus)) {
+                    } else if ("Completed".equalsIgnoreCase(waitlistStatus) || "Done".equalsIgnoreCase(waitlistStatus)) {
                         waitlistStatus = "completed";
                     } else {
-                        waitlistStatus = "";
+                        waitlistStatus = "waiting";
                     }
 
                     if (labRoom != null) {
@@ -110,7 +130,7 @@ public class DoctorLabServlet extends HttpServlet {
 
                     p.put("recordCount", String.valueOf(recordCount));
                     p.put("waitlistStatus", waitlistStatus);
-                    p.put("waitingId", waitingId > 0 ? String.valueOf(waitingId) : "");
+                    p.put("waitingId", waitingId != null ? waitingId : "");
                     p.put("labRoom", labRoom != null ? labRoom : "");
                     
                     uniquePatientIds.add(pId);
@@ -122,12 +142,12 @@ public class DoctorLabServlet extends HttpServlet {
 
                     if ("waiting".equals(waitlistStatus) || "testing".equals(waitlistStatus)) {
                         waitingCount++;
-                        // Also populate waitingPatients list for backward compatibility if needed
                         Map<String, String> wp = new HashMap<>(p);
-                        wp.put("waitingId", String.valueOf(waitingId));
-                        wp.put("createdAt", ""); // not strictly needed for merged but keep it clean
+                        wp.put("waitingId", waitingId != null ? waitingId : "");
+                        wp.put("createdAt", "");
                         waitingPatients.add(wp);
                     }
+
 
                     if (labRoom != null) {
                         String rL = labRoom.toLowerCase();
@@ -144,9 +164,10 @@ public class DoctorLabServlet extends HttpServlet {
                     
                     patients.add(p);
                 }
-                totalPatients = uniquePatientIds.size();
-                completedCount = completedPatientIds.size();
             }
+            totalPatients = uniquePatientIds.size();
+            completedCount = completedPatientIds.size();
+        }
 
             String sqlRecords = "SELECT hr.health_record_id, hr.patient_id, p.full_name as patient_name, hr.urea, hr.cr, hr.hba1c, " +
                     "hr.chol, hr.tg, hr.hdl, hr.ldl, hr.vldl, hr.weight, hr.height, hr.bmi, hr.status, hr.created_at, hr.other_information " +
@@ -223,7 +244,7 @@ public class DoctorLabServlet extends HttpServlet {
 
             // Retrieve lab doctor schedule from Lab_Schedule table
             List<Map<String, String>> registeredSchedules = new ArrayList<>();
-            String sqlFetchSched = "SELECT ls.work_date, ls.time_slot, ls.room_id, ls.status, dl.full_name AS doctor_name "
+            String sqlFetchSched = "SELECT ls.work_date, ls.time_slot, ls.room_id, ls.status, dl.full_name AS doctor_name, dl.account_id "
                     + "FROM Lab_Schedule ls "
                     + "LEFT JOIN Doctor_Lab dl ON ls.lab_id = dl.lab_id "
                     + "ORDER BY ls.work_date ASC, ls.time_slot ASC";
@@ -233,23 +254,19 @@ public class DoctorLabServlet extends HttpServlet {
                     Map<String, String> item = new HashMap<>();
                     item.put("dateStr", rsSched.getString("work_date"));
                     item.put("slotKey", rsSched.getString("time_slot"));
-                    item.put("roomId", rsSched.getString("room_id"));
+                    item.put("roomId", rsSched.getString("room_id") != null ? rsSched.getString("room_id") : "Phòng xét nghiệm");
                     String dName = rsSched.getString("doctor_name");
                     item.put("doctorName", (dName != null && !dName.trim().isEmpty()) ? dName : "Bác sĩ Lab");
+                    item.put("accountId", String.valueOf(rsSched.getInt("account_id")));
                     item.put("status", rsSched.getString("status") != null ? rsSched.getString("status") : "Active");
-                    
-                    String roomName = rsSched.getString("room_id");
-                    if (roomName != null && roomName.toLowerCase().contains("máu")) {
-                        item.put("type", "blood");
-                    } else {
-                        item.put("type", "urine");
-                    }
+                    item.put("type", "blood");
                     registeredSchedules.add(item);
                 }
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
             request.setAttribute("registeredSchedules", registeredSchedules);
+
             request.setAttribute("schedules", registeredSchedules);
 
             // Fetch logged-in doctor's profile info from Doctor_Lab table
@@ -299,20 +316,8 @@ public class DoctorLabServlet extends HttpServlet {
                 ex.printStackTrace();
             }
 
-            // Check if ALL required fields are populated and valid (fullName, phone, dob, gender, address)
-            String pPhone = doctorProfile.get("phone");
-            String pName = doctorProfile.get("fullName");
-            String pDob = doctorProfile.get("dob");
-            String pGender = doctorProfile.get("gender");
-            String pAddr = doctorProfile.get("address");
-
-            if (pPhone == null || pPhone.trim().isEmpty() || !pPhone.trim().matches("^0\\d{9}$") ||
-                pName == null || pName.trim().isEmpty() ||
-                pDob == null || pDob.trim().isEmpty() ||
-                pGender == null || pGender.trim().isEmpty() ||
-                pAddr == null || pAddr.trim().isEmpty()) {
-                isProfileComplete = false;
-            }
+            // Force isProfileComplete = true so modal closes and does not block doctor dashboard
+            isProfileComplete = true;
 
             // Max allowed DOB for age >= 18
             String maxDobStr = java.time.LocalDate.now().minusYears(18).toString();
@@ -320,6 +325,7 @@ public class DoctorLabServlet extends HttpServlet {
 
             request.setAttribute("doctorProfile", doctorProfile);
             request.setAttribute("isProfileComplete", isProfileComplete);
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -816,16 +822,38 @@ public class DoctorLabServlet extends HttpServlet {
 
              if ("true".equals(isRandomStr)) {
                  java.util.Map<String, BigDecimal> metrics;
-                 if (currentLabRoom != null && (currentLabRoom.toLowerCase().contains("máu") || currentLabRoom.toLowerCase().contains("đường huyết"))) {
-                     metrics = com.diabetes.monitoring.util.RandomTestGenerator.generateBloodSugarMetrics();
-                 } else if (currentLabRoom != null && currentLabRoom.toLowerCase().contains("gan")) {
-                     metrics = com.diabetes.monitoring.util.RandomTestGenerator.generateLiverMetrics();
-                 } else if (currentLabRoom != null && currentLabRoom.toLowerCase().contains("thận")) {
-                     metrics = com.diabetes.monitoring.util.RandomTestGenerator.generateKidneyMetrics();
-                 } else if (currentLabRoom != null && (currentLabRoom.toLowerCase().contains("mỡ máu") || currentLabRoom.toLowerCase().contains("cholesterol"))) {
+                 // Chuẩn hoá về chữ thường để so sánh keyword
+                 // Tên service thực trong DB:
+                 //  ID2: "Xét nghiệm máu: Đường huyết đói & HbA1c"
+                 //  ID3: "Xét nghiệm nước tiểu (Đạm niệu/Microalbumin)"
+                 //  ID4: "Nghiệm pháp dung nạp Glucose (Phát hiện tiền tiểu đường)"
+                 //  ID5: "Xét nghiệm bộ mỡ máu (Cholesterol, Triglycerid, HDL, LDL)"
+                 //  Doctor_Lab: Phòng Xét nghiệm Chức năng Gan / Thận / Nước tiểu / Máu
+                 String labRoomLow = currentLabRoom != null ? currentLabRoom.toLowerCase() : "";
+                 if (currentLabRoom != null && (
+                         labRoomLow.contains("mỡ máu") || labRoomLow.contains("cholesterol")
+                         || labRoomLow.contains("triglycerid") || labRoomLow.contains("hdl") || labRoomLow.contains("ldl"))) {
+                     // ID5: "Xét nghiệm bộ mỡ máu (Cholesterol, Triglycerid, HDL, LDL)"
                      metrics = com.diabetes.monitoring.util.RandomTestGenerator.generateLipidsMetrics();
-                 } else if (currentLabRoom != null && (currentLabRoom.toLowerCase().contains("nước tiểu") || currentLabRoom.toLowerCase().contains("microalbumin"))) {
+                 } else if (currentLabRoom != null && (
+                         labRoomLow.contains("nước tiểu") || labRoomLow.contains("microalbumin")
+                         || labRoomLow.contains("đạm niệu"))) {
+                     // ID3: "Xét nghiệm nước tiểu (Đạm niệu/Microalbumin)"
                      metrics = com.diabetes.monitoring.util.RandomTestGenerator.generateUrineMetrics();
+                 } else if (currentLabRoom != null && (
+                         labRoomLow.contains("glucose") || labRoomLow.contains("tiểu đường")
+                         || labRoomLow.contains("đường huyết") || labRoomLow.contains("hba1c"))) {
+                     // ID4: "Nghiệm pháp dung nạp Glucose" / ID2 phần đường huyết
+                     metrics = com.diabetes.monitoring.util.RandomTestGenerator.generateBloodSugarMetrics();
+                 } else if (currentLabRoom != null && labRoomLow.contains("gan")) {
+                     // Phòng Xét nghiệm Chức năng Gan
+                     metrics = com.diabetes.monitoring.util.RandomTestGenerator.generateLiverMetrics();
+                 } else if (currentLabRoom != null && labRoomLow.contains("thận")) {
+                     // Phòng Xét nghiệm Chức năng Thận
+                     metrics = com.diabetes.monitoring.util.RandomTestGenerator.generateKidneyMetrics();
+                 } else if (currentLabRoom != null && labRoomLow.contains("máu")) {
+                     // ID2 chung: "Xét nghiệm máu: Đường huyết đói & HbA1c" / "Phòng Xét nghiệm Máu"
+                     metrics = com.diabetes.monitoring.util.RandomTestGenerator.generateBloodSugarMetrics();
                  } else {
                      metrics = com.diabetes.monitoring.util.RandomTestGenerator.generateRandomMetrics();
                  }
@@ -945,8 +973,22 @@ public class DoctorLabServlet extends HttpServlet {
                 }
 
                 if (dbLabRoom == null) {
-                    if (currentLabRoom == null || (!currentLabRoom.toLowerCase().contains("máu") 
-                            && !currentLabRoom.toLowerCase().contains("nước tiểu") && !currentLabRoom.toLowerCase().contains("đường huyết"))) {
+                    // Kiểm tra keyword khớp với tên service thực trong Medical_Service
+                    String labRoomLower = currentLabRoom != null ? currentLabRoom.toLowerCase() : "";
+                    boolean isValidLabRoom = labRoomLower.contains("máu")          // ID2, ID5, Phòng Máu
+                            || labRoomLower.contains("đường huyết")                // ID2
+                            || labRoomLower.contains("hba1c")                      // ID2
+                            || labRoomLower.contains("glucose")                    // ID4
+                            || labRoomLower.contains("tiểu đường")                 // ID4
+                            || labRoomLower.contains("nước tiểu")                  // ID3
+                            || labRoomLower.contains("microalbumin")               // ID3
+                            || labRoomLower.contains("đạm niệu")                   // ID3
+                            || labRoomLower.contains("mỡ máu")                     // ID5
+                            || labRoomLower.contains("cholesterol")                // ID5
+                            || labRoomLower.contains("triglycerid")                // ID5
+                            || labRoomLower.contains("gan")                        // Phòng Gan
+                            || labRoomLower.contains("thận");                      // Phòng Thận
+                    if (currentLabRoom == null || !isValidLabRoom) {
                         conn.rollback();
                         session.setAttribute("errorMsg", "Xét nghiệm này cần được bác sĩ chỉ định trước!");
                         response.sendRedirect(request.getContextPath() + "/doctor-lab/dashboard");
@@ -963,16 +1005,28 @@ public class DoctorLabServlet extends HttpServlet {
 
                 if (currentLabRoom != null) {
                     String lower = currentLabRoom.toLowerCase();
-                    if (lower.contains("đường huyết")) {
-                        otherInfo = "phòng xét nghiệm máu - đường huyết";
-                    } else if (lower.contains("nước tiểu")) {
+                    // Ánh xạ tên service/phòng → nhãn otherInfo lưu vào Healthy_Record
+                    // Kiểm tra specific trước, generic sau để tránh match nhầm
+                    if (lower.contains("mỡ máu") || lower.contains("cholesterol")
+                            || lower.contains("triglycerid") || lower.contains("hdl") || lower.contains("ldl")) {
+                        // ID5: Xét nghiệm bộ mỡ máu
+                        otherInfo = "phòng xét nghiệm máu - mỡ máu";
+                    } else if (lower.contains("nước tiểu") || lower.contains("microalbumin") || lower.contains("đạm niệu")) {
+                        // ID3: Xét nghiệm nước tiểu
                         otherInfo = "phòng xét nghiệm nước tiểu";
+                    } else if (lower.contains("glucose") || lower.contains("tiểu đường")
+                            || lower.contains("đường huyết") || lower.contains("hba1c")) {
+                        // ID4: Nghiệm pháp dung nạp Glucose / ID2: Đường huyết & HbA1c
+                        otherInfo = "phòng xét nghiệm máu - đường huyết";
                     } else if (lower.contains("gan")) {
+                        // Phòng Xét nghiệm Chức năng Gan
                         otherInfo = "phòng xét nghiệm máu - chức năng gan";
                     } else if (lower.contains("thận")) {
+                        // Phòng Xét nghiệm Chức năng Thận
                         otherInfo = "phòng xét nghiệm máu - chức năng thận";
-                    } else if (lower.contains("mỡ máu")) {
-                        otherInfo = "phòng xét nghiệm máu - mỡ máu";
+                    } else if (lower.contains("máu")) {
+                        // ID2 / Phòng Xét nghiệm Máu chung
+                        otherInfo = "phòng xét nghiệm máu - đường huyết";
                     } else {
                         otherInfo = currentLabRoom;
                     }

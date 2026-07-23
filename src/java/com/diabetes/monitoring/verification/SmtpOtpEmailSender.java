@@ -62,9 +62,13 @@ public class SmtpOtpEmailSender implements OtpEmailSender {
     }
 
     private String subject(String purpose) {
-        return EmailVerificationService.CHANGE_EMAIL.equals(purpose)
-                ? "M\u00E3 x\u00E1c th\u1EF1c thay \u0111\u1ED5i email - DiabetesCare"
-                : "M\u00E3 x\u00E1c th\u1EF1c \u0111\u1EB7t l\u1EA1i m\u1EADt kh\u1EA9u - DiabetesCare";
+        if (EmailVerificationService.CHANGE_EMAIL.equals(purpose)) {
+            return "M\u00E3 x\u00E1c th\u1EF1c thay \u0111\u00ED email - DiabetesCare";
+        }
+        if (EmailVerificationService.REGISTER.equals(purpose)) {
+            return "M\u00E3 x\u00E1c th\u1EF1c \u0111\u0103ng k\u00FD t\u00E0i kho\u1EA3n - DiabetesCare";
+        }
+        return "M\u00E3 x\u00E1c th\u1EF1c \u0111\u1EB7t l\u1EA1i m\u1EADt kh\u1EA9u - DiabetesCare";
     }
 
     private String body(String otp, int expiryMinutes) {

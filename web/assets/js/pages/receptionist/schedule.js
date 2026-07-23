@@ -1,10 +1,16 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const scheduleGrid = document.getElementById('scheduleGrid');
-    const selectYear = document.getElementById('selectYear');
-    const selectWeek = document.getElementById('selectWeek');
-    
     let currentDate = new Date();
-    let weeksList = [];
+    const scheduleGrid = document.getElementById('scheduleGrid');
+    const currentWeekRange = document.getElementById('currentWeekRange');
+
+    function getStartOfWeek(date) {
+        const start = new Date(date);
+        const day = start.getDay();
+        const diff = start.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+        start.setDate(diff);
+        start.setHours(0, 0, 0, 0);
+        return start;
+    }
 
     function formatDate(date) {
         const d = new Date(date);
@@ -18,82 +24,30 @@ document.addEventListener('DOMContentLoaded', () => {
         return [year, month, day].join('-');
     }
 
+    function formatDisplayDate(date) {
+        const d = new Date(date);
+        let month = '' + (d.getMonth() + 1);
+        let day = '' + d.getDate();
+        const year = d.getFullYear();
+
+        if (month.length < 2) month = '0' + month;
+        if (day.length < 2) day = '0' + day;
+
+        return [day, month, year].join('/');
+    }
+    
     function isToday(d1, d2) {
         return d1.getFullYear() === d2.getFullYear() &&
             d1.getMonth() === d2.getMonth() &&
             d1.getDate() === d2.getDate();
     }
 
-    function getWeeksOfYear(year) {
-        const weeks = [];
-        let date = new Date(year, 0, 1);
-        
-        // Find the first Monday of the year (standard ISO week starting on Monday)
-        const day = date.getDay();
-        const diff = (day === 0 ? -6 : 1) - day;
-        date.setDate(date.getDate() + diff);
-        
-        while (date.getFullYear() <= year || (date.getFullYear() === year + 1 && date.getMonth() === 0 && date.getDate() <= 7)) {
-            const startOfWeek = new Date(date);
-            const endOfWeek = new Date(startOfWeek);
-            endOfWeek.setDate(startOfWeek.getDate() + 6);
-            
-            const formatWeekPart = (d) => {
-                const dayStr = String(d.getDate()).padStart(2, '0');
-                const monthStr = String(d.getMonth() + 1).padStart(2, '0');
-                return `${dayStr}/${monthStr}`;
-            };
-            
-            weeks.push({
-                start: startOfWeek,
-                end: endOfWeek,
-                label: `${formatWeekPart(startOfWeek)} To ${formatWeekPart(endOfWeek)}`
-            });
-            
-            date.setDate(date.getDate() + 7);
-        }
-        return weeks;
-    }
-
-    function populateWeeks(year) {
-        selectWeek.innerHTML = '';
-        weeksList = getWeeksOfYear(year);
-        
-        weeksList.forEach((wk, idx) => {
-            const opt = document.createElement('option');
-            opt.value = idx;
-            opt.textContent = wk.label;
-            selectWeek.appendChild(opt);
-        });
-    }
-
-    function selectCurrentWeek() {
-        const now = new Date();
-        now.setHours(0, 0, 0, 0);
-        
-        let selectedIdx = 0;
-        for (let i = 0; i < weeksList.length; i++) {
-            const wk = weeksList[i];
-            const start = new Date(wk.start);
-            start.setHours(0, 0, 0, 0);
-            const end = new Date(wk.end);
-            end.setHours(23, 59, 59, 999);
-            
-            if (now >= start && now <= end) {
-                selectedIdx = i;
-                break;
-            }
-        }
-        selectWeek.value = selectedIdx;
-        currentDate = weeksList[selectedIdx].start;
-    }
-
     async function loadSchedule() {
-        const selectedIdx = parseInt(selectWeek.value, 10);
-        if (isNaN(selectedIdx) || !weeksList[selectedIdx]) return;
-        
-        const startOfWeek = weeksList[selectedIdx].start;
-        const endOfWeek = weeksList[selectedIdx].end;
+        const startOfWeek = getStartOfWeek(currentDate);
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+        currentWeekRange.textContent = `${formatDisplayDate(startOfWeek)} - ${formatDisplayDate(endOfWeek)}`;
 
         const startStr = formatDate(startOfWeek);
         const endStr = formatDate(endOfWeek);
@@ -191,34 +145,100 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Initialize Year select
-    const currentYearVal = currentDate.getFullYear();
-    for (let y = currentYearVal - 2; y <= currentYearVal + 2; y++) {
-        const opt = document.createElement('option');
-        opt.value = y;
-        opt.textContent = y;
-        selectYear.appendChild(opt);
+    document.getElementById('btnPrevWeek').addEventListener('click', () => {
+        currentDate.setDate(currentDate.getDate() - 7);
+        loadSchedule();
+    });
+
+    document.getElementById('btnNextWeek').addEventListener('click', () => {
+        currentDate.setDate(currentDate.getDate() + 7);
+        loadSchedule();
+    });
+
+    document.getElementById('btnToday').addEventListener('click', () => {
+        currentDate = new Date();
+        loadSchedule();
+    });
+
+    // Xử lý sự kiện đăng ký lịch trực mới
+    const registerForm = document.getElementById('registerScheduleForm');
+    const modalAlert = document.getElementById('modalAlert');
+    const registerModalElement = document.getElementById('registerScheduleModal');
+    let registerModal = null;
+
+    if (registerForm) {
+        // Cài đặt ngày tối thiểu là ngày hôm nay
+        const regWorkDate = document.getElementById('regWorkDate');
+        if (regWorkDate) {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            regWorkDate.min = `${yyyy}-${mm}-${dd}`;
+            regWorkDate.value = `${yyyy}-${mm}-${dd}`;
+        }
+
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (modalAlert) modalAlert.innerHTML = '';
+            
+            const workDate = document.getElementById('regWorkDate').value;
+            const timeSlot = document.getElementById('regTimeSlot').value;
+            
+            const body = new URLSearchParams();
+            body.set('workDate', workDate);
+            body.set('timeSlot', timeSlot);
+            
+            try {
+                const response = await fetch(`${window.ReceptionistConfig.apiBase}/my-schedule/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: body.toString()
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    alert(data.message || 'Đăng ký lịch trực thành công.');
+                    registerForm.reset();
+                    if (regWorkDate) {
+                        const today = new Date();
+                        const yyyy = today.getFullYear();
+                        const mm = String(today.getMonth() + 1).padStart(2, '0');
+                        const dd = String(today.getDate()).padStart(2, '0');
+                        regWorkDate.value = `${yyyy}-${mm}-${dd}`;
+                    }
+                    
+                    // Đóng modal
+                    if (!registerModal && window.bootstrap && window.bootstrap.Modal) {
+                        registerModal = window.bootstrap.Modal.getInstance(registerModalElement) || new window.bootstrap.Modal(registerModalElement);
+                    }
+                    if (registerModal) {
+                        registerModal.hide();
+                    } else {
+                        const closeBtn = registerModalElement.querySelector('.btn-close');
+                        if (closeBtn) closeBtn.click();
+                    }
+                    
+                    // Tải lại lịch để hiển thị ca trực mới đăng ký
+                    loadSchedule();
+                } else {
+                    if (modalAlert) {
+                        modalAlert.innerHTML = `<div class="alert alert-danger">${data.error || data.message || 'Lỗi không xác định'}</div>`;
+                    }
+                }
+            } catch (error) {
+                console.error('Error registering schedule:', error);
+                if (modalAlert) {
+                    modalAlert.innerHTML = '<div class="alert alert-danger">Lỗi kết nối máy chủ.</div>';
+                }
+            }
+        });
     }
-    selectYear.value = currentYearVal;
 
-    populateWeeks(currentYearVal);
-    selectCurrentWeek();
-
-    selectYear.addEventListener('change', () => {
-        const year = parseInt(selectYear.value, 10);
-        populateWeeks(year);
-        selectWeek.value = 0;
-        currentDate = weeksList[0].start;
-        loadSchedule();
-    });
-
-    selectWeek.addEventListener('change', () => {
-        const selectedIdx = parseInt(selectWeek.value, 10);
-        currentDate = weeksList[selectedIdx].start;
-        loadSchedule();
-    });
-
-
-
+    // Initial load
     loadSchedule();
 });

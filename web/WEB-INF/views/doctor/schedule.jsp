@@ -104,6 +104,9 @@
             
             <!-- Filter Dropdowns -->
             <div class="d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-sm text-white fw-bold px-3 py-2 d-flex align-items-center gap-2" style="background: linear-gradient(135deg, #2ab5a3, #0284c7); border: none; border-radius: 8px;" data-bs-toggle="modal" data-bs-target="#proposeScheduleModal">
+                    <i class="bi bi-calendar-plus"></i> Đăng ký lịch trực
+                </button>
                 <div class="d-flex align-items-center gap-1">
                     <label class="fw-bold text-uppercase small m-0" style="color: #cbd5e1;" for="yearSelect">Năm</label>
                     <select id="yearSelect" class="form-select form-select-sm doctor-filter" style="width: 90px;" onchange="generateWeekOptions(); renderScheduleGrid();">
@@ -276,8 +279,7 @@ function renderScheduleGrid() {
                     else if (matched.status === "Pending" || matched.status === "pending") { badgeClass = "bg-warning-subtle text-warning"; statusText = "Chờ duyệt"; }
                     else if (matched.status === "Cancelled" || matched.status === "cancelled") { badgeClass = "bg-danger-subtle text-danger"; statusText = "Đã hủy"; }
                     cellHtml += '<div class="schedule-cell-card p-2 text-start w-100 shadow-xs">' +
-                        '<div class="fw-bold mb-0.5" style="font-size: 0.82rem; color: #2AB5A3;">' + (matched.roomName || 'Phòng khám') + '</div>' +
-                        '<div class="small mb-1" style="font-size: 0.7rem; color: #94a3b8;"><span class="fw-semibold me-1" style="color: #ffffff;"><i class="bi bi-clock me-0.5" style="color: #2AB5A3;"></i>' + matched.timeSlot + '</span><span>(' + (matched.roomId || '-') + ')</span></div>' +
+                        '<div class="small mb-1" style="font-size: 0.78rem; color: #94a3b8;"><span class="fw-semibold" style="color: #ffffff;"><i class="bi bi-clock me-1" style="color: #2AB5A3;"></i>' + matched.timeSlot + '</span></div>' +
                         '<div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-top-style: dashed !important; border-top-color: rgba(255,255,255,0.1) !important;"><span class="badge ' + badgeClass + ' text-xs py-0.5 px-1">' + statusText + '</span><span class="fw-semibold text-xs" style="color: #94a3b8;"><i class="bi bi-people me-1"></i>' + matched.bookedPatients + '/' + matched.maxPatients + '</span></div></div>';
                 });
                 cellHtml += '</div></td>';
@@ -296,43 +298,49 @@ document.addEventListener("DOMContentLoaded", () => {
     generateWeekOptions();
     renderScheduleGrid();
     
-    const startDateInput = document.getElementById("startDateInput");
-    const endDateInput = document.getElementById("endDateInput");
-    if (startDateInput && endDateInput) {
-        const todayStr = new Date().toISOString().split('T')[0];
-        startDateInput.min = todayStr;
-        endDateInput.min = todayStr;
-        
-        startDateInput.addEventListener("change", () => {
-            endDateInput.min = startDateInput.value;
-            if (endDateInput.value && endDateInput.value < startDateInput.value) {
-                endDateInput.value = startDateInput.value;
-            }
-        });
-    }
-
-    const form = document.querySelector("#proposeScheduleModal form");
-    if (form) {
-        form.addEventListener("submit", function(e) {
-            const checked = form.querySelectorAll('input[name="timeSlots"]:checked');
-            if (checked.length === 0) {
-                alert("Vui lòng chọn ít nhất một ca trực.");
-                e.preventDefault();
-                return false;
-            }
-            const startVal = startDateInput.value;
-            const endVal = endDateInput.value;
-            if (startVal && endVal && endVal < startVal) {
-                alert("Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.");
-                e.preventDefault();
-                return false;
-            }
-        });
+    // Set min date of workDate input to today
+    const workDateInput = document.getElementById("workDateInput");
+    if (workDateInput) {
+        workDateInput.min = new Date().toISOString().split('T')[0];
     }
 });
 </script>
 
-
+<!-- Modal Đăng Ký Lịch Trực -->
+<div class="modal fade" id="proposeScheduleModal" tabindex="-1" aria-labelledby="proposeScheduleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background-color: #1e293b; color: #ffffff; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px;">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(255,255,255,0.08);">
+                <h5 class="modal-title fw-bold" id="proposeScheduleModalLabel"><i class="bi bi-calendar-plus me-2 text-primary"></i>Đăng ký lịch trực mới</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="${pageContext.request.contextPath}/doctor/schedule" method="POST">
+                <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="workDateInput" class="form-label small fw-bold">Ngày làm việc</label>
+                        <input type="date" id="workDateInput" name="workDate" class="form-control" style="background-color: #0f172a; border-color: rgba(255,255,255,0.1); color: #ffffff;" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="timeSlot" class="form-label small fw-bold">Ca trực</label>
+                        <select name="timeSlot" class="form-select" style="background-color: #0f172a; border-color: rgba(255,255,255,0.1); color: #ffffff;" required>
+                            <option value="07:30 - 12:00">Ca sáng (07:30 - 12:00)</option>
+                            <option value="13:30 - 16:30">Ca chiều (13:30 - 16:30)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="maxPatients" class="form-label small fw-bold">Số lượng bệnh nhân tối đa</label>
+                        <input type="number" name="maxPatients" class="form-control" style="background-color: #0f172a; border-color: rgba(255,255,255,0.1); color: #ffffff;" min="1" max="50" value="15" required>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid rgba(255,255,255,0.08);">
+                    <button type="button" class="btn btn-secondary btn-sm px-3" style="background-color: #475569; border: none;" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-sm px-3 text-white fw-semibold" style="background: linear-gradient(135deg, #2ab5a3, #0284c7); border: none;">Gửi đăng ký</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
