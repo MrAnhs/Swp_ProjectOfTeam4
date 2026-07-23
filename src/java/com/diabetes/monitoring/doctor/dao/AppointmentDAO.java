@@ -232,15 +232,30 @@ public class AppointmentDAO {
 
     public List<Appointment> getWaitingAppointmentsByDoctor(int doctorId) {
         List<Appointment> appointments = new ArrayList<>();
-        String sql = "SELECT CAST(NULL AS int) AS conversation_id, a.*, ds.doctor_id AS doctor_id, p.full_name AS patient_name, "
-                + "d.full_name AS doctor_name "
+        // Chỉ lấy bệnh nhân thuộc ca trực đang diễn ra của bác sĩ:
+        //   Ca sáng  (07:30 - 12:00): giờ server trong khoảng [7, 11]
+        //   Ca chiều (13:30 - 16:30): giờ server trong khoảng [13, 16]
+        // Dùng DATEPART(HOUR, GETDATE()) để xác định ca hiện tại,
+        // sau đó khớp với time_slot của Doctor_Schedule.
+        String sql = "SELECT CAST(NULL AS int) AS conversation_id, a.*, ds.doctor_id AS doctor_id, "
+                + "p.full_name AS patient_name, d.full_name AS doctor_name "
                 + "FROM Appointment a "
                 + "JOIN Patient p ON p.patient_id = a.patient_id "
                 + "JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
                 + "JOIN Doctor d ON d.doctor_id = ds.doctor_id "
-                + "WHERE ds.doctor_id = ? AND a.status = 'Checked_In' "
-                + "AND CAST(a.appointment_time AS DATE) = CAST(GETDATE() AS DATE) "
-                + "AND a.appointment_time <= GETDATE() "
+                + "WHERE ds.doctor_id = ? "
+                + "  AND a.status = 'Checked_In' "
+                + "  AND CAST(a.appointment_time AS DATE) = CAST(GETDATE() AS DATE) "
+                + "  AND a.appointment_time <= GETDATE() "
+                // Lọc theo ca đang diễn ra dựa vào time_slot của lịch
+                + "  AND ( "
+                // Ca sáng: time_slot chứa '07:30' hoặc '7:30', giờ hiện tại 7-11
+                + "    ( (ds.time_slot LIKE '%07:30%' OR ds.time_slot LIKE '%7:30%') "
+                + "      AND DATEPART(HOUR, GETDATE()) BETWEEN 7 AND 11 ) "
+                // Ca chiều: time_slot chứa '13:30', giờ hiện tại 13-16
+                + "    OR ( ds.time_slot LIKE '%13:30%' "
+                + "      AND DATEPART(HOUR, GETDATE()) BETWEEN 13 AND 16 ) "
+                + "  ) "
                 + "ORDER BY a.appointment_time ASC, a.queue_number ASC";
 
         try (Connection conn = DatabaseConnection.getConnection();
@@ -256,6 +271,7 @@ public class AppointmentDAO {
         }
         return appointments;
     }
+
 
     public List<Appointment> getAppointmentsByPatient(int patientId) {
         List<Appointment> appointments = new ArrayList<>();

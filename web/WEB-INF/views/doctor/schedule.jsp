@@ -279,8 +279,7 @@ function renderScheduleGrid() {
                     else if (matched.status === "Pending" || matched.status === "pending") { badgeClass = "bg-warning-subtle text-warning"; statusText = "Chờ duyệt"; }
                     else if (matched.status === "Cancelled" || matched.status === "cancelled") { badgeClass = "bg-danger-subtle text-danger"; statusText = "Đã hủy"; }
                     cellHtml += '<div class="schedule-cell-card p-2 text-start w-100 shadow-xs">' +
-                        '<div class="fw-bold mb-0.5" style="font-size: 0.82rem; color: #2AB5A3;">' + (matched.roomName || 'Phòng khám') + '</div>' +
-                        '<div class="small mb-1" style="font-size: 0.7rem; color: #94a3b8;"><span class="fw-semibold me-1" style="color: #ffffff;"><i class="bi bi-clock me-0.5" style="color: #2AB5A3;"></i>' + matched.timeSlot + '</span><span>(' + (matched.roomId || '-') + ')</span></div>' +
+                        '<div class="small mb-1" style="font-size: 0.78rem; color: #94a3b8;"><span class="fw-semibold" style="color: #ffffff;"><i class="bi bi-clock me-1" style="color: #2AB5A3;"></i>' + matched.timeSlot + '</span></div>' +
                         '<div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-top-style: dashed !important; border-top-color: rgba(255,255,255,0.1) !important;"><span class="badge ' + badgeClass + ' text-xs py-0.5 px-1">' + statusText + '</span><span class="fw-semibold text-xs" style="color: #94a3b8;"><i class="bi bi-people me-1"></i>' + matched.bookedPatients + '/' + matched.maxPatients + '</span></div></div>';
                 });
                 cellHtml += '</div></td>';
@@ -327,15 +326,6 @@ document.addEventListener("DOMContentLoaded", () => {
                         <select name="timeSlot" class="form-select" style="background-color: #0f172a; border-color: rgba(255,255,255,0.1); color: #ffffff;" required>
                             <option value="07:30 - 12:00">Ca sáng (07:30 - 12:00)</option>
                             <option value="13:30 - 16:30">Ca chiều (13:30 - 16:30)</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="roomId" class="form-label small fw-bold">Phòng khám</label>
-                        <select name="roomId" class="form-select" style="background-color: #0f172a; border-color: rgba(255,255,255,0.1); color: #ffffff;" required>
-                            <option value="">-- Chọn phòng khám --</option>
-                            <c:forEach var="r" items="${rooms}">
-                                <option value="${r.roomId}">${r.roomName} (${r.roomId})</option>
-                            </c:forEach>
                         </select>
                     </div>
                     <div class="mb-3">
