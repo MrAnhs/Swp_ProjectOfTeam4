@@ -285,15 +285,8 @@
                                                 </div>
                                                 <div class="form-check">
                                                     <input class="form-check-input ai-dept-cb" type="checkbox"
-                                                        name="department" value="Nephrology" id="aiDeptNephro" checked>
-                                                    <label class="form-check-label small" for="aiDeptNephro">Thận
-                                                        học</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input ai-dept-cb" type="checkbox"
-                                                        name="department" value="General" id="aiDeptGen" checked>
-                                                    <label class="form-check-label small" for="aiDeptGen">Tổng
-                                                        quát</label>
+                                                        name="department" value="Da liễu" id="aiDeptDerm" checked>
+                                                    <label class="form-check-label small" for="aiDeptDerm">Da liễu</label>
                                                 </div>
                                             </div>
                                         </div>

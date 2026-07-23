@@ -1170,6 +1170,8 @@ public class AdminAiSchedulingRepository {
                 isSpecialtyMatch = roomName.contains("thận") || roomName.contains("nephro");
             } else if ("General".equalsIgnoreCase(doctorDeptNorm)) {
                 isSpecialtyMatch = roomName.contains("tổng quát") || roomName.contains("general");
+            } else if ("Da liễu".equalsIgnoreCase(doctorDeptNorm) || (doctorDepartment != null && doctorDepartment.toLowerCase().contains("da liễu"))) {
+                isSpecialtyMatch = roomName.contains("da liễu") || roomName.contains("dermatol");
             } else if (doctorDepartment != null && !doctorDepartment.isBlank()) {
                 isSpecialtyMatch = roomName.contains(doctorDepartment.toLowerCase());
             }
