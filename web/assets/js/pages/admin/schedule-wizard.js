@@ -28,6 +28,7 @@ function normalizeSearchText(value) {
 }
 
 const specialtyKeywords = {
+    'Nội tiết': ['noi tiet', 'endo'],
     'Nội tiết - Tiểu đường': ['noi tiet', 'endo'],
     'Endocrinology': ['noi tiet', 'endo'],
     'Tim mạch': ['tim mach', 'cardio'],
@@ -417,7 +418,7 @@ function buildScheduleRow(schedule) {
         : Math.max(0, maxPatients - onlineQuota);
 
     const departmentMap = {
-        Endocrinology: 'Nội tiết - Tiểu đường',
+        Endocrinology: 'Nội tiết',
         Cardiology: 'Tim mạch',
         Nephrology: 'Thận học',
         General: 'Tổng quát'

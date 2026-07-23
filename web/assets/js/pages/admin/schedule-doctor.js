@@ -338,7 +338,7 @@ async function openDoctorScheduleDetailModal(scheduleId) {
         const statusHtml = statusTranslations[schedule.status] || ('<span class="badge bg-primary-subtle text-primary border border-primary-subtle">' + escapeHtml(schedule.status || '-') + '</span>');
 
         const deptMap = {
-            'Endocrinology': 'Nội tiết - Tiểu đường',
+            'Endocrinology': 'Nội tiết',
             'Cardiology': 'Tim mạch',
             'Nephrology': 'Thận học',
             'General': 'Tổng quát'

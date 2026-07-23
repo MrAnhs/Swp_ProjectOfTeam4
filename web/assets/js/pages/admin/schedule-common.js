@@ -143,6 +143,7 @@ function getBookingSourceBadge(source) {
  * Bản đồ ánh xạ tên chuyên khoa hiển thị sang mã chuyên khoa DB
  */
 const departmentMapping = {
+    'Nội tiết': 'Endocrinology',
     'Nội tiết - Tiểu đường': 'Endocrinology',
     'Endocrinology': 'Endocrinology',
     'Tim mạch': 'Cardiology',

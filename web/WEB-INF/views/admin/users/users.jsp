@@ -596,7 +596,7 @@
                                         <div class="col-md-6 d-none" id="editDepartmentWrap">
                                             <label class="form-label">Chuyên khoa (Bác sĩ)</label>
                                             <select class="form-select" name="department" id="editDepartment">
-                                                <option value="Endocrinology">Nội tiết - Tiểu đường</option>
+                                                <option value="Endocrinology">Nội tiết</option>
                                                 <option value="Cardiology">Tim mạch</option>
                                                 <option value="Nephrology">Thận học</option>
                                                 <option value="General">Tổng quát</option>
@@ -644,7 +644,7 @@
                                     <div class="mb-3">
                                         <label class="form-label fw-bold">Chuyên khoa / Khoa công tác</label>
                                         <select class="form-select mb-2" id="specDepartmentSelect" style="border-radius: 8px;">
-                                            <option value="Endocrinology">Nội tiết - Tiểu đường (Endocrinology)</option>
+                                            <option value="Endocrinology">Nội tiết (Endocrinology)</option>
                                             <option value="Cardiology">Tim mạch (Cardiology)</option>
                                             <option value="Nephrology">Thận học (Nephrology)</option>
                                             <option value="General">Tổng quát (General)</option>

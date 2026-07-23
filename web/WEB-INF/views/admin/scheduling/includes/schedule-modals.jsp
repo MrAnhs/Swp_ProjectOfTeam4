@@ -12,7 +12,7 @@
                     <div class="fw-semibold">
                         ${selectedSchedule.doctorName} -
                         <c:choose>
-                            <c:when test="${selectedSchedule.department == 'Endocrinology'}">Nội tiết - Tiểu đường
+                            <c:when test="${selectedSchedule.department == 'Endocrinology'}">Nội tiết
                             </c:when>
                             <c:when test="${selectedSchedule.department == 'Cardiology'}">Tim mạch</c:when>
                             <c:when test="${selectedSchedule.department == 'Nephrology'}">Thận học</c:when>
@@ -274,9 +274,8 @@
                                                 id="aiDoctorDeptCheckboxes">
                                                 <div class="form-check">
                                                     <input class="form-check-input ai-dept-cb" type="checkbox"
-                                                        value="Nội tiết - Tiểu đường" id="aiDeptEndo" checked>
-                                                    <label class="form-check-label small" for="aiDeptEndo">Nội tiết -
-                                                        Tiểu đường</label>
+                                                        value="Nội tiết" id="aiDeptEndo" checked>
+                                                    <label class="form-check-label small" for="aiDeptEndo">Nội tiết</label>
                                                 </div>
                                                 <div class="form-check">
                                                     <input class="form-check-input ai-dept-cb" type="checkbox"

@@ -17,7 +17,7 @@
         let pendingConfirmForm = null;
 
         const departmentTextMap = {
-            Endocrinology: 'Nội tiết - Tiểu đường',
+            Endocrinology: 'Nội tiết',
             Cardiology: 'Tim mạch',
             Nephrology: 'Thận học',
             General: 'Tổng quát'
