@@ -486,14 +486,21 @@ class AdminStaffScheduleHandler {
         String roleFilter = request.getParameter("role");
         String roomFilter = request.getParameter("room");
 
-        Date startDate = nullableDate(weekDateStr);
-        if (startDate == null) startDate = new java.sql.Date(System.currentTimeMillis());
-        java.util.Calendar cal = java.util.Calendar.getInstance();
-        cal.setTime(startDate);
-        cal.add(java.util.Calendar.DAY_OF_MONTH, 6);
-        Date endDate = new java.sql.Date(cal.getTimeInMillis());
+        Date selectedDate = nullableDate(weekDateStr);
+        if (selectedDate == null) selectedDate = new java.sql.Date(System.currentTimeMillis());
 
-        List<Map<String, Object>> rows = staffScheduleRepository.getWeeklyCalendarSchedules(startDate, endDate, roleFilter, roomFilter);
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        cal.setTime(selectedDate);
+        cal.setFirstDayOfWeek(java.util.Calendar.MONDAY);
+        int dayOfWeek = cal.get(java.util.Calendar.DAY_OF_WEEK);
+        int daysToMonday = (dayOfWeek == java.util.Calendar.SUNDAY) ? -6 : (java.util.Calendar.MONDAY - dayOfWeek);
+        cal.add(java.util.Calendar.DAY_OF_MONTH, daysToMonday);
+        Date mondayDate = new java.sql.Date(cal.getTimeInMillis());
+
+        cal.add(java.util.Calendar.DAY_OF_MONTH, 6);
+        Date sundayDate = new java.sql.Date(cal.getTimeInMillis());
+
+        List<Map<String, Object>> rows = staffScheduleRepository.getWeeklyCalendarSchedules(mondayDate, sundayDate, roleFilter, roomFilter);
         try (PrintWriter out = response.getWriter()) {
             out.print(AdminJsonUtil.toJsonSimpleRows(rows));
         } catch (Exception ex) {
@@ -882,7 +889,12 @@ class AdminStaffScheduleHandler {
         try {
             return Date.valueOf(LocalDate.parse(raw));
         } catch (Exception ex) {
-            return null;
+            try {
+                java.time.format.DateTimeFormatter dtf = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
+                return Date.valueOf(LocalDate.parse(raw, dtf));
+            } catch (Exception ex2) {
+                return null;
+            }
         }
     }
 }

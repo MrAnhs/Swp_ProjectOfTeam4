@@ -1082,9 +1082,12 @@ document.addEventListener('DOMContentLoaded', function () {
         // Nhóm các ca trực theo ô (Cell)
         const shiftsByCell = {};
         schedules.forEach(shift => {
-            const dayKey = daysMapByDate[shift.date];
+            const dateStr = shift.date || shift.workDate || shift.work_date || '';
+            const dayKey = daysMapByDate[dateStr];
             if (!dayKey) return;
-            const isMorning = (shift.start === '08:00' || (shift.timeSlot && shift.timeSlot.toLowerCase().includes('morning')));
+            const slotStr = (shift.time_slot || shift.timeSlot || '').toLowerCase();
+            const startTime = (shift.start_time || shift.start || '').toLowerCase();
+            const isMorning = startTime === '08:00' || startTime.startsWith('07') || startTime.startsWith('08') || slotStr.includes('morning') || slotStr.includes('07:') || slotStr.includes('08:');
             const timeKey = isMorning ? '0800' : '1300';
             const cellId = `cell-${dayKey}-${timeKey}`;
             if (!shiftsByCell[cellId]) {
