@@ -593,16 +593,6 @@
                                             <input class="form-control" name="phone" id="editPhone">
                                         </div>
 
-                                        <div class="col-md-6 d-none" id="editDepartmentWrap">
-                                            <label class="form-label">Chuyên khoa (Bác sĩ)</label>
-                                            <select class="form-select" name="department" id="editDepartment">
-                                                <option value="Endocrinology">Nội tiết</option>
-                                                <option value="Cardiology">Tim mạch</option>
-                                                <option value="Nephrology">Thận học</option>
-                                                <option value="General">Tổng quát</option>
-                                            </select>
-                                        </div>
-
                                         <div class="col-12 d-none" id="editAddressWrap">
                                             <label class="form-label">Địa chỉ (Bệnh nhân)</label>
                                             <input class="form-control" name="address" id="editAddress">

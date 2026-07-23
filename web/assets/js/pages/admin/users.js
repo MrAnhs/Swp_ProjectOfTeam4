@@ -51,23 +51,19 @@
             email: document.getElementById('editEmail'),
             phone: document.getElementById('editPhone'),
             address: document.getElementById('editAddress'),
-            department: document.getElementById('editDepartment'),
             roleInfo: document.getElementById('editRoleInfo'),
             phoneWrap: document.getElementById('editPhoneWrap'),
-            addressWrap: document.getElementById('editAddressWrap'),
-            departmentWrap: document.getElementById('editDepartmentWrap')
+            addressWrap: document.getElementById('editAddressWrap')
         };
 
         function setRoleDisplay(role) {
-            fields.roleInfo.textContent = 'Vai trò: ' + roleText(role);
+            if (fields.roleInfo) fields.roleInfo.textContent = 'Vai trò: ' + roleText(role);
 
             const isPatient = role === 'Patient';
             const isDoctor = role === 'Doctor';
 
-            fields.phoneWrap.classList.toggle('d-none', !(isPatient || isDoctor));
-            fields.addressWrap.classList.toggle('d-none', !isPatient);
-            fields.departmentWrap.classList.toggle('d-none', !isDoctor);
-            fields.department.required = isDoctor;
+            if (fields.phoneWrap) fields.phoneWrap.classList.toggle('d-none', !(isPatient || isDoctor));
+            if (fields.addressWrap) fields.addressWrap.classList.toggle('d-none', !isPatient);
         }
 
         function fillViewProfile(item) {
@@ -109,7 +105,6 @@
             fields.email.value = item.email || '';
             fields.phone.value = item.phone || '';
             fields.address.value = item.address || '';
-            fields.department.value = item.department || 'General';
             setRoleDisplay(item.role || '');
 
             modal.show();
