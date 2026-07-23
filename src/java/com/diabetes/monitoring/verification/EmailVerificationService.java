@@ -12,6 +12,7 @@ import java.util.Locale;
 public class EmailVerificationService {
     public static final String CHANGE_EMAIL = "CHANGE_EMAIL";
     public static final String RESET_PASSWORD = "RESET_PASSWORD";
+    public static final String REGISTER = "REGISTER";
     public static final int OTP_EXPIRY_MINUTES = 5;
     public static final int RESET_GRANT_MINUTES = 10;
     private static final int MAXIMUM_ATTEMPTS = 5;
@@ -180,6 +181,66 @@ public class EmailVerificationService {
                 connection.commit();
             } catch (Exception e) {
                 connection.rollback();
+                throw e;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        }
+    }
+
+    public void requestRegistrationOtp(String email) throws Exception {
+        String normalizedEmail = validEmail(email);
+        com.diabetes.monitoring.dao.UserDAO userDAO = new com.diabetes.monitoring.dao.UserDAO();
+        if (userDAO.isEmailExists(normalizedEmail)) {
+            throw new IllegalArgumentException("Email n\u00E0y \u0111\u00E3 \u0111\u01B0\u1EE3c \u0111\u0103ng k\u00FD. Vui l\u00F2ng s\u1EED d\u1EE5ng email kh\u00E1c.");
+        }
+
+        try (Connection connection = DatabaseConnection.getConnection()) {
+            connection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+            connection.setAutoCommit(false);
+            try {
+                if (verificationDAO.isRateLimited(connection, null,
+                        normalizedEmail, REGISTER,
+                        RESEND_INTERVAL_SECONDS, HOURLY_REQUEST_LIMIT)) {
+                    connection.rollback();
+                    throw new IllegalArgumentException("B\u1EA1n g\u1EEDi m\u00E3 qu\u00E1 nhanh. Vui l\u00F2ng ch\u1EDD 60 gi\u00E2y tr\u01B0\u1EDBc khi g\u1EEDi l\u1EA1i.");
+                }
+                createAndSendRegistrationOtp(connection, normalizedEmail);
+                connection.commit();
+            } catch (Exception e) {
+                connection.rollback();
+                throw e;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        }
+    }
+
+    private void createAndSendRegistrationOtp(Connection connection, String targetEmail) throws Exception {
+        verificationDAO.consumeActive(connection, null, targetEmail, REGISTER);
+        String otp = otpSecurity.generateOtp();
+        verificationDAO.insert(connection, null, REGISTER, targetEmail,
+                otpSecurity.hash(REGISTER, targetEmail, otp), OTP_EXPIRY_MINUTES);
+        emailSender.send(targetEmail, REGISTER, otp, OTP_EXPIRY_MINUTES);
+    }
+
+    public boolean verifyRegistrationOtp(String email, String otp) throws Exception {
+        String normalizedEmail = validEmail(email);
+        validateOtpFormat(otp);
+        try (Connection connection = DatabaseConnection.getConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                EmailVerification verification = verificationDAO.lockLatestActive(
+                        connection, null, normalizedEmail, REGISTER);
+                if (!verify(connection, verification, normalizedEmail, REGISTER, otp)) {
+                    connection.commit();
+                    throw invalidOtp();
+                }
+                verificationDAO.markConsumed(connection, verification.getVerificationId());
+                connection.commit();
+                return true;
+            } catch (Exception e) {
+                safeRollback(connection);
                 throw e;
             } finally {
                 connection.setAutoCommit(true);

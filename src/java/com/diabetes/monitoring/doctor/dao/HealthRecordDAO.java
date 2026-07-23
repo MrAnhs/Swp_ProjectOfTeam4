@@ -221,11 +221,7 @@ public class HealthRecordDAO {
                 + "FROM Healthy_Record r "
                 + "LEFT JOIN Patient p ON p.patient_id = r.patient_id "
                 + "LEFT JOIN Medical_record mr ON mr.health_record_id = r.health_record_id "
-                + "LEFT JOIN Appointment a ON a.appointment_id = mr.appointment_id "
-                + "LEFT JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
                 + "WHERE r.doctor_id = ? AND " + workflowCondition + " "
-                + "AND (ds.work_date = CAST(GETDATE() AS DATE) "
-                + "     OR (mr.appointment_id IS NULL AND CAST(r.created_at AS DATE) = CAST(GETDATE() AS DATE))) "
                 + "ORDER BY r.created_at ASC, r.health_record_id ASC";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -365,21 +361,6 @@ public class HealthRecordDAO {
             ps.setInt(10, recordId);
             ps.setInt(11, doctorId);
             return ps.executeUpdate() == 1;
-        }
-    }
-
-    public boolean updateVitals(int recordId, int doctorId, double weight, double height, double bmi) throws SQLException {
-        String sql = "UPDATE Healthy_Record SET weight = ?, height = ?, bmi = ? "
-                + "WHERE health_record_id = ? AND doctor_id = ? "
-                + "AND status IN ('Accepted', 'AI_Processed', 'Editing')";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setDouble(1, weight);
-            ps.setDouble(2, height);
-            ps.setDouble(3, bmi);
-            ps.setInt(4, recordId);
-            ps.setInt(5, doctorId);
-            return ps.executeUpdate() > 0;
         }
     }
 
@@ -2033,5 +2014,19 @@ public class HealthRecordDAO {
         return false;
     }
 
+    public boolean updateVitals(int recordId, int doctorId, double weight, double height, double bmi) throws SQLException {
+        String sql = "UPDATE Healthy_Record SET weight = ?, height = ?, bmi = ? "
+                + "WHERE health_record_id = ? AND doctor_id = ? "
+                + "AND status IN ('Accepted', 'AI_Processed', 'Editing')";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setBigDecimal(1, BigDecimal.valueOf(weight));
+            ps.setBigDecimal(2, BigDecimal.valueOf(height));
+            ps.setBigDecimal(3, BigDecimal.valueOf(bmi));
+            ps.setInt(4, recordId);
+            ps.setInt(5, doctorId);
+            return ps.executeUpdate() == 1;
+        }
+    }
 }
 

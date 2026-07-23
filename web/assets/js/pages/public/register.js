@@ -64,6 +64,81 @@
     dob.addEventListener("input", validateDob);
     phone.addEventListener("input", () => phone.setCustomValidity(""));
 
+    const emailInput = document.getElementById("email");
+    const btnSendOtp = document.getElementById("btnSendOtp");
+    const otpStatusMsg = document.getElementById("otpStatusMsg");
+
+    if (btnSendOtp && emailInput) {
+        let cooldownTimer = null;
+
+        btnSendOtp.addEventListener("click", async () => {
+            const email = emailInput.value.trim();
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (!email || !emailRegex.test(email)) {
+                showOtpStatus("Vui l\u00f2ng nh\u1eadp email h\u1ee3p l\u1ec7 tr\u01b0\u1edbc khi g\u1eedi m\u00e3 OTP.", true);
+                emailInput.focus();
+                return;
+            }
+
+            btnSendOtp.disabled = true;
+            btnSendOtp.textContent = "\u0110ang g\u1eedi...";
+            showOtpStatus("\u0110ang g\u1eedi m\u00e3 OTP t\u1edbi email c\u1ee7a b\u1ea1n...", false);
+
+            try {
+                const params = new URLSearchParams();
+                params.append("action", "send-otp");
+                params.append("email", email);
+
+                const res = await fetch("register", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: params.toString()
+                });
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    showOtpStatus(data.message || "M\u00e3 OTP \u0111\u00e3 \u0111\u01b0\u1ee3c g\u1eedi v\u1ec1 email c\u1ee7a b\u1ea1n.", false);
+                    startCooldown(60);
+                } else {
+                    showOtpStatus(data.message || "Kh\u00f4ng th\u1ec3 g\u1eedi m\u00e3 OTP. Vui l\u00f2ng th\u1eed l\u1ea1i.", true);
+                    btnSendOtp.disabled = false;
+                    btnSendOtp.textContent = "G\u1eedi l\u1ea1i OTP";
+                }
+            } catch (err) {
+                console.error("Send OTP error:", err);
+                showOtpStatus("L\u1ed7i k\u1ebft n\u1ed1i. Vui l\u00f2ng th\u1eed l\u1ea1i.", true);
+                btnSendOtp.disabled = false;
+                btnSendOtp.textContent = "G\u1eedi l\u1ea1i OTP";
+            }
+        });
+
+        function showOtpStatus(msg, isError) {
+            if (!otpStatusMsg) return;
+            otpStatusMsg.style.display = "block";
+            otpStatusMsg.style.color = isError ? "#ef4444" : "#2AB5A3";
+            otpStatusMsg.textContent = msg;
+        }
+
+        function startCooldown(seconds) {
+            let remain = seconds;
+            btnSendOtp.disabled = true;
+            btnSendOtp.textContent = `G\u1eedi l\u1ea1i (${remain}s)`;
+
+            if (cooldownTimer) clearInterval(cooldownTimer);
+            cooldownTimer = setInterval(() => {
+                remain--;
+                if (remain <= 0) {
+                    clearInterval(cooldownTimer);
+                    btnSendOtp.disabled = false;
+                    btnSendOtp.textContent = "G\u1eedi l\u1ea1i OTP";
+                } else {
+                    btnSendOtp.textContent = `G\u1eedi l\u1ea1i (${remain}s)`;
+                }
+            }, 1000);
+        }
+    }
+
     form.addEventListener("submit", (event) => {
         validatePasswordConfirmation();
         validateDob();
