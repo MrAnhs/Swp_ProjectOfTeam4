@@ -1,0 +1,12 @@
+:root {
+    --color-primary: #2AB5A3;
+    --color-primary-dark: #208A7C;
+    --color-text: #1e293b;
+    --color-muted: #64748b;
+    --color-border: #e2e8f0;
+    --color-background: #f8fafc;
+    --sidebar-width: 260px;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 20px;
+}
