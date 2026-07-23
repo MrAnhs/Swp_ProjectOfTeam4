@@ -634,11 +634,11 @@
                                     <div class="mb-3">
                                         <label class="form-label fw-bold">Chuyên khoa / Khoa công tác</label>
                                         <select class="form-select mb-2" id="specDepartmentSelect" style="border-radius: 8px;">
-                                            <option value="Endocrinology">Nội tiết (Endocrinology)</option>
-                                            <option value="Cardiology">Tim mạch (Cardiology)</option>
-                                            <option value="Nephrology">Thận học (Nephrology)</option>
-                                            <option value="General">Tổng quát (General)</option>
-                                            <option value="custom">-- Nhập tên chuyên khoa khác --</option>
+                                            <option value="Endocrinology">Nội tiết</option>
+                                            <option value="Cardiology">Tim mạch</option>
+                                            <option value="Nephrology">Thận học</option>
+                                            <option value="General">Tổng quát</option>
+                                            <option value="custom">-- Thêm tên chuyên khoa khác --</option>
                                         </select>
                                         <input type="text" class="form-control" name="department" id="specDepartmentInput" placeholder="Nhập tên chuyên khoa (VD: Khoa Nhi, Khoa Mắt...)" style="border-radius: 8px;">
                                     </div>
