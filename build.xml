@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="SWP_Project" default="default" basedir=".">
+    <description>Builds, tests, and runs the project SWP_Project.</description>
+    <import file="nbproject/build-impl.xml"/>
+    
+    <!-- Force compilation and library sync before compile -->
+    <target name="-do-compile" depends="init, deps-jar, -pre-pre-compile, -pre-compile, -copy-manifest, -copy-persistence-xml, -copy-webdir, library-inclusion-in-archive,library-inclusion-in-manifest" if="have.sources">
+        <mkdir dir="${build.web.dir}/WEB-INF/lib"/>
+        <copy todir="${build.web.dir}/WEB-INF/lib">
+            <fileset dir="lib" includes="*.jar" erroronmissingdir="false"/>
+        </copy>
+        <mkdir dir="${build.web.dir}/WEB-INF/classes"/>
+        <mkdir dir="${build.dir}/classes"/>
+        <javac srcdir="${src.dir}" destdir="${build.web.dir}/WEB-INF/classes" encoding="UTF-8" includeantruntime="false" debug="true" fork="true">
+            <classpath>
+                <fileset dir="lib" includes="*.jar" erroronmissingdir="false"/>
+                <fileset dir="${build.web.dir}/WEB-INF/lib" includes="*.jar" erroronmissingdir="false"/>
+                <fileset dir="${j2ee.server.home}/lib" includes="*.jar" erroronmissingdir="false"/>
+            </classpath>
+        </javac>
+        <copy todir="${build.dir}/classes">
+            <fileset dir="${build.web.dir}/WEB-INF/classes"/>
+        </copy>
+    </target>
+
+    <!-- Guaranteed execution target right before NetBeans triggers Tomcat Deployment -->
+    <target name="-pre-run-deploy">
+        <mkdir dir="${build.web.dir}/WEB-INF/lib"/>
+        <copy todir="${build.web.dir}/WEB-INF/lib">
+            <fileset dir="lib" includes="*.jar" erroronmissingdir="false"/>
+        </copy>
+        <mkdir dir="${build.web.dir}/WEB-INF/classes"/>
+        <javac srcdir="${src.dir}" destdir="${build.web.dir}/WEB-INF/classes" encoding="UTF-8" includeantruntime="false" debug="true" fork="true">
+            <classpath>
+                <fileset dir="lib" includes="*.jar" erroronmissingdir="false"/>
+                <fileset dir="${build.web.dir}/WEB-INF/lib" includes="*.jar" erroronmissingdir="false"/>
+                <fileset dir="${j2ee.server.home}/lib" includes="*.jar" erroronmissingdir="false"/>
+            </classpath>
+        </javac>
+        <copy todir="${build.web.dir}/WEB-INF/classes">
+            <fileset dir="${build.dir}/classes" erroronmissingdir="false"/>
+        </copy>
+    </target>
+</project>
