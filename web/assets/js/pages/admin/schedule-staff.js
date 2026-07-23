@@ -5,6 +5,23 @@
  * File này xử lý các ca trực của Lễ tân (Receptionist) và Bác sĩ xét nghiệm (Lab).
  */
 
+// Global Context Fallbacks
+const adminContextPath = (window.AdminConfig && window.AdminConfig.contextPath) ? window.AdminConfig.contextPath : (typeof window.adminContextPath !== 'undefined' ? window.adminContextPath : '');
+const adminCsrfToken = (window.AdminConfig && window.AdminConfig.csrfToken) ? window.AdminConfig.csrfToken : (typeof window.adminCsrfToken !== 'undefined' ? window.adminCsrfToken : '');
+const adminLoginUrl = (window.AdminConfig && window.AdminConfig.loginUrl) ? window.AdminConfig.loginUrl : (typeof window.adminLoginUrl !== 'undefined' ? window.adminLoginUrl : adminContextPath + '/login.jsp');
+
+if (typeof window.escapeHtml !== 'function') {
+    window.escapeHtml = function (s) {
+        if (!s) return '';
+        return String(s).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": "&#39;" }[c];
+        });
+    };
+}
+if (typeof window.escapeHtmlForSchedule !== 'function') {
+    window.escapeHtmlForSchedule = window.escapeHtml;
+}
+
 // ==========================================
 // 1. CONFIGURATION & HELPERS FOR STAFF ROLES
 // ==========================================
@@ -301,7 +318,15 @@ function attachLabScheduleValidation(form) {
 }
 window.attachLabScheduleValidation = attachLabScheduleValidation;
 
-document.addEventListener('DOMContentLoaded', function () {
+const safeOnReadyStaff = typeof window.onReady === 'function' ? window.onReady : function (fn) {
+    if (document.readyState === 'interactive' || document.readyState === 'complete') {
+        setTimeout(fn, 0);
+    } else {
+        document.addEventListener('DOMContentLoaded', fn);
+    }
+};
+
+safeOnReadyStaff(function () {
     const labForm = document.querySelector('form[action$="/admin"] input[value="create-staff-schedule"]')?.closest('form');
     if (labForm) {
         attachLabScheduleValidation(labForm);

@@ -6,6 +6,23 @@
  * sửa ca trực và hiển thị danh sách bệnh nhân đã đặt lịch trong ca).
  */
 
+// Global Context Fallbacks
+const adminContextPath = (window.AdminConfig && window.AdminConfig.contextPath) ? window.AdminConfig.contextPath : (typeof window.adminContextPath !== 'undefined' ? window.adminContextPath : '');
+const adminCsrfToken = (window.AdminConfig && window.AdminConfig.csrfToken) ? window.AdminConfig.csrfToken : (typeof window.adminCsrfToken !== 'undefined' ? window.adminCsrfToken : '');
+const adminLoginUrl = (window.AdminConfig && window.AdminConfig.loginUrl) ? window.AdminConfig.loginUrl : (typeof window.adminLoginUrl !== 'undefined' ? window.adminLoginUrl : adminContextPath + '/login.jsp');
+
+if (typeof window.escapeHtml !== 'function') {
+    window.escapeHtml = function (s) {
+        if (!s) return '';
+        return String(s).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": "&#39;" }[c];
+        });
+    };
+}
+if (typeof window.escapeHtmlForSchedule !== 'function') {
+    window.escapeHtmlForSchedule = window.escapeHtml;
+}
+
 // ==========================================
 // 1. CHUYỂN GIAO CA TRỰC (TRANSFER SCHEDULE)
 // ==========================================

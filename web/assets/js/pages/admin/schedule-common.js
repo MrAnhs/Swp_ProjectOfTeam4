@@ -10,9 +10,12 @@
 // 1. CẤU HÌNH TOÀN CỤC (GLOBAL SYSTEM CONFIG)
 // ==========================================
 const adminContextPath = window.AdminConfig && window.AdminConfig.contextPath ? window.AdminConfig.contextPath : '';
+window.adminContextPath = adminContextPath;
 const adminCsrfToken = window.AdminConfig && window.AdminConfig.csrfToken ? window.AdminConfig.csrfToken : '';
 const adminLoginUrl = window.AdminConfig && window.AdminConfig.loginUrl ? window.AdminConfig.loginUrl : adminContextPath + '/login.jsp';
+window.adminLoginUrl = adminLoginUrl;
 const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndpoint ? window.AdminConfig.adminEndpoint : adminContextPath + '/admin';
+window.adminScheduleEndpoint = adminScheduleEndpoint;
 
 // ==========================================
 // 2. CÁC HÀM TIỆN ÍCH AN TOÀN & ĐỊNH DẠNG (SECURITY & FORMAT HELPERS)
@@ -29,6 +32,7 @@ function escapeHtml(s) {
         return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": "&#39;" }[c];
     });
 }
+window.escapeHtml = escapeHtml;
 
 /**
  * Mã hóa chuỗi HTML dùng riêng cho in-place rendering ca trực
@@ -41,6 +45,7 @@ function escapeHtmlForSchedule(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+window.escapeHtmlForSchedule = escapeHtmlForSchedule;
 
 /**
  * Hiển thị hộp thông báo tạm thời góc màn hình rồi tự tắt sau 3 giây
@@ -154,10 +159,19 @@ const departmentMapping = {
     'General': 'General'
 };
 
+function onReady(fn) {
+    if (document.readyState === 'interactive' || document.readyState === 'complete') {
+        setTimeout(fn, 0);
+    } else {
+        document.addEventListener('DOMContentLoaded', fn);
+    }
+}
+window.onReady = onReady;
+
 // ==========================================
 // 4. SAAS UI/UX INTERACTION & FILTER LOGIC
 // ==========================================
-document.addEventListener('DOMContentLoaded', function () {
+onReady(function () {
     const viewCalendarBtn = document.getElementById('viewModeCalendarBtn');
     const viewListBtn = document.getElementById('viewModeListBtn');
     const detailedListPane = document.getElementById('detailedListPane');
@@ -229,9 +243,16 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             if (selectedViewTabInput) selectedViewTabInput.value = 'calendar';
-            if (typeof window.loadWeeklyCalendar === 'function') {
-                window.loadWeeklyCalendar();
-            }
+            // Fix race condition: schedule-wizard.js may not have loaded/executed yet
+            // when schedule-common.js DOMContentLoaded fires. Defer to next event loop tick,
+            // then retry up to 10 times (every 100ms) until loadWeeklyCalendar is defined.
+            (function tryLoadCalendar(attempts) {
+                if (typeof window.loadWeeklyCalendar === 'function') {
+                    window.loadWeeklyCalendar();
+                } else if (attempts > 0) {
+                    setTimeout(function() { tryLoadCalendar(attempts - 1); }, 100);
+                }
+            })(10);
         } else {
             // Cập nhật nút
             viewListBtn.className = "btn btn-sm px-3 rounded-2 fw-bold text-white bg-primary";
@@ -275,6 +296,7 @@ document.addEventListener('DOMContentLoaded', function () {
             updateDetailedListPanes();
         }
     }
+    window.switchViewMode = switchViewMode;
 
     if (viewCalendarBtn && viewListBtn) {
         viewCalendarBtn.addEventListener('click', () => switchViewMode('calendar'));

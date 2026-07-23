@@ -46,8 +46,6 @@
             </div>
         </div>
     </c:if>
-    </div>
-    </div>
 
     <div class="modal fade" id="createScheduleModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
@@ -252,16 +250,18 @@
                                             style="font-size: 0.85rem; border-bottom: 2px solid #e9d5ff; padding-bottom: 4px;">
                                             THÔNG TIN CẤU HÌNH
                                         </div>
+                                        <jsp:useBean id="modalNowDate" class="java.util.Date" />
+                                        <fmt:formatDate var="modalTodayIso" value="${modalNowDate}" pattern="yyyy-MM-dd" />
                                         <div class="row g-2">
                                             <div class="col-md-6">
                                                 <label class="form-label small text-secondary">Từ ngày</label>
                                                 <input type="date" class="form-control form-control-sm" name="startDate"
-                                                    id="aiStartDate" required>
+                                                    id="aiStartDate" value="${modalTodayIso}" required>
                                             </div>
                                             <div class="col-md-6">
                                                 <label class="form-label small text-secondary">Đến ngày</label>
                                                 <input type="date" class="form-control form-control-sm" name="endDate"
-                                                    id="aiEndDate" required>
+                                                    id="aiEndDate" value="${modalTodayIso}" required>
                                             </div>
                                         </div>
                                     </div>
@@ -312,49 +312,30 @@
                                                 </div>
                                             </div>
 
-                                            <%-- KHUNG CA TRỰC ÁP DỤNG & SỐ NHÂN SỰ MỖI CA --%>
-                                                <div class="col-12">
-                                                    <div class="row g-2">
-                                                        <div class="col-md-6">
-                                                            <label
-                                                                class="form-label small text-secondary fw-semibold">Khung
-                                                                ca trực áp dụng</label>
-                                                            <div
-                                                                class="d-flex flex-wrap gap-3 p-2 bg-light rounded border">
-                                                                <div class="form-check">
-                                                                    <input class="form-check-input doctor-ai-shift-cb"
-                                                                        type="checkbox" name="aiSelectedShifts"
-                                                                        value="07:00-11:30" id="universalShiftMorning"
-                                                                        checked>
-                                                                    <label
-                                                                        class="form-check-label small fw-semibold text-dark"
-                                                                        for="universalShiftMorning">Ca sáng (07:00 -
-                                                                        11:30)</label>
-                                                                </div>
-                                                                <div class="form-check">
-                                                                    <input class="form-check-input doctor-ai-shift-cb"
-                                                                        type="checkbox" name="aiSelectedShifts"
-                                                                        value="13:30-17:30" id="universalShiftAfternoon"
-                                                                        checked>
-                                                                    <label
-                                                                        class="form-check-label small fw-semibold text-dark"
-                                                                        for="universalShiftAfternoon">Ca chiều (13:30 -
-                                                                        17:30)</label>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-md-6">
-                                                            <label class="form-label small text-secondary fw-semibold"
-                                                                id="aiStaffPerShiftLabel">Số bác sĩ trực mỗi ca</label>
-                                                            <select class="form-select form-select-sm"
-                                                                name="staffPerShift" id="aiDoctorsPerShift" required>
-                                                                <option value="1" selected>1 nhân sự/ca</option>
-                                                                <option value="2">2 nhân sự/ca</option>
-                                                                <option value="3">3 nhân sự/ca</option>
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                             <%-- KHUNG CA TRỰC ÁP DỤNG --%>
+                                                 <div class="col-12">
+                                                     <label class="form-label small text-secondary fw-semibold">Khung ca trực áp dụng</label>
+                                                     <div class="d-flex flex-wrap gap-3 p-2 bg-light rounded border">
+                                                         <div class="form-check">
+                                                             <input class="form-check-input doctor-ai-shift-cb"
+                                                                 type="checkbox" name="aiSelectedShifts"
+                                                                 value="07:00-11:30" id="universalShiftMorning"
+                                                                 checked>
+                                                             <label class="form-check-label small fw-semibold text-dark"
+                                                                 for="universalShiftMorning">Ca sáng (07:00 - 11:30)</label>
+                                                         </div>
+                                                         <div class="form-check">
+                                                             <input class="form-check-input doctor-ai-shift-cb"
+                                                                 type="checkbox" name="aiSelectedShifts"
+                                                                 value="13:30-17:30" id="universalShiftAfternoon"
+                                                                 checked>
+                                                             <label class="form-check-label small fw-semibold text-dark"
+                                                                 for="universalShiftAfternoon">Ca chiều (13:30 - 17:30)</label>
+                                                         </div>
+                                                     </div>
+                                                     <input type="hidden" name="staffPerShift" id="aiDoctorsPerShift" value="1">
+                                                     <input type="hidden" name="doctorsPerShift" value="1">
+                                                 </div>
 
                                                 <%-- NGÀY ÁP DỤNG TRONG TUẦN --%>
                                                     <div class="col-12">
@@ -472,6 +453,7 @@
                                                                         </div>
                                                                     </div>
 
+                                                                    <input type="hidden" name="csrfToken" value="${csrfToken}">
                                                                     <input type="hidden" name="shiftTemplates"
                                                                         id="aiShiftTemplates">
                                                                     <input type="hidden" name="startTime" value="07:00">
@@ -485,8 +467,6 @@
                                                                         id="aiMaxPatients" value="20">
                                                                     <input type="hidden" name="maxWorkload" value="50">
                                                                     <input type="hidden" name="workArea" value="">
-                                                                    <input type="hidden" name="doctorsPerShift"
-                                                                        id="aiDoctorsPerShiftHidden" value="1">
                         </div>
                     </div>
 

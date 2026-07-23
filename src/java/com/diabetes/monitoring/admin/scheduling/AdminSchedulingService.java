@@ -718,6 +718,13 @@ class AdminAiSchedulingService {
         shiftsPerDay = expandShiftsForDoctorsPerSlot(shiftsPerDay,
                 doctorsPerShift);
 
+        if (maxPatients <= 0) {
+            maxPatients = 20;
+        }
+        if (maxSchedules <= 0) {
+            maxSchedules = expectedScheduleCount;
+        }
+
         if (startDate == null || endDate == null || startDate.after(endDate)) {
             result.message = "Khoảng ngày lập lịch không hợp lệ.";
             return result;
@@ -742,8 +749,6 @@ class AdminAiSchedulingService {
             result.message = "Số bệnh nhân tối đa không được vượt quá 50 để đảm bảo chất lượng khám.";
             return result;
         }
-
-        maxSchedules = expectedScheduleCount;
         List<Map<String, Object>> doctors = aiSchedulingRepository.getDoctorsForAiScheduling(startDate,
                 endDate, request.selectedDepartments);
         GeminiSchedulingService.SchedulingResult geminiResult = geminiSchedulingService.generate(targetDates,

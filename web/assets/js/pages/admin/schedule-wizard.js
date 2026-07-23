@@ -12,6 +12,65 @@
 let proposedSchedules = [];
 let availableDoctors = [];
 
+if (typeof window.escapeHtml !== 'function') {
+    window.escapeHtml = function (s) {
+        if (!s) return '';
+        return String(s).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": "&#39;" }[c];
+        });
+    };
+}
+if (typeof window.escapeHtmlForSchedule !== 'function') {
+    window.escapeHtmlForSchedule = window.escapeHtml;
+}
+
+// ==========================================
+// DATE PARSING & FORMATTING UTILITIES (GLOBAL)
+// ==========================================
+
+function parseAnyDate(raw) {
+    if (!raw) return new Date();
+    if (raw instanceof Date) {
+        return isNaN(raw.getTime()) ? new Date() : raw;
+    }
+    const str = String(raw).trim();
+    if (!str) return new Date();
+
+    if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+        const parts = str.substring(0, 10).split('-');
+        return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    }
+    if (/^\d{1,2}\/\d{1,2}\/\d{4}/.test(str)) {
+        const parts = str.substring(0, 10).split('/');
+        return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+    }
+
+    const d = new Date(str);
+    return isNaN(d.getTime()) ? new Date() : d;
+}
+
+function getMondayOfDate(d) {
+    const date = parseAnyDate(d);
+    const day = date.getDay();
+    const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+    return new Date(date.getFullYear(), date.getMonth(), diff);
+}
+
+function formatDateIso(d) {
+    const date = parseAnyDate(d);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function formatDateDisplay(d) {
+    const date = parseAnyDate(d);
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${day}/${month}`;
+}
+
 // ==========================================
 // 2. SHIFT TEMPLATE & CAPACITY CALCULATION HELPERS
 // ==========================================
@@ -40,7 +99,7 @@ const specialtyKeywords = {
     'General': ['tong quat', 'general']
 };
 
-const departmentMapping = {
+const aiDepartmentDisplayMapping = {
     'Endocrinology': 'Nội tiết',
     'Cardiology': 'Tim mạch',
     'Nephrology': 'Thận học',
@@ -51,7 +110,7 @@ const departmentMapping = {
 function formatDepartmentName(dept) {
     if (!dept) return '-';
     const trimmed = String(dept).trim();
-    if (departmentMapping[trimmed]) return departmentMapping[trimmed];
+    if (aiDepartmentDisplayMapping[trimmed]) return aiDepartmentDisplayMapping[trimmed];
     const lower = trimmed.toLowerCase();
     if (lower.includes('nội tiết') || lower.includes('endocrin')) return 'Nội tiết';
     if (lower.includes('tim mạch') || lower.includes('cardio')) return 'Tim mạch';
@@ -184,6 +243,7 @@ function updateTemplatePreview() {
     }
     updateAiMaxSchedules();
 }
+window.updateTemplatePreview = updateTemplatePreview;
 
 /**
  * Lấy danh sách các thứ được tick chọn trong tuần (1 = Thứ 2, 7 = Chủ nhật)
@@ -205,8 +265,10 @@ function countSelectedTargetDates(startValue, endValue) {
         return 0;
     }
     const selected = new Set(getSelectedWeekdays());
-    const cursor = new Date(startValue + 'T00:00:00');
-    const end = new Date(endValue + 'T00:00:00');
+    const startDateObj = parseAnyDate(startValue);
+    const endDateObj = parseAnyDate(endValue);
+    const cursor = new Date(startDateObj.getFullYear(), startDateObj.getMonth(), startDateObj.getDate());
+    const end = new Date(endDateObj.getFullYear(), endDateObj.getMonth(), endDateObj.getDate());
     let count = 0;
     while (cursor <= end) {
         const jsDay = cursor.getDay();
@@ -297,10 +359,152 @@ function updateAiMaxSchedules() {
     }
 }
 
+function updateWeekdayStates() {
+    const startDate = document.getElementById('aiStartDate');
+    const endDate = document.getElementById('aiEndDate');
+    if (!startDate || !endDate || !startDate.value || !endDate.value) return;
+
+    const startDateObj = parseAnyDate(startDate.value);
+    const endDateObj = parseAnyDate(endDate.value);
+    if (!startDateObj || !endDateObj) return;
+
+    const start = new Date(startDateObj.getFullYear(), startDateObj.getMonth(), startDateObj.getDate());
+    const end = new Date(endDateObj.getFullYear(), endDateObj.getMonth(), endDateObj.getDate());
+
+    if (start > end) return;
+
+    const activeDays = new Set();
+    const cursor = new Date(start);
+    while (cursor <= end) {
+        const jsDay = cursor.getDay();
+        const isoDay = jsDay === 0 ? 7 : jsDay;
+        activeDays.add(isoDay);
+        cursor.setDate(cursor.getDate() + 1);
+    }
+    document.querySelectorAll('input[name="selectedWeekdays"]').forEach(cb => {
+        const val = Number(cb.value);
+        const container = cb.closest('.weekday-option') || cb.closest('.form-check') || cb.parentElement;
+        if (activeDays.has(val)) {
+            cb.disabled = false;
+            if (container) container.classList.remove('opacity-50');
+        } else {
+            cb.disabled = true;
+            cb.checked = false;
+            if (container) container.classList.add('opacity-50');
+        }
+    });
+    updateAiMaxSchedules();
+}
+window.updateWeekdayStates = updateWeekdayStates;
+window.updateAiMaxSchedules = updateAiMaxSchedules;
+
+let currentWeeklySchedules = [];
+
+// Tải dữ liệu lịch tuần qua AJAX (Top-level)
+async function loadWeeklyCalendar() {
+    const picker = document.getElementById('unifiedWeekPicker') || document.getElementById('calendarWeekPicker');
+    if (!picker) return;
+
+    if (!picker.value || !picker.value.trim()) {
+        picker.value = formatDateIso(new Date());
+    }
+
+    const baseDate = parseAnyDate(picker.value);
+    picker.value = formatDateIso(baseDate);
+
+    const monday = getMondayOfDate(baseDate);
+
+    const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+    const datesMap = {};
+
+    days.forEach((dayKey, idx) => {
+        const dateObj = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + idx);
+        const isoStr = formatDateIso(dateObj);
+        datesMap[dayKey] = isoStr;
+
+        const el = document.getElementById(`date-head-${dayKey}`);
+        if (el) el.textContent = formatDateDisplay(dateObj);
+    });
+
+    days.forEach(dayKey => {
+        ['0800', '1300'].forEach(timeKey => {
+            const cell = document.getElementById(`cell-${dayKey}-${timeKey}`);
+            if (cell) cell.innerHTML = '';
+        });
+    });
+
+    const roleFilterEl = document.getElementById('unifiedRoleFilter') || document.getElementById('calendarRoleFilter');
+    const roomFilterEl = document.getElementById('unifiedRoomFilter') || document.getElementById('calendarRoomFilter');
+
+    const role = roleFilterEl ? roleFilterEl.value : 'all';
+    let room = roomFilterEl ? roomFilterEl.value : 'all';
+
+    if (room && room.startsWith('room_')) {
+        room = room.substring('room_'.length);
+    } else if (room && room.startsWith('dept_')) {
+        room = 'all';
+    }
+
+    const ctx = (window.AdminConfig && window.AdminConfig.contextPath) ? window.AdminConfig.contextPath : (typeof window.adminContextPath !== 'undefined' ? window.adminContextPath : '');
+
+    try {
+        const url = `${ctx}/admin?action=getCalendarSchedule&weekDate=${encodeURIComponent(formatDateIso(baseDate))}&role=${encodeURIComponent(role)}&room=${encodeURIComponent(room)}`;
+        const resp = await fetch(url, { headers: { 'Accept': 'application/json' } });
+        const data = await resp.json();
+
+        if (!resp.ok || data.success === false) {
+            throw new Error(data.message || `HTTP ${resp.status}`);
+        }
+
+        currentWeeklySchedules = Array.isArray(data)
+            ? data
+            : (Array.isArray(data.items) ? data.items : []);
+
+        renderWeeklyCalendarCards(currentWeeklySchedules, datesMap, role);
+    } catch (err) {
+        console.error('Failed to load weekly calendar', err);
+        if (typeof showTempAlert === 'function') {
+            showTempAlert(`Không thể tải lịch theo tuần: ${err.message}`, 'danger');
+        }
+    }
+}
+window.loadWeeklyCalendar = loadWeeklyCalendar;
+
+function bindAiWizardEvents() {
+    const startDate = document.getElementById('aiStartDate');
+    const endDate = document.getElementById('aiEndDate');
+    const doctorsPerShiftSelect = document.getElementById('aiDoctorsPerShift');
+
+    function onDateChange() {
+        updateWeekdayStates();
+        updateTemplatePreview();
+    }
+
+    [startDate, endDate].forEach(input => {
+        if (input) {
+            input.removeEventListener('change', onDateChange);
+            input.addEventListener('change', onDateChange);
+            input.removeEventListener('input', onDateChange);
+            input.addEventListener('input', onDateChange);
+        }
+    });
+
+    if (doctorsPerShiftSelect) {
+        doctorsPerShiftSelect.removeEventListener('change', updateTemplatePreview);
+        doctorsPerShiftSelect.addEventListener('change', updateTemplatePreview);
+    }
+
+    document.querySelectorAll('.ai-dept-cb, .doctor-ai-shift-cb, input[name="selectedWeekdays"], .lab-room-cb, input[name="aiSelectedShifts"]').forEach(cb => {
+        cb.removeEventListener('change', updateTemplatePreview);
+        cb.addEventListener('change', updateTemplatePreview);
+    });
+}
+
 /**
  * Cấu hình động giao diện Universal Modal theo vai trò được chọn
  */
 function initUniversalModal(staffType) {
+    window.initUniversalModal = initUniversalModal;
     const title = document.getElementById('aiModalTitle');
     const subtitle = document.getElementById('aiModalSubtitle');
     const staffTypeInput = document.getElementById('aiStaffType');
@@ -326,35 +530,98 @@ function initUniversalModal(staffType) {
 
     const startDate = document.getElementById('aiStartDate');
     const endDate = document.getElementById('aiEndDate');
-    const todayStr = new Date().toISOString().slice(0, 10);
-    const nextWeek = new Date();
-    nextWeek.setDate(nextWeek.getDate() + 7);
-    const nextWeekStr = nextWeek.toISOString().slice(0, 10);
+    const today = new Date();
+    const nextWeek = new Date(today);
+    nextWeek.setDate(today.getDate() + 7);
 
-    if (startDate && !startDate.value) startDate.value = todayStr;
-    if (endDate && !endDate.value) endDate.value = nextWeekStr;
+    const todayStr = formatDateIso(today);
+    const nextWeekStr = formatDateIso(nextWeek);
 
-    if (doctorsPerShiftSelect) {
-        doctorsPerShiftSelect.innerHTML = '';
-        if (staffType === 'Doctor') {
-            doctorsPerShiftSelect.innerHTML =
-                '<option value="1" selected>1 bác sĩ/phòng</option>' +
-                '<option value="2">2 bác sĩ/phòng</option>' +
-                '<option value="3">3 bác sĩ/phòng</option>';
-        } else if (staffType === 'Receptionist') {
-            doctorsPerShiftSelect.innerHTML =
-                '<option value="1" selected>1 lễ tân/ca</option>' +
-                '<option value="2">2 lễ tân/ca</option>' +
-                '<option value="3">3 lễ tân/ca</option>';
-        } else if (staffType === 'doctor_lab') {
-            doctorsPerShiftSelect.innerHTML =
-                '<option value="1">1 KTV/ca</option>' +
-                '<option value="2" selected>2 KTV/ca</option>' +
-                '<option value="3">3 KTV/ca</option>';
+    if (startDate) {
+        startDate.min = todayStr;
+        if (!startDate.value) {
+            startDate.value = todayStr;
+        }
+    }
+    if (endDate) {
+        endDate.min = startDate ? (startDate.value || todayStr) : todayStr;
+        if (!endDate.value || endDate.value < (startDate ? startDate.value : todayStr)) {
+            endDate.value = nextWeekStr;
         }
     }
 
+    if (startDate) {
+        startDate.onchange = function () {
+            if (endDate) {
+                endDate.min = startDate.value;
+                if (!endDate.value || endDate.value < startDate.value) {
+                    endDate.value = startDate.value;
+                }
+            }
+            updateWeekdayStates();
+            updateTemplatePreview();
+        };
+    }
+    if (endDate) {
+        endDate.onchange = function () {
+            updateWeekdayStates();
+            updateTemplatePreview();
+        };
+    }
+
+    if (doctorsPerShiftSelect) {
+        doctorsPerShiftSelect.value = '1';
+    }
+
     if (conflictSection) conflictSection.classList.remove('d-none');
+
+function populateLabRoomCheckboxes() {
+    const labContainer = document.getElementById('aiLabRoomCheckboxes');
+    if (!labContainer) return;
+
+    let labRooms = [];
+    if (window.activeRoomsList && Array.isArray(window.activeRoomsList) && window.activeRoomsList.length > 0) {
+        labRooms = window.activeRoomsList.filter(room => {
+            const id = (room.roomId || '').toLowerCase().trim();
+            const name = normalizeSearchText(room.roomName || '');
+            const status = (room.status || '').toLowerCase().trim();
+            const isActive = status === 'active' || status === '';
+            return isActive && (name.includes('xet nghiem') || name.includes('lab') || name.includes('xn') || id === 'r104' || id === 'r105');
+        });
+    }
+
+    if (!labRooms || labRooms.length === 0) {
+        labRooms = [
+            { roomId: 'R104', roomName: 'Phòng Xét Nghiệm Máu & Sinh Hóa' },
+            { roomId: 'R105', roomName: 'Phòng Xét Nghiệm Huyết Học' }
+        ];
+    }
+
+    labContainer.innerHTML = labRooms.map(room => `
+        <div class="form-check me-3">
+            <input class="form-check-input lab-room-cb" type="checkbox"
+                name="roomIds" value="${escapeHtml(room.roomId)}"
+                id="universalLabRoom_${escapeHtml(room.roomId)}" checked
+                data-room-name="${escapeHtml(room.roomName)}">
+            <label class="form-check-label small fw-semibold text-dark" for="universalLabRoom_${escapeHtml(room.roomId)}">
+                <i class="fa-solid fa-flask me-1 text-purple"></i>${escapeHtml(room.roomId)} - ${escapeHtml(room.roomName)}
+            </label>
+        </div>
+    `).join('');
+
+    labContainer.querySelectorAll('.lab-room-cb').forEach(cb => {
+        cb.addEventListener('change', function () {
+            const checkedCount = labContainer.querySelectorAll('.lab-room-cb:checked').length;
+            if (checkedCount === 0) {
+                this.checked = true;
+                if (typeof showTempAlert === 'function') {
+                    showTempAlert('Phải chọn ít nhất 1 phòng xét nghiệm cho ca trực!', 'warning');
+                }
+            }
+            updateTemplatePreview();
+        });
+    });
+}
 
     if (staffType === 'Doctor') {
         if (title) title.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles me-2 text-purple"></i>Lập lịch bác sĩ thông minh';
@@ -390,6 +657,7 @@ function initUniversalModal(staffType) {
 
         if (deptSection) deptSection.classList.add('d-none');
         if (labRoomSection) labRoomSection.classList.remove('d-none');
+        populateLabRoomCheckboxes();
 
         if (runBtn) {
             runBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Xác nhận lập lịch';
@@ -400,16 +668,11 @@ function initUniversalModal(staffType) {
     const alertBox = document.getElementById('aiScheduleAlert');
     if (alertBox) alertBox.style.display = 'none';
 
-    const startEl = document.getElementById('aiStartDate');
-    if (startEl) {
-        startEl.dispatchEvent(new Event('change'));
-    }
-    
-    document.querySelectorAll('.ai-dept-cb').forEach(cb => {
-        cb.removeEventListener('change', updateAiMaxSchedules);
-        cb.addEventListener('change', updateAiMaxSchedules);
-    });
+    bindAiWizardEvents();
+    updateWeekdayStates();
+    updateTemplatePreview();
 }
+window.initUniversalModal = initUniversalModal;
 
 // ==========================================
 // 3. WIZARD INTERFACES & UI PROGRESS STEPS
@@ -565,45 +828,453 @@ function buildScheduleRow(schedule) {
         + '</tr>';
 }
 
-document.addEventListener('DOMContentLoaded', function () {
-    const startDate = document.getElementById('aiStartDate');
-    const endDate = document.getElementById('aiEndDate');
-    const form = document.getElementById('aiScheduleForm');
-    const maxPatientsInput = document.getElementById('aiMaxPatients');
-    const submitBtn = document.getElementById('aiScheduleSubmitBtn');
+// ==========================================
+// 5. RENDER LỊCH TUẦN (TOP-LEVEL – accessible from loadWeeklyCalendar above)
+// ==========================================
 
-    function updateWeekdayStates() {
-        if (!startDate || !endDate || !startDate.value || !endDate.value) return;
-        const start = new Date(startDate.value + 'T00:00:00');
-        const end = new Date(endDate.value + 'T00:00:00');
-        const activeDays = new Set();
-        const cursor = new Date(start);
-        while (cursor <= end) {
-            const jsDay = cursor.getDay();
-            const isoDay = jsDay === 0 ? 7 : jsDay;
-            activeDays.add(isoDay);
-            cursor.setDate(cursor.getDate() + 1);
-        }
-        document.querySelectorAll('input[name="selectedWeekdays"]').forEach(cb => {
-            const val = Number(cb.value);
-            const container = cb.closest('.form-check') || cb.parentElement;
-            if (activeDays.has(val)) {
-                cb.disabled = false;
-                if (container) container.classList.remove('opacity-50');
-            } else {
-                cb.disabled = true;
-                cb.checked = false;
-                if (container) container.classList.add('opacity-50');
-            }
-        });
-        updateAiMaxSchedules();
-    }
-
-    [startDate, endDate].forEach(input => {
-        if (input) input.addEventListener('change', updateWeekdayStates);
+function renderWeeklyCalendarCards(schedules, datesMap, activeRole) {
+    const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+    const daysMapByDate = {};
+    Object.keys(datesMap).forEach(key => {
+        daysMapByDate[datesMap[key]] = key;
     });
 
-    document.querySelectorAll('.ai-dept-cb, .doctor-ai-shift-cb, input[name="selectedWeekdays"], .lab-room-cb').forEach(cb => {
+    let hasConflict = false;
+
+    if (activeRole && activeRole !== 'all') {
+        const targetRoleLower = activeRole.toLowerCase();
+        schedules = schedules.filter(shift => {
+            const r = (shift.role || shift.staffType || '').toLowerCase();
+            if (targetRoleLower === 'doctor') return r.includes('doctor') || r.includes('bác sĩ khám');
+            if (targetRoleLower === 'receptionist' || targetRoleLower === 'reception') return r.includes('reception') || r.includes('lễ tân');
+            if (targetRoleLower === 'doctor_lab' || targetRoleLower === 'lab') return r.includes('lab') || r.includes('xét nghiệm');
+            return r === targetRoleLower;
+        });
+    }
+
+    const shiftsByCell = {};
+    schedules.forEach(shift => {
+        const rawDate = shift.date || shift.workDate || shift.work_date;
+        const dateStr = formatDateIso(rawDate);
+        const dayKey = daysMapByDate[dateStr];
+        if (!dayKey) return;
+        const slotStr = (shift.time_slot || shift.timeSlot || '').toLowerCase();
+        const startTime = (shift.start_time || shift.start || '').toLowerCase();
+        const isMorning = startTime === '08:00' || startTime.startsWith('07') || startTime.startsWith('08') || slotStr.includes('morning') || slotStr.includes('07:') || slotStr.includes('08:') || slotStr.includes('sáng') || slotStr.includes('sang');
+        const timeKey = isMorning ? '0800' : '1300';
+        const cellId = `cell-${dayKey}-${timeKey}`;
+        if (!shiftsByCell[cellId]) shiftsByCell[cellId] = [];
+        shiftsByCell[cellId].push(shift);
+        if (shift.conflict) hasConflict = true;
+    });
+
+    days.forEach(dayKey => {
+        ['0800', '1300'].forEach(timeKey => {
+            const cell = document.getElementById(`cell-${dayKey}-${timeKey}`);
+            if (cell) cell.innerHTML = '';
+        });
+    });
+
+    Object.keys(shiftsByCell).forEach(cellId => {
+        const cell = document.getElementById(cellId);
+        if (!cell) return;
+        const listInCell = shiftsByCell[cellId];
+        const maxVisible = 2;
+        const visibleShifts = listInCell.slice(0, maxVisible);
+        const extraCount = listInCell.length - maxVisible;
+
+        visibleShifts.forEach(shift => {
+            const card = document.createElement('div');
+            const roleName = shift.role || shift.staffType || 'Doctor';
+            const staffName = shift.staff || shift.staffName || shift.fullName || 'Nhân sự';
+            const roomName = shift.room || shift.roomName || 'Chưa xếp';
+            card.className = `shift-card role-${roleName} ${shift.conflict ? 'is-conflict' : ''} ${shift.isPreview ? 'is-preview' : ''}`;
+
+            const conflictBadge = shift.conflict
+                ? '<span class="badge bg-danger-subtle text-danger border border-danger-subtle ms-1" style="font-size:0.65rem;" title="' + window.escapeHtml(shift.conflictMessage || 'Trùng lịch') + '">⚠ Trùng</span>'
+                : '';
+            const previewBadge = shift.isPreview
+                ? '<span class="badge bg-purple-subtle text-purple ms-1" style="font-size:0.65rem;">AI gợi ý</span>'
+                : '';
+
+            card.innerHTML = `
+                <div class="fw-bold d-flex justify-content-between align-items-center mb-1">
+                    <span class="text-truncate">${window.escapeHtml(staffName)}</span>
+                    ${conflictBadge} ${previewBadge}
+                </div>
+                <div class="text-secondary small mb-1" style="font-size: 0.72rem;">
+                    <i class="bi bi-person-badge me-1"></i>${window.escapeHtml(roleName)}
+                </div>
+                <div class="text-dark small fw-semibold text-truncate" style="font-size: 0.72rem;">
+                    <i class="bi bi-geo-alt me-1 text-danger"></i>${window.escapeHtml(roomName)}
+                </div>
+            `;
+
+            card.addEventListener('click', () => openShiftDetailModal(shift));
+            cell.appendChild(card);
+        });
+
+        if (extraCount > 0) {
+            const moreBtn = document.createElement('div');
+            moreBtn.className = 'btn-more-shifts mt-1 text-center py-1 bg-purple-subtle text-purple fw-bold rounded border border-purple-subtle';
+            moreBtn.style.fontSize = '0.72rem';
+            moreBtn.style.cursor = 'pointer';
+            moreBtn.innerHTML = `<i class="fa-solid fa-layer-group me-1"></i>+${extraCount} nhân sự khác`;
+            moreBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openCellMoreSchedulesModal(cellId, listInCell);
+            });
+            cell.appendChild(moreBtn);
+        }
+    });
+
+    const alertEl = document.getElementById('calendarConflictAlert');
+    if (alertEl) {
+        if (hasConflict) {
+            alertEl.classList.remove('d-none');
+            alertEl.classList.add('d-flex');
+        } else {
+            alertEl.classList.add('d-none');
+            alertEl.classList.remove('d-flex');
+        }
+    }
+}
+
+function openShiftDetailModal(shift) {
+    const staffEl = document.getElementById('shiftDetailStaff');
+    const roleEl = document.getElementById('shiftDetailRole');
+    const roomEl = document.getElementById('shiftDetailRoom');
+    const dateEl = document.getElementById('shiftDetailDate');
+    const timeEl = document.getElementById('shiftDetailTime');
+    const statusEl = document.getElementById('shiftDetailStatus');
+    const editBtn = document.getElementById('shiftDetailEditBtn');
+
+    if (staffEl) staffEl.textContent = shift.staff || '-';
+    if (roleEl) roleEl.textContent = shift.role || '-';
+    if (roomEl) roomEl.textContent = shift.room || 'Chưa xếp';
+    if (dateEl) dateEl.textContent = shift.date || '-';
+
+    const timeText = (shift.start && shift.end)
+        ? `${shift.start} - ${shift.end}`
+        : (shift.timeSlot || 'Ca trực');
+    if (timeEl) timeEl.textContent = timeText;
+    if (statusEl) statusEl.textContent = shift.status || 'Đã xếp lịch';
+
+    if (editBtn) {
+        const schId = shift.scheduleId || shift.id || '';
+        if (schId) {
+            editBtn.setAttribute('data-schedule-id', schId);
+            editBtn.style.display = 'inline-block';
+        } else {
+            editBtn.removeAttribute('data-schedule-id');
+            editBtn.style.display = 'none';
+        }
+    }
+
+    const alertEl = document.getElementById('shiftDetailConflictAlert');
+    const textEl = document.getElementById('shiftDetailConflictText');
+    if (alertEl && textEl) {
+        if (shift.conflict) {
+            alertEl.classList.remove('d-none');
+            textEl.textContent = shift.conflictMessage || 'Phát hiện ca làm việc trùng nhân sự hoặc trùng phòng!';
+        } else {
+            alertEl.classList.add('d-none');
+        }
+    }
+
+    document.querySelectorAll('.dropdown-menu.show').forEach(m => m.classList.remove('show'));
+    const modalEl = document.getElementById('shiftDetailModal');
+    if (modalEl) {
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
+    }
+}
+window.openShiftDetailModal = openShiftDetailModal;
+
+function openCellMoreSchedulesModal(cellId, listInCell) {
+    const modalEl = document.getElementById('cellMoreSchedulesModal');
+    const container = document.getElementById('cellMoreSchedulesList');
+    if (!modalEl || !container) return;
+
+    let html = '';
+    listInCell.forEach((shift, index) => {
+        const conflictBadge = shift.conflict ? '<span class="badge bg-danger-subtle text-danger border border-danger-subtle ms-2">⚠ Trùng lịch</span>' : '';
+        html += `<div class="p-3 mb-2 rounded border ${shift.conflict ? 'border-danger bg-danger-subtle' : 'bg-light'} d-flex justify-content-between align-items-center">
+            <div>
+                <div class="fw-bold text-dark"><i class="fa-solid fa-user-doctor me-2 text-primary"></i>${escapeHtml(shift.staff)} ${conflictBadge}</div>
+                <div class="small text-secondary mt-1"><i class="fa-solid fa-hospital-user me-1 text-danger"></i>${escapeHtml(shift.room || 'Chưa xếp')} | Khung giờ: ${escapeHtml(shift.timeSlot || shift.start)}</div>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-primary fw-bold px-3" onclick="openShiftDetailModalFromMore('${index}')">Chi tiết</button>
+        </div>`;
+    });
+    container.innerHTML = html;
+    window.currentCellMoreList = listInCell;
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+}
+
+window.openShiftDetailModalFromMore = function (index) {
+    if (window.currentCellMoreList && window.currentCellMoreList[index]) {
+        openShiftDetailModal(window.currentCellMoreList[index]);
+    }
+};
+
+window.openResolveConflictModal = function () {
+    const modalEl = document.getElementById('resolveConflictModal');
+    const container = document.getElementById('resolveConflictList');
+    if (!modalEl || !container) return;
+
+    const conflictShifts = currentWeeklySchedules.filter(s => s.conflict);
+    if (conflictShifts.length === 0) {
+        container.innerHTML = '<div class="alert alert-success mb-0 text-center fw-bold"><i class="fa-solid fa-circle-check me-2"></i>Không có xung đột nào cần tháo gỡ!</div>';
+    } else {
+        let html = '';
+        conflictShifts.forEach(shift => {
+            html += `<div class="p-3 rounded border border-danger-subtle bg-danger-subtle d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                <div>
+                    <div class="fw-bold text-danger mb-1"><i class="fa-solid fa-circle-exclamation me-1"></i>${escapeHtml(shift.staff)} (${escapeHtml(shift.role)})</div>
+                    <div class="small text-dark mb-1"><i class="fa-solid fa-hospital-user me-1"></i>Phòng: ${escapeHtml(shift.room || 'Chưa xếp')} | Ngày: ${escapeHtml(shift.date)} (${escapeHtml(shift.timeSlot || shift.start)})</div>
+                    <div class="small text-danger fw-semibold"><i class="fa-solid fa-info-circle me-1"></i>Lý do: ${escapeHtml(shift.conflictMessage || 'Trùng phòng hoặc trùng bác sĩ')}</div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-danger fw-bold" onclick="resolveSingleConflict('${shift.id}', '${shift.staffType}', 'delete')"><i class="fa-solid fa-trash-can me-1"></i>Hủy ca</button>
+                    <button type="button" class="btn btn-sm btn-primary fw-bold" onclick="resolveSingleConflict('${shift.id}', '${shift.staffType}', 'reassign')"><i class="fa-solid fa-shuffle me-1"></i>Đổi phòng trống</button>
+                </div>
+            </div>`;
+        });
+        container.innerHTML = html;
+    }
+
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+};
+
+window.resolveSingleConflict = async function (id, staffType, actionType) {
+    try {
+        const ctx = (window.AdminConfig && window.AdminConfig.contextPath) ? window.AdminConfig.contextPath : (typeof adminContextPath !== 'undefined' ? adminContextPath : '');
+        const csrfToken = (window.AdminConfig && window.AdminConfig.csrfToken) || window.adminCsrfToken || (document.querySelector('input[name="csrfToken"]')?.value) || '';
+        const formData = new URLSearchParams();
+        formData.append('action', 'resolveScheduleConflict');
+        formData.append('id', id);
+        formData.append('staffType', staffType);
+        formData.append('type', actionType);
+        if (csrfToken) formData.append('csrfToken', csrfToken);
+
+        const resp = await fetch(`${ctx}/admin`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8', 'Accept': 'application/json' },
+            body: formData.toString()
+        });
+        const data = await resp.json();
+        if (data.success) {
+            loadWeeklyCalendar();
+            const modalEl = document.getElementById('resolveConflictModal');
+            if (modalEl) { const m = bootstrap.Modal.getInstance(modalEl); if (m) m.hide(); }
+        } else {
+            alert(data.message || 'Không thể xử lý xung đột');
+        }
+    } catch (e) {
+        console.error('Failed to resolve single conflict', e);
+    }
+};
+
+// ==========================================
+// 6. AI SCHEDULING WIZARD – hàm gửi form
+// ==========================================
+
+async function generateProposal() {
+    const loader = document.getElementById('aiProposalLoading');
+    const container = document.getElementById('aiProposalTableContainer');
+    const submitBtn = document.getElementById('aiScheduleSubmitBtn');
+    const runModelBtn = document.getElementById('aiRunModelBtn');
+    const form = document.getElementById('aiScheduleForm');
+
+    if (loader) {
+        loader.classList.remove('d-none');
+        const loadingTitle = document.getElementById('aiLoadingTitle');
+        if (loadingTitle) loadingTitle.textContent = 'Đang gửi yêu cầu phân bổ bằng AI Gemini...';
+    }
+    if (container) container.classList.add('d-none');
+    if (submitBtn) submitBtn.style.display = 'none';
+
+    updateTemplatePreview();
+
+    const formData = new FormData(form);
+    const params = new URLSearchParams();
+    formData.forEach((value, key) => {
+        if (key !== 'action' && key !== 'csrfToken') {
+            params.append(key, value);
+        }
+    });
+    params.set('action', 'aiCreateSchedules');
+    params.set('preview', 'true');
+
+    const csrfToken = (window.AdminConfig && window.AdminConfig.csrfToken) || window.adminCsrfToken || (document.querySelector('input[name="csrfToken"]')?.value) || '';
+    if (csrfToken) params.set('csrfToken', csrfToken);
+
+    const staffPerShiftVal = document.getElementById('aiDoctorsPerShift') ? document.getElementById('aiDoctorsPerShift').value : '1';
+    params.set('staffPerShift', staffPerShiftVal);
+    params.set('doctorsPerShift', staffPerShiftVal);
+
+    try {
+        const response = await fetch(adminScheduleEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8', 'Accept': 'application/json' },
+            body: params.toString()
+        });
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        const data = await response.json();
+        if (!data.success) throw new Error(data.message || 'Lỗi không xác định.');
+
+        proposedSchedules = data.items || [];
+        availableDoctors = data.doctors || [];
+
+        renderProposalTable();
+
+        if (loader) loader.classList.add('d-none');
+        if (container) container.classList.remove('d-none');
+        if (submitBtn) submitBtn.style.display = 'inline-block';
+        if (runModelBtn) runModelBtn.style.display = 'none';
+
+        const modalBody = document.querySelector('#aiScheduleModal .modal-body');
+        if (modalBody) {
+            setTimeout(() => { modalBody.scrollTo({ top: modalBody.scrollHeight, behavior: 'smooth' }); }, 200);
+        }
+    } catch (err) {
+        showAiScheduleMessage('Không thể tạo đề xuất AI: ' + err.message, false);
+        if (loader) loader.classList.add('d-none');
+    }
+}
+
+async function submitStaffAiSchedule() {
+    const loader = document.getElementById('aiProposalLoading');
+    const alertBox = document.getElementById('aiScheduleAlert');
+    const runModelBtn = document.getElementById('aiRunModelBtn');
+    const form = document.getElementById('aiScheduleForm');
+
+    if (loader) {
+        loader.classList.remove('d-none');
+        const loadingTitle = document.getElementById('aiLoadingTitle');
+        if (loadingTitle) loadingTitle.textContent = 'Đang tự động xử lý và lưu ca trực...';
+    }
+    if (runModelBtn) runModelBtn.disabled = true;
+    if (alertBox) alertBox.style.display = 'none';
+
+    updateTemplatePreview();
+
+    const staffType = document.getElementById('aiStaffType').value;
+    const deptHiddenInput = document.getElementById('aiDeptHiddenInput');
+    if (deptHiddenInput) {
+        deptHiddenInput.value = (staffType === 'Receptionist') ? 'Tiếp nhận' : 'Xét nghiệm';
+    }
+
+    const formData = new FormData(form);
+    const params = new URLSearchParams();
+    params.set('action', 'ai-staff-schedule');
+    formData.forEach((value, key) => {
+        if (key === 'roomIds') { params.append('roomIds', value); }
+        else if (key !== 'action') { params.set(key, value); }
+    });
+
+    const csrfToken = (window.AdminConfig && window.AdminConfig.csrfToken) || window.adminCsrfToken || (document.querySelector('input[name="csrfToken"]')?.value) || '';
+    if (csrfToken) params.set('csrfToken', csrfToken);
+
+    const staffPerShiftVal = document.getElementById('aiDoctorsPerShift') ? document.getElementById('aiDoctorsPerShift').value : '1';
+    params.set('staffPerShift', staffPerShiftVal);
+    params.set('doctorsPerShift', staffPerShiftVal);
+
+    try {
+        const response = await fetch(adminScheduleEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8', 'Accept': 'application/json' },
+            body: params.toString()
+        });
+
+        let data = {};
+        const text = await response.text();
+        try { data = JSON.parse(text); } catch (e) {
+            if (response.redirected || response.ok) { data = { success: true, message: 'Lập lịch thông minh thành công!' }; }
+            else { throw new Error('Không thể phân tích phản hồi từ máy chủ.'); }
+        }
+
+        if (!data.success) throw new Error(data.message || 'Lỗi lưu lịch trực.');
+
+        showAiScheduleMessage('Lập lịch thông minh thành công! Trang web sẽ tải lại...', true);
+        setTimeout(() => { window.location.reload(); }, 1200);
+    } catch (err) {
+        showAiScheduleMessage('Lỗi lập lịch: ' + err.message, false);
+        if (loader) loader.classList.add('d-none');
+        if (runModelBtn) runModelBtn.disabled = false;
+    }
+}
+
+function renderProposalTable() {
+    const tbody = document.getElementById('aiProposalTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    if (proposedSchedules.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">Không có ca trực nào được đề xuất.</td></tr>';
+        return;
+    }
+
+    proposedSchedules.forEach((item, index) => {
+        const row = document.createElement('tr');
+        const rawDept = item.department || item.specialty || '';
+        const displayDept = formatDepartmentName(rawDept);
+        const doctorsInSpecialty = availableDoctors.filter(doc => {
+            const docDept = formatDepartmentName(doc.department || '').toLowerCase().trim();
+            const searchDept = displayDept.toLowerCase().trim();
+            return docDept.includes(searchDept) || searchDept.includes(docDept);
+        });
+
+        const doctorOptionsList = doctorsInSpecialty.length > 0 ? doctorsInSpecialty : availableDoctors;
+        let selectHtml = '<select class="form-select form-select-sm proposed-doctor-select" style="min-width: 150px; font-size: 0.8rem;" data-index="' + index + '">';
+        doctorOptionsList.forEach(doc => {
+            const selected = Number(doc.doctorId) === Number(item.doctorId) ? 'selected' : '';
+            selectHtml += '<option value="' + doc.doctorId + '" ' + selected + '>' + escapeHtmlForSchedule(doc.doctorName || doc.fullName || '-') + '</option>';
+        });
+        selectHtml += '</select>';
+
+        row.innerHTML = '<td><strong>' + escapeHtmlForSchedule(formatVietnameseDate(item.workDate)) + '</strong></td>'
+            + '<td><span class="badge bg-purple-subtle text-purple border border-purple-subtle" style="background:#f3e8ff; color:#6b21a8; font-size: 0.78rem;">' + escapeHtmlForSchedule(item.timeSlot) + '</span></td>'
+            + '<td><span class="fw-semibold text-dark" style="font-size:0.82rem;">' + escapeHtmlForSchedule(displayDept) + '</span></td>'
+            + '<td>' + selectHtml + '</td>'
+            + '<td><small class="text-muted" style="line-height:1.25; display:block; font-size:0.75rem;">' + escapeHtmlForSchedule(item.reason || '-') + '</small></td>';
+
+        tbody.appendChild(row);
+    });
+
+    const summary = document.getElementById('aiScheduleSummary');
+    if (summary) {
+        summary.textContent = 'Hệ thống đã đề xuất ' + proposedSchedules.length + ' ca trực bác sĩ khám. Bạn có thể chọn bác sĩ trực khác từ danh sách thả xuống.';
+    }
+}
+
+window.loadWeeklyCalendar = loadWeeklyCalendar;
+
+const safeOnReady = typeof window.onReady === 'function' ? window.onReady : function (fn) {
+    if (document.readyState === 'interactive' || document.readyState === 'complete') {
+        setTimeout(fn, 0);
+    } else {
+        document.addEventListener('DOMContentLoaded', fn);
+    }
+};
+
+// ==========================================
+// 7. INITIALIZATION – CHỈ GẮN SỰ KIỆN
+// ==========================================
+safeOnReady(function () {
+    // --- AI Wizard form refs ---
+    const form = document.getElementById('aiScheduleForm');
+    const maxPatientsInput = document.getElementById('aiMaxPatients');
+
+    // Khởi tạo sự kiện ngày/ca/phòng
+    bindAiWizardEvents();
+    updateWeekdayStates();
+    updateAiMaxSchedules();
+
+    document.querySelectorAll('.ai-dept-cb, .doctor-ai-shift-cb, input[name="selectedWeekdays"], .lab-room-cb, input[name="aiSelectedShifts"]').forEach(cb => {
         cb.addEventListener('change', updateTemplatePreview);
     });
 
@@ -612,6 +1283,7 @@ document.addEventListener('DOMContentLoaded', function () {
         doctorsPerShiftSelect.addEventListener('change', updateTemplatePreview);
     }
 
+    // AI Modal: khởi tạo khi mở
     const aiModalEl = document.getElementById('aiScheduleModal');
     if (aiModalEl) {
         aiModalEl.addEventListener('show.bs.modal', function (event) {
@@ -619,12 +1291,19 @@ document.addEventListener('DOMContentLoaded', function () {
             const staffType = button ? (button.getAttribute('data-staff-type') || 'Doctor') : 'Doctor';
             initUniversalModal(staffType);
         });
+        aiModalEl.addEventListener('shown.bs.modal', function () {
+            updateWeekdayStates();
+            updateAiMaxSchedules();
+        });
     }
 
+    // Nút Lập lịch thông minh
     const runModelBtn = document.getElementById('aiRunModelBtn');
     if (runModelBtn) {
         runModelBtn.addEventListener('click', async function () {
-            if (!startDate.value || !endDate.value) {
+            const startDate = document.getElementById('aiStartDate');
+            const endDate = document.getElementById('aiEndDate');
+            if (!startDate || !endDate || !startDate.value || !endDate.value) {
                 showAiScheduleMessage('Vui lòng chọn khoảng ngày trực.', false);
                 return;
             }
@@ -637,28 +1316,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (staffType === 'Doctor') {
                 const depts = Array.from(document.querySelectorAll('.ai-dept-cb:checked')).map(cb => cb.value);
-                if (depts.length === 0) {
-                    showAiScheduleMessage('Vui lòng chọn ít nhất một chuyên khoa áp dụng.', false);
-                    return;
-                }
+                if (depts.length === 0) { showAiScheduleMessage('Vui lòng chọn ít nhất một chuyên khoa áp dụng.', false); return; }
             } else if (staffType === 'doctor_lab') {
                 const rooms = Array.from(document.querySelectorAll('.lab-room-cb:checked')).map(cb => cb.value);
-                if (rooms.length === 0) {
-                    showAiScheduleMessage('Vui lòng chọn ít nhất một phòng xét nghiệm áp dụng.', false);
-                    return;
-                }
+                if (rooms.length === 0) { showAiScheduleMessage('Vui lòng chọn ít nhất một phòng xét nghiệm áp dụng.', false); return; }
             }
 
             const shifts = Array.from(document.querySelectorAll('input[name="aiSelectedShifts"]:checked')).map(cb => cb.value);
-            if (shifts.length === 0) {
-                showAiScheduleMessage('Vui lòng chọn ít nhất một khung ca trực áp dụng.', false);
-                return;
-            }
+            if (shifts.length === 0) { showAiScheduleMessage('Vui lòng chọn ít nhất một khung ca trực áp dụng.', false); return; }
 
-            if (getSelectedWeekdays().length === 0) {
-                showAiScheduleMessage('Vui lòng chọn ít nhất một ngày áp dụng trong tuần.', false);
-                return;
-            }
+            if (getSelectedWeekdays().length === 0) { showAiScheduleMessage('Vui lòng chọn ít nhất một ngày áp dụng trong tuần.', false); return; }
 
             if (staffType === 'Doctor') {
                 await generateProposal();
@@ -668,211 +1335,30 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    async function generateProposal() {
-        const loader = document.getElementById('aiProposalLoading');
-        const container = document.getElementById('aiProposalTableContainer');
-
-        if (loader) {
-            loader.classList.remove('d-none');
-            const loadingTitle = document.getElementById('aiLoadingTitle');
-            if (loadingTitle) loadingTitle.textContent = 'Đang gửi yêu cầu phân bổ bằng AI Gemini...';
-        }
-        if (container) container.classList.add('d-none');
-        if (submitBtn) submitBtn.style.display = 'none';
-
-        updateTemplatePreview();
-
-        const doctorsPerShiftHidden = document.getElementById('aiDoctorsPerShiftHidden');
-        if (doctorsPerShiftHidden) {
-            doctorsPerShiftHidden.value = "1";
-        }
-
-        const formData = new FormData(form);
-        const params = new URLSearchParams();
-        params.set('action', 'aiCreateSchedules');
-        params.set('preview', 'true');
-        formData.forEach((value, key) => params.append(key, value));
-
-        try {
-            const response = await fetch(adminScheduleEndpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-                    'Accept': 'application/json'
-                },
-                body: params.toString()
-            });
-            if (!response.ok) throw new Error('HTTP ' + response.status);
-            const data = await response.json();
-            if (!data.success) throw new Error(data.message || 'Lỗi không xác định.');
-
-            proposedSchedules = data.items || [];
-            availableDoctors = data.doctors || [];
-
-            renderProposalTable();
-
-            if (loader) loader.classList.add('d-none');
-            if (container) container.classList.remove('d-none');
-            if (submitBtn) submitBtn.style.display = 'inline-block';
-            if (runModelBtn) runModelBtn.style.display = 'none';
-
-            const modalBody = document.querySelector('#aiScheduleModal .modal-body');
-            if (modalBody) {
-                setTimeout(() => {
-                    modalBody.scrollTo({
-                        top: modalBody.scrollHeight,
-                        behavior: 'smooth'
-                    });
-                }, 200);
-            }
-        } catch (err) {
-            showAiScheduleMessage('Không thể tạo đề xuất AI: ' + err.message, false);
-            if (loader) loader.classList.add('d-none');
-        }
-    }
-
-    async function submitStaffAiSchedule() {
-        const loader = document.getElementById('aiProposalLoading');
-        const alertBox = document.getElementById('aiScheduleAlert');
-
-        if (loader) {
-            loader.classList.remove('d-none');
-            const loadingTitle = document.getElementById('aiLoadingTitle');
-            if (loadingTitle) loadingTitle.textContent = 'Đang tự động xử lý và lưu ca trực...';
-        }
-        if (runModelBtn) runModelBtn.disabled = true;
-        if (alertBox) alertBox.style.display = 'none';
-
-        updateTemplatePreview();
-
-        const staffType = document.getElementById('aiStaffType').value;
-        const doctorsPerShiftSelect = document.getElementById('aiDoctorsPerShift');
-        const doctorsPerShiftHidden = document.getElementById('aiDoctorsPerShiftHidden');
-        if (doctorsPerShiftHidden && doctorsPerShiftSelect) {
-            doctorsPerShiftHidden.value = doctorsPerShiftSelect.value;
-        }
-        const deptHiddenInput = document.getElementById('aiDeptHiddenInput');
-        if (deptHiddenInput) {
-            deptHiddenInput.value = (staffType === 'Receptionist') ? 'Tiếp nhận' : 'Xét nghiệm';
-        }
-
-        const formData = new FormData(form);
-        const params = new URLSearchParams();
-
-        params.set('action', 'ai-staff-schedule');
-        formData.forEach((value, key) => {
-            if (key === 'roomIds') {
-                params.append('roomIds', value);
-            } else if (key !== 'action') {
-                params.set(key, value);
-            }
-        });
-
-        try {
-            const response = await fetch(adminScheduleEndpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-                    'Accept': 'application/json'
-                },
-                body: params.toString()
-            });
-
-            let data = {};
-            const text = await response.text();
-            try {
-                data = JSON.parse(text);
-            } catch (e) {
-                if (response.redirected || response.ok) {
-                    data = { success: true, message: 'Lập lịch thông minh thành công!' };
-                } else {
-                    throw new Error('Không thể phân tích phản hồi từ máy chủ.');
-                }
-            }
-
-            if (!data.success) throw new Error(data.message || 'Lỗi lưu lịch trực.');
-
-            showAiScheduleMessage('Lập lịch thông minh thành công! Trang web sẽ tải lại...', true);
-            setTimeout(() => {
-                window.location.reload();
-            }, 1200);
-
-        } catch (err) {
-            showAiScheduleMessage('Lỗi lập lịch: ' + err.message, false);
-            if (loader) loader.classList.add('d-none');
-            if (runModelBtn) runModelBtn.disabled = false;
-        }
-    }
-
-    function renderProposalTable() {
-        const tbody = document.getElementById('aiProposalTableBody');
-        if (!tbody) return;
-        tbody.innerHTML = '';
-
-        if (proposedSchedules.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">Không có ca trực nào được đề xuất.</td></tr>';
-            return;
-        }
-
-        proposedSchedules.forEach((item, index) => {
-            const row = document.createElement('tr');
-            const rawDept = item.department || item.specialty || '';
-            const displayDept = formatDepartmentName(rawDept);
-            const doctorsInSpecialty = availableDoctors.filter(doc => {
-                const docDept = formatDepartmentName(doc.department || '').toLowerCase().trim();
-                const searchDept = displayDept.toLowerCase().trim();
-                return docDept.includes(searchDept) || searchDept.includes(docDept);
-            });
-
-            const doctorOptionsList = doctorsInSpecialty.length > 0 ? doctorsInSpecialty : availableDoctors;
-            let selectHtml = '<select class="form-select form-select-sm proposed-doctor-select" style="min-width: 150px; font-size: 0.8rem; padding: 0.25rem 0.5rem;" data-index="' + index + '">';
-            doctorOptionsList.forEach(doc => {
-                const selected = Number(doc.doctorId) === Number(item.doctorId) ? 'selected' : '';
-                selectHtml += '<option value="' + doc.doctorId + '" ' + selected + '>' + escapeHtmlForSchedule(doc.doctorName || doc.fullName || '-') + '</option>';
-            });
-            selectHtml += '</select>';
-
-            row.innerHTML = '<td><strong>' + escapeHtmlForSchedule(formatVietnameseDate(item.workDate)) + '</strong></td>'
-                + '<td><span class="badge bg-purple-subtle text-purple border border-purple-subtle" style="background:#f3e8ff; color:#6b21a8; font-size: 0.78rem; font-weight:600; padding:0.25rem 0.45rem;">' + escapeHtmlForSchedule(item.timeSlot) + '</span></td>'
-                + '<td><span class="fw-semibold text-dark" style="font-size:0.82rem;">' + escapeHtmlForSchedule(displayDept) + '</span></td>'
-                + '<td>' + selectHtml + '</td>'
-                + '<td><small class="text-muted" style="line-height:1.25; display:block; font-size:0.75rem;">' + escapeHtmlForSchedule(item.reason || '-') + '</small></td>';
-
-            tbody.appendChild(row);
-        });
-
-        const summary = document.getElementById('aiScheduleSummary');
-        if (summary) {
-            summary.textContent = 'Hệ thống đã đề xuất ' + proposedSchedules.length + ' ca trực bác sĩ khám. Bạn có thể chọn bác sĩ trực khác từ danh sách thả xuống.';
-        }
-    }
-
+    // Submit lưu đề xuất AI
     if (form) {
         form.addEventListener('submit', async function (e) {
             e.preventDefault();
-
             const staffType = document.getElementById('aiStaffType') ? document.getElementById('aiStaffType').value : 'Doctor';
             if (staffType !== 'Doctor' || proposedSchedules.length === 0) return;
 
             const selects = document.querySelectorAll('.proposed-doctor-select');
             const params = new URLSearchParams();
             params.set('action', 'aiSaveProposedSchedules');
-            params.set('csrfToken', document.querySelector('input[name="csrfToken"]').value);
+            const csrf = (window.AdminConfig && window.AdminConfig.csrfToken) || window.adminCsrfToken || (document.querySelector('input[name="csrfToken"]')?.value) || '';
+            if (csrf) params.set('csrfToken', csrf);
 
             const conflictOption = document.querySelector('input[name="conflictHandling"]:checked');
-            if (conflictOption) {
-                params.set('conflictHandling', conflictOption.value);
-            }
+            if (conflictOption) params.set('conflictHandling', conflictOption.value);
 
             selects.forEach(select => {
                 const index = parseInt(select.getAttribute('data-index'));
                 const item = proposedSchedules[index];
                 const selectedDoctorId = select.value;
-
                 params.append('doctorId', selectedDoctorId);
                 params.append('workDate', item.workDate);
                 params.append('timeSlot', item.timeSlot);
-                params.append('maxPatients', maxPatientsInput.value);
+                params.append('maxPatients', maxPatientsInput ? maxPatientsInput.value : '20');
                 params.append('roomId', item.roomId || item.room || '');
             });
 
@@ -880,10 +1366,7 @@ document.addEventListener('DOMContentLoaded', function () {
             try {
                 const response = await fetch(adminScheduleEndpoint, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-                        'Accept': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8', 'Accept': 'application/json' },
                     body: params.toString()
                 });
                 if (!response.ok) throw new Error('HTTP ' + response.status);
@@ -908,438 +1391,18 @@ document.addEventListener('DOMContentLoaded', function () {
     initUniversalModal('Doctor');
     updateTemplatePreview();
 
-    // ==========================================
-    // 4. BỘ ĐIỀU HƯỚNG LỊCH TRỰC TUẦN (WEEKLY CALENDAR)
-    // ==========================================
-
-    function parseAnyDate(raw) {
-        if (!raw) return new Date();
-        if (raw instanceof Date) {
-            return isNaN(raw.getTime()) ? new Date() : raw;
-        }
-        const str = String(raw).trim();
-        if (!str) return new Date();
-
-        if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
-            const parts = str.substring(0, 10).split('-');
-            return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-        }
-        if (/^\d{1,2}\/\d{1,2}\/\d{4}/.test(str)) {
-            const parts = str.substring(0, 10).split('/');
-            return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
-        }
-
-        const d = new Date(str);
-        return isNaN(d.getTime()) ? new Date() : d;
-    }
-
-    function getMondayOfDate(d) {
-        const date = parseAnyDate(d);
-        const day = date.getDay();
-        const diff = date.getDate() - day + (day === 0 ? -6 : 1);
-        return new Date(date.getFullYear(), date.getMonth(), diff);
-    }
-
-    function formatDateIso(d) {
-        const date = parseAnyDate(d);
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    }
-
-    function formatDateDisplay(d) {
-        const date = parseAnyDate(d);
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${day}/${month}`;
-    }
-
-    const weekPicker = document.getElementById('calendarWeekPicker');
-    const unifiedWeekPickerEl = document.getElementById('unifiedWeekPicker') || document.getElementById('calendarWeekPicker');
-    if (unifiedWeekPickerEl) {
-        const todayStr = formatDateIso(new Date());
-        if (!unifiedWeekPickerEl.value) {
-            unifiedWeekPickerEl.value = todayStr;
-        }
-
-        const bindClick = (id, fn) => {
-            const el = document.getElementById(id);
-            if (el) el.addEventListener('click', fn);
-        };
-
-        bindClick('unifiedTodayBtn', () => {
-            unifiedWeekPickerEl.value = formatDateIso(new Date());
-            loadWeeklyCalendar();
-        });
-        bindClick('calTodayBtn', () => {
-            unifiedWeekPickerEl.value = formatDateIso(new Date());
-            loadWeeklyCalendar();
-        });
-
-        bindClick('unifiedPrevWeekBtn', () => {
-            const cur = new Date(unifiedWeekPickerEl.value || new Date());
-            cur.setDate(cur.getDate() - 7);
-            unifiedWeekPickerEl.value = formatDateIso(cur);
-            loadWeeklyCalendar();
-        });
-        bindClick('calPrevWeekBtn', () => {
-            const cur = new Date(unifiedWeekPickerEl.value || new Date());
-            cur.setDate(cur.getDate() - 7);
-            unifiedWeekPickerEl.value = formatDateIso(cur);
-            loadWeeklyCalendar();
-        });
-
-        bindClick('unifiedNextWeekBtn', () => {
-            const cur = new Date(unifiedWeekPickerEl.value || new Date());
-            cur.setDate(cur.getDate() + 7);
-            unifiedWeekPickerEl.value = formatDateIso(cur);
-            loadWeeklyCalendar();
-        });
-        bindClick('calNextWeekBtn', () => {
-            const cur = new Date(unifiedWeekPickerEl.value || new Date());
-            cur.setDate(cur.getDate() + 7);
-            unifiedWeekPickerEl.value = formatDateIso(cur);
-            loadWeeklyCalendar();
-        });
-
-        unifiedWeekPickerEl.addEventListener('change', loadWeeklyCalendar);
-        document.getElementById('unifiedRoleFilter')?.addEventListener('change', loadWeeklyCalendar);
-        document.getElementById('unifiedRoomFilter')?.addEventListener('change', loadWeeklyCalendar);
-        document.getElementById('calendarRoleFilter')?.addEventListener('change', loadWeeklyCalendar);
-        document.getElementById('calendarRoomFilter')?.addEventListener('change', loadWeeklyCalendar);
-        document.getElementById('calFilterSubmitBtn')?.addEventListener('click', loadWeeklyCalendar);
-
-        document.getElementById('viewModeCalendarBtn')?.addEventListener('click', () => {
-            setTimeout(loadWeeklyCalendar, 50);
-        });
-
-        if (!document.getElementById('weeklyCalendarPane')?.hasAttribute('hidden')) {
-            loadWeeklyCalendar();
-        }
-    }
-
-    // Tải dữ liệu lịch tuần qua AJAX
-    async function loadWeeklyCalendar() {
-        window.loadWeeklyCalendar = loadWeeklyCalendar;
-        const picker = document.getElementById('unifiedWeekPicker') || document.getElementById('calendarWeekPicker');
-        if (!picker) return;
-
-        const baseDate = parseAnyDate(picker.value);
-        picker.value = formatDateIso(baseDate);
-
-        const monday = getMondayOfDate(baseDate);
-
-        const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
-        const datesMap = {};
-
-        days.forEach((dayKey, idx) => {
-            const dateObj = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + idx);
-            const isoStr = formatDateIso(dateObj);
-            datesMap[dayKey] = isoStr;
-
-            const el = document.getElementById(`date-head-${dayKey}`);
-            if (el) el.textContent = formatDateDisplay(dateObj);
-        });
-
-        days.forEach(dayKey => {
-            ['0800', '1300'].forEach(timeKey => {
-                const cell = document.getElementById(`cell-${dayKey}-${timeKey}`);
-                if (cell) cell.innerHTML = '';
-            });
-        });
-
-        const roleFilterEl = document.getElementById('unifiedRoleFilter') || document.getElementById('calendarRoleFilter');
-        const roomFilterEl = document.getElementById('unifiedRoomFilter') || document.getElementById('calendarRoomFilter');
-
-        const role = roleFilterEl ? roleFilterEl.value : 'all';
-        const room = roomFilterEl ? roomFilterEl.value : 'all';
-
-        try {
-            const url = `${adminContextPath}/admin?action=getCalendarSchedule&weekDate=${encodeURIComponent(formatDateIso(baseDate))}&role=${encodeURIComponent(role)}&room=${encodeURIComponent(room)}`;
-            const resp = await fetch(url, { headers: { 'Accept': 'application/json' } });
-            if (!resp.ok) throw new Error('HTTP ' + resp.status);
-            const data = await resp.json();
-            currentWeeklySchedules = Array.isArray(data) ? data : [];
-            renderWeeklyCalendarCards(currentWeeklySchedules, datesMap, role);
-        } catch (err) {
-            console.error('Failed to load weekly calendar', err);
-        }
-    }
-
-    // Vẽ các thẻ trực Bác sĩ/Lễ tân lên lưới lịch trực tuần
-    function renderWeeklyCalendarCards(schedules, datesMap, activeRole) {
-        const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
-        const daysMapByDate = {};
-        Object.keys(datesMap).forEach(key => {
-            daysMapByDate[datesMap[key]] = key;
-        });
-
-        let hasConflict = false;
-
-        // Lọc client-side theo role nếu được chọn
-        if (activeRole && activeRole !== 'all') {
-            const targetRoleLower = activeRole.toLowerCase();
-            schedules = schedules.filter(shift => {
-                const r = (shift.role || '').toLowerCase();
-                if (targetRoleLower === 'doctor') return r.includes('doctor') || r.includes('bác sĩ khám');
-                if (targetRoleLower === 'receptionist' || targetRoleLower === 'reception') return r.includes('reception') || r.includes('lễ tân');
-                if (targetRoleLower === 'doctor_lab' || targetRoleLower === 'lab') return r.includes('lab') || r.includes('xét nghiệm');
-                return r === targetRoleLower;
-            });
-        }
-
-        // Nhóm các ca trực theo ô (Cell)
-        const shiftsByCell = {};
-        schedules.forEach(shift => {
-            const rawDate = shift.date || shift.workDate || shift.work_date;
-            const dateStr = formatDateIso(rawDate);
-            const dayKey = daysMapByDate[dateStr];
-            if (!dayKey) return;
-            const slotStr = (shift.time_slot || shift.timeSlot || '').toLowerCase();
-            const startTime = (shift.start_time || shift.start || '').toLowerCase();
-            const isMorning = startTime === '08:00' || startTime.startsWith('07') || startTime.startsWith('08') || slotStr.includes('morning') || slotStr.includes('07:') || slotStr.includes('08:');
-            const timeKey = isMorning ? '0800' : '1300';
-            const cellId = `cell-${dayKey}-${timeKey}`;
-            if (!shiftsByCell[cellId]) {
-                shiftsByCell[cellId] = [];
-            }
-            shiftsByCell[cellId].push(shift);
-            if (shift.conflict) hasConflict = true;
-        });
-
-        // Clear tất cả các ô cell trước khi render
-        days.forEach(dayKey => {
-            ['0800', '1300'].forEach(timeKey => {
-                const cell = document.getElementById(`cell-${dayKey}-${timeKey}`);
-                if (cell) cell.innerHTML = '';
-            });
-        });
-
-        // Render từng ô cell với giới hạn tối đa 2 thẻ
-        Object.keys(shiftsByCell).forEach(cellId => {
-            const cell = document.getElementById(cellId);
-            if (!cell) return;
-            const listInCell = shiftsByCell[cellId];
-            const maxVisible = 2;
-            const visibleShifts = listInCell.slice(0, maxVisible);
-            const extraCount = listInCell.length - maxVisible;
-
-            visibleShifts.forEach(shift => {
-                const card = document.createElement('div');
-                card.className = `shift-card role-${shift.role || 'Doctor'} ${shift.conflict ? 'is-conflict' : ''} ${shift.isPreview ? 'is-preview' : ''}`;
-
-                const conflictBadge = shift.conflict ? '<span class="badge bg-danger-subtle text-danger border border-danger-subtle ms-1" style="font-size:0.65rem;" title="' + escapeHtml(shift.conflictMessage || 'Trùng lịch') + '">⚠ Trùng</span>' : '';
-                const previewBadge = shift.isPreview ? '<span class="badge bg-purple-subtle text-purple ms-1" style="font-size:0.65rem;">AI gợi ý</span>' : '';
-
-                card.innerHTML = `
-                    <div class="fw-bold d-flex justify-content-between align-items-center mb-1">
-                        <span class="text-truncate">${escapeHtml(shift.staff)}</span>
-                        ${conflictBadge} ${previewBadge}
-                    </div>
-                    <div class="text-secondary small mb-1" style="font-size: 0.72rem;">
-                        <i class="bi bi-person-badge me-1"></i>${escapeHtml(shift.role)}
-                    </div>
-                    <div class="text-dark small fw-semibold text-truncate" style="font-size: 0.72rem;">
-                        <i class="bi bi-geo-alt me-1 text-danger"></i>${escapeHtml(shift.room || 'Chưa xếp')}
-                    </div>
-                `;
-
-                card.addEventListener('click', () => openShiftDetailModal(shift));
-                cell.appendChild(card);
-            });
-
-            if (extraCount > 0) {
-                const moreBtn = document.createElement('div');
-                moreBtn.className = 'btn-more-shifts mt-1 text-center py-1 bg-purple-subtle text-purple fw-bold rounded border border-purple-subtle cursor-pointer';
-                moreBtn.style.fontSize = '0.72rem';
-                moreBtn.style.cursor = 'pointer';
-                moreBtn.innerHTML = `<i class="fa-solid fa-layer-group me-1"></i>+${extraCount} nhân sự khác`;
-                moreBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    openCellMoreSchedulesModal(cellId, listInCell);
-                });
-                cell.appendChild(moreBtn);
-            }
-        });
-
-        const alertEl = document.getElementById('calendarConflictAlert');
-        if (alertEl) {
-            if (hasConflict) {
-                alertEl.classList.remove('d-none');
-                alertEl.classList.add('d-flex');
-            } else {
-                alertEl.classList.add('d-none');
-                alertEl.classList.remove('d-flex');
-            }
-        }
-    }
-
-    // Mở modal xem thông tin ca trực chi tiết trên Calendar tuần
-    function openShiftDetailModal(shift) {
-        const staffEl = document.getElementById('shiftDetailStaff');
-        const roleEl = document.getElementById('shiftDetailRole');
-        const roomEl = document.getElementById('shiftDetailRoom');
-        const dateEl = document.getElementById('shiftDetailDate');
-        const timeEl = document.getElementById('shiftDetailTime');
-        const statusEl = document.getElementById('shiftDetailStatus');
-        const editBtn = document.getElementById('shiftDetailEditBtn');
-
-        if (staffEl) staffEl.textContent = shift.staff || '-';
-        if (roleEl) roleEl.textContent = shift.role || '-';
-        if (roomEl) roomEl.textContent = shift.room || 'Chưa xếp';
-        if (dateEl) dateEl.textContent = shift.date || '-';
-        
-        const timeText = (shift.start && shift.end) 
-            ? `${shift.start} - ${shift.end}` 
-            : (shift.timeSlot || 'Ca trực');
-        if (timeEl) timeEl.textContent = timeText;
-        if (statusEl) statusEl.textContent = shift.status || 'Đã xếp lịch';
-
-        if (editBtn) {
-            const schId = shift.scheduleId || shift.id || '';
-            if (schId) {
-                editBtn.setAttribute('data-schedule-id', schId);
-                editBtn.style.display = 'inline-block';
-            } else {
-                editBtn.removeAttribute('data-schedule-id');
-                editBtn.style.display = 'none';
-            }
-        }
-
-        const alertEl = document.getElementById('shiftDetailConflictAlert');
-        const textEl = document.getElementById('shiftDetailConflictText');
-        if (alertEl && textEl) {
-            if (shift.conflict) {
-                alertEl.classList.remove('d-none');
-                textEl.textContent = shift.conflictMessage || 'Phát hiện ca làm việc trùng nhân sự hoặc trùng phòng!';
-            } else {
-                alertEl.classList.add('d-none');
-            }
-        }
-
-        document.querySelectorAll('.dropdown-menu.show').forEach(m => m.classList.remove('show'));
-        const modalEl = document.getElementById('shiftDetailModal');
-        if (modalEl) {
-            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-            modal.show();
-        }
-    }
-
-    window.openShiftDetailModal = openShiftDetailModal;
-
-    // Mở Modal xem danh sách đầy đủ ca trực trong 1 ô ngày/ca
-    function openCellMoreSchedulesModal(cellId, listInCell) {
-        const modalEl = document.getElementById('cellMoreSchedulesModal');
-        const container = document.getElementById('cellMoreSchedulesList');
-        if (!modalEl || !container) return;
-
-        let html = '';
-        listInCell.forEach((shift, index) => {
-            const conflictBadge = shift.conflict ? '<span class="badge bg-danger-subtle text-danger border border-danger-subtle ms-2">⚠ Trùng lịch</span>' : '';
-            html += `<div class="p-3 mb-2 rounded border ${shift.conflict ? 'border-danger bg-danger-subtle' : 'bg-light'} d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="fw-bold text-dark"><i class="fa-solid fa-user-doctor me-2 text-primary"></i>${escapeHtml(shift.staff)} ${conflictBadge}</div>
-                    <div class="small text-secondary mt-1"><i class="fa-solid fa-hospital-user me-1 text-danger"></i>${escapeHtml(shift.room || 'Chưa xếp')} | Khung giờ: ${escapeHtml(shift.timeSlot || shift.start)}</div>
-                </div>
-                <button type="button" class="btn btn-sm btn-outline-primary fw-bold px-3" onclick="openShiftDetailModalFromMore('${index}')">Chi tiết</button>
-            </div>`;
-        });
-        container.innerHTML = html;
-
-        // Lưu tạm danh sách hiện tại để gọi detail
-        window.currentCellMoreList = listInCell;
-
-        const modal = new bootstrap.Modal(modalEl);
-        modal.show();
-    }
-
-    window.openShiftDetailModalFromMore = function (index) {
-        if (window.currentCellMoreList && window.currentCellMoreList[index]) {
-            openShiftDetailModal(window.currentCellMoreList[index]);
-        }
-    };
-
-    // Mở Modal Tháo gỡ xung đột ca trực 1-Click
-    window.openResolveConflictModal = function () {
-        const modalEl = document.getElementById('resolveConflictModal');
-        const container = document.getElementById('resolveConflictList');
-        if (!modalEl || !container) return;
-
-        const conflictShifts = currentWeeklySchedules.filter(s => s.conflict);
-        if (conflictShifts.length === 0) {
-            container.innerHTML = '<div class="alert alert-success mb-0 text-center fw-bold"><i class="fa-solid fa-circle-check me-2"></i>Không có xung đột nào cần tháo gỡ! Lịch làm việc tuần này hoàn toàn hợp lệ.</div>';
-        } else {
-            let html = '';
-            conflictShifts.forEach(shift => {
-                html += `<div class="p-3 rounded border border-danger-subtle bg-danger-subtle d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
-                    <div>
-                        <div class="fw-bold text-danger mb-1"><i class="fa-solid fa-circle-exclamation me-1"></i>${escapeHtml(shift.staff)} (${escapeHtml(shift.role)})</div>
-                        <div class="small text-dark mb-1"><i class="fa-solid fa-hospital-user me-1"></i>Phòng: ${escapeHtml(shift.room || 'Chưa xếp')} | Ngày: ${escapeHtml(shift.date)} (${escapeHtml(shift.timeSlot || shift.start)})</div>
-                        <div class="small text-danger fw-semibold"><i class="fa-solid fa-info-circle me-1"></i>Lý do: ${escapeHtml(shift.conflictMessage || 'Trùng phòng hoặc trùng bác sĩ')}</div>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-sm btn-outline-danger fw-bold" onclick="resolveSingleConflict('${shift.id}', '${shift.staffType}', 'delete')"><i class="fa-solid fa-trash-can me-1"></i>Hủy ca</button>
-                        <button type="button" class="btn btn-sm btn-primary fw-bold" onclick="resolveSingleConflict('${shift.id}', '${shift.staffType}', 'reassign')"><i class="fa-solid fa-shuffle me-1"></i>Đổi phòng trống</button>
-                    </div>
-                </div>`;
-            });
-            container.innerHTML = html;
-        }
-
-        const modal = new bootstrap.Modal(modalEl);
-        modal.show();
-    };
-
-    window.resolveSingleConflict = async function (id, staffType, actionType) {
-        try {
-            const csrfTokenInput = document.querySelector('input[name="csrfToken"]');
-            const csrfToken = csrfTokenInput ? csrfTokenInput.value : '';
-
-            const formData = new URLSearchParams();
-            formData.append('action', 'resolveScheduleConflict');
-            formData.append('id', id);
-            formData.append('staffType', staffType);
-            formData.append('type', actionType);
-            if (csrfToken) {
-                formData.append('csrfToken', csrfToken);
-            }
-
-            const resp = await fetch(`${adminContextPath}/admin`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8', 'Accept': 'application/json' },
-                body: formData.toString()
-            });
-            const data = await resp.json();
-            if (data.success) {
-                loadWeeklyCalendar();
-                const modalEl = document.getElementById('resolveConflictModal');
-                if (modalEl) {
-                    const modal = bootstrap.Modal.getInstance(modalEl);
-                    if (modal) modal.hide();
-                }
-            } else {
-                alert(data.message || 'Không thể xử lý xung đột');
-            }
-        } catch (e) {
-            console.error('Failed to resolve single conflict', e);
-        }
-    };
-
+    // --- Auto-resolve conflict button ---
     const autoResolveBtn = document.getElementById('autoResolveAllConflictsBtn');
     if (autoResolveBtn) {
         autoResolveBtn.addEventListener('click', async () => {
             try {
-                const csrfTokenInput = document.querySelector('input[name="csrfToken"]');
-                const csrfToken = csrfTokenInput ? csrfTokenInput.value : '';
-
+                const ctx = (window.AdminConfig && window.AdminConfig.contextPath) ? window.AdminConfig.contextPath : (typeof adminContextPath !== 'undefined' ? adminContextPath : '');
+                const csrfToken = (window.AdminConfig && window.AdminConfig.csrfToken) || window.adminCsrfToken || (document.querySelector('input[name="csrfToken"]')?.value) || '';
                 const formData = new URLSearchParams();
                 formData.append('action', 'autoResolveAllConflicts');
-                if (csrfToken) {
-                    formData.append('csrfToken', csrfToken);
-                }
+                if (csrfToken) formData.append('csrfToken', csrfToken);
 
-                const resp = await fetch(`${adminContextPath}/admin`, {
+                const resp = await fetch(`${ctx}/admin`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8', 'Accept': 'application/json' },
                     body: formData.toString()
@@ -1348,10 +1411,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (data.success) {
                     loadWeeklyCalendar();
                     const modalEl = document.getElementById('resolveConflictModal');
-                    if (modalEl) {
-                        const modal = bootstrap.Modal.getInstance(modalEl);
-                        if (modal) modal.hide();
-                    }
+                    if (modalEl) { const m = bootstrap.Modal.getInstance(modalEl); if (m) m.hide(); }
                 } else {
                     alert(data.message || 'Không thể tự động sửa ca trùng');
                 }
@@ -1361,25 +1421,74 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Gán sự kiện cho picker tuần và bộ lọc role/room
+    // --- Weekly Calendar picker events ---
     const unifiedWeekPicker = document.getElementById('unifiedWeekPicker') || document.getElementById('calendarWeekPicker');
     if (unifiedWeekPicker) {
-        unifiedWeekPicker.addEventListener('change', loadWeeklyCalendar);
         if (!unifiedWeekPicker.value) {
             unifiedWeekPicker.value = new Date().toISOString().slice(0, 10);
         }
+        unifiedWeekPicker.addEventListener('change', loadWeeklyCalendar);
     }
 
-    const unifiedRoleFilter = document.getElementById('unifiedRoleFilter') || document.getElementById('calendarRoleFilter');
-    if (unifiedRoleFilter) {
-        unifiedRoleFilter.addEventListener('change', loadWeeklyCalendar);
-    }
+    ['unifiedRoleFilter', 'calendarRoleFilter'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('change', loadWeeklyCalendar);
+    });
 
-    const unifiedRoomFilter = document.getElementById('unifiedRoomFilter') || document.getElementById('calendarRoomFilter');
-    if (unifiedRoomFilter) {
-        unifiedRoomFilter.addEventListener('change', loadWeeklyCalendar);
-    }
+    ['unifiedRoomFilter', 'calendarRoomFilter'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('change', loadWeeklyCalendar);
+    });
 
-    // Tự động nạp Weekly Calendar ban đầu
+    // Today / Prev / Next week buttons
+    ['unifiedTodayBtn', 'calTodayBtn'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('click', () => {
+            if (unifiedWeekPicker) unifiedWeekPicker.value = formatDateIso(new Date());
+            loadWeeklyCalendar();
+        });
+    });
+
+    ['unifiedPrevWeekBtn', 'calPrevWeekBtn'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('click', () => {
+            if (unifiedWeekPicker) {
+                const cur = parseAnyDate(unifiedWeekPicker.value);
+                cur.setDate(cur.getDate() - 7);
+                unifiedWeekPicker.value = formatDateIso(cur);
+            }
+            loadWeeklyCalendar();
+        });
+    });
+
+    ['unifiedNextWeekBtn', 'calNextWeekBtn'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('click', () => {
+            if (unifiedWeekPicker) {
+                const cur = parseAnyDate(unifiedWeekPicker.value);
+                cur.setDate(cur.getDate() + 7);
+                unifiedWeekPicker.value = formatDateIso(cur);
+            }
+            loadWeeklyCalendar();
+        });
+    });
+
+    // Tải lịch ngay khi DOM ready
     loadWeeklyCalendar();
 });
+
+// Immediately trigger calendar load if DOM elements are present
+try {
+    loadWeeklyCalendar();
+} catch (e) {
+    console.warn("Immediate loadWeeklyCalendar attempt:", e);
+}
+
+if (typeof window !== 'undefined') {
+    window.addEventListener('load', function () {
+        if (typeof window.loadWeeklyCalendar === 'function') {
+            window.loadWeeklyCalendar();
+        }
+    });
+}
+

@@ -1,6 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <fmt:setLocale value="vi_VN" />
 <c:set var="currentAction" value="schedule" />
 
@@ -22,6 +23,49 @@
                                     href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
                                 <link href="${pageContext.request.contextPath}/assets/css/pages/admin/admin-ui.css"
                                     rel="stylesheet">
+                                <style>
+                                    .shift-card {
+                                        background: #ffffff;
+                                        border: 1px solid #e2e8f0;
+                                        border-left: 4px solid #7c3aed;
+                                        border-radius: 8px;
+                                        padding: 6px 8px;
+                                        margin-bottom: 6px;
+                                        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+                                        cursor: pointer;
+                                        transition: all 0.2s ease-in-out;
+                                    }
+                                    .shift-card:hover {
+                                        transform: translateY(-2px);
+                                        box-shadow: 0 4px 8px rgba(124,58,237,0.15);
+                                    }
+                                    .shift-card.role-Doctor, .shift-card.role-doctor {
+                                        border-left-color: #7c3aed;
+                                        background: #fdf4ff;
+                                    }
+                                    .shift-card.role-Reception, .shift-card.role-Receptionist, .shift-card.role-receptionist {
+                                        border-left-color: #0284c7;
+                                        background: #f0f9ff;
+                                    }
+                                    .shift-card.role-Lab, .shift-card.role-doctor_lab {
+                                        border-left-color: #d97706;
+                                        background: #fffbeb;
+                                    }
+                                    .shift-card.is-conflict {
+                                        border: 1px solid #ef4444 !important;
+                                        border-left: 4px solid #dc2626 !important;
+                                        background: #fef2f2 !important;
+                                    }
+                                    .cal-cell {
+                                        min-height: 100px;
+                                        vertical-align: top;
+                                        padding: 6px !important;
+                                        background-color: #fafafa;
+                                    }
+                                    .cal-cell:hover {
+                                        background-color: #f1f5f9;
+                                    }
+                                </style>
                             </head>
 
                             <body class="bg-light">
@@ -138,44 +182,47 @@
 
                                                         <!-- Chọn tuần / Ngày -->
                                                         <div class="col-md-4" id="unifiedTimeFilterContainer">
-                                                            <label id="filterTimeLabel"
-                                                                class="form-label text-secondary small fw-bold mb-1">${param.viewTab
-                                                                == 'list' ? 'Chọn ngày' : 'Chọn tuần'}</label>
+                                                            <c:set var="isListTab" value="${param.viewTab == 'list'}" />
+                                                            <label id="filterTimeLabel" class="form-label text-secondary small fw-bold mb-1">
+                                                                <c:choose>
+                                                                    <c:when test="${isListTab}">Chọn ngày</c:when>
+                                                                    <c:otherwise>Chọn tuần</c:otherwise>
+                                                                </c:choose>
+                                                            </label>
 
-                                                            <c:set var="todayIso">
-                                                                <%= new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()) %>
-                                                            </c:set>
+                                                            <jsp:useBean id="nowDate" class="java.util.Date" />
+                                                            <fmt:formatDate var="todayIso" value="${nowDate}" pattern="yyyy-MM-dd" />
+                                                            <c:set var="currentWeekDate" value="${empty param.weekDate ? todayIso : param.weekDate}" />
+                                                            <c:set var="currentWorkDate" value="${empty param.workDate ? todayIso : param.workDate}" />
 
                                                             <!-- Picker Tuần -->
-                                                            <div id="filterWeekPickerGroup"
-                                                                class="input-group input-group-sm flex-nowrap ${param.viewTab == 'list' ? 'd-none' : ''}"
-                                                                style="flex-wrap: nowrap !important; ${param.viewTab == 'list' ? 'display: none !important;' : 'display: flex !important;'}">
-                                                                <button type="button" id="unifiedPrevWeekBtn"
-                                                                    class="btn btn-outline-secondary px-2"
-                                                                    title="Tuần trước"
-                                                                    style="border-top-left-radius: 8px; border-bottom-left-radius: 8px;"><i
-                                                                        class="fa-solid fa-chevron-left"></i></button>
-                                                                <input type="date" id="unifiedWeekPicker"
-                                                                    name="weekDate"
-                                                                    value="${empty param.weekDate ? todayIso : param.weekDate}"
-                                                                    class="form-control text-center px-1"
-                                                                    style="font-size: 0.85rem;">
-                                                                <button type="button" id="unifiedTodayBtn"
-                                                                    class="btn btn-outline-secondary px-2 fw-semibold"
-                                                                    style="font-size: 0.82rem; white-space: nowrap;"
-                                                                    title="Hôm nay">Hôm nay</button>
-                                                                <button type="button" id="unifiedNextWeekBtn"
-                                                                    class="btn btn-outline-secondary px-2"
-                                                                    title="Tuần sau"
-                                                                    style="border-top-right-radius: 8px; border-bottom-right-radius: 8px;"><i
-                                                                        class="fa-solid fa-chevron-right"></i></button>
-                                                            </div>
+                                                            <c:choose>
+                                                                <c:when test="${isListTab}">
+                                                                    <div id="filterWeekPickerGroup" class="input-group input-group-sm flex-nowrap d-none" style="flex-wrap: nowrap !important; display: none !important;">
+                                                                </c:when>
+                                                                <c:otherwise>
+                                                                    <div id="filterWeekPickerGroup" class="input-group input-group-sm flex-nowrap" style="flex-wrap: nowrap !important; display: flex !important;">
+                                                                </c:otherwise>
+                                                            </c:choose>
+                                                                        <button type="button" id="unifiedPrevWeekBtn" class="btn btn-outline-secondary px-2" title="Tuần trước" style="border-top-left-radius: 8px; border-bottom-left-radius: 8px;">
+                                                                            <i class="fa-solid fa-chevron-left"></i>
+                                                                        </button>
+                                                                        <input type="date" id="unifiedWeekPicker" name="weekDate" value="${currentWeekDate}" class="form-control text-center px-1" style="font-size: 0.85rem;">
+                                                                        <button type="button" id="unifiedTodayBtn" class="btn btn-outline-secondary px-2 fw-semibold" style="font-size: 0.82rem; white-space: nowrap;" title="Hôm nay">Hôm nay</button>
+                                                                        <button type="button" id="unifiedNextWeekBtn" class="btn btn-outline-secondary px-2" title="Tuần sau" style="border-top-right-radius: 8px; border-bottom-right-radius: 8px;">
+                                                                            <i class="fa-solid fa-chevron-right"></i>
+                                                                        </button>
+                                                                    </div>
 
                                                             <!-- Picker Ngày -->
-                                                            <input type="date" id="unifiedDatePicker" name="workDate"
-                                                                value="${empty param.workDate ? todayIso : param.workDate}"
-                                                                class="form-control form-control-sm ${param.viewTab == 'list' ? '' : 'd-none'} px-2"
-                                                                style="border-radius: 8px; font-size: 0.88rem; ${param.viewTab == 'list' ? 'display: block !important;' : 'display: none !important;'}">
+                                                            <c:choose>
+                                                                <c:when test="${isListTab}">
+                                                                    <input type="date" id="unifiedDatePicker" name="workDate" value="${currentWorkDate}" class="form-control form-control-sm px-2" style="border-radius: 8px; font-size: 0.88rem; display: block !important;">
+                                                                </c:when>
+                                                                <c:otherwise>
+                                                                    <input type="date" id="unifiedDatePicker" name="workDate" value="${currentWorkDate}" class="form-control form-control-sm d-none px-2" style="border-radius: 8px; font-size: 0.88rem; display: none !important;">
+                                                                </c:otherwise>
+                                                            </c:choose>
                                                         </div>
 
                                                         <!-- Tìm kiếm -->
@@ -318,6 +365,33 @@
                                                                             nhật<br><small class="text-muted fw-normal"
                                                                                 id="date-head-sun">-</small></th>
                                                                     </tr>
+                                                                    <script>
+                                                                        (function syncHeadersInline() {
+                                                                            try {
+                                                                                const picker = document.getElementById('unifiedWeekPicker') || document.getElementById('calendarWeekPicker');
+                                                                                let raw = picker ? picker.value : '';
+                                                                                let baseDate = new Date();
+                                                                                if (raw) {
+                                                                                    if (/^\d{4}-\d{2}-\d{2}/.test(raw)) {
+                                                                                        const p = raw.split('-');
+                                                                                        baseDate = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+                                                                                    } else if (/^\d{1,2}\/\d{1,2}\/\d{4}/.test(raw)) {
+                                                                                        const p = raw.split('/');
+                                                                                        baseDate = new Date(Number(p[2]), Number(p[1]) - 1, Number(p[0]));
+                                                                                    }
+                                                                                }
+                                                                                const day = baseDate.getDay();
+                                                                                const diff = baseDate.getDate() - day + (day === 0 ? -6 : 1);
+                                                                                const monday = new Date(baseDate.getFullYear(), baseDate.getMonth(), diff);
+                                                                                const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+                                                                                days.forEach((key, idx) => {
+                                                                                    const d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + idx);
+                                                                                    const el = document.getElementById('date-head-' + key);
+                                                                                    if (el) el.textContent = String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0');
+                                                                                });
+                                                                            } catch(e) {}
+                                                                        })();
+                                                                    </script>
                                                                 </thead>
                                                                 <tbody>
                                                                     <tr>
@@ -397,11 +471,11 @@
 
                                             <c:if test="${not empty sessionScope.successMessage}">
                                                 <div class="alert alert-success">${sessionScope.successMessage}</div>
-                                                <% session.removeAttribute("successMessage"); %>
+                                                <c:remove var="successMessage" scope="session" />
                                             </c:if>
                                             <c:if test="${not empty sessionScope.errorMessage}">
                                                 <div class="alert alert-danger">${sessionScope.errorMessage}</div>
-                                                <% session.removeAttribute("errorMessage"); %>
+                                                <c:remove var="errorMessage" scope="session" />
                                             </c:if>
 
                                             <div id="aiScheduleLoading"
@@ -420,6 +494,18 @@
                                 </div>
 
                                 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+                                <script id="activeRoomsData" type="application/json">
+                                [
+                                    <c:forEach var="r" items="${rooms}" varStatus="loop">
+                                    {
+                                        "roomId": "${r.roomId}",
+                                        "roomName": "${r.roomName}",
+                                        "department": "${r.department}",
+                                        "status": "${r.status}"
+                                    }${!loop.last ? ',' : ''}
+                                    </c:forEach>
+                                ]
+                                </script>
                                 <script>
                                     window.AdminConfig = window.AdminConfig || {};
                                     window.AdminConfig.contextPath = '${pageContext.request.contextPath}';
@@ -427,15 +513,17 @@
                                     window.AdminConfig.adminEndpoint = '${pageContext.request.contextPath}/admin';
                                     window.AdminConfig.loginUrl = '${pageContext.request.contextPath}/login.jsp';
 
-                                    window.activeRoomsList = [];
-                                    <c:forEach var="r" items="${rooms}">
-                                        window.activeRoomsList.push({
-                                            roomId: "${r.roomId}",
-                                            roomName: "${r.roomName}",
-                                            department: "${r.department}",
-                                            status: "${r.status}"
-                                        });
-                                    </c:forEach>
+                                    window.adminContextPath = window.AdminConfig.contextPath;
+                                    window.adminCsrfToken = window.AdminConfig.csrfToken;
+                                    window.adminEndpoint = window.AdminConfig.adminEndpoint;
+                                    window.adminLoginUrl = window.AdminConfig.loginUrl;
+
+                                    try {
+                                        const rawRoomsEl = document.getElementById('activeRoomsData');
+                                        window.activeRoomsList = rawRoomsEl && rawRoomsEl.textContent.trim() ? JSON.parse(rawRoomsEl.textContent) : [];
+                                    } catch (e) {
+                                        window.activeRoomsList = [];
+                                    }
                                 </script>
                                 <script>
                                     document.addEventListener('DOMContentLoaded', function () {
@@ -476,9 +564,9 @@
                                         });
                                     });
                                 </script>
-                                <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/admin/schedule-common.js?v=20260723-v1"></script>
-                                <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/admin/schedule-doctor.js?v=20260723-v1"></script>
-                                <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/admin/schedule-staff.js?v=20260723-v1"></script>
-                                <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/admin/schedule-wizard.js?v=20260723-v1"></script>
+                                <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/admin/schedule-common.js?v=20260723-v16"></script>
+                                <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/admin/schedule-wizard.js?v=20260723-v16"></script>
+                                <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/admin/schedule-doctor.js?v=20260723-v16"></script>
+                                <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/admin/schedule-staff.js?v=20260723-v16"></script>
                             </body>
                             </html>
