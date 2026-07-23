@@ -4,6 +4,7 @@ import com.diabetes.monitoring.dao.UserDAO;
 import com.diabetes.monitoring.model.User;
 import com.diabetes.monitoring.util.InputValidationUtil;
 import com.diabetes.monitoring.util.PasswordUtil;
+import com.diabetes.monitoring.verification.EmailVerificationService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -16,6 +17,7 @@ import java.util.Set;
 
 public class RegisterServlet extends HttpServlet {
     private final UserDAO userDAO = new UserDAO();
+    private final EmailVerificationService verificationService = new EmailVerificationService();
     private static final Set<String> ALLOWED_GENDERS = Set.of("male", "female", "other");
     private static final LocalDate MIN_DATE_OF_BIRTH = LocalDate.of(1900, 1, 1);
     private static final int MIN_PASSWORD_LENGTH = 8;
@@ -24,8 +26,16 @@ public class RegisterServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
 
+        String action = request.getParameter("action");
+        String path = request.getPathInfo();
+        if ("send-otp".equals(action) || (path != null && path.endsWith("/send-otp"))) {
+            handleSendOtp(request, response);
+            return;
+        }
+
         String fullName = InputValidationUtil.trimToNull(request.getParameter("fullName"));
         String email = InputValidationUtil.normalizeEmail(request.getParameter("email"));
+        String otp = InputValidationUtil.trimToNull(request.getParameter("otp"));
         String password = request.getParameter("password");
         String confirmPassword = request.getParameter("confirmPassword");
         String gender = InputValidationUtil.trimToNull(request.getParameter("gender"));
@@ -38,6 +48,11 @@ public class RegisterServlet extends HttpServlet {
                 fullName, email, password, confirmPassword, gender, dob, phone);
         if (validationError != null) {
             forwardWithError(request, response, validationError);
+            return;
+        }
+
+        if (otp == null || !otp.matches("\\d{6}")) {
+            forwardWithError(request, response, "Vui lòng nhập mã OTP xác thực 6 chữ số.");
             return;
         }
 
@@ -90,6 +105,18 @@ public class RegisterServlet extends HttpServlet {
             return;
         }
 
+        // Verify Email OTP before registration
+        try {
+            verificationService.verifyRegistrationOtp(email, otp);
+        } catch (IllegalArgumentException e) {
+            forwardWithError(request, response, e.getMessage());
+            return;
+        } catch (Exception e) {
+            getServletContext().log("Unable to verify registration OTP", e);
+            forwardWithError(request, response, "Kh\u00f4ng th\u1ec3 x\u00e1c th\u1EF1c m\u00e3 OTP l\u00fac n\u00e0y. Vui l\u00f2ng th\u1eed l\u1ea1i.");
+            return;
+        }
+
         String hashedPassword = PasswordUtil.hashPassword(password);
         User user = new User(fullName, email, hashedPassword, "Patient", gender, dob, phone, address, null, null);
         String errorMsg = userDAO.registerUser(user);
@@ -97,9 +124,45 @@ public class RegisterServlet extends HttpServlet {
             request.getSession().setAttribute("currentUser", user);
             response.sendRedirect(request.getContextPath() + "/patient/dashboard");
         } else {
-            request.setAttribute("registerError", "Đăng ký thất bại: " + errorMsg);
+            request.setAttribute("registerError", "\u0110\u0103ng k\u00fd th\u1ea5t b\u1ea1i: " + errorMsg);
             request.getRequestDispatcher("register.jsp").forward(request, response);
         }
+    }
+
+    private void handleSendOtp(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setContentType("application/json;charset=UTF-8");
+        response.setCharacterEncoding("UTF-8");
+
+        String email = InputValidationUtil.normalizeEmail(request.getParameter("email"));
+        if (!InputValidationUtil.isValidEmail(email)) {
+            response.setStatus(400);
+            response.getWriter().write("{\"success\":false,\"message\":\"Email kh\u00f4ng \u0111\u00fang \u0111\u1ecbnh d\u1ea1ng. Vui l\u00f2ng ki\u1ec3m tra l\u1ea1i.\"}");
+            return;
+        }
+
+        if (userDAO.isEmailExists(email)) {
+            response.setStatus(400);
+            response.getWriter().write("{\"success\":false,\"message\":\"Email n\u00e0y \u0111\u00e3 \u0111\u01b0\u1ee3c \u0111\u0103ng k\u00fd. Vui l\u00f2ng s\u1eed d\u1ee5ng email kh\u00e1c.\"}");
+            return;
+        }
+
+        try {
+            verificationService.requestRegistrationOtp(email);
+            response.getWriter().write("{\"success\":true,\"message\":\"M\u00e3 OTP 6 ch\u1eed s\u1ed1 \u0111\u00e3 \u0111\u01b0\u1ee3c g\u1eedi t\u1edbi email c\u1ee7a b\u1ea1n.\"}");
+        } catch (IllegalArgumentException e) {
+            response.setStatus(400);
+            response.getWriter().write("{\"success\":false,\"message\":\"" + escapeJson(e.getMessage()) + "\"}");
+        } catch (Exception e) {
+            getServletContext().log("Unable to send registration OTP", e);
+            response.setStatus(500);
+            String errMsg = e.getMessage() != null ? e.getMessage() : "L\u1ed7i h\u1ec7 th\u1ed1ng khi g\u1eedi email";
+            response.getWriter().write("{\"success\":false,\"message\":\"" + escapeJson(errMsg) + "\"}");
+        }
+    }
+
+    private String escapeJson(String value) {
+        if (value == null) return "";
+        return value.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "");
     }
     
     /**

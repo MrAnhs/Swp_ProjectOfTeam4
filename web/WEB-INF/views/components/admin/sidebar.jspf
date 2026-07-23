@@ -200,11 +200,6 @@
             <span class="menu-text">Qu&#7843;n l&#253; ph&#242;ng kh&#225;m</span>
             <i class="fa-solid fa-angle-right menu-arrow"></i>
         </a>
-        <a class="menu-item ${currentAction == 'reports' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin?action=reports">
-            <i class="fa-solid fa-chart-line menu-icon"></i>
-            <span class="menu-text">B&#225;o c&#225;o & Doanh thu</span>
-            <i class="fa-solid fa-angle-right menu-arrow"></i>
-        </a>
 
         <div class="menu-group-title">Trí tuệ nhân tạo AI</div>
         <a class="menu-item ${currentAction == 'ai-management' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin?action=ai-management">

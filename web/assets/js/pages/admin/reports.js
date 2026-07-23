@@ -22,17 +22,9 @@ let revenueChart = null;
         visitValues: visitValues
     };
 
-    const initialInvoices = window.AdminConfig && Array.isArray(window.AdminConfig.initialInvoices) ? window.AdminConfig.initialInvoices : [];
-    const initialAppointments = window.AdminConfig && Array.isArray(window.AdminConfig.initialAppointments) ? window.AdminConfig.initialAppointments : [];
-    const initialPeriod = (window.AdminConfig && window.AdminConfig.initialPeriod)
-        ? window.AdminConfig.initialPeriod
-        : (revenueLabels.length > 0 ? revenueLabels[revenueLabels.length - 1] : (visitLabels.length > 0 ? visitLabels[visitLabels.length - 1] : ''));
-
-    if (initialPeriod) {
-        currentSelectedPeriod = initialPeriod;
-        currentDetailData.invoices = initialInvoices;
-        currentDetailData.appointments = initialAppointments;
-    }
+    const initialPeriod = revenueLabels.length > 0
+        ? revenueLabels[revenueLabels.length - 1]
+        : (visitLabels.length > 0 ? visitLabels[visitLabels.length - 1] : '');
 
     function createChartConfig(labels, values, chartLabel, activeColor, inactiveColor, onPick) {
         return {
@@ -258,7 +250,7 @@ let revenueChart = null;
         tbody.innerHTML = '';
 
         if (!invoices || invoices.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">Kh\u00F4ng c\u00F3 d\u1EEF li\u1EC7u</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-3">Kh\u00F4ng c\u00F3 d\u1EEF li\u1EC7u</td></tr>';
             return;
         }
 
@@ -269,6 +261,7 @@ let revenueChart = null;
             html += '<td>' + escapeHtml(item.invoiceId) + '</td>';
             html += '<td>' + escapeHtml(item.patientName) + '</td>';
             html += '<td class="text-end">' + formatCurrency(item.totalAmount) + '</td>';
+            html += '<td class="text-end">' + formatCurrency(item.bhytDeduction) + '</td>';
             html += '<td class="text-end fw-semibold">' + formatCurrency(item.finalAmount) + '</td>';
             html += '<td>' + escapeHtml(item.paymentDate) + '</td>';
             html += '<td><button class="btn btn-sm btn-outline-primary" onclick="viewInvoiceDetail(\'' + safeInvoiceId + '\')">Xem chi ti\u1EBFt</button></td>';
@@ -360,19 +353,13 @@ let revenueChart = null;
         invoiceDetailModalInstance.show();
     }
 
-    const invoiceTabEl = document.getElementById('invoiceTab');
-    if (invoiceTabEl) {
-        invoiceTabEl.addEventListener('shown.bs.tab', function () {
-            renderInvoiceTable(currentDetailData.invoices);
-        });
-    }
+    document.getElementById('invoiceTab').addEventListener('shown.bs.tab', function () {
+        renderInvoiceTable(currentDetailData.invoices);
+    });
 
-    const appointmentTabEl = document.getElementById('appointmentTab');
-    if (appointmentTabEl) {
-        appointmentTabEl.addEventListener('shown.bs.tab', function () {
-            renderAppointmentTable(currentDetailData.appointments);
-        });
-    }
+    document.getElementById('appointmentTab').addEventListener('shown.bs.tab', function () {
+        renderAppointmentTable(currentDetailData.appointments);
+    });
 
     window.viewInvoiceDetail = viewInvoiceDetail;
 
@@ -406,11 +393,6 @@ let revenueChart = null;
 
         if (initialPeriod) {
             syncSelectedPeriodUI(initialPeriod);
-            if (currentDetailData.invoices.length > 0 || currentDetailData.appointments.length > 0) {
-                renderInvoiceTable(currentDetailData.invoices);
-                renderAppointmentTable(currentDetailData.appointments);
-            } else {
-                fetchReportDetail(initialPeriod);
-            }
+            fetchReportDetail(initialPeriod);
         }
     });

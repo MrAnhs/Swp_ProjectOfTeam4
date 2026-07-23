@@ -12,7 +12,7 @@
                     <div class="fw-semibold">
                         ${selectedSchedule.doctorName} -
                         <c:choose>
-                            <c:when test="${selectedSchedule.department == 'Endocrinology'}">Nội tiết
+                            <c:when test="${selectedSchedule.department == 'Endocrinology'}">Nội tiết - Tiểu đường
                             </c:when>
                             <c:when test="${selectedSchedule.department == 'Cardiology'}">Tim mạch</c:when>
                             <c:when test="${selectedSchedule.department == 'Nephrology'}">Thận học</c:when>
@@ -274,19 +274,27 @@
                                                 id="aiDoctorDeptCheckboxes">
                                                 <div class="form-check">
                                                     <input class="form-check-input ai-dept-cb" type="checkbox"
-                                                        name="department" value="Endocrinology" id="aiDeptEndo" checked>
-                                                    <label class="form-check-label small" for="aiDeptEndo">Nội tiết</label>
+                                                        value="Nội tiết - Tiểu đường" id="aiDeptEndo" checked>
+                                                    <label class="form-check-label small" for="aiDeptEndo">Nội tiết -
+                                                        Tiểu đường</label>
                                                 </div>
                                                 <div class="form-check">
                                                     <input class="form-check-input ai-dept-cb" type="checkbox"
-                                                        name="department" value="Cardiology" id="aiDeptCardio" checked>
+                                                        value="Tim mạch" id="aiDeptCardio" checked>
                                                     <label class="form-check-label small" for="aiDeptCardio">Tim
                                                         mạch</label>
                                                 </div>
                                                 <div class="form-check">
                                                     <input class="form-check-input ai-dept-cb" type="checkbox"
-                                                        name="department" value="Da liễu" id="aiDeptDerm" checked>
-                                                    <label class="form-check-label small" for="aiDeptDerm">Da liễu</label>
+                                                        value="Thận học" id="aiDeptNephro" checked>
+                                                    <label class="form-check-label small" for="aiDeptNephro">Thận
+                                                        học</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input ai-dept-cb" type="checkbox"
+                                                        value="Tổng quát" id="aiDeptGen" checked>
+                                                    <label class="form-check-label small" for="aiDeptGen">Tổng
+                                                        quát</label>
                                                 </div>
                                             </div>
                                         </div>
@@ -595,55 +603,6 @@
                     <button type="button" class="btn btn-danger px-4 fw-bold" id="autoResolveAllConflictsBtn"
                         style="border-radius: 8px;">
                         <i class="fa-solid fa-bolt me-1"></i>Tự động sửa tất cả ca trùng
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal Xem Chi Tiết Ca Trực (Shift Detail Modal) -->
-    <div class="modal fade" id="shiftDetailModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
-                <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title fw-bold text-dark"><i class="bi bi-info-circle text-primary me-2"></i>Chi tiết ca trực</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body py-3">
-                    <div id="shiftDetailConflictAlert" class="alert alert-danger d-none mb-3" role="alert">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i><span id="shiftDetailConflictText"></span>
-                    </div>
-                    <div class="list-group list-group-flush">
-                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-                            <span class="text-muted"><i class="bi bi-person me-2"></i>Bác sĩ / Nhân sự:</span>
-                            <span class="fw-semibold text-dark" id="shiftDetailStaff">-</span>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-                            <span class="text-muted"><i class="bi bi-tag me-2"></i>Chuyên khoa / Vai trò:</span>
-                            <span class="fw-semibold text-dark" id="shiftDetailRole">-</span>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-                            <span class="text-muted"><i class="bi bi-geo-alt me-2"></i>Phòng / Khu vực:</span>
-                            <span class="fw-semibold text-dark" id="shiftDetailRoom">-</span>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-                            <span class="text-muted"><i class="bi bi-calendar-event me-2"></i>Ngày trực:</span>
-                            <span class="fw-semibold text-dark" id="shiftDetailDate">-</span>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-                            <span class="text-muted"><i class="bi bi-clock me-2"></i>Khung giờ:</span>
-                            <span class="fw-semibold text-dark" id="shiftDetailTime">-</span>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-                            <span class="text-muted"><i class="bi bi-check-circle me-2"></i>Trạng thái:</span>
-                            <span class="badge bg-success" id="shiftDetailStatus">Đã xếp lịch</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal" style="border-radius: 8px;">Đóng</button>
-                    <button type="button" class="btn btn-primary px-4 fw-bold" id="shiftDetailEditBtn" style="border-radius: 8px; display: none;">
-                        <i class="bi bi-pencil-square me-1"></i>Chỉnh sửa ca trực
                     </button>
                 </div>
             </div>

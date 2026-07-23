@@ -557,10 +557,7 @@
                 <i class="bi bi-calendar3 text-success"></i>
                 <span class="nav-text">Lịch làm việc</span>
             </a>
-            <a href="#pill-register-schedule" class="nav-link nav-item-dash" id="pill-register-schedule-tab" data-bs-toggle="pill" role="tab" aria-controls="pill-register-schedule" aria-selected="false">
-                <i class="bi bi-calendar-plus text-success"></i>
-                <span class="nav-text">Đăng ký lịch làm việc</span>
-            </a>
+
         </nav>
 
         <div class="sidebar-footer">
@@ -1049,7 +1046,7 @@
                                     <tr>
                                         <th>ID</th>
                                         <th>Họ và tên</th>
-                                        <th>Email / SĐT</th>
+                                        <th>Thời gian vào phòng</th>
                                         <th>Phòng</th>
                                         <th>Trạng thái</th>
                                         <th>Hành động</th>
@@ -1078,8 +1075,7 @@
                                                         <small class="text-secondary">Ngày sinh: <c:out value="${p.dob}" /> | <c:out value="${p.gender}" /></small>
                                                     </td>
                                                     <td class="small">
-                                                        <i class="bi bi-envelope text-secondary me-1"></i><c:out value="${p.email}" /><br>
-                                                        <i class="bi bi-telephone text-secondary me-1"></i><c:out value="${p.phone}" />
+                                                        <i class="bi bi-clock-fill text-success me-1"></i><span class="fw-semibold text-dark"><c:out value="${p.requestedAt}" /></span>
                                                     </td>
                                                     <td>
                                                         <c:choose>
@@ -1185,7 +1181,7 @@
                                     <tr>
                                         <th>ID</th>
                                         <th>Họ và tên</th>
-                                        <th>Email / SĐT</th>
+                                        <th>Thời gian vào phòng</th>
                                         <th>Trạng thái</th>
                                         <th>Hành động</th>
                                     </tr>
@@ -1211,8 +1207,7 @@
                                                              <small class="text-secondary">Ngày sinh: <c:out value="${p.dob}" /> | <c:out value="${p.gender}" /></small>
                                                          </td>
                                                          <td class="small">
-                                                             <i class="bi bi-envelope text-secondary me-1"></i><c:out value="${p.email}" /><br>
-                                                             <i class="bi bi-telephone text-secondary me-1"></i><c:out value="${p.phone}" />
+                                                             <i class="bi bi-clock-fill text-success me-1"></i><span class="fw-semibold text-dark"><c:out value="${p.requestedAt}" /></span>
                                                          </td>
                                                          <td>
                                                              <c:choose>
@@ -1297,108 +1292,6 @@
                 </div>
             </div>
 
-            <!-- Module 6: Đăng ký lịch làm việc -->
-            <div class="tab-pane fade" id="pill-register-schedule" role="tabpanel" aria-labelledby="pill-register-schedule-tab">
-                <!-- Compact Top Horizontal Registration Banner -->
-                <div class="card card-custom mb-2 shadow-sm border-0">
-                    <div class="card-body py-2 px-3 bg-light-subtle">
-                        <form action="${pageContext.request.contextPath}/doctor-lab/dashboard" method="POST" class="row g-2 align-items-center">
-                            <input type="hidden" name="action" value="registerSchedule">
-
-                            <div class="col-md-2">
-                                <span class="fw-bold text-success text-nowrap" style="font-size: 0.85rem;">
-                                    <i class="bi bi-calendar-plus-fill me-1"></i>Đăng ký ca mới:
-                                </span>
-                            </div>
-
-                            <div class="col-md-3">
-                                <div class="input-group input-group-sm">
-                                    <span class="input-group-text bg-white text-success fw-bold"><i class="bi bi-calendar-date"></i></span>
-                                    <input type="date" class="form-control form-control-sm fw-semibold" id="workDateMain" name="workDate" required value="2026-07-27">
-                                </div>
-                            </div>
-
-                            <div class="col-md-3">
-                                <div class="input-group input-group-sm">
-                                    <span class="input-group-text bg-white text-success fw-bold"><i class="bi bi-clock"></i></span>
-                                    <select class="form-select form-select-sm fw-semibold" id="timeSlotMain" name="timeSlot" required>
-                                        <option value="Ca 1">Ca 1 (7:30 - 12:00)</option>
-                                        <option value="Ca 2">Ca 2 (13:30 - 16:30)</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="col-md-3">
-                                <div class="input-group input-group-sm">
-                                    <span class="input-group-text bg-white text-success fw-bold"><i class="bi bi-door-open"></i></span>
-                                    <select class="form-select form-select-sm fw-semibold" id="roomIdMain" name="roomId" required>
-                                        <option value="phòng xét nghiệm máu">Phòng xét nghiệm máu</option>
-                                        <option value="phòng xét nghiệm nước tiểu">Phòng xét nghiệm nước tiểu</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="col-md-1">
-                                <button type="submit" class="btn btn-vinmec btn-sm fw-bold w-100 py-1.5 shadow-sm text-nowrap">
-                                    <i class="bi bi-check-circle-fill me-1"></i>Đăng ký
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- Bottom Full-Width Weekly Timetable Grid -->
-                <div class="card card-custom shadow-sm border-0">
-                    <div class="card-header card-header-custom py-1.5 px-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
-                        <div class="d-flex align-items-center gap-2">
-                            <i class="bi bi-calendar3 fs-6"></i>
-                            <span class="fw-bold fs-6">Lịch làm việc chung của tất cả bác sĩ (Weekly Timetable)</span>
-                        </div>
-                        <div class="d-flex align-items-center gap-2 flex-wrap">
-                            <div class="d-flex align-items-center gap-2 bg-white px-2 py-1 rounded border shadow-sm">
-                                <span class="fw-bold text-danger extra-small" style="font-size: 0.75rem;">YEAR</span>
-                                <select id="yearSelectDropdownReg" class="form-select form-select-sm fw-bold border-secondary py-0 px-1" style="width: auto; font-size: 0.8rem;" onchange="onYearDropdownChange(this.value)">
-                                    <!-- Dynamically populated by JS -->
-                                </select>
-
-                                <span class="fw-bold text-secondary extra-small ms-1" style="font-size: 0.75rem;">WEEK</span>
-                                <select id="weekSelectDropdownReg" class="form-select form-select-sm fw-bold border-primary text-primary py-0 px-1" style="width: auto; font-size: 0.8rem;" onchange="onWeekDropdownChange(this.value)">
-                                    <!-- Dynamically populated by JS -->
-                                </select>
-                            </div>
-                            <div class="btn-group btn-group-sm">
-                                <button type="button" class="btn btn-outline-success btn-sm py-0.5 px-2" onclick="changeTimetableWeek(-1)" title="Tuần trước">
-                                    <i class="bi bi-chevron-left"></i>
-                                </button>
-                                <button type="button" class="btn btn-outline-success btn-sm py-0.5 px-2" onclick="changeTimetableWeek(1)" title="Tuần sau">
-                                    <i class="bi bi-chevron-right"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card-body p-1 bg-light-subtle">
-                        <div class="table-responsive">
-                            <table class="table table-bordered text-center align-middle m-0" style="width: 100%; border-color: #dee2e6; table-layout: fixed;">
-                                <thead>
-                                    <tr style="background: #edf7f3; color: #004d3a; border: none;">
-                                        <th class="py-1.5" style="width: 11%; font-size: 0.8rem; background: transparent; color: #004d3a;">Ca làm việc</th>
-                                        <th class="py-1.5" id="th-reg-day-0" style="width: 12.71%; font-size: 0.78rem; background: transparent; color: #004d3a;">MON<br><span class="small" style="color:#5a9080;">27/07</span></th>
-                                        <th class="py-1.5" id="th-reg-day-1" style="width: 12.71%; font-size: 0.78rem; background: transparent; color: #004d3a;">TUE<br><span class="small" style="color:#5a9080;">28/07</span></th>
-                                        <th class="py-1.5" id="th-reg-day-2" style="width: 12.71%; font-size: 0.78rem; background: transparent; color: #004d3a;">WED<br><span class="small" style="color:#5a9080;">29/07</span></th>
-                                        <th class="py-1.5" id="th-reg-day-3" style="width: 12.71%; font-size: 0.78rem; background: transparent; color: #004d3a;">THU<br><span class="small" style="color:#5a9080;">30/07</span></th>
-                                        <th class="py-1.5" id="th-reg-day-4" style="width: 12.71%; font-size: 0.78rem; background: transparent; color: #004d3a;">FRI<br><span class="small" style="color:#5a9080;">31/07</span></th>
-                                        <th class="py-1.5" id="th-reg-day-5" style="width: 12.71%; font-size: 0.78rem; background: transparent; color: #004d3a;">SAT<br><span class="small" style="color:#5a9080;">01/08</span></th>
-                                        <th class="py-1.5" id="th-reg-day-6" style="width: 12.71%; font-size: 0.78rem; background: transparent; color: #004d3a;">SUN<br><span class="small" style="color:#5a9080;">02/08</span></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="reg-timetable-body">
-                                    <!-- Generated by JavaScript -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
 </div>
 </div>
     </main>
@@ -1698,34 +1591,47 @@
     <c:forEach var="r" items="${records}">
         <c:choose>
              <c:when test="${fn:contains(r.otherInfo, 'gan')}">
-                 <c:set var="isLiverTest" value="true" />
-                 <c:set var="isLipidsTest" value="false" />
-                 <c:set var="isKidneyTest" value="false" />
-                 <c:set var="isUrineTest" value="false" />
+                 <c:set var="isBloodSugarTest" value="false" />
+                 <c:set var="isLiverTest"      value="true"  />
+                 <c:set var="isLipidsTest"     value="false" />
+                 <c:set var="isKidneyTest"     value="false" />
+                 <c:set var="isUrineTest"      value="false" />
              </c:when>
              <c:when test="${fn:contains(r.otherInfo, 'thận')}">
-                 <c:set var="isLiverTest" value="false" />
-                 <c:set var="isLipidsTest" value="false" />
-                 <c:set var="isKidneyTest" value="true" />
-                 <c:set var="isUrineTest" value="false" />
+                 <c:set var="isBloodSugarTest" value="false" />
+                 <c:set var="isLiverTest"      value="false" />
+                 <c:set var="isLipidsTest"     value="false" />
+                 <c:set var="isKidneyTest"     value="true"  />
+                 <c:set var="isUrineTest"      value="false" />
              </c:when>
              <c:when test="${fn:contains(r.otherInfo, 'mỡ máu')}">
-                 <c:set var="isLiverTest" value="false" />
-                 <c:set var="isLipidsTest" value="true" />
-                 <c:set var="isKidneyTest" value="false" />
-                 <c:set var="isUrineTest" value="false" />
+                 <c:set var="isBloodSugarTest" value="false" />
+                 <c:set var="isLiverTest"      value="false" />
+                 <c:set var="isLipidsTest"     value="true"  />
+                 <c:set var="isKidneyTest"     value="false" />
+                 <c:set var="isUrineTest"      value="false" />
              </c:when>
              <c:when test="${fn:contains(r.otherInfo, 'nước tiểu')}">
-                 <c:set var="isLiverTest" value="false" />
-                 <c:set var="isLipidsTest" value="false" />
-                 <c:set var="isKidneyTest" value="false" />
-                 <c:set var="isUrineTest" value="true" />
+                 <c:set var="isBloodSugarTest" value="false" />
+                 <c:set var="isLiverTest"      value="false" />
+                 <c:set var="isLipidsTest"     value="false" />
+                 <c:set var="isKidneyTest"     value="false" />
+                 <c:set var="isUrineTest"      value="true"  />
+             </c:when>
+             <c:when test="${fn:contains(r.otherInfo, 'đường huyết') or fn:contains(r.otherInfo, 'máu')}">
+                 <c:set var="isBloodSugarTest" value="true"  />
+                 <c:set var="isLiverTest"      value="false" />
+                 <c:set var="isLipidsTest"     value="false" />
+                 <c:set var="isKidneyTest"     value="false" />
+                 <c:set var="isUrineTest"      value="false" />
              </c:when>
              <c:otherwise>
-                 <c:set var="isLiverTest" value="${(empty r.hba1c or r.hba1c eq '0' or r.hba1c eq '0.0') and (empty r.cr or r.cr eq '0' or r.cr eq '0.0') and (empty r.ldl or r.ldl eq '0' or r.ldl eq '0.0') and not empty r.chol and r.chol ne '0'}" />
+                 <%-- fallback: detect by which fields are populated --%>
+                 <c:set var="isLiverTest"  value="${(empty r.hba1c or r.hba1c eq '0' or r.hba1c eq '0.0') and (empty r.cr or r.cr eq '0' or r.cr eq '0.0') and (empty r.ldl or r.ldl eq '0' or r.ldl eq '0.0') and not empty r.chol and r.chol ne '0'}" />
                  <c:set var="isLipidsTest" value="${(empty r.hba1c or r.hba1c eq '0' or r.hba1c eq '0.0') and (empty r.cr or r.cr eq '0' or r.cr eq '0.0') and not empty r.ldl and r.ldl ne '0' and r.ldl ne '0.0'}" />
                  <c:set var="isKidneyTest" value="${(empty r.hba1c or r.hba1c eq '0' or r.hba1c eq '0.0') and (empty r.chol or r.chol eq '0' or r.chol eq '0.0') and not empty r.cr and r.cr ne '0' and r.cr ne '0.0'}" />
-                 <c:set var="isUrineTest" value="${(empty r.hba1c or r.hba1c eq '0' or r.hba1c eq '0.0') and (empty r.chol or r.chol eq '0' or r.chol eq '0.0') and (empty r.cr or r.cr eq '0' or r.cr eq '0.0') and not empty r.tg}" />
+                 <c:set var="isUrineTest"  value="${(empty r.hba1c or r.hba1c eq '0' or r.hba1c eq '0.0') and (empty r.chol or r.chol eq '0' or r.chol eq '0.0') and (empty r.cr or r.cr eq '0' or r.cr eq '0.0') and not empty r.tg}" />
+                 <c:set var="isBloodSugarTest" value="${not isLiverTest and not isLipidsTest and not isKidneyTest and not isUrineTest}" />
              </c:otherwise>
         </c:choose>
         <div class="modal fade" id="recordModal${r.recordId}" tabindex="-1" aria-labelledby="recordModalLabel${r.recordId}" aria-hidden="true">
@@ -1751,76 +1657,53 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <c:if test="${not isUrineTest}">
-                                        <!-- Urea / AST / Đường huyết -->
+                                    <%-- ===== BLOOD SUGAR: chỉ hiện Đường huyết + HbA1c ===== --%>
+                                    <c:if test="${isBloodSugarTest}">
                                         <c:if test="${not empty r.urea and r.urea ne '0' and r.urea ne '0.0' and r.urea ne '0.00'}">
-                                            <c:choose>
-                                                <c:when test="${fn:contains(r.otherInfo, 'đường huyết') or fn:contains(r.otherInfo, 'xét nghiệm máu')}">
-                                                    <tr><td>Chỉ số đường huyết (mmol/L)</td><td class="fw-bold"><c:out value="${r.urea}" /> mmol/L</td></tr>
-                                                </c:when>
-                                                <c:otherwise>
-                                                    <tr><td>Ure</td><td class="fw-bold"><c:out value="${r.urea}" /> mmol/L</td></tr>
-                                                </c:otherwise>
-                                            </c:choose>
+                                            <tr><td>Chỉ số đường huyết (mmol/L)</td><td class="fw-bold"><c:out value="${r.urea}" /> mmol/L</td></tr>
                                         </c:if>
-                                         <!-- HbA1c -->
-                                         <c:if test="${not empty r.hba1c and r.hba1c ne '0' and r.hba1c ne '0.0' and r.hba1c ne '0.00'}">
-                                             <tr><td>Chỉ số đường huyết (HbA1c)</td><td class="fw-bold text-danger"><c:out value="${r.hba1c}" /> %</td></tr>
-                                         </c:if>
-                                        <!-- Creatinine (Cr) -->
-                                        <c:if test="${not empty r.cr and r.cr ne '0' and r.cr ne '0.0' and r.cr ne '0.00'}">
-                                            <c:choose>
-                                                <c:when test="${isKidneyTest}">
-                                                    <tr><td>Creatinin</td><td class="fw-bold"><c:out value="${r.cr}" /> mg/dL</td></tr>
-                                                </c:when>
-                                                <c:otherwise>
-                                                    <tr><td>Creatinine (Cr)</td><td class="fw-bold"><c:out value="${r.cr}" /> μmol/L</td></tr>
-                                                </c:otherwise>
-                                            </c:choose>
-                                        </c:if>
-                                        <!-- Cholesterol (Chol) / AST -->
-                                        <c:if test="${not empty r.chol and r.chol ne '0' and r.chol ne '0.0' and r.chol ne '0.00'}">
-                                            <c:choose>
-                                                <c:when test="${isLiverTest}">
-                                                    <tr><td>AST</td><td class="fw-bold"><c:out value="${r.chol}" /> UI/L</td></tr>
-                                                </c:when>
-                                                <c:when test="${isLipidsTest}">
-                                                    <tr><td>Cholesterol</td><td class="fw-bold"><c:out value="${r.chol}" /> mmol/L</td></tr>
-                                                </c:when>
-                                                <c:otherwise>
-                                                    <tr><td>Cholesterol (Chol)</td><td class="fw-bold"><c:out value="${r.chol}" /> mmol/L</td></tr>
-                                                </c:otherwise>
-                                            </c:choose>
-                                        </c:if>
-                                        <!-- Triglyceride (TG) / ALT -->
-                                        <c:if test="${not empty r.tg and r.tg ne '0' and r.tg ne '0.0' and r.tg ne '0.00'}">
-                                            <c:choose>
-                                                <c:when test="${isLiverTest}">
-                                                    <tr><td>ALT</td><td class="fw-bold"><c:out value="${r.tg}" /> UI/L</td></tr>
-                                                </c:when>
-                                                <c:when test="${isLipidsTest}">
-                                                    <tr><td>Triglyceride</td><td class="fw-bold"><c:out value="${r.tg}" /> mmol/L</td></tr>
-                                                </c:when>
-                                                <c:otherwise>
-                                                    <tr><td>Triglyceride (TG)</td><td class="fw-bold"><c:out value="${r.tg}" /> mmol/L</td></tr>
-                                                </c:otherwise>
-                                            </c:choose>
-                                        </c:if>
-                                        <!-- HDL -->
-                                        <c:if test="${not empty r.hdl and r.hdl ne '0' and r.hdl ne '0.0' and r.hdl ne '0.00'}">
-                                            <tr><td>HDL</td><td class="fw-bold"><c:out value="${r.hdl}" /> mmol/L</td></tr>
-                                        </c:if>
-                                        <!-- LDL -->
-                                        <c:if test="${not empty r.ldl and r.ldl ne '0' and r.ldl ne '0.0' and r.ldl ne '0.00'}">
-                                            <tr><td>LDL</td><td class="fw-bold"><c:out value="${r.ldl}" /> mmol/L</td></tr>
-                                        </c:if>
-                                        <!-- VLDL -->
-                                        <c:if test="${not empty r.vldl and r.vldl ne '0' and r.vldl ne '0.0' and r.vldl ne '0.00'}">
-                                            <tr><td>VLDL</td><td class="fw-bold"><c:out value="${r.vldl}" /> mmol/L</td></tr>
+                                        <c:if test="${not empty r.hba1c and r.hba1c ne '0' and r.hba1c ne '0.0' and r.hba1c ne '0.00'}">
+                                            <tr><td>Chỉ số đường huyết (HbA1c)</td><td class="fw-bold text-danger"><c:out value="${r.hba1c}" /> %</td></tr>
                                         </c:if>
                                     </c:if>
+                                    <%-- ===== GAN (Liver): AST + ALT ===== --%>
+                                    <c:if test="${isLiverTest}">
+                                        <c:if test="${not empty r.chol and r.chol ne '0' and r.chol ne '0.0' and r.chol ne '0.00'}">
+                                            <tr><td>AST (GOT)</td><td class="fw-bold"><c:out value="${r.chol}" /> UI/L</td></tr>
+                                        </c:if>
+                                        <c:if test="${not empty r.tg and r.tg ne '0' and r.tg ne '0.0' and r.tg ne '0.00'}">
+                                            <tr><td>ALT (GPT)</td><td class="fw-bold"><c:out value="${r.tg}" /> UI/L</td></tr>
+                                        </c:if>
+                                    </c:if>
+                                    <%-- ===== THẬN (Kidney): Ure + Creatinin ===== --%>
+                                    <c:if test="${isKidneyTest}">
+                                        <c:if test="${not empty r.urea and r.urea ne '0' and r.urea ne '0.0' and r.urea ne '0.00'}">
+                                            <tr><td>Ure</td><td class="fw-bold"><c:out value="${r.urea}" /> mmol/L</td></tr>
+                                        </c:if>
+                                        <c:if test="${not empty r.cr and r.cr ne '0' and r.cr ne '0.0' and r.cr ne '0.00'}">
+                                            <tr><td>Creatinin</td><td class="fw-bold"><c:out value="${r.cr}" /> mg/dL</td></tr>
+                                        </c:if>
+                                    </c:if>
+                                    <%-- ===== MỠ MÁU (Lipids): Cholesterol + TG + HDL + LDL + VLDL ===== --%>
+                                    <c:if test="${isLipidsTest}">
+                                        <c:if test="${not empty r.chol and r.chol ne '0' and r.chol ne '0.0' and r.chol ne '0.00'}">
+                                            <tr><td>Cholesterol toàn phần</td><td class="fw-bold"><c:out value="${r.chol}" /> mmol/L</td></tr>
+                                        </c:if>
+                                        <c:if test="${not empty r.tg and r.tg ne '0' and r.tg ne '0.0' and r.tg ne '0.00'}">
+                                            <tr><td>Triglyceride</td><td class="fw-bold"><c:out value="${r.tg}" /> mmol/L</td></tr>
+                                        </c:if>
+                                        <c:if test="${not empty r.hdl and r.hdl ne '0' and r.hdl ne '0.0' and r.hdl ne '0.00'}">
+                                            <tr><td>HDL-Cholesterol</td><td class="fw-bold"><c:out value="${r.hdl}" /> mmol/L</td></tr>
+                                        </c:if>
+                                        <c:if test="${not empty r.ldl and r.ldl ne '0' and r.ldl ne '0.0' and r.ldl ne '0.00'}">
+                                            <tr><td>LDL-Cholesterol</td><td class="fw-bold"><c:out value="${r.ldl}" /> mmol/L</td></tr>
+                                        </c:if>
+                                        <c:if test="${not empty r.vldl and r.vldl ne '0' and r.vldl ne '0.0' and r.vldl ne '0.00'}">
+                                            <tr><td>VLDL-Cholesterol</td><td class="fw-bold"><c:out value="${r.vldl}" /> mmol/L</td></tr>
+                                        </c:if>
+                                    </c:if>
+                                    <%-- ===== NƯỚC TIỂU (Urine): 7 chỉ số ===== --%>
                                     <c:if test="${isUrineTest}">
-                                        <!-- GLU -->
                                         <c:if test="${not empty r.urea and r.urea ne '0' and r.urea ne '0.0' and r.urea ne '0.00'}">
                                             <tr>
                                                 <td>GLU (Glucose / Đường)</td>
@@ -1986,9 +1869,10 @@
 
         const registeredDBSchedules = [
             <c:forEach var="s" items="${registeredSchedules}" varStatus="loop">
-                { slotKey: "${s.slotKey}", dateStr: "${s.dateStr}", roomId: "${s.roomId}", type: "${s.type}", doctorName: "${s.doctorName}" }<c:if test="${!loop.last}">,</c:if>
+                { slotKey: "${s.slotKey}", dateStr: "${s.dateStr}", roomId: "${s.roomId}", type: "${s.type}", doctorName: "${s.doctorName}", accountId: "${s.accountId}" }<c:if test="${!loop.last}">,</c:if>
             </c:forEach>
         ];
+
 
         const mockSchedules = registeredDBSchedules;
 
@@ -2208,9 +2092,11 @@
                         td.style.minHeight = "50px";
 
                         // Filter ONLY current doctor's registered schedules
+                        const currentAccId = "${sessionScope.currentUser.id}";
                         const matches = mockSchedules.filter(s => s.dateStr === dateStr && s.slotKey === slotKey && (
-                            !currentDoctorName || (s.doctorName && s.doctorName.trim().toLowerCase() === currentDoctorName)
+                            !currentAccId || s.accountId === currentAccId
                         ));
+
 
                         if (matches && matches.length > 0) {
                             td.innerHTML = "";
@@ -2475,20 +2361,12 @@
 
             // Initial render of timetable for target week
             renderTimetableWeek();
-
-            <c:if test="${not isProfileComplete}">
-            // Auto open edit profile modal if profile is incomplete
-            const editModalEl = document.getElementById('editProfileModal');
-            if (editModalEl) {
-                const editModal = new bootstrap.Modal(editModalEl);
-                editModal.show();
-            }
-            </c:if>
         });
     </script>
 
 
-    <div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true" data-bs-backdrop="${isProfileComplete ? 'true' : 'static'}" data-bs-keyboard="${isProfileComplete ? 'true' : 'false'}">
+    <div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true" data-bs-backdrop="true" data-bs-keyboard="true">
+
         <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
             <form class="modal-content border-0 shadow-lg rounded-4 overflow-hidden" action="${pageContext.request.contextPath}/doctor-lab/dashboard" method="POST" accept-charset="UTF-8" onsubmit="return validateProfileForm(event)" style="max-height: 85vh; display: flex; flex-direction: column;">
                 <input type="hidden" name="action" value="updateProfile">
@@ -2504,10 +2382,9 @@
                             <small style="color:#4a7a68;font-size:0.78rem;">Phòng Xét nghiệm – ${sessionScope.currentUser.fullName}</small>
                         </div>
                     </div>
-                    <c:if test="${isProfileComplete}">
-                        <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </c:if>
+                    <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
+
 
                 <div class="modal-body" style="padding: 1.5rem; background: #f8fffe; overflow-y: auto; flex: 1 1 auto;">
 
@@ -2677,3 +2554,4 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+

@@ -87,12 +87,10 @@ function normalizeSearchText(value) {
 }
 
 const specialtyKeywords = {
-    'Nội tiết': ['noi tiet', 'endo'],
     'Nội tiết - Tiểu đường': ['noi tiet', 'endo'],
     'Endocrinology': ['noi tiet', 'endo'],
     'Tim mạch': ['tim mach', 'cardio'],
     'Cardiology': ['tim mach', 'cardio'],
-    'Da liễu': ['da lieu', 'dermatol'],
     'Thận học': ['than hoc', 'nephro'],
     'Nephrology': ['than hoc', 'nephro'],
     'Tổng quát': ['tong quat', 'general'],
@@ -317,31 +315,17 @@ function updateAiMaxSchedules() {
 
     if (staffType === 'Doctor') {
         const checkedDepts = Array.from(document.querySelectorAll('.ai-dept-cb:checked')).map(cb => cb.value);
-        if (checkedDepts.length === 0) {
-            total = 0;
-            desc = '<span class="text-danger fw-bold"><i class="bi bi-exclamation-triangle-fill me-1"></i>Vui lòng tích chọn ít nhất một chuyên khoa áp dụng!</span>';
-        } else {
-            const allDoctorRooms = getDoctorActiveRooms();
-            const filteredRooms = allDoctorRooms.filter(room => {
-                const name = normalizeSearchText(room.roomName || '');
-                const dept = normalizeSearchText(room.department || '');
-                return checkedDepts.some(selDept => {
-                    const kws = specialtyKeywords[selDept] || [normalizeSearchText(selDept)];
-                    return kws.some(kw => name.includes(kw) || dept.includes(kw));
-                });
-            });
-            const roomsCount = filteredRooms.length > 0 ? filteredRooms.length : checkedDepts.length;
-            const totalDoctorsPerShift = roomsCount * staffPerShift;
+        const doctorRooms = getDoctorActiveRooms();
+        const roomsCount = doctorRooms.length;
+        const totalDoctorsPerShift = roomsCount * staffPerShift;
 
-            let specialtyDetailHtml = `<ul class="ps-3 mb-0 text-muted" style="font-size:0.78rem; list-style-type:circle;">
-                <li>Số chuyên khoa đã chọn: <strong>${checkedDepts.length} chuyên khoa</strong></li>
-                <li>Tổng phòng khám phù hợp đang hoạt động: <strong>${roomsCount} phòng</strong></li>
-                <li>Sức chứa phân bổ: <strong>${totalDoctorsPerShift} bác sĩ/ca</strong> (${roomsCount} phòng x ${staffPerShift} bác sĩ/phòng)</li>
-            </ul>`;
+        let specialtyDetailHtml = `<ul class="ps-3 mb-0 text-muted" style="font-size:0.78rem; list-style-type:circle;">
+            <li>Tổng phòng khám tổng quát đang hoạt động: <strong>${roomsCount} phòng</strong></li>
+            <li>Sức chứa phân bổ: <strong>${totalDoctorsPerShift} bác sĩ/ca</strong> (${roomsCount} phòng x ${staffPerShift} bác sĩ/phòng)</li>
+        </ul>`;
 
-            total = days * actualShiftsPerDay * totalDoctorsPerShift;
-            desc = `(${days} ngày x ${actualShiftsPerDay} ca trực/ngày x ${totalDoctorsPerShift} bác sĩ/ca)<br>${specialtyDetailHtml}`;
-        }
+        total = days * actualShiftsPerDay * totalDoctorsPerShift;
+        desc = `(${days} ngày x ${actualShiftsPerDay} ca trực/ngày x ${totalDoctorsPerShift} bác sĩ/ca)<br>${specialtyDetailHtml}`;
     } else if (staffType === 'Receptionist') {
         total = days * actualShiftsPerDay * staffPerShift;
         desc = `(${days} ngày x ${actualShiftsPerDay} ca trực/ngày x ${staffPerShift} lễ tân/ca)`;
@@ -731,7 +715,7 @@ function buildScheduleRow(schedule) {
         : Math.max(0, maxPatients - onlineQuota);
 
     const departmentMap = {
-        Endocrinology: 'Nội tiết',
+        Endocrinology: 'Nội tiết - Tiểu đường',
         Cardiology: 'Tim mạch',
         Nephrology: 'Thận học',
         General: 'Tổng quát'

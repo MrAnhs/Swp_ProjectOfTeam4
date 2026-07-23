@@ -148,7 +148,6 @@ function getBookingSourceBadge(source) {
  * Bản đồ ánh xạ tên chuyên khoa hiển thị sang mã chuyên khoa DB
  */
 const departmentMapping = {
-    'Nội tiết': 'Endocrinology',
     'Nội tiết - Tiểu đường': 'Endocrinology',
     'Endocrinology': 'Endocrinology',
     'Tim mạch': 'Cardiology',
@@ -612,26 +611,28 @@ onReady(function () {
 
     // 4.7 Lắng nghe sự kiện click nút Xem chi tiết ca trực
     document.addEventListener('click', function (e) {
-        const btn = e.target.closest('.schedule-detail-action, .staff-schedule-detail-action');
+        const btn = e.target.closest('.schedule-detail-action');
         if (!btn) return;
 
         e.preventDefault();
         const row = btn.closest('tr');
+        if (!row) return;
 
-        const scheduleId = (row ? row.getAttribute('data-schedule-id') : null) || btn.getAttribute('data-schedule-id') || btn.getAttribute('data-staff-schedule-id');
-        const doctorName = (row ? row.getAttribute('data-doctor-name') || row.getAttribute('data-staff-name') || (row.cells[0] ? row.cells[0].textContent.trim() : '-') : '-');
-        const department = (row ? row.getAttribute('data-department') || row.getAttribute('data-work-area') || (row.cells[1] ? row.cells[1].textContent.trim() : '-') : '-');
-        const workDate = (row ? row.getAttribute('data-work-date') || (row.cells[2] ? row.cells[2].textContent.trim() : '-') : '-');
-        const timeSlot = (row ? row.getAttribute('data-time-slot') || (row.cells[3] ? row.cells[3].textContent.trim() : '-') : '-');
-        const roomName = (row ? row.getAttribute('data-room-name') || (row.cells[4] ? row.cells[4].textContent.trim() : 'Chưa xếp') : 'Chưa xếp');
+        const doctorName = row.getAttribute('data-doctor-name') || (row.cells[0] ? row.cells[0].textContent.trim() : '-');
+        const department = row.getAttribute('data-department') || (row.cells[1] ? row.cells[1].textContent.trim() : '-');
+        const workDate = row.cells[2] ? row.cells[2].textContent.trim() : '-';
+        const timeSlot = row.cells[3] ? row.cells[3].textContent.trim() : '-';
+        const roomName = row.cells[4] ? row.cells[4].textContent.trim() : 'Chưa xếp';
 
         const shiftObj = {
-            scheduleId: scheduleId,
             staff: doctorName,
             role: department,
             room: roomName,
             date: workDate,
-            timeSlot: timeSlot
+            start: timeSlot.split('-')[0] || '13:30',
+            end: timeSlot.split('-')[1] || '17:00',
+            timeSlot: timeSlot,
+            status: 'Confirmed'
         };
 
         document.querySelectorAll('.dropdown-menu.show').forEach(m => m.classList.remove('show'));
@@ -668,23 +669,4 @@ onReady(function () {
             }
         }
     });
-
-    // SỰ KIỆN CLICK NÚT "CHỈNH SỬA CA TRỰC" TRÊN MODAL XEM CHI TIẾT
-    const shiftDetailEditBtn = document.getElementById('shiftDetailEditBtn');
-    if (shiftDetailEditBtn) {
-        shiftDetailEditBtn.addEventListener('click', function () {
-            const schId = this.getAttribute('data-schedule-id');
-            if (!schId) return;
-
-            const modalEl = document.getElementById('shiftDetailModal');
-            if (modalEl) {
-                const bsModal = bootstrap.Modal.getInstance(modalEl);
-                if (bsModal) bsModal.hide();
-            }
-
-            if (typeof openEditScheduleModal === 'function') {
-                openEditScheduleModal(schId);
-            }
-        });
-    }
 });

@@ -225,8 +225,25 @@
                                                             </c:choose>
                                                         </div>
 
+                                                        <!-- Phòng / Chuyên khoa -->
+                                                        <div class="col-md-3" id="unifiedRoomFilterContainer">
+                                                            <label
+                                                                class="form-label text-secondary small fw-bold mb-1">Phòng
+                                                                / Chuyên khoa</label>
+                                                            <select id="unifiedRoomFilter" name="roomId"
+                                                                class="form-select form-select-sm"
+                                                                style="border-radius: 8px;">
+                                                                <option value="all" selected>Tất cả phòng / khoa
+                                                                </option>
+                                                                <c:forEach var="r" items="${rooms}">
+                                                                    <option value="room_${r.roomId}">${r.roomName}
+                                                                        (${r.roomId})</option>
+                                                                </c:forEach>
+                                                            </select>
+                                                        </div>
+
                                                         <!-- Tìm kiếm -->
-                                                        <div class="col-md-4">
+                                                        <div class="col-md-3">
                                                             <label
                                                                 class="form-label text-secondary small fw-bold mb-1">Tìm
                                                                 kiếm nhân sự</label>
@@ -242,7 +259,7 @@
                                                         </div>
 
                                                         <!-- Nút Lọc & Reset -->
-                                                        <div class="col-md-2 d-flex align-items-end gap-1"
+                                                        <div class="col-md-1 d-flex align-items-end gap-1"
                                                             style="margin-top: 24px;">
                                                             <button type="submit"
                                                                 class="btn btn-sm text-white fw-bold w-100 py-1"

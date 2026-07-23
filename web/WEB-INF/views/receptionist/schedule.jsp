@@ -89,30 +89,62 @@
     <%@ include file="/WEB-INF/views/components/receptionist/sidebar.jspf" %>
     <main class="receptionist-main">
         <div class="page-kicker">Lễ tân</div>
-        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h1 class="page-title">Lịch trực của tôi</h1>
                 <p class="page-subtitle">Xem lịch làm việc theo tuần.</p>
             </div>
-            <div class="d-flex align-items-center gap-3 flex-wrap">
-                <div class="d-flex align-items-center gap-2 bg-light p-2 rounded border">
-                    <div class="d-flex align-items-center gap-1">
-                        <span class="fw-bold text-danger small" style="text-decoration: underline;">YEAR</span>
-                        <select id="selectYear" class="form-select form-select-sm" style="width: 100px;">
-                        </select>
-                    </div>
-                    <div class="d-flex align-items-center gap-1 ms-2">
-                        <span class="fw-bold text-primary small">WEEK</span>
-                        <select id="selectWeek" class="form-select form-select-sm" style="width: 220px;">
-                        </select>
-                    </div>
-                </div>
+            <div class="d-flex align-items-center gap-3">
+                <button class="btn btn-outline-secondary" id="btnPrevWeek">
+                    <i class="bi bi-chevron-left"></i> Tuần trước
+                </button>
+                <h5 class="mb-0 fw-bold" id="currentWeekRange">--/--/---- - --/--/----</h5>
+                <button class="btn btn-outline-secondary" id="btnNextWeek">
+                    Tuần sau <i class="bi bi-chevron-right"></i>
+                </button>
+                <button class="btn btn-primary" id="btnToday">Hôm nay</button>
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#registerScheduleModal">
+                    <i class="bi bi-plus-circle me-1"></i> Đăng ký lịch trực
+                </button>
             </div>
         </div>
 
         <div class="schedule-container bg-white p-4 rounded shadow-sm">
             <div class="schedule-grid" id="scheduleGrid">
                 <!-- Data will be populated by JS -->
+            </div>
+        </div>
+
+        <!-- Modal Đăng ký lịch trực -->
+        <div class="modal fade" id="registerScheduleModal" tabindex="-1" aria-labelledby="registerScheduleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form id="registerScheduleForm">
+                        <div class="modal-header">
+                            <h5 class="modal-title fw-bold" id="registerScheduleModalLabel">Đăng ký lịch trực</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="modalAlert"></div>
+                            <div class="mb-3">
+                                <label for="regWorkDate" class="form-label fw-semibold">Chọn ngày trực</label>
+                                <input type="date" id="regWorkDate" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="regTimeSlot" class="form-label fw-semibold">Chọn ca trực</label>
+                                <select id="regTimeSlot" class="form-select" required>
+                                    <option value="">-- Chọn ca trực --</option>
+                                    <option value="08:00 - 12:00">Ca 1 (08:00 - 12:00)</option>
+                                    <option value="13:00 - 17:00">Ca 2 (13:00 - 17:00)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                            <button type="submit" class="btn btn-success" id="btnSubmitSchedule">Xác nhận đăng ký</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </main>
