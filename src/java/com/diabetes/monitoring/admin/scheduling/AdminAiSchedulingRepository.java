@@ -1209,16 +1209,7 @@ public class AdminAiSchedulingRepository {
             }
         }
 
-        // Pass 2: Fallback to General rooms or any active unassigned room
-        for (Map<String, String> room : activeRooms) {
-            String roomId = room.get("roomId");
-            String slotRoomKey = workDate + "_" + timeSlot + "_" + roomId;
-            if (!usedRoomSlotKeys.contains(slotRoomKey)
-                    && !roomRepository.hasRoomOverlap(conn, roomId, workDate, timeSlot, excludeScheduleId, null)) {
-                return roomId;
-            }
-        }
-
+        // STRICT ENFORCEMENT: Never assign a room of a different specialty
         return null;
     }
 }
