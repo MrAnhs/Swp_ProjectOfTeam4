@@ -11,7 +11,7 @@ public class AppointmentBookingResult {
     private String doctorName;
     private String department;
     private String timeSlot;
-    private Integer roomId;
+    private String roomId;
     private String roomName;
     private String roomLocation;
 
@@ -31,8 +31,8 @@ public class AppointmentBookingResult {
     public void setDepartment(String department) { this.department = department; }
     public String getTimeSlot() { return timeSlot; }
     public void setTimeSlot(String timeSlot) { this.timeSlot = timeSlot; }
-    public Integer getRoomId() { return roomId; }
-    public void setRoomId(Integer roomId) { this.roomId = roomId; }
+    public String getRoomId() { return roomId; }
+    public void setRoomId(String roomId) { this.roomId = roomId; }
     public String getRoomName() { return roomName; }
     public void setRoomName(String roomName) { this.roomName = roomName; }
     public String getRoomLocation() { return roomLocation; }

@@ -25,8 +25,8 @@ const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndp
  */
 function escapeHtml(s) {
     if (!s) return '';
-    return String(s).replace(/[&<>"']/g, function (c) { 
-        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": "&#39;" }[c]; 
+    return String(s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": "&#39;" }[c];
     });
 }
 
@@ -165,7 +165,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const filterWeekPickerGroup = document.getElementById('filterWeekPickerGroup');
     const unifiedDatePicker = document.getElementById('unifiedDatePicker');
     const unifiedWeekPicker = document.getElementById('unifiedWeekPicker');
-    
+
     const unifiedRoleFilter = document.getElementById('unifiedRoleFilter');
     const unifiedRoleFilterContainer = document.getElementById('unifiedRoleFilterContainer');
     const detailedListRoleSwitch = document.getElementById('detailedListRoleSwitch');
@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // 4.1 Khởi tạo trạng thái View ban đầu
     let currentViewMode = sessionStorage.getItem('adminScheduleViewMode') || 'calendar';
-    
+
     // Nếu URL có tham số roleFilter hoặc workDate hoặc doctorName -> Tự động chuyển sang chế độ xem Danh sách chi tiết
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('roleFilter') || urlParams.has('workDate') || urlParams.has('doctorName') || urlParams.has('staffName') || urlParams.has('staffType')) {
@@ -191,7 +191,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function switchViewMode(mode) {
         currentViewMode = mode;
         sessionStorage.setItem('adminScheduleViewMode', mode);
-        
+
         if (mode === 'calendar') {
             // Cập nhật nút
             viewCalendarBtn.className = "btn btn-sm px-3 rounded-2 fw-bold text-white bg-purple";
@@ -226,7 +226,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 unifiedDatePicker.classList.add('d-none');
                 unifiedDatePicker.style.setProperty('display', 'none', 'important');
             }
-            
+
             if (selectedViewTabInput) selectedViewTabInput.value = 'calendar';
             if (typeof window.loadWeeklyCalendar === 'function') {
                 window.loadWeeklyCalendar();
@@ -267,7 +267,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             if (selectedViewTabInput) selectedViewTabInput.value = 'list';
-            
+
             // Đồng bộ trạng thái active của Bộ 3 Nút Tab Role và Pane chi tiết
             const activeRole = unifiedRoleFilter ? unifiedRoleFilter.value : 'Doctor';
             syncDetailedRoleTabButtons(activeRole);
@@ -278,7 +278,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (viewCalendarBtn && viewListBtn) {
         viewCalendarBtn.addEventListener('click', () => switchViewMode('calendar'));
         viewListBtn.addEventListener('click', () => switchViewMode('list'));
-        
+
         // Khởi tạo chạy view mặc định
         switchViewMode(currentViewMode);
     }
@@ -294,7 +294,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 opt.style.display = 'block';
                 return;
             }
-            
+
             if (role === 'all') {
                 opt.style.display = 'block';
             } else if (role === 'Doctor') {
@@ -409,7 +409,7 @@ document.addEventListener('DOMContentLoaded', function () {
             cur.setDate(cur.getDate() - 7);
             const dateStr = cur.toISOString().slice(0, 10);
             unifiedWeekPicker.value = dateStr;
-            
+
             // Đồng bộ sang calendar cũ và trigger
             const oldPicker = document.getElementById('calendarWeekPicker');
             if (oldPicker) {
@@ -423,7 +423,7 @@ document.addEventListener('DOMContentLoaded', function () {
         unifiedTodayBtn.addEventListener('click', function () {
             const dateStr = new Date().toISOString().slice(0, 10);
             unifiedWeekPicker.value = dateStr;
-            
+
             // Đồng bộ sang calendar cũ và trigger
             const oldPicker = document.getElementById('calendarWeekPicker');
             if (oldPicker) {
@@ -439,7 +439,7 @@ document.addEventListener('DOMContentLoaded', function () {
             cur.setDate(cur.getDate() + 7);
             const dateStr = cur.toISOString().slice(0, 10);
             unifiedWeekPicker.value = dateStr;
-            
+
             // Đồng bộ sang calendar cũ và trigger
             const oldPicker = document.getElementById('calendarWeekPicker');
             if (oldPicker) {
@@ -454,7 +454,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!unifiedWeekPicker.value) {
             unifiedWeekPicker.value = new Date().toISOString().slice(0, 10);
         }
-        
+
         unifiedWeekPicker.addEventListener('change', function () {
             const oldPicker = document.getElementById('calendarWeekPicker');
             if (oldPicker) {
@@ -470,11 +470,11 @@ document.addEventListener('DOMContentLoaded', function () {
             const role = unifiedRoleFilter.value;
             const searchVal = unifiedSearch.value;
             const roomVal = unifiedRoomFilter.value; // room_id hoặc dept_id
-            
+
             // Gán dữ liệu sang các hidden inputs tương ứng
             document.getElementById('hiddenDoctorName').value = searchVal;
             document.getElementById('hiddenStaffName').value = searchVal;
-            
+
             // Trạng thái
             document.getElementById('hiddenDoctorStatus').value = '';
             document.getElementById('hiddenReceptionistStatus').value = '';
@@ -493,16 +493,16 @@ document.addEventListener('DOMContentLoaded', function () {
             // Xử lý thời gian
             if (currentViewMode === 'calendar') {
                 e.preventDefault(); // Không reload trang nếu đang xem Calendar (vì Calendar load qua AJAX)
-                
+
                 // Đồng bộ sang bộ lọc Calendar cũ
                 const calRole = document.getElementById('calendarRoleFilter');
                 const calRoom = document.getElementById('calendarRoomFilter');
                 const calPicker = document.getElementById('calendarWeekPicker');
-                
+
                 if (calRole) calRole.value = role === 'Reception' ? 'Reception' : (role === 'Lab' ? 'Lab' : (role === 'Doctor' ? 'Doctor' : 'all'));
                 if (calRoom) calRoom.value = roomVal.startsWith('room_') ? roomVal.substring(5) : 'all';
                 if (calPicker) calPicker.value = unifiedWeekPicker.value;
-                
+
                 // Trigger gọi AJAX tải dữ liệu lịch tuần
                 document.getElementById('calFilterSubmitBtn')?.click();
             } else {
@@ -510,7 +510,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const dateVal = unifiedDatePicker.value;
                 document.getElementById('hiddenWorkDate').value = dateVal;
                 document.getElementById('hiddenStaffWorkDate').value = dateVal;
-                
+
                 // Nếu vai trò được chọn, truyền kèm tham số staffType để backend tối ưu
                 if (role === 'Reception') {
                     // Thêm hidden input staffType
@@ -549,7 +549,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!unifiedRoomFilter) return;
         const val = unifiedRoomFilter.value;
         const tables = document.querySelectorAll('.schedule-list-table');
-        
+
         tables.forEach(table => {
             const rows = table.querySelectorAll('tbody tr');
             rows.forEach(row => {
@@ -557,7 +557,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (row.querySelector('.schedule-empty-state') || row.cells.length <= 1) {
                     return;
                 }
-                
+
                 if (val === 'all') {
                     row.style.display = '';
                 } else if (val.startsWith('room_')) {
@@ -588,20 +588,20 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // 4.7 Lắng nghe sự kiện click nút Xem chi tiết ca trực
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         const btn = e.target.closest('.schedule-detail-action');
         if (!btn) return;
-        
+
         e.preventDefault();
         const row = btn.closest('tr');
         if (!row) return;
-        
+
         const doctorName = row.getAttribute('data-doctor-name') || (row.cells[0] ? row.cells[0].textContent.trim() : '-');
         const department = row.getAttribute('data-department') || (row.cells[1] ? row.cells[1].textContent.trim() : '-');
         const workDate = row.cells[2] ? row.cells[2].textContent.trim() : '-';
         const timeSlot = row.cells[3] ? row.cells[3].textContent.trim() : '-';
         const roomName = row.cells[4] ? row.cells[4].textContent.trim() : 'Chưa xếp';
-        
+
         const shiftObj = {
             staff: doctorName,
             role: department,
@@ -612,7 +612,7 @@ document.addEventListener('DOMContentLoaded', function () {
             timeSlot: timeSlot,
             status: 'Confirmed'
         };
-        
+
         const modalEl = document.getElementById('shiftDetailModal');
         if (modalEl) {
             const staffEl = document.getElementById('shiftDetailStaff');
@@ -620,13 +620,13 @@ document.addEventListener('DOMContentLoaded', function () {
             const roomEl = document.getElementById('shiftDetailRoom');
             const dateEl = document.getElementById('shiftDetailDate');
             const timeEl = document.getElementById('shiftDetailTime');
-            
+
             if (staffEl) staffEl.textContent = shiftObj.staff;
             if (roleEl) roleEl.textContent = shiftObj.role;
             if (roomEl) roomEl.textContent = shiftObj.room;
             if (dateEl) dateEl.textContent = shiftObj.date;
             if (timeEl) timeEl.textContent = shiftObj.timeSlot;
-            
+
             const modal = new bootstrap.Modal(modalEl);
             modal.show();
         }

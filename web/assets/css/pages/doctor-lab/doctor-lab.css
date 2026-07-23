@@ -1,3 +1,5 @@
+@import '../../components/forms.css';
+
 :root {
     --lab-bg: #f4fbf9;
     --lab-surface: #ffffff;

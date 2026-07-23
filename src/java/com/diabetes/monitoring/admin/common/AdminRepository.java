@@ -59,6 +59,7 @@ public class AdminRepository {
         ALLOWED_SCHEDULE_STATUS.add("Full");
         ALLOWED_SCHEDULE_STATUS.add("Cancelled");
         ALLOWED_SCHEDULE_STATUS.add("Expired");
+        ALLOWED_SCHEDULE_STATUS.add("Pending");
 
         ALLOWED_BOOKING_SOURCES.add("Online");
         ALLOWED_BOOKING_SOURCES.add("Receptionist");
@@ -2895,7 +2896,7 @@ public class AdminRepository {
                 + "   FROM Appointment ap "
                 + "   WHERE ap.schedule_id = ds.schedule_id "
                 + ") counts "
-                + "WHERE LOWER(ds.status) <> 'cancelled'";
+                + "WHERE LOWER(ds.status) NOT IN ('cancelled', 'pending')";
 
         try (Connection connection = DatabaseConnection.getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
             return statement.executeUpdate();

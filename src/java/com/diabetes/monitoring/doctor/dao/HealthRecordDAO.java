@@ -188,19 +188,26 @@ public class HealthRecordDAO {
 
     public List<HealthRecord> getGeneralExaminationRecords(int doctorId) {
         return getDoctorWorkflowRecords(doctorId,
-                "r.status = 'Accepted' AND NOT EXISTS ("
+                "(r.status IS NULL OR r.status != 'Completed') AND NOT EXISTS ("
                 + "SELECT 1 FROM Invoice_Detail id "
                 + "JOIN Invoice i ON i.invoice_id = id.invoice_id "
-                + "WHERE id.health_record_id = r.health_record_id "
-                + "AND id.lab_status IS NOT NULL AND i.status = 'Paid')");
+                + "LEFT JOIN Medical_record mr2 ON mr2.health_record_id = r.health_record_id "
+                + "WHERE (id.health_record_id = r.health_record_id "
+                + "OR (mr2.appointment_id IS NOT NULL AND id.appointment_id = mr2.appointment_id) "
+                + "OR (i.patient_id = r.patient_id)) "
+                + "AND (i.status = 'Paid' OR id.lab_status IN ('Requested', 'Processing', 'Completed')))");
     }
 
     public List<HealthRecord> getDetailedExaminationRecords(int doctorId) {
         return getDoctorWorkflowRecords(doctorId,
-                "r.status IN ('Accepted', 'AI_Processed') AND EXISTS ("
+                "(r.status IS NULL OR r.status != 'Completed') AND EXISTS ("
                 + "SELECT 1 FROM Invoice_Detail id "
-                + "WHERE id.health_record_id = r.health_record_id "
-                + "AND id.lab_status = 'Completed')");
+                + "JOIN Invoice i ON i.invoice_id = id.invoice_id "
+                + "LEFT JOIN Medical_record mr2 ON mr2.health_record_id = r.health_record_id "
+                + "WHERE (id.health_record_id = r.health_record_id "
+                + "OR (mr2.appointment_id IS NOT NULL AND id.appointment_id = mr2.appointment_id) "
+                + "OR (i.patient_id = r.patient_id)) "
+                + "AND (i.status = 'Paid' OR id.lab_status IN ('Requested', 'Processing', 'Completed')))");
     }
 
     private List<HealthRecord> getDoctorWorkflowRecords(
@@ -308,9 +315,7 @@ public class HealthRecordDAO {
     public boolean hasRequiredAIData(int recordId, int doctorId) {
         String sql = "SELECT COUNT(*) FROM Healthy_Record "
                 + "WHERE health_record_id = ? AND doctor_id = ? "
-                + "AND urea IS NOT NULL AND cr IS NOT NULL AND hba1c IS NOT NULL "
-                + "AND chol IS NOT NULL AND tg IS NOT NULL AND hdl IS NOT NULL "
-                + "AND ldl IS NOT NULL AND vldl IS NOT NULL AND bmi IS NOT NULL";
+                + "AND hba1c IS NOT NULL AND bmi IS NOT NULL AND urea IS NOT NULL";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, recordId);
@@ -400,12 +405,26 @@ public class HealthRecordDAO {
     }
 
     public boolean isRecordAssignedToDoctor(int healthRecordId, int doctorId) {
-        String sql = "SELECT COUNT(*) FROM Healthy_Record WHERE health_record_id = ? AND doctor_id = ?";
+        String sql = "SELECT COUNT(*) FROM Healthy_Record r "
+                + "LEFT JOIN Medical_record mr ON mr.health_record_id = r.health_record_id "
+                + "LEFT JOIN Appointment a ON a.appointment_id = mr.appointment_id "
+                + "LEFT JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
+                + "WHERE r.health_record_id = ? AND ("
+                + "r.doctor_id = ? "
+                + "OR mr.doctor_id = ? "
+                + "OR ds.doctor_id = ? "
+                + "OR EXISTS (SELECT 1 FROM Invoice_Detail id WHERE id.doctor_id = ? AND (id.health_record_id = r.health_record_id OR id.appointment_id = mr.appointment_id)) "
+                + "OR EXISTS (SELECT 1 FROM Medical_record mr2 WHERE mr2.patient_id = r.patient_id AND mr2.doctor_id = ?)"
+                + ")";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, healthRecordId);
             ps.setInt(2, doctorId);
+            ps.setInt(3, doctorId);
+            ps.setInt(4, doctorId);
+            ps.setInt(5, doctorId);
+            ps.setInt(6, doctorId);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() && rs.getInt(1) > 0;
             }
@@ -715,7 +734,7 @@ public class HealthRecordDAO {
                 + "(MONTH(p.date_of_birth) = MONTH(GETDATE()) AND DAY(p.date_of_birth) > DAY(GETDATE())) "
                 + "THEN 1 ELSE 0 END as calculated_age, "
                 + "r.urea, r.cr, r.hba1c, r.chol, r.tg, r.hdl, "
-                + "r.ldl AS ldl_value, r.vldl, r.bmi, "
+                + "r.ldl AS ldl_value, r.vldl, r.bmi, r.weight, r.height, "
                 + "ai.diabetes_probability, "
                 + "ai.pre_diabetes_probability, "
                 + "ai.normal_probability "
@@ -752,6 +771,8 @@ public class HealthRecordDAO {
 
                 hr.setPatientId(rs.getInt("patient_id"));
                 hr.setDoctorId(rs.getInt("doctor_id"));
+                hr.setWeight(rs.getDouble("weight"));
+                hr.setHeight(rs.getDouble("height"));
                 hr.setCreatedAt(rs.getTimestamp("created_at"));
                 hr.setProcessedAt(rs.getTimestamp("processed_at"));
 
@@ -1301,17 +1322,42 @@ public class HealthRecordDAO {
         return history;
     }
 
+    public List<Map<String, Object>> getActiveLabDoctors() {
+        List<Map<String, Object>> list = new ArrayList<>();
+        String sql = "SELECT lab_id, full_name, lab_name FROM Doctor_Lab ORDER BY full_name";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Map<String, Object> map = new LinkedHashMap<>();
+                map.put("labId", rs.getInt("lab_id"));
+                map.put("fullName", rs.getString("full_name"));
+                map.put("labName", rs.getString("lab_name"));
+                list.add(map);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
     public List<LaboratoryRequest> getLaboratoryRequests(int recordId, int doctorId) {
         List<LaboratoryRequest> requests = new ArrayList<>();
         String sql = "SELECT id.invoice_detail_id, id.invoice_id, id.health_record_id, "
                 + "i.patient_id, id.doctor_id, id.service_id, ms.service_name, id.price, "
                 + "id.request_note, id.lab_status, id.lab_result, i.status AS invoice_status, "
                 + "id.requested_at, id.completed_at, hr.urea, hr.cr, hr.hba1c, "
-                + "hr.chol, hr.tg, hr.hdl, hr.ldl, hr.vldl, hr.bmi, hr.weight, hr.height "
+                + "hr.chol, hr.tg, hr.hdl, hr.ldl, hr.vldl, hr.bmi, hr.weight, hr.height, "
+                + "id.lab_id, dl.full_name AS lab_doctor_name, "
+                + "COALESCE((SELECT TOP 1 r.room_name + ' - ' + r.room_id FROM Lab_Schedule ls "
+                + "JOIN Room r ON ls.room_id = r.room_id "
+                + "WHERE ls.lab_id = id.lab_id AND ls.work_date = CAST(GETDATE() AS date) "
+                + "AND LOWER(ls.status) = 'scheduled' ORDER BY ls.lab_sched_id DESC), dl.lab_name) AS lab_room_name "
                 + "FROM Invoice_Detail id "
                 + "JOIN Invoice i ON i.invoice_id = id.invoice_id "
                 + "JOIN Medical_Service ms ON ms.service_id = id.service_id "
                 + "JOIN Healthy_Record hr ON hr.health_record_id = id.health_record_id "
+                + "LEFT JOIN Doctor_Lab dl ON dl.lab_id = id.lab_id "
                 + "WHERE id.health_record_id = ? AND hr.doctor_id = ? "
                 + "AND id.lab_status IS NOT NULL "
                 + "ORDER BY id.requested_at DESC, id.invoice_detail_id DESC";
@@ -1337,6 +1383,10 @@ public class HealthRecordDAO {
                     item.setResult(rs.getString("lab_result"));
                     item.setRequestedAt(rs.getTimestamp("requested_at"));
                     item.setCompletedAt(rs.getTimestamp("completed_at"));
+                    int labIdVal = rs.getInt("lab_id");
+                    item.setLabId(rs.wasNull() ? null : labIdVal);
+                    item.setLabDoctorName(rs.getString("lab_doctor_name"));
+                    item.setLabName(rs.getString("lab_room_name"));
                     mapLaboratoryValues(rs, item);
                     requests.add(item);
                 }
@@ -1361,21 +1411,39 @@ public class HealthRecordDAO {
                 || stage == LaboratoryStage.COMPLETED;
     }
 
+    public boolean hasUnpaidLaboratoryRequest(int recordId) {
+        String sql = "SELECT COUNT(*) FROM Invoice_Detail id "
+                + "JOIN Invoice i ON i.invoice_id = id.invoice_id "
+                + "WHERE id.health_record_id = ? AND i.status <> 'Paid'";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, recordId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     public LaboratoryStage getLaboratoryStage(int recordId, int doctorId) {
         String sql = "SELECT "
                 + "COUNT(*) AS request_count, "
-                + "SUM(CASE WHEN i.status = 'Paid' THEN 1 ELSE 0 END) AS paid_count, "
-                + "SUM(CASE WHEN i.status = 'Paid' AND id.lab_status = 'Completed' "
-                + "THEN 1 ELSE 0 END) AS completed_count "
+                + "SUM(CASE WHEN i.status = 'Paid' OR id.lab_status IN ('Requested', 'Processing', 'Completed') THEN 1 ELSE 0 END) AS paid_count, "
+                + "SUM(CASE WHEN id.lab_status = 'Completed' THEN 1 ELSE 0 END) AS completed_count "
                 + "FROM Invoice_Detail id "
                 + "JOIN Invoice i ON i.invoice_id = id.invoice_id "
-                + "JOIN Healthy_Record hr ON hr.health_record_id = id.health_record_id "
-                + "WHERE id.health_record_id = ? AND hr.doctor_id = ? "
+                + "LEFT JOIN Medical_record mr ON mr.health_record_id = ? "
+                + "WHERE (id.health_record_id = ? OR (mr.appointment_id IS NOT NULL AND id.appointment_id = mr.appointment_id) OR i.patient_id = (SELECT patient_id FROM Healthy_Record WHERE health_record_id = ?)) "
                 + "AND id.lab_status IS NOT NULL";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, recordId);
-            ps.setInt(2, doctorId);
+            ps.setInt(2, recordId);
+            ps.setInt(3, recordId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (!rs.next() || rs.getInt("request_count") == 0) {
                     return LaboratoryStage.NONE;
@@ -1402,11 +1470,17 @@ public class HealthRecordDAO {
                 + "id.request_note, id.lab_status, id.lab_result, "
                 + "i.status AS invoice_status, id.requested_at, id.completed_at, "
                 + "hr.urea, hr.cr, hr.hba1c, "
-                + "hr.chol, hr.tg, hr.hdl, hr.ldl, hr.vldl, hr.bmi, hr.weight, hr.height "
+                + "hr.chol, hr.tg, hr.hdl, hr.ldl, hr.vldl, hr.bmi, hr.weight, hr.height, "
+                + "id.lab_id, dl.full_name AS lab_doctor_name, "
+                + "COALESCE((SELECT TOP 1 r.room_name + ' - ' + r.room_id FROM Lab_Schedule ls "
+                + "JOIN Room r ON ls.room_id = r.room_id "
+                + "WHERE ls.lab_id = id.lab_id AND ls.work_date = CAST(GETDATE() AS date) "
+                + "AND LOWER(ls.status) = 'scheduled' ORDER BY ls.lab_sched_id DESC), dl.lab_name) AS lab_room_name "
                 + "FROM Invoice_Detail id "
                 + "JOIN Invoice i ON i.invoice_id = id.invoice_id "
                 + "JOIN Medical_Service ms ON ms.service_id = id.service_id "
                 + "JOIN Healthy_Record hr ON hr.health_record_id = id.health_record_id "
+                + "LEFT JOIN Doctor_Lab dl ON dl.lab_id = id.lab_id "
                 + "WHERE id.doctor_id = ? AND id.lab_status IS NOT NULL ");
         boolean hasStatus = status != null && !status.trim().isEmpty()
                 && !"All".equalsIgnoreCase(status);
@@ -1440,6 +1514,10 @@ public class HealthRecordDAO {
                     item.setResult(rs.getString("lab_result"));
                     item.setRequestedAt(rs.getTimestamp("requested_at"));
                     item.setCompletedAt(rs.getTimestamp("completed_at"));
+                    int labIdVal = rs.getInt("lab_id");
+                    item.setLabId(rs.wasNull() ? null : labIdVal);
+                    item.setLabDoctorName(rs.getString("lab_doctor_name"));
+                    item.setLabName(rs.getString("lab_room_name"));
                     mapLaboratoryValues(rs, item);
                     requests.add(item);
                 }
@@ -1458,7 +1536,7 @@ public class HealthRecordDAO {
         item.setChol(nullableDouble(rs, "chol"));
         item.setTg(nullableDouble(rs, "tg"));
         item.setHdl(nullableDouble(rs, "hdl"));
-        item.setIdl(nullableDouble(rs, "ldl"));
+        item.setLdl(nullableDouble(rs, "ldl"));
         item.setVldl(nullableDouble(rs, "vldl"));
         item.setBmi(nullableDouble(rs, "bmi"));
         item.setWeight(nullableDouble(rs, "weight"));
@@ -1493,11 +1571,42 @@ public class HealthRecordDAO {
         return services;
     }
 
+    public List<Map<String, Object>> getScheduledLabDoctors() {
+        List<Map<String, Object>> list = new ArrayList<>();
+        String sql = "SELECT DISTINCT dl.lab_id, dl.full_name, r.room_id, r.room_name "
+                + "FROM Lab_Schedule ls "
+                + "JOIN Doctor_Lab dl ON dl.lab_id = ls.lab_id "
+                + "JOIN Room r ON ls.room_id = r.room_id "
+                + "WHERE ls.work_date = CAST(GETDATE() AS date) "
+                + "AND LOWER(ls.status) = 'scheduled' "
+                + "ORDER BY dl.full_name";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Map<String, Object> map = new LinkedHashMap<>();
+                map.put("labId", rs.getInt("lab_id"));
+                map.put("fullName", rs.getString("full_name"));
+                String roomDetail = rs.getString("room_name") + " - " + rs.getString("room_id");
+                map.put("labName", roomDetail);
+                list.add(map);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        // Fallback: if no schedules today, return all active lab doctors
+        if (list.isEmpty()) {
+            return getActiveLabDoctors();
+        }
+        return list;
+    }
+
     public boolean createLaboratoryRequest(
             int recordId, int doctorId, int[] selectedServiceIds,
-            String requestNote) throws SQLException {
+            String requestNote, int labId) throws SQLException {
         if (selectedServiceIds == null || selectedServiceIds.length == 0) {
-            throw new SQLException("Vui lòng chọn ít nhất một loại xét nghiệm");
+            throw new SQLException("Vui l\u00f2ng ch\u1ecdn \u00edt nh\u1ea5t m\u1ed9t lo\u1ea1i x\u00e9t nghi\u1ec7m");
         }
 
         Set<Integer> serviceIds = new LinkedHashSet<>();
@@ -1507,7 +1616,7 @@ public class HealthRecordDAO {
             }
         }
         if (serviceIds.isEmpty()) {
-            throw new SQLException("Danh sách xét nghiệm không hợp lệ");
+            throw new SQLException("Danh s\u00e1ch x\u00e9t nghi\u1ec7m kh\u00f4ng h\u1ee3p l\u1ec7");
         }
 
         String recordSql = "SELECT hr.patient_id, mr.appointment_id "
@@ -1530,8 +1639,8 @@ public class HealthRecordDAO {
                 + "VALUES (?, NULL, ?, 0, ?, NULL, 'Pending', GETDATE())";
         String detailSql = "INSERT INTO Invoice_Detail "
                 + "(invoice_id, service_id, appointment_id, quantity, price, "
-                + "health_record_id, doctor_id, request_note, lab_status, requested_at) "
-                + "VALUES (?, ?, ?, 1, ?, ?, ?, ?, 'Waiting_Payment', GETDATE())";
+                + "health_record_id, doctor_id, request_note, lab_status, requested_at, lab_id) "
+                + "VALUES (?, ?, ?, 1, ?, ?, ?, ?, 'Waiting_Payment', GETDATE(), ?)";
         String ensureMedicalSql = "IF NOT EXISTS (SELECT 1 FROM Medical_record WHERE health_record_id = ?) "
                 + "INSERT INTO Medical_record (patient_id, doctor_id, health_record_id, "
                 + "result_visibility, processed_at) VALUES (?, ?, ?, 0, NULL)";
@@ -1554,7 +1663,7 @@ public class HealthRecordDAO {
                     ps.setInt(2, doctorId);
                     try (ResultSet rs = ps.executeQuery()) {
                         if (!rs.next()) {
-                            throw new SQLException("Hồ sơ không thuộc bác sĩ hoặc chưa ở trạng thái cho phép");
+                            throw new SQLException("H\u1ed3 s\u01a1 kh\u00f4ng thu\u1ed9c b\u00e1c s\u0129 ho\u1eb7c ch\u01b0a \u1edf tr\u1ea1ng th\u00e1i cho ph\u00e9p");
                         }
                         patientId = rs.getInt("patient_id");
                         int linkedAppointmentId = rs.getInt("appointment_id");
@@ -1577,7 +1686,7 @@ public class HealthRecordDAO {
                 }
                 if (prices.size() != serviceIds.size()) {
                     throw new SQLException(
-                            "Có loại xét nghiệm không hợp lệ hoặc đã ngừng áp dụng");
+                            "C\u00f3 lo\u1ea1i x\u00e9t nghi\u1ec7m kh\u00f4ng h\u1ee3p l\u1ec7 ho\u1eb7c \u0111\u00e3 ng\u1eebng \u00e1p d\u1ee5ng");
                 }
 
                 try (PreparedStatement ps = conn.prepareStatement(duplicateSql)) {
@@ -1587,7 +1696,7 @@ public class HealthRecordDAO {
                         try (ResultSet rs = ps.executeQuery()) {
                             if (rs.next() && rs.getInt(1) > 0) {
                                 throw new SQLException(
-                                        "Xét nghiệm đã được chỉ định trước đó");
+                                        "X\u00e9t nghi\u1ec7m \u0111\u00e3 \u0111\u01b0\u1ee3c ch\u1ec9 \u0111\u1ecbnh tr\u01b0\u1edbc \u0111\u00f3");
                             }
                         }
                     }
@@ -1605,11 +1714,11 @@ public class HealthRecordDAO {
                     ps.setBigDecimal(2, totalPrice);
                     ps.setBigDecimal(3, totalPrice);
                     if (ps.executeUpdate() != 1) {
-                        throw new SQLException("Không thể tạo hóa đơn xét nghiệm");
+                        throw new SQLException("Kh\u00f4ng th\u1ec3 t\u1ea1o h\u00f3a \u0111\u01a1n x\u00e9t nghi\u1ec7m");
                     }
                     try (ResultSet rs = ps.getGeneratedKeys()) {
                         if (!rs.next()) {
-                            throw new SQLException("Không lấy được mã hóa đơn xét nghiệm");
+                            throw new SQLException("Kh\u00f4ng l\u1ea5y \u0111\u01b0\u1ee3c m\u00e3 h\u00f3a \u0111\u01a1n x\u00e9t nghi\u1ec7m");
                         }
                         invoiceId = rs.getInt(1);
                     }
@@ -1617,8 +1726,10 @@ public class HealthRecordDAO {
 
                 try (PreparedStatement ps = conn.prepareStatement(detailSql)) {
                     for (Map.Entry<Integer, BigDecimal> entry : prices.entrySet()) {
+                        int serviceId = entry.getKey();
+
                         ps.setInt(1, invoiceId);
-                        ps.setInt(2, entry.getKey());
+                        ps.setInt(2, serviceId);
                         if (appointmentId == null) {
                             ps.setNull(3, java.sql.Types.INTEGER);
                         } else {
@@ -1628,11 +1739,16 @@ public class HealthRecordDAO {
                         ps.setInt(5, recordId);
                         ps.setInt(6, doctorId);
                         ps.setString(7, requestNote);
+                        if (labId <= 0) {
+                            ps.setNull(8, java.sql.Types.INTEGER);
+                        } else {
+                            ps.setInt(8, labId);
+                        }
                         ps.addBatch();
                     }
                     int[] insertedRows = ps.executeBatch();
                     if (insertedRows.length != prices.size()) {
-                        throw new SQLException("Không thể tạo chi tiết chỉ định xét nghiệm");
+                        throw new SQLException("Kh\u00f4ng th\u1ec3 t\u1ea1o chi ti\u1ebft ch\u1ec9 \u0111\u1ecbnh x\u00e9t nghi\u1ec7m");
                     }
                 }
 
@@ -1647,6 +1763,15 @@ public class HealthRecordDAO {
                     ps.setInt(1, recordId);
                     ps.executeUpdate();
                 }
+                try {
+                    String updateHealthyRecordSql = "UPDATE Healthy_Record SET invoice_id = ? WHERE health_record_id = ?";
+                    try (PreparedStatement ps = conn.prepareStatement(updateHealthyRecordSql)) {
+                        ps.setInt(1, invoiceId);
+                        ps.setInt(2, recordId);
+                        ps.executeUpdate();
+                    }
+                } catch (SQLException ignored) {}
+                new com.diabetes.monitoring.notification.NotificationService().notifyInvoiceCreated(conn, invoiceId);
                 conn.commit();
                 return true;
             } catch (SQLException e) {
@@ -1771,6 +1896,136 @@ public class HealthRecordDAO {
             } finally {
                 conn.setAutoCommit(true);
             }
+        }
+    }
+
+    public List<Map<String, Object>> getDoctorSchedulesByAccountId(int accountId) {
+        List<Map<String, Object>> list = new ArrayList<>();
+        String sql = "SELECT ds.schedule_id, ds.work_date, ds.time_slot, ds.max_patients, ds.status, r.room_id, r.room_name, "
+                + "(SELECT COUNT(*) FROM Appointment a WHERE a.schedule_id = ds.schedule_id AND a.status <> 'Cancelled') AS booked_patients "
+                + "FROM Doctor_Schedule ds "
+                + "JOIN Doctor d ON d.doctor_id = ds.doctor_id "
+                + "LEFT JOIN Room r ON r.room_id = ds.room_id "
+                + "WHERE d.account_id = ? "
+                + "ORDER BY ds.work_date DESC, ds.time_slot ASC";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, accountId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> map = new LinkedHashMap<>();
+                    map.put("scheduleId", rs.getInt("schedule_id"));
+                    map.put("workDate", rs.getDate("work_date"));
+                    map.put("timeSlot", rs.getString("time_slot"));
+                    map.put("maxPatients", rs.getInt("max_patients"));
+                    map.put("status", rs.getString("status"));
+                    map.put("roomId", rs.getString("room_id"));
+                    map.put("roomName", rs.getString("room_name"));
+                    map.put("bookedPatients", rs.getInt("booked_patients"));
+                    list.add(map);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public List<Map<String, Object>> getLabSchedulesByAccountId(int accountId) {
+        List<Map<String, Object>> list = new ArrayList<>();
+        String sql = "SELECT ls.lab_sched_id, ls.work_date, ls.time_slot, ls.status, r.room_id, r.room_name "
+                + "FROM Lab_Schedule ls "
+                + "JOIN Doctor_Lab dl ON dl.lab_id = ls.lab_id "
+                + "LEFT JOIN Room r ON r.room_id = ls.room_id "
+                + "WHERE dl.account_id = ? "
+                + "ORDER BY ls.work_date DESC, ls.time_slot ASC";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, accountId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> map = new LinkedHashMap<>();
+                    map.put("labSchedId", rs.getInt("lab_sched_id"));
+                    map.put("workDate", rs.getDate("work_date"));
+                    map.put("timeSlot", rs.getString("time_slot"));
+                    map.put("status", rs.getString("status"));
+                    map.put("roomId", rs.getString("room_id"));
+                    map.put("roomName", rs.getString("room_name"));
+                    list.add(map);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public List<Map<String, String>> getActiveRooms() {
+        List<Map<String, String>> list = new ArrayList<>();
+        String sql = "SELECT room_id, room_name, location FROM Room WHERE LOWER(status) = 'active' ORDER BY room_name";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Map<String, String> map = new LinkedHashMap<>();
+                map.put("roomId", rs.getString("room_id"));
+                map.put("roomName", rs.getString("room_name"));
+                map.put("location", rs.getString("location"));
+                list.add(map);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public boolean proposeDoctorSchedule(int doctorId, java.sql.Date workDate, String timeSlot, int maxPatients, String roomId) throws SQLException {
+        String sql = "INSERT INTO Doctor_Schedule (doctor_id, work_date, time_slot, max_patients, status, room_id) VALUES (?, ?, ?, ?, 'Pending', ?)";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, doctorId);
+            ps.setDate(2, workDate);
+            ps.setString(3, timeSlot);
+            ps.setInt(4, maxPatients);
+            if (roomId != null && !roomId.trim().isEmpty()) {
+                ps.setString(5, roomId.trim());
+            } else {
+                ps.setNull(5, java.sql.Types.VARCHAR);
+            }
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    public boolean isScheduleOverlapping(int doctorId, java.sql.Date workDate, String timeSlot) {
+        String sql = "SELECT COUNT(*) FROM Doctor_Schedule WHERE doctor_id = ? AND work_date = ? AND time_slot = ? AND status <> 'Cancelled'";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, doctorId);
+            ps.setDate(2, workDate);
+            ps.setString(3, timeSlot);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean updateVitals(int recordId, int doctorId, double weight, double height, double bmi) throws SQLException {
+        String sql = "UPDATE Healthy_Record SET weight = ?, height = ?, bmi = ? "
+                + "WHERE health_record_id = ? AND doctor_id = ? "
+                + "AND status IN ('Accepted', 'AI_Processed', 'Editing')";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setBigDecimal(1, BigDecimal.valueOf(weight));
+            ps.setBigDecimal(2, BigDecimal.valueOf(height));
+            ps.setBigDecimal(3, BigDecimal.valueOf(bmi));
+            ps.setInt(4, recordId);
+            ps.setInt(5, doctorId);
+            return ps.executeUpdate() == 1;
         }
     }
 }

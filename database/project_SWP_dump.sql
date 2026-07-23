@@ -1340,7 +1340,40 @@ ALTER TABLE [dbo].[Medical_Service]  WITH CHECK ADD  CONSTRAINT [CK_MedicalServi
 GO
 ALTER TABLE [dbo].[Medical_Service] CHECK CONSTRAINT [CK_MedicalService_Type]
 GO
+
+-- ============================================================================
+-- BẢNG RECORD_SHARING (CHIA SẺ HỒ SƠ Y TẾ GIA ĐÌNH 2 CHIỀU)
+-- ============================================================================
+IF OBJECT_ID('dbo.Record_Sharing', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.Record_Sharing (
+        SharingID INT IDENTITY(1,1) NOT NULL,
+        Owner_AccountID INT NOT NULL,
+        Viewer_AccountID INT NOT NULL,
+        Initiator_AccountID INT NOT NULL,
+        CanViewAppointments BIT NOT NULL CONSTRAINT DF_RecordSharing_CanViewAppointments DEFAULT (0),
+        CanViewInvoices BIT NOT NULL CONSTRAINT DF_RecordSharing_CanViewInvoices DEFAULT (0),
+        CanViewRecords BIT NOT NULL CONSTRAINT DF_RecordSharing_CanViewRecords DEFAULT (0),
+        Status VARCHAR(20) NOT NULL CONSTRAINT DF_RecordSharing_Status DEFAULT ('PENDING'),
+        CreatedAt DATETIME NOT NULL CONSTRAINT DF_RecordSharing_CreatedAt DEFAULT (GETDATE()),
+        UpdatedAt DATETIME NOT NULL CONSTRAINT DF_RecordSharing_UpdatedAt DEFAULT (GETDATE()),
+
+        CONSTRAINT PK_RecordSharing PRIMARY KEY CLUSTERED (SharingID ASC),
+        CONSTRAINT FK_RecordSharing_Owner FOREIGN KEY (Owner_AccountID) REFERENCES dbo.Account (account_id) ON DELETE CASCADE,
+        CONSTRAINT FK_RecordSharing_Viewer FOREIGN KEY (Viewer_AccountID) REFERENCES dbo.Account (account_id),
+        CONSTRAINT FK_RecordSharing_Initiator FOREIGN KEY (Initiator_AccountID) REFERENCES dbo.Account (account_id),
+        CONSTRAINT CHK_RecordSharing_NoSelfSharing CHECK (Owner_AccountID <> Viewer_AccountID),
+        CONSTRAINT CHK_RecordSharing_Status CHECK (Status IN ('PENDING', 'ACCEPTED', 'REJECTED')),
+        CONSTRAINT UQ_RecordSharing_OwnerViewer UNIQUE (Owner_AccountID, Viewer_AccountID)
+    );
+
+    CREATE NONCLUSTERED INDEX IX_RecordSharing_Viewer ON dbo.Record_Sharing (Viewer_AccountID, Status);
+    CREATE NONCLUSTERED INDEX IX_RecordSharing_Owner ON dbo.Record_Sharing (Owner_AccountID, Status);
+END;
+GO
+
 USE [master]
 GO
 ALTER DATABASE [Project] SET  READ_WRITE 
 GO
+

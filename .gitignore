@@ -1,0 +1,10 @@
+/dist/
+
+# Build output - không commit compiled files
+/build/
+
+# Java compiled classes
+*.class
+*.war
+.DS_Store
+Thumbs.db

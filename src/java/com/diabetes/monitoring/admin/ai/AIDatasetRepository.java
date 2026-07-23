@@ -161,6 +161,8 @@ public class AIDatasetRepository {
                 sql.append(" AND ad.decision_status = ?");
                 params.add(statusFilter.trim());
             }
+        } else {
+            sql.append(" AND (ad.decision_status IS NULL OR ad.decision_status NOT IN ('Approved', 'Exported', 'Trained'))");
         }
         if (qualityFilter != null && !qualityFilter.trim().isEmpty() && !"all".equalsIgnoreCase(qualityFilter)) {
             if ("valid".equalsIgnoreCase(qualityFilter)) {
@@ -169,6 +171,25 @@ public class AIDatasetRepository {
                 sql.append(" AND (p.date_of_birth IS NULL OR hr.bmi IS NULL OR hr.bmi <= 0 OR hr.hba1c IS NULL OR hr.hba1c <= 0)");
             }
         }
+    }
+
+    /**
+     * Chuyển trạng thái các hồ sơ bệnh án đã được duyệt/xuất dữ liệu sang 'Trained' 
+     * sau khi hoàn tất đợt huấn luyện AI, đưa số lượng bệnh án chờ train về 0.
+     *
+     * @param trainingId ID đợt huấn luyện
+     * @return true nếu cập nhật thành công
+     */
+    public boolean markApprovedRecordsAsTrained(String trainingId) {
+        String sql = "UPDATE AI_Dataset SET decision_status = 'Trained', decision_reason = ? WHERE decision_status IN ('Approved', 'Exported')";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, "Đã được sử dụng trong đợt huấn luyện AI: " + trainingId);
+            return ps.executeUpdate() >= 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     public Map<String, Object> getDatasetRecordDetail(int recordId) {

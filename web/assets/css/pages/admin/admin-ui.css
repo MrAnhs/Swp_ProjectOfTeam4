@@ -1,3 +1,5 @@
+@import '../../components/forms.css';
+
 /* Shared Admin UI layer for S-COMS
    Keeps typography, spacing and dashboard surfaces consistent across admin JSPs. */
 :root {

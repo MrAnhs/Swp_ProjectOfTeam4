@@ -100,6 +100,12 @@ public class PatientPageServlet extends HttpServlet {
         if ("/patient/profile".equals(servletPath)) {
             return "profile.jsp";
         }
+        if ("/patient/notifications".equals(servletPath)) {
+            return "notifications.jsp";
+        }
+        if ("/patient/family-sharing".equals(servletPath)) {
+            return "family-sharing.jsp";
+        }
         return null;
     }
 

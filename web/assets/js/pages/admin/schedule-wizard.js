@@ -115,11 +115,11 @@ function buildCustomShiftTemplate() {
     if (staffType === 'Doctor') {
         const checkedDepts = Array.from(document.querySelectorAll('.ai-dept-cb:checked')).map(cb => cb.value);
         if (checkedDepts.length === 0) return [];
-        
+
         const staffPerRoom = getDoctorsPerShift();
         const doctorRooms = getDoctorActiveRooms();
         const totalSlotsPerShift = doctorRooms.length * staffPerRoom;
-        
+
         checkedShifts.forEach(shift => {
             for (let i = 0; i < totalSlotsPerShift; i++) {
                 const dept = checkedDepts[i % checkedDepts.length];
@@ -217,7 +217,7 @@ function updateAiMaxSchedules() {
     const checkedShifts = Array.from(document.querySelectorAll('input[name="aiSelectedShifts"]:checked')).map(cb => cb.value);
     const actualShiftsPerDay = checkedShifts.length;
     const staffPerShift = getDoctorsPerShift();
-    
+
     let total = 0;
     let desc = '';
 
@@ -226,7 +226,7 @@ function updateAiMaxSchedules() {
         const doctorRooms = getDoctorActiveRooms();
         const roomsCount = doctorRooms.length;
         const totalDoctorsPerShift = roomsCount * staffPerShift;
-        
+
         let specialtyDetailHtml = `<ul class="ps-3 mb-0 text-muted" style="font-size:0.78rem; list-style-type:circle;">
             <li>Tổng phòng khám tổng quát đang hoạt động: <strong>${roomsCount} phòng</strong></li>
             <li>Sức chứa phân bổ: <strong>${totalDoctorsPerShift} bác sĩ/ca</strong> (${roomsCount} phòng x ${staffPerShift} bác sĩ/phòng)</li>
@@ -291,17 +291,17 @@ function initUniversalModal(staffType) {
     if (doctorsPerShiftSelect) {
         doctorsPerShiftSelect.innerHTML = '';
         if (staffType === 'Doctor') {
-            doctorsPerShiftSelect.innerHTML = 
+            doctorsPerShiftSelect.innerHTML =
                 '<option value="1" selected>1 bác sĩ/phòng</option>' +
                 '<option value="2">2 bác sĩ/phòng</option>' +
                 '<option value="3">3 bác sĩ/phòng</option>';
         } else if (staffType === 'Receptionist') {
-            doctorsPerShiftSelect.innerHTML = 
+            doctorsPerShiftSelect.innerHTML =
                 '<option value="1" selected>1 lễ tân/ca</option>' +
                 '<option value="2">2 lễ tân/ca</option>' +
                 '<option value="3">3 lễ tân/ca</option>';
         } else if (staffType === 'doctor_lab') {
-            doctorsPerShiftSelect.innerHTML = 
+            doctorsPerShiftSelect.innerHTML =
                 '<option value="1">1 KTV/ca</option>' +
                 '<option value="2" selected>2 KTV/ca</option>' +
                 '<option value="3">3 KTV/ca</option>';
@@ -318,7 +318,7 @@ function initUniversalModal(staffType) {
 
         if (deptSection) deptSection.classList.remove('d-none');
         if (labRoomSection) labRoomSection.classList.add('d-none');
-        
+
         if (runBtn) {
             runBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles me-1"></i>Lập lịch thông minh';
             runBtn.className = 'btn btn-purple text-white bg-purple border-purple';
@@ -483,7 +483,7 @@ function buildScheduleRow(schedule) {
 
         + '<td>' + escapeHtmlForSchedule(schedule.timeSlot) + '</td>'
 
-        + '<td><span class="badge bg-light text-dark border"><i class="fa-solid fa-hospital-user me-1 text-primary"></i>' 
+        + '<td><span class="badge bg-light text-dark border"><i class="fa-solid fa-hospital-user me-1 text-primary"></i>'
         + escapeHtmlForSchedule(schedule.room || schedule.roomName || schedule.roomId || 'Chưa xếp') + '</span></td>'
 
         + '<td><div style="background-color: #f0f8f4; padding: 6px 10px; border-radius: 4px; font-weight: 500; text-align: center;">'
@@ -555,7 +555,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.ai-dept-cb, .doctor-ai-shift-cb, input[name="selectedWeekdays"], .lab-room-cb').forEach(cb => {
         cb.addEventListener('change', updateTemplatePreview);
     });
-    
+
     const doctorsPerShiftSelect = document.getElementById('aiDoctorsPerShift');
     if (doctorsPerShiftSelect) {
         doctorsPerShiftSelect.addEventListener('change', updateTemplatePreview);
@@ -664,7 +664,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (container) container.classList.remove('d-none');
             if (submitBtn) submitBtn.style.display = 'inline-block';
             if (runModelBtn) runModelBtn.style.display = 'none';
-            
+
             const modalBody = document.querySelector('#aiScheduleModal .modal-body');
             if (modalBody) {
                 setTimeout(() => {
@@ -693,7 +693,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (alertBox) alertBox.style.display = 'none';
 
         updateTemplatePreview();
-        
+
         const staffType = document.getElementById('aiStaffType').value;
         const doctorsPerShiftSelect = document.getElementById('aiDoctorsPerShift');
         const doctorsPerShiftHidden = document.getElementById('aiDoctorsPerShiftHidden');
@@ -707,7 +707,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const formData = new FormData(form);
         const params = new URLSearchParams();
-        
+
         params.set('action', 'ai-staff-schedule');
         formData.forEach((value, key) => {
             if (key === 'roomIds') {
@@ -1160,14 +1160,14 @@ document.addEventListener('DOMContentLoaded', function () {
         modal.show();
     }
 
-    window.openShiftDetailModalFromMore = function(index) {
+    window.openShiftDetailModalFromMore = function (index) {
         if (window.currentCellMoreList && window.currentCellMoreList[index]) {
             openShiftDetailModal(window.currentCellMoreList[index]);
         }
     };
 
     // Mở Modal Tháo gỡ xung đột ca trực 1-Click
-    window.openResolveConflictModal = function() {
+    window.openResolveConflictModal = function () {
         const modalEl = document.getElementById('resolveConflictModal');
         const container = document.getElementById('resolveConflictList');
         if (!modalEl || !container) return;
@@ -1197,7 +1197,7 @@ document.addEventListener('DOMContentLoaded', function () {
         modal.show();
     };
 
-    window.resolveSingleConflict = async function(id, staffType, actionType) {
+    window.resolveSingleConflict = async function (id, staffType, actionType) {
         try {
             const formData = new URLSearchParams();
             formData.append('action', 'resolveScheduleConflict');
@@ -1273,7 +1273,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (unifiedRoomFilter) {
         unifiedRoomFilter.addEventListener('change', loadWeeklyCalendar);
     }
-    
+
     // Tự động nạp Weekly Calendar ban đầu
     loadWeeklyCalendar();
 });

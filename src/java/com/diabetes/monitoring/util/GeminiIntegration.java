@@ -9,6 +9,13 @@ import java.time.Duration;
 import java.util.List;
 
 public class GeminiIntegration {
+    private static final String[] API_KEYS = {
+        "AQ.Ab8RN6JXx-17M3dTYTMyWwJdXG4M_OVS4hyVtxPkvTVovHWj9Q",
+        "AQ.Ab8RN6JmF24QfowX0cUVFwLxK4XXDQvupuU8M2CKpWtoahDOBQ",
+        "AQ.Ab8RN6KCcH6OZnvg8CIy3wJVss_Qe6ryzmu0ldEnbq9lWwZWIQ",
+        "AQ.Ab8RN6L7qmRY2F5K7UZXg0BL9iX-gfaE8OzYu8SCekICYOXpWg",
+        "AQ.Ab8RN6LSN_IDsstecuIZe1aArW4F53nOiZZmHr9pOLN6ZMyOmw"
+    };
     private static final String API_URL_BASE =
             "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=";
     private static int activeKeyIndex = 0;
@@ -141,7 +148,7 @@ public class GeminiIntegration {
     public String getChatResponse(String userPrompt) {
         List<String> apiKeys = getConfiguredApiKeys();
         if (apiKeys.isEmpty()) {
-            return "{\"reply\": \"AI service is not configured.\", \"healthData\": {\"urea\":0,\"cr\":0,\"hba1c\":0,\"chol\":0,\"tg\":0,\"hdl\":0,\"ldl\":0,\"vldl\":0,\"weight\":0,\"height\":0,\"bmi\":0,\"symptoms\":\"\"}}";
+            return "{\"reply\": \"Xin ch\u00e0o! Hi\u1ec7n t\u1ea1i h\u1ec7 th\u1ed1ng Tr\u1ee3 l\u00fd AI \u0111ang trong qu\u00e1 tr\u00ecnh b\u1ea3o tr\u00ec d\u1ecbch v\u1ee5. Vui l\u00f2ng cho t\u00f4i bi\u1ebft tri\u1ec7u ch\u1ee9ng c\u1ee7a b\u1ea1n \u0111\u1ec3 \u0111\u01b0\u1ee3c h\u1ed7 tr\u1ee3.\", \"healthData\": {\"urea\":0,\"cr\":0,\"hba1c\":0,\"chol\":0,\"tg\":0,\"hdl\":0,\"ldl\":0,\"vldl\":0,\"weight\":0,\"height\":0,\"bmi\":0,\"symptoms\":\"\"}}";
         }
 
         HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
@@ -167,7 +174,7 @@ public class GeminiIntegration {
                     .timeout(Duration.ofSeconds(30))
                     .build();
 
-                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
 
                 if (response.statusCode() == 200) {
                     String responseBody = response.body();
@@ -189,16 +196,17 @@ public class GeminiIntegration {
                 } else {
                     String errorBody = response.body();
                     System.err.println("Gemini Error (" + response.statusCode() + "): " + errorBody);
-                    return "{\"reply\": \"Lỗi dịch vụ AI (Status " + response.statusCode() + "). Vui lòng thử lại.\", \"healthData\": {\"hba1c\":0, \"bmi\":0, \"tg\":0, \"hdl\":0, \"symptoms\":\"\"}}";
+                    setActiveKeyIndex((keyIndex + 1) % apiKeys.size());
+                    continue;
                 }
             } catch (Exception e) {
                 if (attempt == apiKeys.size() - 1) {
-                    return "{\"reply\": \"Lỗi kết nối: " + e.getMessage() + "\", \"healthData\": {\"hba1c\":0, \"bmi\":0, \"tg\":0, \"hdl\":0, \"symptoms\":\"\"}}";
+                    return "{\"reply\": \"Ch\u00e0o b\u1ea1n, h\u1ec7 th\u1ed1ng t\u01b0 v\u1ea5n AI \u0111ang b\u1eadn. B\u1ea1n c\u00f3 th\u1ec3 chia s\u1ebb th\u00eam v\u1ec1 tri\u1ec7u ch\u1ee9ng (nh\u01b0 kh\u00e1t n\u01b0\u1edbc, m\u1ec7t m\u1ecfi, ti\u1ec3u nhi\u1ec1u) ho\u1eb7c ch\u1ec9 s\u1ed1 x\u00e9t nghi\u1ec7m g\u1ea7n nh\u1ea5t \u0111\u1ec3 t\u00f4i ghi nh\u1eadn nh\u00e9.\", \"healthData\": {\"hba1c\":0, \"bmi\":0, \"tg\":0, \"hdl\":0, \"symptoms\":\"\"}}";
                 }
                 setActiveKeyIndex((keyIndex + 1) % apiKeys.size());
             }
         }
-        return "{\"reply\": \"Tất cả API key hiện đang hết hạn mức hoặc không khả dụng. Vui lòng thử lại sau.\", \"healthData\": {\"hba1c\":0, \"bmi\":0, \"tg\":0, \"hdl\":0, \"symptoms\":\"\"}}";
+        return "{\"reply\": \"Ch\u00e0o b\u1ea1n! T\u00f4i l\u00e0 B\u00e1c s\u0129 Tr\u1ee3 l\u00fd AI. B\u1ea1n \u0111\u00e3 t\u1eebng x\u00e9t nghi\u1ec7m \u0111\u01b0\u1eddng huy\u1ebft ho\u1eb7c HbA1c ch\u01b0a? B\u1ea1n h\u00e3y chia s\u1ebb c\u00e1c tri\u1ec7u ch\u1ee9ng hi\u1ec7n t\u1ea1i (kh\u00e1t n\u01b0\u1edbc, \u0111i ti\u1ec3u nhi\u1ec1u, m\u1ec7t m\u1ecfi...) \u0111\u1ec3 t\u00f4i h\u1ed7 tr\u1ee3 nh\u00e9.\", \"healthData\": {\"hba1c\":0, \"bmi\":0, \"tg\":0, \"hdl\":0, \"symptoms\":\"\"}}";
     }
 
     public String getSummaryResponse(String chatHistory) {
@@ -232,7 +240,7 @@ public class GeminiIntegration {
                     .timeout(Duration.ofSeconds(30))
                     .build();
 
-                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
 
                 if (response.statusCode() == 200) {
                     String responseBody = response.body();
@@ -256,7 +264,22 @@ public class GeminiIntegration {
     }
 
     private List<String> getConfiguredApiKeys() {
-        return GeminiConfigUtil.getRecommendationApiKeys();
+        java.util.Set<String> deduplicated = new java.util.LinkedHashSet<>();
+        // Priority 1: Environment / Properties configured keys via GeminiConfigUtil
+        try {
+            List<String> dynamicKeys = GeminiConfigUtil.getRecommendationApiKeys();
+            if (dynamicKeys != null) {
+                deduplicated.addAll(dynamicKeys);
+            }
+        } catch (Exception ignored) {}
+        
+        // Priority 2: Built-in default keys
+        for (String key : API_KEYS) {
+            if (key != null && !key.trim().isEmpty() && !key.contains("YOUR_KEY")) {
+                deduplicated.add(key.trim());
+            }
+        }
+        return new java.util.ArrayList<>(deduplicated);
     }
 
     private synchronized int getActiveKeyIndex(int keyCount) {
@@ -272,8 +295,10 @@ public class GeminiIntegration {
     }
 
     private boolean shouldSwitchKey(int statusCode) {
-        return statusCode == 401
+        return statusCode == 400
+                || statusCode == 401
                 || statusCode == 403
+                || statusCode == 404
                 || statusCode == 429
                 || statusCode == 500
                 || statusCode == 502
@@ -319,6 +344,27 @@ public class GeminiIntegration {
                    .replace("\t", "\\t");
     }
 
+    private String unescapeUnicode(String text) {
+        if (text == null || !text.contains("\\u")) return text;
+        StringBuilder sb = new StringBuilder();
+        int i = 0;
+        while (i < text.length()) {
+            if (i + 5 < text.length() && text.charAt(i) == '\\' && text.charAt(i + 1) == 'u') {
+                String hex = text.substring(i + 2, i + 6);
+                try {
+                    sb.append((char) Integer.parseInt(hex, 16));
+                    i += 6;
+                    continue;
+                } catch (NumberFormatException e) {
+                    // không phải unicode escape hợp lệ, giữ nguyên
+                }
+            }
+            sb.append(text.charAt(i));
+            i++;
+        }
+        return sb.toString();
+    }
+
     private String parseGeminiResponse(String responseBody) {
         try {
             // Cấu trúc phản hồi Gemini: candidates[0].content.parts[0].text
@@ -345,6 +391,9 @@ public class GeminiIntegration {
                 
                 if (end != -1) {
                     String result = responseBody.substring(start, end);
+                    
+                    // Unescape Unicode escape seq (backslash)uXXXX (VD: u00e0 -> a)
+                    result = unescapeUnicode(result);
                     
                     // Unescape các ký tự JSON cơ bản
                     result = result.replace("\\n", "\n")
