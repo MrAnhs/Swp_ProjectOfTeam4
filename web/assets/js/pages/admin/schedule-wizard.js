@@ -40,6 +40,27 @@ const specialtyKeywords = {
     'General': ['tong quat', 'general']
 };
 
+const departmentMapping = {
+    'Endocrinology': 'Nội tiết',
+    'Cardiology': 'Tim mạch',
+    'Nephrology': 'Thận học',
+    'General': 'Tổng quát',
+    'Da liễu': 'Da liễu'
+};
+
+function formatDepartmentName(dept) {
+    if (!dept) return '-';
+    const trimmed = String(dept).trim();
+    if (departmentMapping[trimmed]) return departmentMapping[trimmed];
+    const lower = trimmed.toLowerCase();
+    if (lower.includes('nội tiết') || lower.includes('endocrin')) return 'Nội tiết';
+    if (lower.includes('tim mạch') || lower.includes('cardio')) return 'Tim mạch';
+    if (lower.includes('thận') || lower.includes('nephro')) return 'Thận học';
+    if (lower.includes('da liễu') || lower.includes('da lieu') || lower.includes('dermatol')) return 'Da liễu';
+    if (lower.includes('tổng quát') || lower.includes('general')) return 'Tổng quát';
+    return trimmed;
+}
+
 function getActiveRoomsForSpecialty(specialty) {
     if (!window.activeRoomsList || !Array.isArray(window.activeRoomsList) || window.activeRoomsList.length === 0) {
         return [{ roomId: 'R102', roomName: 'Phòng Khám Tổng Quát 1', department: 'Tổng quát', status: 'active' }];
@@ -119,7 +140,16 @@ function buildCustomShiftTemplate() {
         if (checkedDepts.length === 0) return [];
 
         const staffPerRoom = getDoctorsPerShift();
-        const doctorRooms = getDoctorActiveRooms();
+        const allDoctorRooms = getDoctorActiveRooms();
+        const filteredRooms = allDoctorRooms.filter(room => {
+            const name = normalizeSearchText(room.roomName || '');
+            const dept = normalizeSearchText(room.department || '');
+            return checkedDepts.some(selDept => {
+                const kws = specialtyKeywords[selDept] || [normalizeSearchText(selDept)];
+                return kws.some(kw => name.includes(kw) || dept.includes(kw));
+            });
+        });
+        const doctorRooms = filteredRooms.length > 0 ? filteredRooms : [];
         const totalSlotsPerShift = doctorRooms.length * staffPerRoom;
 
         checkedShifts.forEach(shift => {
@@ -786,10 +816,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
         proposedSchedules.forEach((item, index) => {
             const row = document.createElement('tr');
-            const specialty = item.department || '';
-            const displayDept = departmentMapping[specialty] || specialty;
+            const rawDept = item.department || item.specialty || '';
+            const displayDept = formatDepartmentName(rawDept);
             const doctorsInSpecialty = availableDoctors.filter(doc => {
-                const docDept = String(doc.department || '').toLowerCase().trim();
+                const docDept = formatDepartmentName(doc.department || '').toLowerCase().trim();
                 const searchDept = displayDept.toLowerCase().trim();
                 return docDept.includes(searchDept) || searchDept.includes(docDept);
             });

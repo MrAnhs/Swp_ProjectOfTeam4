@@ -127,46 +127,46 @@ public class AdminAiSchedulingRepository {
 
     private String normalizeDepartmentForAi(String rawDepartment) {
         if (rawDepartment == null) {
-            return "General";
+            return "Tổng quát";
         }
         String trimmed = rawDepartment.trim();
         if (trimmed.isEmpty()) {
-            return "General";
+            return "Tổng quát";
         }
         String lower = trimmed.toLowerCase();
         if (lower.contains("nội tiết") || lower.contains("tiểu đường") || lower.contains("endocrin")) {
-            return "Endocrinology";
+            return "Nội tiết";
         }
         if (lower.contains("tim mạch") || lower.contains("cardio")) {
-            return "Cardiology";
+            return "Tim mạch";
         }
         if (lower.contains("thận") || lower.contains("tiết niệu") || lower.contains("nephro")) {
-            return "Nephrology";
+            return "Thận học";
         }
         if (lower.contains("da liễu") || lower.contains("da lieu") || lower.contains("dermatol")) {
             return "Da liễu";
         }
         if (lower.contains("tổng quát") || lower.contains("general")) {
-            return "General";
+            return "Tổng quát";
         }
         return trimmed;
     }
 
     private String deriveDepartmentFromDoctor(String rawDepartment, String doctorName) {
         String norm = normalizeDepartmentForAi(rawDepartment);
-        if (("General".equalsIgnoreCase(norm) || rawDepartment == null || rawDepartment.isBlank()) && doctorName != null) {
+        if (("Tổng quát".equalsIgnoreCase(norm) || "General".equalsIgnoreCase(norm) || rawDepartment == null || rawDepartment.isBlank()) && doctorName != null) {
             String lowerName = doctorName.toLowerCase();
             if (lowerName.contains("da liễu") || lowerName.contains("da lieu")) {
                 return "Da liễu";
             }
             if (lowerName.contains("nội tiết") || lowerName.contains("noi tiet") || lowerName.contains("endocrin")) {
-                return "Endocrinology";
+                return "Nội tiết";
             }
             if (lowerName.contains("tim mạch") || lowerName.contains("tim mach") || lowerName.contains("cardio")) {
-                return "Cardiology";
+                return "Tim mạch";
             }
             if (lowerName.contains("thận") || lowerName.contains("than hoc") || lowerName.contains("nephro")) {
-                return "Nephrology";
+                return "Thận học";
             }
         }
         return norm;
@@ -1186,16 +1186,16 @@ public class AdminAiSchedulingRepository {
             String roomName = room.get("roomName") == null ? "" : room.get("roomName").toLowerCase();
 
             boolean isSpecialtyMatch = false;
-            if ("Endocrinology".equalsIgnoreCase(doctorDeptNorm)) {
+            if ("Nội tiết".equalsIgnoreCase(doctorDeptNorm) || "Endocrinology".equalsIgnoreCase(doctorDeptNorm)) {
                 isSpecialtyMatch = roomName.contains("nội tiết") || roomName.contains("endocrin");
-            } else if ("Cardiology".equalsIgnoreCase(doctorDeptNorm)) {
+            } else if ("Tim mạch".equalsIgnoreCase(doctorDeptNorm) || "Cardiology".equalsIgnoreCase(doctorDeptNorm)) {
                 isSpecialtyMatch = roomName.contains("tim mạch") || roomName.contains("cardio");
-            } else if ("Nephrology".equalsIgnoreCase(doctorDeptNorm)) {
+            } else if ("Thận học".equalsIgnoreCase(doctorDeptNorm) || "Nephrology".equalsIgnoreCase(doctorDeptNorm)) {
                 isSpecialtyMatch = roomName.contains("thận") || roomName.contains("nephro");
-            } else if ("General".equalsIgnoreCase(doctorDeptNorm)) {
-                isSpecialtyMatch = roomName.contains("tổng quát") || roomName.contains("general");
             } else if ("Da liễu".equalsIgnoreCase(doctorDeptNorm) || (doctorDepartment != null && doctorDepartment.toLowerCase().contains("da liễu"))) {
                 isSpecialtyMatch = roomName.contains("da liễu") || roomName.contains("dermatol");
+            } else if ("Tổng quát".equalsIgnoreCase(doctorDeptNorm) || "General".equalsIgnoreCase(doctorDeptNorm)) {
+                isSpecialtyMatch = roomName.contains("tổng quát") || roomName.contains("general");
             } else if (doctorDepartment != null && !doctorDepartment.isBlank()) {
                 isSpecialtyMatch = roomName.contains(doctorDepartment.toLowerCase());
             }
