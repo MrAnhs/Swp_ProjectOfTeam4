@@ -28,10 +28,12 @@ function normalizeSearchText(value) {
 }
 
 const specialtyKeywords = {
+    'Nội tiết': ['noi tiet', 'endo'],
     'Nội tiết - Tiểu đường': ['noi tiet', 'endo'],
     'Endocrinology': ['noi tiet', 'endo'],
     'Tim mạch': ['tim mach', 'cardio'],
     'Cardiology': ['tim mach', 'cardio'],
+    'Da liễu': ['da lieu', 'dermatol'],
     'Thận học': ['than hoc', 'nephro'],
     'Nephrology': ['than hoc', 'nephro'],
     'Tổng quát': ['tong quat', 'general'],
@@ -223,17 +225,31 @@ function updateAiMaxSchedules() {
 
     if (staffType === 'Doctor') {
         const checkedDepts = Array.from(document.querySelectorAll('.ai-dept-cb:checked')).map(cb => cb.value);
-        const doctorRooms = getDoctorActiveRooms();
-        const roomsCount = doctorRooms.length;
-        const totalDoctorsPerShift = roomsCount * staffPerShift;
+        if (checkedDepts.length === 0) {
+            total = 0;
+            desc = '<span class="text-danger fw-bold"><i class="bi bi-exclamation-triangle-fill me-1"></i>Vui lòng tích chọn ít nhất một chuyên khoa áp dụng!</span>';
+        } else {
+            const allDoctorRooms = getDoctorActiveRooms();
+            const filteredRooms = allDoctorRooms.filter(room => {
+                const name = normalizeSearchText(room.roomName || '');
+                const dept = normalizeSearchText(room.department || '');
+                return checkedDepts.some(selDept => {
+                    const kws = specialtyKeywords[selDept] || [normalizeSearchText(selDept)];
+                    return kws.some(kw => name.includes(kw) || dept.includes(kw));
+                });
+            });
+            const roomsCount = filteredRooms.length > 0 ? filteredRooms.length : checkedDepts.length;
+            const totalDoctorsPerShift = roomsCount * staffPerShift;
 
-        let specialtyDetailHtml = `<ul class="ps-3 mb-0 text-muted" style="font-size:0.78rem; list-style-type:circle;">
-            <li>Tổng phòng khám tổng quát đang hoạt động: <strong>${roomsCount} phòng</strong></li>
-            <li>Sức chứa phân bổ: <strong>${totalDoctorsPerShift} bác sĩ/ca</strong> (${roomsCount} phòng x ${staffPerShift} bác sĩ/phòng)</li>
-        </ul>`;
+            let specialtyDetailHtml = `<ul class="ps-3 mb-0 text-muted" style="font-size:0.78rem; list-style-type:circle;">
+                <li>Số chuyên khoa đã chọn: <strong>${checkedDepts.length} chuyên khoa</strong></li>
+                <li>Tổng phòng khám phù hợp đang hoạt động: <strong>${roomsCount} phòng</strong></li>
+                <li>Sức chứa phân bổ: <strong>${totalDoctorsPerShift} bác sĩ/ca</strong> (${roomsCount} phòng x ${staffPerShift} bác sĩ/phòng)</li>
+            </ul>`;
 
-        total = days * actualShiftsPerDay * totalDoctorsPerShift;
-        desc = `(${days} ngày x ${actualShiftsPerDay} ca trực/ngày x ${totalDoctorsPerShift} bác sĩ/ca)<br>${specialtyDetailHtml}`;
+            total = days * actualShiftsPerDay * totalDoctorsPerShift;
+            desc = `(${days} ngày x ${actualShiftsPerDay} ca trực/ngày x ${totalDoctorsPerShift} bác sĩ/ca)<br>${specialtyDetailHtml}`;
+        }
     } else if (staffType === 'Receptionist') {
         total = days * actualShiftsPerDay * staffPerShift;
         desc = `(${days} ngày x ${actualShiftsPerDay} ca trực/ngày x ${staffPerShift} lễ tân/ca)`;
@@ -358,6 +374,11 @@ function initUniversalModal(staffType) {
     if (startEl) {
         startEl.dispatchEvent(new Event('change'));
     }
+    
+    document.querySelectorAll('.ai-dept-cb').forEach(cb => {
+        cb.removeEventListener('change', updateAiMaxSchedules);
+        cb.addEventListener('change', updateAiMaxSchedules);
+    });
 }
 
 // ==========================================
@@ -417,7 +438,7 @@ function buildScheduleRow(schedule) {
         : Math.max(0, maxPatients - onlineQuota);
 
     const departmentMap = {
-        Endocrinology: 'Nội tiết - Tiểu đường',
+        Endocrinology: 'Nội tiết',
         Cardiology: 'Tim mạch',
         Nephrology: 'Thận học',
         General: 'Tổng quát'
@@ -822,6 +843,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 params.append('workDate', item.workDate);
                 params.append('timeSlot', item.timeSlot);
                 params.append('maxPatients', maxPatientsInput.value);
+                params.append('roomId', item.roomId || item.room || '');
             });
 
             setAiScheduleBusy(true);
@@ -1111,20 +1133,45 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Mở modal xem thông tin ca trực chi tiết trên Calendar tuần
     function openShiftDetailModal(shift) {
-        document.getElementById('shiftDetailStaff').textContent = shift.staff || '-';
-        document.getElementById('shiftDetailRole').textContent = shift.role || '-';
-        document.getElementById('shiftDetailRoom').textContent = shift.room || 'Chưa xếp';
-        document.getElementById('shiftDetailDate').textContent = shift.date || '-';
-        document.getElementById('shiftDetailTime').textContent = `${shift.start || '08:00'} - ${shift.end || '12:00'} (${shift.timeSlot || ''})`;
-        document.getElementById('shiftDetailStatus').textContent = shift.status || 'Confirmed';
+        const staffEl = document.getElementById('shiftDetailStaff');
+        const roleEl = document.getElementById('shiftDetailRole');
+        const roomEl = document.getElementById('shiftDetailRoom');
+        const dateEl = document.getElementById('shiftDetailDate');
+        const timeEl = document.getElementById('shiftDetailTime');
+        const statusEl = document.getElementById('shiftDetailStatus');
+        const editBtn = document.getElementById('shiftDetailEditBtn');
+
+        if (staffEl) staffEl.textContent = shift.staff || '-';
+        if (roleEl) roleEl.textContent = shift.role || '-';
+        if (roomEl) roomEl.textContent = shift.room || 'Chưa xếp';
+        if (dateEl) dateEl.textContent = shift.date || '-';
+        
+        const timeText = (shift.start && shift.end) 
+            ? `${shift.start} - ${shift.end}` 
+            : (shift.timeSlot || 'Ca trực');
+        if (timeEl) timeEl.textContent = timeText;
+        if (statusEl) statusEl.textContent = shift.status || 'Đã xếp lịch';
+
+        if (editBtn) {
+            const schId = shift.scheduleId || shift.id || '';
+            if (schId) {
+                editBtn.setAttribute('data-schedule-id', schId);
+                editBtn.style.display = 'inline-block';
+            } else {
+                editBtn.removeAttribute('data-schedule-id');
+                editBtn.style.display = 'none';
+            }
+        }
 
         const alertEl = document.getElementById('shiftDetailConflictAlert');
         const textEl = document.getElementById('shiftDetailConflictText');
-        if (shift.conflict) {
-            alertEl.classList.remove('d-none');
-            textEl.textContent = shift.conflictMessage || 'Phát hiện ca làm việc trùng nhân sự hoặc trùng phòng!';
-        } else {
-            alertEl.classList.add('d-none');
+        if (alertEl && textEl) {
+            if (shift.conflict) {
+                alertEl.classList.remove('d-none');
+                textEl.textContent = shift.conflictMessage || 'Phát hiện ca làm việc trùng nhân sự hoặc trùng phòng!';
+            } else {
+                alertEl.classList.add('d-none');
+            }
         }
 
         const modalEl = document.getElementById('shiftDetailModal');
@@ -1133,6 +1180,8 @@ document.addEventListener('DOMContentLoaded', function () {
             modal.show();
         }
     }
+
+    window.openShiftDetailModal = openShiftDetailModal;
 
     // Mở Modal xem danh sách đầy đủ ca trực trong 1 ô ngày/ca
     function openCellMoreSchedulesModal(cellId, listInCell) {
@@ -1199,11 +1248,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
     window.resolveSingleConflict = async function (id, staffType, actionType) {
         try {
+            const csrfTokenInput = document.querySelector('input[name="csrfToken"]');
+            const csrfToken = csrfTokenInput ? csrfTokenInput.value : '';
+
             const formData = new URLSearchParams();
             formData.append('action', 'resolveScheduleConflict');
             formData.append('id', id);
             formData.append('staffType', staffType);
             formData.append('type', actionType);
+            if (csrfToken) {
+                formData.append('csrfToken', csrfToken);
+            }
 
             const resp = await fetch(`${adminContextPath}/admin`, {
                 method: 'POST',
@@ -1230,8 +1285,14 @@ document.addEventListener('DOMContentLoaded', function () {
     if (autoResolveBtn) {
         autoResolveBtn.addEventListener('click', async () => {
             try {
+                const csrfTokenInput = document.querySelector('input[name="csrfToken"]');
+                const csrfToken = csrfTokenInput ? csrfTokenInput.value : '';
+
                 const formData = new URLSearchParams();
                 formData.append('action', 'autoResolveAllConflicts');
+                if (csrfToken) {
+                    formData.append('csrfToken', csrfToken);
+                }
 
                 const resp = await fetch(`${adminContextPath}/admin`, {
                     method: 'POST',

@@ -67,6 +67,9 @@
                                             value="${s.maxPatients > 0 ? (bookedAppointments * 100.0 / s.maxPatients) : 0}" />
                                         <tr data-schedule-id="${s.scheduleId}" data-doctor-name="${s.doctorName}"
                                             data-department="${s.department}" data-room-id="${s.roomId}"
+                                            data-room-name="${empty s.roomName ? (empty s.roomId ? 'Chưa xếp' : s.roomId) : s.roomName}"
+                                            data-time-slot="${s.timeSlot}"
+                                            data-work-date="<fmt:formatDate value='${s.workDate}' pattern='dd/MM/yyyy' />"
                                             data-load-pct="${loadPct}" data-active-appointments="${activeAppointments}"
                                             data-booked-appointments="${bookedAppointments}"
                                             data-online-booked-count="${onlineBookedCount}"

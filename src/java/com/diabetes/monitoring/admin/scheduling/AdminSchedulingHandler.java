@@ -930,12 +930,16 @@ class AdminAiSchedulingHandler {
             aiRequest.maxSchedules = parseInt(request.getParameter("maxSchedules"), 12);
             aiRequest.doctorsPerShift = parseInt(request.getParameter("doctorsPerShift"), 1);
             aiRequest.department = request.getParameter("department");
+            String[] reqDepts = request.getParameterValues("department");
+            if (reqDepts != null && reqDepts.length > 0) {
+                aiRequest.selectedDepartments = java.util.Arrays.asList(reqDepts);
+            }
             aiRequest.shiftsPerDay = parseShiftTemplates(request.getParameter("shiftTemplates"));
             aiRequest.selectedWeekdays = parseSelectedWeekdays(request.getParameterValues("selectedWeekdays"));
             aiRequest.preview = "true".equalsIgnoreCase(request.getParameter("preview"));
 
             AiSchedulingResult result = aiSchedulingService.createSchedules(aiRequest);
-            List<Map<String, Object>> doctors = aiSchedulingRepository.getDoctorsForAiScheduling(aiRequest.startDate, aiRequest.endDate);
+            List<Map<String, Object>> doctors = aiSchedulingRepository.getDoctorsForAiScheduling(aiRequest.startDate, aiRequest.endDate, aiRequest.selectedDepartments);
             try (PrintWriter out = response.getWriter()) {
                 out.print("{\"success\":");
                 out.print(result.success);
@@ -963,6 +967,7 @@ class AdminAiSchedulingHandler {
             String[] workDates = request.getParameterValues("workDate");
             String[] timeSlots = request.getParameterValues("timeSlot");
             String[] maxPatientsArr = request.getParameterValues("maxPatients");
+            String[] roomIds = request.getParameterValues("roomId");
             String conflictHandling = request.getParameter("conflictHandling");
 
             if (doctorIds == null || workDates == null || timeSlots == null || maxPatientsArr == null
@@ -979,6 +984,9 @@ class AdminAiSchedulingHandler {
                 item.put("workDate", workDates[i]);
                 item.put("timeSlot", timeSlots[i]);
                 item.put("maxPatients", Integer.parseInt(maxPatientsArr[i]));
+                if (roomIds != null && i < roomIds.length && roomIds[i] != null && !roomIds[i].isBlank()) {
+                    item.put("roomId", roomIds[i]);
+                }
                 schedules.add(item);
             }
 
