@@ -640,7 +640,7 @@
                                             <option value="General">Tổng quát</option>
                                             <option value="custom">-- Thêm tên chuyên khoa khác --</option>
                                         </select>
-                                        <input type="text" class="form-control" name="department" id="specDepartmentInput" placeholder="Nhập tên chuyên khoa (VD: Khoa Nhi, Khoa Mắt...)" style="border-radius: 8px;">
+                                        <input type="text" class="form-control d-none mt-2" name="department" id="specDepartmentInput" placeholder="Nhập tên chuyên khoa (VD: Khoa Nhi, Khoa Mắt...)" style="border-radius: 8px;">
                                     </div>
                                 </div>
 

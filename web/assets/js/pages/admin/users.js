@@ -165,9 +165,11 @@
                     if (['Endocrinology', 'Cardiology', 'Nephrology', 'General'].includes(currDept)) {
                         selectEl.value = currDept;
                         inputEl.value = currDept;
+                        inputEl.classList.add('d-none');
                     } else {
                         selectEl.value = 'custom';
                         inputEl.value = currDept;
+                        inputEl.classList.remove('d-none');
                     }
 
                     const bsSpecModal = new bootstrap.Modal(specModalEl);
@@ -274,9 +276,11 @@
                 const inputEl = document.getElementById('specDepartmentInput');
                 if (!inputEl) return;
                 if (e.target.value === 'custom') {
+                    inputEl.classList.remove('d-none');
                     inputEl.value = '';
                     inputEl.focus();
                 } else {
+                    inputEl.classList.add('d-none');
                     inputEl.value = e.target.value;
                 }
             }
