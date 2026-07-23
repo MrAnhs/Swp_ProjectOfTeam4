@@ -1013,11 +1013,15 @@ document.addEventListener('DOMContentLoaded', function () {
         const picker = document.getElementById('unifiedWeekPicker') || document.getElementById('calendarWeekPicker');
         if (!picker) return;
 
-        if (!picker.value) {
-            picker.value = new Date().toISOString().slice(0, 10);
+        if (!picker.value || isNaN(new Date(picker.value).getTime())) {
+            picker.value = formatDateIso(new Date());
         }
 
-        const baseDate = new Date(picker.value);
+        let baseDate = new Date(picker.value);
+        if (isNaN(baseDate.getTime())) {
+            baseDate = new Date();
+            picker.value = formatDateIso(baseDate);
+        }
         const monday = getMondayOfDate(baseDate);
 
         const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
@@ -1207,9 +1211,10 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
+        document.querySelectorAll('.dropdown-menu.show').forEach(m => m.classList.remove('show'));
         const modalEl = document.getElementById('shiftDetailModal');
         if (modalEl) {
-            const modal = new bootstrap.Modal(modalEl);
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
             modal.show();
         }
     }

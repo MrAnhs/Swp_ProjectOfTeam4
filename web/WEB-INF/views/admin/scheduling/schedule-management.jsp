@@ -142,6 +142,10 @@
                                                                 class="form-label text-secondary small fw-bold mb-1">${param.viewTab
                                                                 == 'list' ? 'Chọn ngày' : 'Chọn tuần'}</label>
 
+                                                            <c:set var="todayIso">
+                                                                <%= new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()) %>
+                                                            </c:set>
+
                                                             <!-- Picker Tuần -->
                                                             <div id="filterWeekPickerGroup"
                                                                 class="input-group input-group-sm flex-nowrap ${param.viewTab == 'list' ? 'd-none' : ''}"
@@ -153,6 +157,7 @@
                                                                         class="fa-solid fa-chevron-left"></i></button>
                                                                 <input type="date" id="unifiedWeekPicker"
                                                                     name="weekDate"
+                                                                    value="${empty param.weekDate ? todayIso : param.weekDate}"
                                                                     class="form-control text-center px-1"
                                                                     style="font-size: 0.85rem;">
                                                                 <button type="button" id="unifiedTodayBtn"
@@ -168,6 +173,7 @@
 
                                                             <!-- Picker Ngày -->
                                                             <input type="date" id="unifiedDatePicker" name="workDate"
+                                                                value="${empty param.workDate ? todayIso : param.workDate}"
                                                                 class="form-control form-control-sm ${param.viewTab == 'list' ? '' : 'd-none'} px-2"
                                                                 style="border-radius: 8px; font-size: 0.88rem; ${param.viewTab == 'list' ? 'display: block !important;' : 'display: none !important;'}">
                                                         </div>

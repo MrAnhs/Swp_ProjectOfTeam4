@@ -612,6 +612,7 @@ document.addEventListener('DOMContentLoaded', function () {
             timeSlot: timeSlot
         };
 
+        document.querySelectorAll('.dropdown-menu.show').forEach(m => m.classList.remove('show'));
         if (typeof window.openShiftDetailModal === 'function') {
             window.openShiftDetailModal(shiftObj);
         } else {
@@ -640,7 +641,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 }
 
-                const modal = new bootstrap.Modal(modalEl);
+                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
                 modal.show();
             }
         }
