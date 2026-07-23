@@ -17,7 +17,7 @@
         let pendingConfirmForm = null;
 
         const departmentTextMap = {
-            Endocrinology: 'Nội tiết',
+            Endocrinology: 'Nội tiết - Tiểu đường',
             Cardiology: 'Tim mạch',
             Nephrology: 'Thận học',
             General: 'Tổng quát'
@@ -51,19 +51,23 @@
             email: document.getElementById('editEmail'),
             phone: document.getElementById('editPhone'),
             address: document.getElementById('editAddress'),
+            department: document.getElementById('editDepartment'),
             roleInfo: document.getElementById('editRoleInfo'),
             phoneWrap: document.getElementById('editPhoneWrap'),
-            addressWrap: document.getElementById('editAddressWrap')
+            addressWrap: document.getElementById('editAddressWrap'),
+            departmentWrap: document.getElementById('editDepartmentWrap')
         };
 
         function setRoleDisplay(role) {
-            if (fields.roleInfo) fields.roleInfo.textContent = 'Vai trò: ' + roleText(role);
+            fields.roleInfo.textContent = 'Vai trò: ' + roleText(role);
 
             const isPatient = role === 'Patient';
             const isDoctor = role === 'Doctor';
 
-            if (fields.phoneWrap) fields.phoneWrap.classList.toggle('d-none', !(isPatient || isDoctor));
-            if (fields.addressWrap) fields.addressWrap.classList.toggle('d-none', !isPatient);
+            fields.phoneWrap.classList.toggle('d-none', !(isPatient || isDoctor));
+            fields.addressWrap.classList.toggle('d-none', !isPatient);
+            fields.departmentWrap.classList.toggle('d-none', !isDoctor);
+            fields.department.required = isDoctor;
         }
 
         function fillViewProfile(item) {
@@ -105,6 +109,7 @@
             fields.email.value = item.email || '';
             fields.phone.value = item.phone || '';
             fields.address.value = item.address || '';
+            fields.department.value = item.department || 'General';
             setRoleDisplay(item.role || '');
 
             modal.show();
@@ -139,44 +144,6 @@
                     newPasswordInput.value = '';
                     changePasswordModal.show();
                 }
-                return;
-            }
-
-            const editSpecBtn = event.target.closest('.edit-specialty-btn');
-            if (editSpecBtn) {
-                const accountId = editSpecBtn.getAttribute('data-account-id');
-                const accountName = editSpecBtn.getAttribute('data-account-name');
-                if (!accountId) return;
-
-                fetchAccountProfile(accountId).then(function (item) {
-                    const specModalEl = document.getElementById('editSpecialtyModal');
-                    if (!specModalEl) return;
-
-                    document.getElementById('specAccountId').value = item.accountId || accountId;
-                    document.getElementById('specFullNameHidden').value = item.fullName || '';
-                    document.getElementById('specEmailHidden').value = item.email || '';
-                    document.getElementById('specPhoneHidden').value = item.phone || '';
-                    document.getElementById('specAccountName').textContent = (item.fullName || accountName) + ' (' + (roleText(item.role)) + ')';
-
-                    const selectEl = document.getElementById('specDepartmentSelect');
-                    const inputEl = document.getElementById('specDepartmentInput');
-                    const currDept = item.department || '';
-
-                    if (['Endocrinology', 'Cardiology', 'Nephrology', 'General'].includes(currDept)) {
-                        selectEl.value = currDept;
-                        inputEl.value = currDept;
-                        inputEl.classList.add('d-none');
-                    } else {
-                        selectEl.value = 'custom';
-                        inputEl.value = currDept;
-                        inputEl.classList.remove('d-none');
-                    }
-
-                    const bsSpecModal = new bootstrap.Modal(specModalEl);
-                    bsSpecModal.show();
-                }).catch(function (err) {
-                    alert('Không thể tải thông tin chuyên khoa: ' + err.message);
-                });
                 return;
             }
 
@@ -269,20 +236,5 @@
             }
             event.preventDefault();
             actionConfirmSubmitBtn.click();
-        });
-
-        document.addEventListener('change', function (e) {
-            if (e.target && e.target.id === 'specDepartmentSelect') {
-                const inputEl = document.getElementById('specDepartmentInput');
-                if (!inputEl) return;
-                if (e.target.value === 'custom') {
-                    inputEl.classList.remove('d-none');
-                    inputEl.value = '';
-                    inputEl.focus();
-                } else {
-                    inputEl.classList.add('d-none');
-                    inputEl.value = e.target.value;
-                }
-            }
         });
     })();

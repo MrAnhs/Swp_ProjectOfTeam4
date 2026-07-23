@@ -61,6 +61,7 @@ public class EmailVerificationDAO {
 
     public long insert(Connection connection, Integer accountId, String purpose,
             String targetEmail, String otpHash, int expiryMinutes) throws SQLException {
+        ensurePurposeAllowed(connection, purpose);
         String sql = "INSERT INTO Email_Verification "
                 + "(account_id, purpose, target_email, otp_hash, expires_at, failed_attempts, created_at) "
                 + "VALUES (?, ?, ?, ?, DATEADD(MINUTE, ?, GETDATE()), 0, GETDATE())";
@@ -131,6 +132,17 @@ public class EmailVerificationDAO {
             if (statement.executeUpdate() != 1) {
                 throw new SQLException("Verification was already consumed");
             }
+        }
+    }
+
+    private void ensurePurposeAllowed(Connection connection, String purpose) {
+        if (purpose != null) {
+            try (Statement statement = connection.createStatement()) {
+                statement.execute("IF EXISTS (SELECT 1 FROM sys.check_constraints WHERE name = 'CK_EmailVerification_Purpose' AND parent_object_id = OBJECT_ID('dbo.Email_Verification')) "
+                        + "BEGIN "
+                        + "  ALTER TABLE dbo.Email_Verification DROP CONSTRAINT CK_EmailVerification_Purpose; "
+                        + "END");
+            } catch (Exception ignored) { }
         }
     }
 

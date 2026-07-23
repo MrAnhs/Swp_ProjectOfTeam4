@@ -65,11 +65,7 @@ public class ReceptionistApiServlet extends HttpServlet {
                 return;
             }
             if ("/invoices".equals(path)) {
-                List<Map<String, Object>> invoices = service.getInvoices(
-                        request.getParameter("status"),
-                        request.getParameter("invoiceType"),
-                        request.getParameter("keyword")
-                );
+                List<Map<String, Object>> invoices = service.getInvoices(request.getParameter("status"), request.getParameter("invoiceType"));
                 write(response, "{\"success\":true,\"invoices\":" + toJson(invoices) + "}");
                 return;
             }

@@ -100,13 +100,8 @@ public class ReceptionistService {
 
     public List<Map<String, Object>> getInvoices(String status, String invoiceType)
             throws SQLException, ReceptionistException {
-        return getInvoices(status, invoiceType, null);
-    }
-
-    public List<Map<String, Object>> getInvoices(String status, String invoiceType, String keyword)
-            throws SQLException, ReceptionistException {
         String normalized = "Paid".equalsIgnoreCase(status) ? "Paid" : "Pending";
-        return dao.findInvoicesByStatus(normalized, invoiceType, keyword);
+        return dao.findInvoicesByStatus(normalized, invoiceType);
     }
 
     public List<Map<String, Object>> getInvoiceDetails(int invoiceId) throws SQLException {

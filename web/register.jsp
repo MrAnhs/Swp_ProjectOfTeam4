@@ -123,7 +123,20 @@
                                         <div class="input-group custom-input-group">
                                             <span class="input-group-text border-end-0"><i class="bi bi-envelope"></i></span>
                                             <input type="email" class="form-control border-start-0 ps-0 shadow-none" id="email" name="email" placeholder="example@gmail.com" required>
+                                            <button type="button" class="btn btn-outline-teal btn-sm me-1 rounded-3 px-3 py-1 fw-semibold align-self-center" id="btnSendOtp" style="font-size: 12px; border-color: rgba(42, 181, 163, 0.4); color: #2AB5A3; background: rgba(42, 181, 163, 0.1);">
+                                                Gửi mã OTP
+                                            </button>
                                             <div class="invalid-feedback ms-3">Vui lòng nhập email hợp lệ.</div>
+                                        </div>
+                                        <div id="otpStatusMsg" class="form-text small mt-1 ms-1" style="display: none;"></div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-uppercase tracking-wider" style="font-size: 11px; opacity: 0.65;" for="otp">MÃ OTP XÁC THỰC (6 CHỮ SỐ)</label>
+                                        <div class="input-group custom-input-group">
+                                            <span class="input-group-text border-end-0"><i class="bi bi-shield-check"></i></span>
+                                            <input type="text" class="form-control border-start-0 ps-0 shadow-none" id="otp" name="otp" placeholder="Nhập mã OTP 6 chữ số" maxlength="6" pattern="\d{6}" required>
+                                            <div class="invalid-feedback ms-3">Vui lòng nhập mã OTP 6 chữ số.</div>
                                         </div>
                                     </div>
                                     
