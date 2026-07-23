@@ -56,6 +56,9 @@ public class ReceptionistPageServlet extends HttpServlet {
         if ("/receptionist/billing".equals(servletPath)) {
             return "billing-management.jsp";
         }
+        if ("/receptionist/schedule".equals(servletPath)) {
+            return "schedule.jsp";
+        }
         return null;
     }
 }

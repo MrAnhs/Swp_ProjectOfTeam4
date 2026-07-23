@@ -110,7 +110,9 @@
         <url-pattern>/doctor-lab/*</url-pattern>
     </filter-mapping>
 
-
+    <listener>
+        <listener-class>com.diabetes.monitoring.listener.NotificationSchedulerListener</listener-class>
+    </listener>
 
     <welcome-file-list>
 
@@ -270,6 +272,10 @@
     <servlet-mapping>
         <servlet-name>ReceptionistPageServlet</servlet-name>
         <url-pattern>/receptionist/billing</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ReceptionistPageServlet</servlet-name>
+        <url-pattern>/receptionist/schedule</url-pattern>
     </servlet-mapping>
 
     <servlet>

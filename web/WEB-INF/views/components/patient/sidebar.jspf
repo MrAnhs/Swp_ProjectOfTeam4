@@ -72,3 +72,22 @@
         </a>
     </div>
 </aside>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const contextPath = "${pageContext.request.contextPath}";
+        fetch(contextPath + "/patient/api/notifications")
+            .then(response => {
+                if (response.ok) return response.json();
+                throw new Error("Failed to load notifications");
+            })
+            .then(data => {
+                const badge = document.getElementById("sidebar-notification-badge");
+                if (badge && data.unreadCount > 0) {
+                    badge.textContent = data.unreadCount;
+                    badge.classList.remove("d-none");
+                }
+            })
+            .catch(err => console.error("Error loading notification count:", err));
+    });
+</script>

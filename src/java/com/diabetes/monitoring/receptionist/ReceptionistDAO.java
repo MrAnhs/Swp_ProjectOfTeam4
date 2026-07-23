@@ -186,15 +186,15 @@ public class ReceptionistDAO {
             connection = openConnection();
             connection.setAutoCommit(false);
             Integer patientId = findPatientIdByPhone(connection, request.phone);
-            Integer accountId = null;
-            String temporaryPassword = null;
-            if (patientId == null) {
-                temporaryPassword = UUID.randomUUID().toString().replace("-", "").substring(0, 12);
-                accountId = insertPatientAccount(connection, request, temporaryPassword);
-                patientId = insertPatient(connection, request, accountId);
-            } else {
-                updatePatient(connection, patientId, request);
+            if (patientId != null) {
+                throw new ReceptionistException("Số điện thoại này đã được đăng ký cho một bệnh nhân khác.");
             }
+            if (emailExists(connection, request.email)) {
+                throw new ReceptionistException("Email này đã được đăng ký bởi một tài khoản khác.");
+            }
+            String temporaryPassword = UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+            Integer accountId = insertPatientAccount(connection, request, temporaryPassword);
+            patientId = insertPatient(connection, request, accountId);
             connection.commit();
             Map<String, Object> result = new HashMap<>();
             result.put("patientId", patientId);
@@ -227,6 +227,13 @@ public class ReceptionistDAO {
             if (patientId == null) {
                 patientId = insertPatient(connection, request);
             } else {
+                String existingName = getPatientNameById(connection, patientId);
+                if (existingName != null && !existingName.trim().equalsIgnoreCase(request.patientName.trim())) {
+                    throw new ReceptionistException("Số điện thoại này đã được đăng ký cho bệnh nhân khác.");
+                }
+                if (hasActiveAppointmentOnSameDay(connection, patientId, request.scheduleId)) {
+                    throw new ReceptionistException("Bệnh nhân này đã có lịch hẹn đăng ký trong ngày hôm nay.");
+                }
                 updatePatient(connection, patientId, request);
             }
 
@@ -266,6 +273,32 @@ public class ReceptionistDAO {
             throw e;
         } finally {
             close(connection);
+        }
+    }
+
+    private boolean hasActiveAppointmentOnSameDay(Connection connection, int patientId, int targetScheduleId) throws SQLException {
+        String sql = "SELECT 1 FROM Appointment a "
+                + "INNER JOIN Doctor_Schedule target_ds ON target_ds.schedule_id = ? "
+                + "INNER JOIN Doctor_Schedule existing_ds ON existing_ds.schedule_id = a.schedule_id "
+                + "WHERE a.patient_id = ? "
+                + "AND a.status <> 'Cancelled' "
+                + "AND existing_ds.work_date = target_ds.work_date";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, targetScheduleId);
+            statement.setInt(2, patientId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next();
+            }
+        }
+    }
+
+    private String getPatientNameById(Connection connection, int patientId) throws SQLException {
+        String sql = "SELECT full_name FROM Patient WHERE patient_id = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, patientId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next() ? resultSet.getString("full_name") : null;
+            }
         }
     }
 
@@ -461,6 +494,68 @@ public class ReceptionistDAO {
         }
     }
 
+    public int payPendingInvoiceById(int invoiceId, String paymentMethod, int receptionistAccountId)
+            throws SQLException, ReceptionistException {
+        Connection connection = null;
+        try {
+            connection = openConnection();
+            connection.setAutoCommit(false);
+
+            String sql = "UPDATE Invoice SET status = 'Paid', payment_method = ?, "
+                    + "receptionist_id = ?, exported_at = GETDATE() WHERE invoice_id = ? AND status = 'Pending'";
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setString(1, paymentMethod);
+                statement.setInt(2, receptionistAccountId);
+                statement.setInt(3, invoiceId);
+                if (statement.executeUpdate() == 0) {
+                    throw new ReceptionistException("Hóa đơn không tồn tại hoặc đã được xử lý trước đó.");
+                }
+            }
+
+            String detailSql = "UPDATE Invoice_Detail SET lab_status = 'Requested' "
+                    + "WHERE invoice_id = ? AND lab_status = 'Waiting_Payment'";
+            try (PreparedStatement statement = connection.prepareStatement(detailSql)) {
+                statement.setInt(1, invoiceId);
+                statement.executeUpdate();
+            }
+            connection.commit();
+            return invoiceId;
+        } catch (SQLException | ReceptionistException e) {
+            rollback(connection);
+            throw e;
+        } finally {
+            close(connection);
+        }
+    }
+
+
+    public List<Map<String, Object>> findInvoiceDetails(int invoiceId) throws SQLException {
+        String sql = "SELECT id.invoice_detail_id, id.service_id, ms.service_name, ms.service_type, "
+                + "id.quantity, id.price "
+                + "FROM Invoice_Detail id "
+                + "INNER JOIN Medical_Service ms ON ms.service_id = id.service_id "
+                + "WHERE id.invoice_id = ? "
+                + "ORDER BY id.invoice_detail_id ASC";
+        try (Connection connection = openConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, invoiceId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                List<Map<String, Object>> details = new ArrayList<>();
+                while (resultSet.next()) {
+                    Map<String, Object> detail = new HashMap<>();
+                    detail.put("invoiceDetailId", resultSet.getInt("invoice_detail_id"));
+                    detail.put("serviceId", resultSet.getInt("service_id"));
+                    detail.put("serviceName", resultSet.getString("service_name"));
+                    detail.put("serviceType", resultSet.getString("service_type"));
+                    detail.put("quantity", resultSet.getInt("quantity"));
+                    detail.put("price", resultSet.getBigDecimal("price"));
+                    details.add(detail);
+                }
+                return details;
+            }
+        }
+    }
+
     public List<Map<String, Object>> findTodayQueue(String status) throws SQLException {
         String sql = "SELECT a.appointment_id, a.queue_number, a.appointment_time, a.status, "
                 + "p.full_name AS patient_name, p.phone, d.full_name AS doctor_name, mr.revisit_date "
@@ -555,6 +650,34 @@ public class ReceptionistDAO {
             return statement.executeUpdate() > 0;
         }
     }
+    public List<Map<String, Object>> findMySchedule(int accountId, LocalDate fromDate, LocalDate toDate) throws SQLException {
+        String sql = "SELECT rs.reception_sched_id, rs.work_date, rs.time_slot, rs.status, a.full_name "
+                + "FROM Reception_Schedule rs "
+                + "INNER JOIN Reception r ON r.reception_id = rs.reception_id "
+                + "INNER JOIN Account a ON a.account_id = r.account_id "
+                + "WHERE r.account_id = ? AND rs.work_date BETWEEN ? AND ? "
+                + "ORDER BY rs.work_date, rs.time_slot";
+        try (Connection connection = openConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, accountId);
+            statement.setDate(2, Date.valueOf(fromDate));
+            statement.setDate(3, Date.valueOf(toDate));
+            try (ResultSet resultSet = statement.executeQuery()) {
+                List<Map<String, Object>> schedule = new ArrayList<>();
+                while (resultSet.next()) {
+                    Map<String, Object> item = new HashMap<>();
+                    item.put("scheduleId", resultSet.getInt("reception_sched_id"));
+                    Date workDate = resultSet.getDate("work_date");
+                    item.put("workDate", workDate == null ? "" : workDate.toString());
+                    item.put("timeSlot", resultSet.getString("time_slot"));
+                    item.put("status", resultSet.getString("status"));
+                    item.put("fullName", resultSet.getString("full_name"));
+                    schedule.add(item);
+                }
+                return schedule;
+            }
+        }
+    }
 
     private Map<String, Object> mapPatient(ResultSet resultSet) throws SQLException {
         Map<String, Object> patient = new HashMap<>();
@@ -610,6 +733,17 @@ public class ReceptionistDAO {
             statement.setString(1, phone);
             try (ResultSet resultSet = statement.executeQuery()) {
                 return resultSet.next() ? resultSet.getInt("patient_id") : null;
+            }
+        }
+    }
+
+    private boolean emailExists(Connection connection, String email) throws SQLException {
+        if (email == null || email.isBlank()) return false;
+        String sql = "SELECT 1 FROM Account WHERE email = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, email.trim());
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next();
             }
         }
     }
@@ -863,6 +997,92 @@ public class ReceptionistDAO {
 
     private String emptyToNull(String value) {
         return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    public List<Map<String, Object>> findUpcomingRevisits(LocalDate date) throws SQLException {
+        List<Map<String, Object>> list = new ArrayList<>();
+        String sql = "SELECT mr.record_id, mr.appointment_id, p.patient_id, p.full_name AS patient_name, "
+                + "p.phone AS patient_phone, p.email AS patient_email, p.gender AS patient_gender, "
+                + "p.address AS patient_address, p.date_of_birth AS patient_dob, "
+                + "mr.revisit_date, d.full_name AS doctor_name, "
+                + "(SELECT TOP 1 a.appointment_id FROM Appointment a "
+                + " INNER JOIN Doctor_Schedule ds ON a.schedule_id = ds.schedule_id "
+                + " WHERE a.patient_id = p.patient_id "
+                + "   AND ds.work_date = CAST(mr.revisit_date AS DATE) "
+                + "   AND a.status <> 'Cancelled' "
+                + ") AS active_appointment_id "
+                + "FROM Medical_record mr "
+                + "JOIN Patient p ON mr.patient_id = p.patient_id "
+                + "LEFT JOIN Doctor d ON mr.doctor_id = d.doctor_id "
+                + "WHERE mr.revisit_date IS NOT NULL "
+                + "  AND CAST(mr.revisit_date AS DATE) = ? "
+                + "ORDER BY mr.revisit_date ASC";
+        try (Connection connection = openConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setDate(1, Date.valueOf(date));
+            try (ResultSet resultSet = statement.executeQuery()) {
+            while (resultSet.next()) {
+                Map<String, Object> item = new HashMap<>();
+                item.put("recordId", resultSet.getInt("record_id"));
+                item.put("patientId", resultSet.getInt("patient_id"));
+                item.put("revisitAppointmentId", resultSet.getObject("appointment_id") == null ? "" : resultSet.getInt("appointment_id"));
+                item.put("activeAppointmentId", resultSet.getObject("active_appointment_id") == null ? "" : resultSet.getInt("active_appointment_id"));
+                item.put("patientName", resultSet.getString("patient_name"));
+                item.put("patientPhone", resultSet.getString("patient_phone"));
+                item.put("patientEmail", resultSet.getString("patient_email") == null ? "" : resultSet.getString("patient_email"));
+                item.put("patientGender", resultSet.getString("patient_gender") == null ? "Male" : resultSet.getString("patient_gender"));
+                item.put("patientAddress", resultSet.getString("patient_address") == null ? "" : resultSet.getString("patient_address"));
+                Date dob = resultSet.getDate("patient_dob");
+                item.put("patientDob", dob == null ? "" : dob.toString());
+                Date revisit = resultSet.getDate("revisit_date");
+                item.put("revisitDate", revisit == null ? "" : revisit.toString());
+                item.put("doctorName", resultSet.getString("doctor_name") == null ? "Không xác định" : resultSet.getString("doctor_name"));
+                list.add(item);
+        }
+        }
+        }
+        return list;
+    }
+
+    private Integer findReceptionIdByAccountId(Connection connection, int accountId) throws SQLException {
+        String sql = "SELECT reception_id FROM Reception WHERE account_id = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, accountId);
+            try (ResultSet rs = statement.executeQuery()) {
+                return rs.next() ? rs.getInt("reception_id") : null;
+            }
+        }
+    }
+
+    public boolean registerMySchedule(int accountId, LocalDate workDate, String timeSlot) throws SQLException, ReceptionistException {
+        try (Connection connection = openConnection()) {
+            Integer receptionId = findReceptionIdByAccountId(connection, accountId);
+            if (receptionId == null) {
+                throw new ReceptionistException("Không tìm thấy thông tin lễ tân cho tài khoản này.");
+            }
+            
+            // Check if this slot already exists for this receptionist
+            String checkSql = "SELECT 1 FROM Reception_Schedule WHERE reception_id = ? AND work_date = ? AND time_slot = ?";
+            try (PreparedStatement checkStmt = connection.prepareStatement(checkSql)) {
+                checkStmt.setInt(1, receptionId);
+                checkStmt.setDate(2, Date.valueOf(workDate));
+                checkStmt.setString(3, timeSlot);
+                try (ResultSet rs = checkStmt.executeQuery()) {
+                    if (rs.next()) {
+                        throw new ReceptionistException("Lịch trực này của bạn đã được đăng ký trước đó.");
+                    }
+                }
+            }
+            
+            // Insert the schedule
+            String insertSql = "INSERT INTO Reception_Schedule (reception_id, work_date, time_slot, status) VALUES (?, ?, ?, 'Active')";
+            try (PreparedStatement insertStmt = connection.prepareStatement(insertSql)) {
+                insertStmt.setInt(1, receptionId);
+                insertStmt.setDate(2, Date.valueOf(workDate));
+                insertStmt.setString(3, timeSlot);
+                return insertStmt.executeUpdate() > 0;
+            }
+        }
     }
 
     private void rollback(Connection connection) {

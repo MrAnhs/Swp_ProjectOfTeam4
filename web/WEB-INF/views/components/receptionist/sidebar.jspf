@@ -37,6 +37,9 @@
         <a class="nav-link ${currentPage == 'billing' ? 'active' : ''}" href="${pageContext.request.contextPath}/receptionist/billing">
             <i class="bi bi-receipt"></i><span>Hóa đơn</span>
         </a>
+        <a class="nav-link ${currentPage == 'schedule' ? 'active' : ''}" href="${pageContext.request.contextPath}/receptionist/schedule">
+            <i class="bi bi-calendar-check"></i><span>Lịch Trực</span>
+        </a>
         <a class="nav-link ${currentPage == 'settings' ? 'active' : ''}" href="${pageContext.request.contextPath}/settings">
             <i class="bi bi-gear"></i><span>Cài đặt</span>
         </a>

@@ -1,4 +1,4 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -61,7 +61,8 @@
         </section>
     </main>
 
-    <script defer src="${pageContext.request.contextPath}/assets/js/pages/patient/notifications.js?v=20260721-ui2"></script>
+<script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/app-config.js?v=20260710-patient-fontfix-all2"></script>
+<script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/api-client.js?v=20260710-patient-fontfix-all2"></script>
+<script defer src="${pageContext.request.contextPath}/assets/js/pages/patient/notifications.js?v=20260721-ui2"></script>
 </body>
 </html>
-

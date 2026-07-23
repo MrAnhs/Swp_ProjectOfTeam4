@@ -10,7 +10,7 @@
     <title>Quản lý hóa đơn</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="${pageContext.request.contextPath}/assets/css/pages/receptionist/receptionist.css" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/css/pages/receptionist/receptionist.css?v=20260720-details" rel="stylesheet">
 </head>
 <body class="receptionist-page">
 <div class="receptionist-shell">
@@ -76,6 +76,6 @@
     };
 </script>
 <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/receptionist/receptionist-utils.js?v=20260709-fontfix2"></script>
-<script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/receptionist/billing-management.js?v=20260709-fontfix2"></script>
+<script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/receptionist/billing-management.js?v=20260720-details"></script>
 </body>
 </html>

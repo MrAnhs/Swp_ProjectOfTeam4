@@ -1,10 +1,45 @@
-/dist/
-
-# Build output - không commit compiled files
-/build/
-
-# Java compiled classes
+# Compiled class files
 *.class
-*.war
+
+# Log files
+*.log
+
+# Build and Dist directories
+build/
+dist/
+nbbuild/
+nbdist/
+out/
+bin/
+
+# NetBeans private configurations
+nbproject/private/
+.nb-gradle/
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Eclipse
+.metadata/
+.settings/
+.classpath
+.project
+.factorypath
+
+# VS Code and Windsurf IDEs
+.vscode/
+.windsurf/
+
+# Operating System Files
 .DS_Store
 Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Temporary files
+*.tmp
+*.bak
+*.swp

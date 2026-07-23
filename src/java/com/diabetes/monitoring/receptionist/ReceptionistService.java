@@ -65,7 +65,8 @@ public class ReceptionistService {
         }
         request.gender = normalizeGender(params.get("patientGender"));
         request.address = trim(params.get("patientAddress"));
-        return dao.createPatient(request);
+        Map<String, Object> patient = dao.createPatient(request);
+        return patient;
     }
 
     public Map<String, Object> registerAppointment(Map<String, String> params)
@@ -103,6 +104,10 @@ public class ReceptionistService {
         return dao.findInvoicesByStatus(normalized, invoiceType);
     }
 
+    public List<Map<String, Object>> getInvoiceDetails(int invoiceId) throws SQLException {
+        return dao.findInvoiceDetails(invoiceId);
+    }
+
     public int payInvoice(String keyword, String paymentMethod, int receptionistAccountId)
             throws SQLException, ReceptionistException {
         if (!PAYMENT_METHODS.contains(paymentMethod)) {
@@ -110,6 +115,15 @@ public class ReceptionistService {
         }
         return dao.payPendingInvoice(trim(keyword), paymentMethod, receptionistAccountId);
     }
+
+    public int payInvoiceById(int invoiceId, String paymentMethod, int receptionistAccountId)
+            throws SQLException, ReceptionistException {
+        if (!PAYMENT_METHODS.contains(paymentMethod)) {
+            throw new ReceptionistException("Phương thức thanh toán không hợp lệ.");
+        }
+        return dao.payPendingInvoiceById(invoiceId, paymentMethod, receptionistAccountId);
+    }
+
 
     public List<Map<String, Object>> getTodayQueue(String status)
             throws SQLException, ReceptionistException {
@@ -166,6 +180,36 @@ public class ReceptionistService {
         }
     }
 
+    public List<Map<String, Object>> getMySchedule(int accountId, String fromDate, String toDate)
+            throws SQLException, ReceptionistException {
+        LocalDate start = parseDate(fromDate);
+        LocalDate end = parseDate(toDate);
+        if (end.isBefore(start)) {
+            throw new ReceptionistException("Khoảng thời gian không hợp lệ.");
+        }
+        return dao.findMySchedule(accountId, start, end);
+    }
+
+    public void registerMySchedule(int accountId, String dateStr, String timeSlot) throws SQLException, ReceptionistException {
+        if (dateStr == null || dateStr.isBlank()) {
+            throw new ReceptionistException("Vui lòng chọn ngày trực.");
+        }
+        LocalDate workDate;
+        try {
+            workDate = LocalDate.parse(dateStr.trim());
+        } catch (DateTimeParseException e) {
+            throw new ReceptionistException("Ngày trực không đúng định dạng YYYY-MM-DD.");
+        }
+        if (workDate.isBefore(LocalDate.now())) {
+            throw new ReceptionistException("Không thể đăng ký lịch trực trong quá khứ.");
+        }
+        String slot = trim(timeSlot);
+        if (slot.isEmpty()) {
+            throw new ReceptionistException("Vui lòng chọn ca trực.");
+        }
+        dao.registerMySchedule(accountId, workDate, slot);
+    }
+
     private String require(Map<String, String> params, String key, String message)
             throws ReceptionistException {
         String value = trim(params.get(key));
@@ -184,6 +228,10 @@ public class ReceptionistService {
         } catch (NumberFormatException ignored) {
         }
         throw new ReceptionistException(message);
+    }
+
+    public List<Map<String, Object>> getUpcomingRevisits(LocalDate date) throws SQLException {
+        return dao.findUpcomingRevisits(date);
     }
 
     private int parseOptionalPositiveInt(String value) {

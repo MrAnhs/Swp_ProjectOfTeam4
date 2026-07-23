@@ -32,6 +32,25 @@ public class ReceptionistApiServlet extends HttpServlet {
                 write(response, successObject(service.searchPatient(keyword)));
                 return;
             }
+            if ("/patients/revisit".equals(path)) {
+                String dateStr = request.getParameter("date");
+                System.out.println("DEBUG Revisit API - dateStr received: '" + dateStr + "'");
+                java.time.LocalDate date = java.time.LocalDate.now();
+                if (dateStr != null && !dateStr.isBlank()) {
+                    try {
+                        date = java.time.LocalDate.parse(dateStr.trim());
+                        System.out.println("DEBUG Revisit API - parsed date: " + date);
+                    } catch (java.time.format.DateTimeParseException e) {
+                        System.out.println("DEBUG Revisit API - failed to parse: " + e.getMessage());
+                    }
+                } else {
+                    System.out.println("DEBUG Revisit API - dateStr is null or blank, using today: " + date);
+                }
+                List<Map<String, Object>> patients = service.getUpcomingRevisits(date);
+                System.out.println("DEBUG Revisit API - number of patients found: " + (patients == null ? 0 : patients.size()));
+                write(response, "{\"success\":true,\"patients\":" + toJson(patients) + "}");
+                return;
+            }
             if ("/doctors".equals(path)) {
                 write(response, "{\"success\":true,\"doctors\":" + toJson(service.getDoctors()) + "}");
                 return;
@@ -50,6 +69,12 @@ public class ReceptionistApiServlet extends HttpServlet {
                 write(response, "{\"success\":true,\"invoices\":" + toJson(invoices) + "}");
                 return;
             }
+            if ("/invoices/details".equals(path)) {
+                int invoiceId = parseInt(request.getParameter("invoiceId"));
+                List<Map<String, Object>> details = service.getInvoiceDetails(invoiceId);
+                write(response, "{\"success\":true,\"details\":" + toJson(details) + "}");
+                return;
+            }
             if ("/queue".equals(path)) {
                 List<Map<String, Object>> items = service.getTodayQueue(request.getParameter("status"));
                 write(response, "{\"success\":true,\"items\":" + toJson(items) + "}");
@@ -66,6 +91,11 @@ public class ReceptionistApiServlet extends HttpServlet {
             if ("/queue".equals(path)) {
                 List<Map<String, Object>> items = service.getTodayQueue(request.getParameter("status"));
                 write(response, "{\"success\":true,\"items\":" + toJson(items) + "}");
+                return;
+            }
+            if ("/my-schedule".equals(path)) {
+                User currentUser = currentUser(request);
+                write(response, "{\"success\":true,\"items\":" + toJson(service.getMySchedule(currentUser.getId(), request.getParameter("fromDate"), request.getParameter("toDate"))) + "}");
                 return;
             }
             writeError(response, HttpServletResponse.SC_NOT_FOUND, "API không tồn tại.");
@@ -87,14 +117,38 @@ public class ReceptionistApiServlet extends HttpServlet {
                 write(response, "{\"success\":true,\"patient\":" + toJson(service.createPatient(params(request))) + "}");
                 return;
             }
+            if ("/patients/send-email".equals(path)) {
+                Map<String, String> parameters = params(request);
+                String email = parameters.get("email");
+                String fullName = parameters.get("fullName");
+                String temporaryPassword = parameters.get("temporaryPassword");
+                if (email == null || email.trim().isEmpty() || fullName == null || fullName.trim().isEmpty() || temporaryPassword == null || temporaryPassword.trim().isEmpty()) {
+                    writeError(response, HttpServletResponse.SC_BAD_REQUEST, "Thiếu thông tin gửi email.");
+                    return;
+                }
+                try {
+                    com.diabetes.monitoring.util.EmailUtil.sendAccountDetails(email, fullName, temporaryPassword);
+                    write(response, "{\"success\":true,\"message\":\"Email đã được gửi thành công.\"}");
+                } catch (jakarta.mail.MessagingException e) {
+                    writeError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Không thể gửi email: " + e.getMessage());
+                }
+                return;
+            }
             if ("/appointments".equals(path)) {
                 write(response, successObject(service.registerAppointment(params(request))));
                 return;
             }
             if ("/invoices/pay".equals(path)) {
                 User currentUser = currentUser(request);
-                int invoiceId = service.payInvoice(request.getParameter("patientKeyword"),
-                        request.getParameter("paymentMethod"), currentUser.getId());
+                String invoiceIdStr = request.getParameter("invoiceId");
+                int invoiceId;
+                if (invoiceIdStr != null && !invoiceIdStr.trim().isEmpty()) {
+                    invoiceId = service.payInvoiceById(parseInt(invoiceIdStr),
+                            request.getParameter("paymentMethod"), currentUser.getId());
+                } else {
+                    invoiceId = service.payInvoice(request.getParameter("patientKeyword"),
+                            request.getParameter("paymentMethod"), currentUser.getId());
+                }
                 write(response, "{\"success\":true,\"message\":\"Thanh toán thành công.\",\"invoiceId\":"
                         + invoiceId + "}");
                 return;
@@ -112,6 +166,14 @@ public class ReceptionistApiServlet extends HttpServlet {
             if ("/queue/cancel".equals(path)) {
                 service.cancelAppointment(request.getParameter("appointmentId"));
                 write(response, "{\"success\":true,\"message\":\"Đã hủy lịch hẹn thành công.\"}");
+                return;
+            }
+            if ("/my-schedule/register".equals(path)) {
+                User currentUser = currentUser(request);
+                String workDate = request.getParameter("workDate");
+                String timeSlot = request.getParameter("timeSlot");
+                service.registerMySchedule(currentUser.getId(), workDate, timeSlot);
+                write(response, "{\"success\":true,\"message\":\"Đăng ký lịch trực thành công.\"}");
                 return;
             }
             writeError(response, HttpServletResponse.SC_NOT_FOUND, "API không tồn tại.");
