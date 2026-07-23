@@ -14,8 +14,10 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -190,7 +192,7 @@ public class AdminAiSchedulingRepository {
             connection.setAutoCommit(false);
             try {
                 List<String> activeRooms = getActiveDoctorRooms(connection);
-                Map<String, Integer> roomAssignedCount = new HashMap<>();
+                Set<String> usedRoomSlotKeys = new HashSet<>();
                 Map<String, Integer> previousDoctorByDate = new HashMap<>();
                 Map<String, Integer> dailyShiftCount = new HashMap<>();
                 for (Map<String, Object> assignment : assignments) {
@@ -244,10 +246,24 @@ public class AdminAiSchedulingRepository {
                         }
                     }
 
-                    String dateSlotKey = workDate + "_" + timeSlot;
-                    int roomIdx = roomAssignedCount.getOrDefault(dateSlotKey, 0);
-                    String roomId = activeRooms.get(roomIdx % activeRooms.size());
-                    roomAssignedCount.put(dateSlotKey, roomIdx + 1);
+                    String assignedRoomId = null;
+                    for (String candidate : activeRooms) {
+                        String slotRoomKey = workDate + "_" + timeSlot + "_" + candidate;
+                        if (usedRoomSlotKeys.contains(slotRoomKey)) {
+                            continue;
+                        }
+                        if (roomRepository.hasRoomOverlap(connection, candidate, workDate, timeSlot, null, null)) {
+                            continue;
+                        }
+                        assignedRoomId = candidate;
+                        usedRoomSlotKeys.add(slotRoomKey);
+                        break;
+                    }
+
+                    if (assignedRoomId == null) {
+                        throw new SQLException("Không đủ phòng khám khả dụng cho ca trực " + timeSlot + " ngày " + workDate + ". Quy định: Mỗi phòng chỉ chứa tối đa 1 bác sĩ / 1 ca.");
+                    }
+                    String roomId = assignedRoomId;
 
                     try (PreparedStatement insert = connection.prepareStatement(
                             insertSql, java.sql.Statement.RETURN_GENERATED_KEYS)) {
@@ -959,7 +975,7 @@ public class AdminAiSchedulingRepository {
         try (Connection connection = DatabaseConnection.getConnection()) {
             connection.setAutoCommit(false);
             try {
-                Map<String, Integer> roomAssignedCount = new HashMap<>();
+                Set<String> usedRoomSlotKeysInSave = new HashSet<>();
                 for (Map<String, Object> item : list) {
                     int doctorId = ((Number) item.get("doctorId")).intValue();
                     Date workDate = Date.valueOf(String.valueOf(item.get("workDate")));
@@ -969,24 +985,6 @@ public class AdminAiSchedulingRepository {
                     }
                     int maxPatients = ((Number) item.get("maxPatients")).intValue();
                     String roomId = (String) item.get("roomId");
-
-                    if (roomId == null || roomId.trim().isEmpty()) {
-                        List<String> activeDoctorRooms = getActiveDoctorRooms(connection);
-                        String dateSlotKey = workDate + "_" + timeSlot;
-                        int roomIdx = roomAssignedCount.getOrDefault(dateSlotKey, 0);
-                        for (int k = 0; k < activeDoctorRooms.size(); k++) {
-                            String candidate = activeDoctorRooms.get((roomIdx + k) % activeDoctorRooms.size());
-                            if (!roomRepository.hasRoomOverlap(connection, candidate, workDate, timeSlot, null, null)) {
-                                roomId = candidate;
-                                roomAssignedCount.put(dateSlotKey, roomIdx + k + 1);
-                                break;
-                            }
-                        }
-                        if (roomId == null || roomId.trim().isEmpty()) {
-                            roomId = activeDoctorRooms.isEmpty() ? "R102" : activeDoctorRooms.get(roomIdx % activeDoctorRooms.size());
-                            roomAssignedCount.put(dateSlotKey, roomIdx + 1);
-                        }
-                    }
 
                     // 1. Kiểm tra ca trực cũ đã tồn tại chưa (chuẩn hóa khoảng trắng trong time_slot)
                     String checkExistSql = "SELECT schedule_id FROM Doctor_Schedule WHERE doctor_id = ? AND work_date = ? AND REPLACE(time_slot, ' ', '') = REPLACE(?, ' ', '') AND status <> 'Cancelled'";
@@ -998,6 +996,31 @@ public class AdminAiSchedulingRepository {
                         try (ResultSet rs = checkExist.executeQuery()) {
                             if (rs.next()) {
                                 oldScheduleId = rs.getInt("schedule_id");
+                            }
+                        }
+                    }
+
+                    boolean isValidRoom = false;
+                    if (roomId != null && !roomId.trim().isEmpty()) {
+                        String key = workDate + "_" + timeSlot + "_" + roomId.trim();
+                        if (!usedRoomSlotKeysInSave.contains(key) 
+                            && !roomRepository.hasRoomOverlap(connection, roomId.trim(), workDate, timeSlot, oldScheduleId, null)) {
+                            isValidRoom = true;
+                            usedRoomSlotKeysInSave.add(key);
+                            roomId = roomId.trim();
+                        }
+                    }
+
+                    if (!isValidRoom) {
+                        List<String> activeDoctorRooms = getActiveDoctorRooms(connection);
+                        for (String candidate : activeDoctorRooms) {
+                            String key = workDate + "_" + timeSlot + "_" + candidate;
+                            if (!usedRoomSlotKeysInSave.contains(key) 
+                                && !roomRepository.hasRoomOverlap(connection, candidate, workDate, timeSlot, oldScheduleId, null)) {
+                                roomId = candidate;
+                                usedRoomSlotKeysInSave.add(key);
+                                isValidRoom = true;
+                                break;
                             }
                         }
                     }
