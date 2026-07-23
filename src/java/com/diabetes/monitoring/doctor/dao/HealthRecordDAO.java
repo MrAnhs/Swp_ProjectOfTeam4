@@ -224,8 +224,14 @@ public class HealthRecordDAO {
                 + "LEFT JOIN Appointment a ON a.appointment_id = mr.appointment_id "
                 + "LEFT JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
                 + "WHERE r.doctor_id = ? AND " + workflowCondition + " "
-                + "AND (ds.work_date = CAST(GETDATE() AS DATE) "
-                + "     OR (mr.appointment_id IS NULL AND CAST(r.created_at AS DATE) = CAST(GETDATE() AS DATE))) "
+                + "AND ( "
+                + "    (ds.work_date = CAST(GETDATE() AS DATE) AND ( "
+                + "        (ds.time_slot LIKE '%07:30%' AND CAST(GETDATE() AS TIME) < '12:30:00') "
+                + "        OR "
+                + "        (ds.time_slot LIKE '%13:30%' AND CAST(GETDATE() AS TIME) >= '12:30:00') "
+                + "    )) "
+                + "    OR (mr.appointment_id IS NULL AND CAST(r.created_at AS DATE) = CAST(GETDATE() AS DATE)) "
+                + ") "
                 + "ORDER BY r.created_at ASC, r.health_record_id ASC";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
