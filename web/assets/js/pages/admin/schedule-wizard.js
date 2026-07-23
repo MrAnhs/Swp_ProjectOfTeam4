@@ -1111,20 +1111,33 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Mở modal xem thông tin ca trực chi tiết trên Calendar tuần
     function openShiftDetailModal(shift) {
-        document.getElementById('shiftDetailStaff').textContent = shift.staff || '-';
-        document.getElementById('shiftDetailRole').textContent = shift.role || '-';
-        document.getElementById('shiftDetailRoom').textContent = shift.room || 'Chưa xếp';
-        document.getElementById('shiftDetailDate').textContent = shift.date || '-';
-        document.getElementById('shiftDetailTime').textContent = `${shift.start || '08:00'} - ${shift.end || '12:00'} (${shift.timeSlot || ''})`;
-        document.getElementById('shiftDetailStatus').textContent = shift.status || 'Confirmed';
+        const staffEl = document.getElementById('shiftDetailStaff');
+        const roleEl = document.getElementById('shiftDetailRole');
+        const roomEl = document.getElementById('shiftDetailRoom');
+        const dateEl = document.getElementById('shiftDetailDate');
+        const timeEl = document.getElementById('shiftDetailTime');
+        const statusEl = document.getElementById('shiftDetailStatus');
+
+        if (staffEl) staffEl.textContent = shift.staff || '-';
+        if (roleEl) roleEl.textContent = shift.role || '-';
+        if (roomEl) roomEl.textContent = shift.room || 'Chưa xếp';
+        if (dateEl) dateEl.textContent = shift.date || '-';
+        
+        const timeText = (shift.start && shift.end) 
+            ? `${shift.start} - ${shift.end}` 
+            : (shift.timeSlot || 'Ca trực');
+        if (timeEl) timeEl.textContent = timeText;
+        if (statusEl) statusEl.textContent = shift.status || 'Đã xếp lịch';
 
         const alertEl = document.getElementById('shiftDetailConflictAlert');
         const textEl = document.getElementById('shiftDetailConflictText');
-        if (shift.conflict) {
-            alertEl.classList.remove('d-none');
-            textEl.textContent = shift.conflictMessage || 'Phát hiện ca làm việc trùng nhân sự hoặc trùng phòng!';
-        } else {
-            alertEl.classList.add('d-none');
+        if (alertEl && textEl) {
+            if (shift.conflict) {
+                alertEl.classList.remove('d-none');
+                textEl.textContent = shift.conflictMessage || 'Phát hiện ca làm việc trùng nhân sự hoặc trùng phòng!';
+            } else {
+                alertEl.classList.add('d-none');
+            }
         }
 
         const modalEl = document.getElementById('shiftDetailModal');
