@@ -188,18 +188,26 @@ public class HealthRecordDAO {
 
     public List<HealthRecord> getGeneralExaminationRecords(int doctorId) {
         return getDoctorWorkflowRecords(doctorId,
-                "r.status = 'Accepted' AND NOT EXISTS ("
+                "(r.status IS NULL OR r.status != 'Completed') AND NOT EXISTS ("
                 + "SELECT 1 FROM Invoice_Detail id "
-                + "WHERE id.health_record_id = r.health_record_id "
-                + "AND id.lab_status IS NOT NULL)");
+                + "JOIN Invoice i ON i.invoice_id = id.invoice_id "
+                + "LEFT JOIN Medical_record mr2 ON mr2.health_record_id = r.health_record_id "
+                + "WHERE (id.health_record_id = r.health_record_id "
+                + "OR (mr2.appointment_id IS NOT NULL AND id.appointment_id = mr2.appointment_id) "
+                + "OR (i.patient_id = r.patient_id)) "
+                + "AND (i.status = 'Paid' OR id.lab_status IN ('Requested', 'Processing', 'Completed')))");
     }
 
     public List<HealthRecord> getDetailedExaminationRecords(int doctorId) {
         return getDoctorWorkflowRecords(doctorId,
-                "r.status IN ('Accepted', 'AI_Processed') AND EXISTS ("
+                "(r.status IS NULL OR r.status != 'Completed') AND EXISTS ("
                 + "SELECT 1 FROM Invoice_Detail id "
-                + "WHERE id.health_record_id = r.health_record_id "
-                + "AND id.lab_status = 'Completed')");
+                + "JOIN Invoice i ON i.invoice_id = id.invoice_id "
+                + "LEFT JOIN Medical_record mr2 ON mr2.health_record_id = r.health_record_id "
+                + "WHERE (id.health_record_id = r.health_record_id "
+                + "OR (mr2.appointment_id IS NOT NULL AND id.appointment_id = mr2.appointment_id) "
+                + "OR (i.patient_id = r.patient_id)) "
+                + "AND (i.status = 'Paid' OR id.lab_status IN ('Requested', 'Processing', 'Completed')))");
     }
 
     private List<HealthRecord> getDoctorWorkflowRecords(
@@ -397,12 +405,26 @@ public class HealthRecordDAO {
     }
 
     public boolean isRecordAssignedToDoctor(int healthRecordId, int doctorId) {
-        String sql = "SELECT COUNT(*) FROM Healthy_Record WHERE health_record_id = ? AND doctor_id = ?";
+        String sql = "SELECT COUNT(*) FROM Healthy_Record r "
+                + "LEFT JOIN Medical_record mr ON mr.health_record_id = r.health_record_id "
+                + "LEFT JOIN Appointment a ON a.appointment_id = mr.appointment_id "
+                + "LEFT JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
+                + "WHERE r.health_record_id = ? AND ("
+                + "r.doctor_id = ? "
+                + "OR mr.doctor_id = ? "
+                + "OR ds.doctor_id = ? "
+                + "OR EXISTS (SELECT 1 FROM Invoice_Detail id WHERE id.doctor_id = ? AND (id.health_record_id = r.health_record_id OR id.appointment_id = mr.appointment_id)) "
+                + "OR EXISTS (SELECT 1 FROM Medical_record mr2 WHERE mr2.patient_id = r.patient_id AND mr2.doctor_id = ?)"
+                + ")";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, healthRecordId);
             ps.setInt(2, doctorId);
+            ps.setInt(3, doctorId);
+            ps.setInt(4, doctorId);
+            ps.setInt(5, doctorId);
+            ps.setInt(6, doctorId);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() && rs.getInt(1) > 0;
             }
@@ -592,14 +614,12 @@ public class HealthRecordDAO {
                     }
                 }
 
-                if (hasTable(conn, "Record_Transfer_History")) {
-                    try (PreparedStatement ps = conn.prepareStatement(historySql)) {
-                        ps.setInt(1, healthRecordId);
-                        ps.setInt(2, fromDoctorId);
-                        ps.setInt(3, toDoctorId);
-                        ps.setString(4, reason);
-                        ps.executeUpdate();
-                    }
+                try (PreparedStatement ps = conn.prepareStatement(historySql)) {
+                    ps.setInt(1, healthRecordId);
+                    ps.setInt(2, fromDoctorId);
+                    ps.setInt(3, toDoctorId);
+                    ps.setString(4, reason);
+                    ps.executeUpdate();
                 }
 
                 conn.commit();
@@ -638,17 +658,41 @@ public class HealthRecordDAO {
     }
 
     public List<TransferHistory> getTransferHistoryForDoctor(int doctorId) {
-        return new ArrayList<>();
-    }
+        List<TransferHistory> list = new ArrayList<>();
+        String sql = "SELECT h.transfer_id, h.health_record_id, h.from_doctor_id, h.to_doctor_id, "
+                + "fd.full_name AS from_doctor_name, td.full_name AS to_doctor_name, "
+                + "p.full_name AS patient_name, h.reason, h.created_at "
+                + "FROM Record_Transfer_History h "
+                + "LEFT JOIN Doctor fd ON h.from_doctor_id = fd.doctor_id "
+                + "LEFT JOIN Doctor td ON h.to_doctor_id = td.doctor_id "
+                + "LEFT JOIN Healthy_Record r ON h.health_record_id = r.health_record_id "
+                + "LEFT JOIN Patient p ON r.patient_id = p.patient_id "
+                + "WHERE h.from_doctor_id = ? OR h.to_doctor_id = ? "
+                + "ORDER BY h.created_at DESC";
 
-    private boolean hasTable(Connection connection, String tableName) throws SQLException {
-        String sql = "SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME = ?";
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, tableName);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                return resultSet.next();
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, doctorId);
+            ps.setInt(2, doctorId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    TransferHistory history = new TransferHistory();
+                    history.setTransferId(rs.getInt("transfer_id"));
+                    history.setHealthRecordId(rs.getInt("health_record_id"));
+                    history.setFromDoctorId(rs.getInt("from_doctor_id"));
+                    history.setToDoctorId(rs.getInt("to_doctor_id"));
+                    history.setFromDoctorName(rs.getString("from_doctor_name"));
+                    history.setToDoctorName(rs.getString("to_doctor_name"));
+                    history.setPatientName(rs.getString("patient_name"));
+                    history.setReason(rs.getString("reason"));
+                    history.setCreatedAt(rs.getTimestamp("created_at"));
+                    list.add(history);
+                }
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
+        return list;
     }
 
     public int getPatientIdByRecordId(int recordId) {
@@ -1388,18 +1432,18 @@ public class HealthRecordDAO {
     public LaboratoryStage getLaboratoryStage(int recordId, int doctorId) {
         String sql = "SELECT "
                 + "COUNT(*) AS request_count, "
-                + "SUM(CASE WHEN i.status = 'Paid' THEN 1 ELSE 0 END) AS paid_count, "
-                + "SUM(CASE WHEN i.status = 'Paid' AND id.lab_status = 'Completed' "
-                + "THEN 1 ELSE 0 END) AS completed_count "
+                + "SUM(CASE WHEN i.status = 'Paid' OR id.lab_status IN ('Requested', 'Processing', 'Completed') THEN 1 ELSE 0 END) AS paid_count, "
+                + "SUM(CASE WHEN id.lab_status = 'Completed' THEN 1 ELSE 0 END) AS completed_count "
                 + "FROM Invoice_Detail id "
                 + "JOIN Invoice i ON i.invoice_id = id.invoice_id "
-                + "JOIN Healthy_Record hr ON hr.health_record_id = id.health_record_id "
-                + "WHERE id.health_record_id = ? AND hr.doctor_id = ? "
+                + "LEFT JOIN Medical_record mr ON mr.health_record_id = ? "
+                + "WHERE (id.health_record_id = ? OR (mr.appointment_id IS NOT NULL AND id.appointment_id = mr.appointment_id) OR i.patient_id = (SELECT patient_id FROM Healthy_Record WHERE health_record_id = ?)) "
                 + "AND id.lab_status IS NOT NULL";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, recordId);
-            ps.setInt(2, doctorId);
+            ps.setInt(2, recordId);
+            ps.setInt(3, recordId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (!rs.next() || rs.getInt("request_count") == 0) {
                     return LaboratoryStage.NONE;

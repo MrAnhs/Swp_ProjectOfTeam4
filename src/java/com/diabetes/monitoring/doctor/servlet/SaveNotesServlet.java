@@ -94,6 +94,13 @@ public class SaveNotesServlet extends HttpServlet {
                     revisitDate
             );
 
+            try (java.sql.Connection conn = com.diabetes.monitoring.util.DatabaseConnection.getConnection()) {
+                new com.diabetes.monitoring.notification.NotificationService()
+                        .notifyMedicalRecordDiagnosisCompleted(conn, recordId);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+
             sendJson(response, HttpServletResponse.SC_OK, true, "Luu ho so thanh cong");
         } catch (NumberFormatException e) {
             sendJson(response, HttpServletResponse.SC_BAD_REQUEST, false,

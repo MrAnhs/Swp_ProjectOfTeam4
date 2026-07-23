@@ -289,6 +289,40 @@ public class NotificationService {
         create(connection, accountId, title, content, type, targetUrl, eventKey);
     }
 
+    public void notifyMedicalRecordDiagnosisCompleted(Connection connection, int recordId)
+            throws SQLException {
+        String sql = "SELECT p.account_id, mr.appointment_id, mr.revisit_date "
+                + "FROM Medical_record mr "
+                + "JOIN Patient p ON p.patient_id = mr.patient_id "
+                + "WHERE mr.record_id = ? OR mr.health_record_id = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, recordId);
+            statement.setInt(2, recordId);
+            try (ResultSet result = statement.executeQuery()) {
+                if (!result.next()) return;
+                int accountId = result.getInt("account_id");
+                int appointmentId = result.getInt("appointment_id");
+                Timestamp revisitTs = result.getTimestamp("revisit_date");
+                String target = "/patient/history/detail?id=" + appointmentId;
+
+                create(connection, accountId,
+                        "Kết quả khám bệnh",
+                        "Bác sĩ đã hoàn tất kết quả khám và chỉ số xét nghiệm của bạn.",
+                        "DIAGNOSIS_COMPLETED", target,
+                        "DIAGNOSIS_COMPLETED:" + recordId + ":" + System.currentTimeMillis());
+
+                if (revisitTs != null) {
+                    String dateStr = revisitTs.toLocalDateTime().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                    create(connection, accountId,
+                            "Lịch hẹn tái khám",
+                            "Bạn có lịch hẹn tái khám vào ngày " + dateStr + ".",
+                            "REVISIT_SCHEDULED", target,
+                            "REVISIT_SCHEDULED:" + recordId + ":" + revisitTs.getTime());
+                }
+            }
+        }
+    }
+
     private void create(Connection connection, int accountId, String title,
             String content, String type, String targetUrl, String eventKey)
             throws SQLException {
