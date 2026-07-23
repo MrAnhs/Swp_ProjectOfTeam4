@@ -109,6 +109,17 @@
                 min-height: 280px;
             }
         }
+
+        .report-detail-scroll-wrap {
+            max-height: 480px;
+            overflow-y: auto;
+        }
+        .report-detail-scroll-wrap table thead th {
+            position: sticky;
+            top: 0;
+            background-color: #f8f9fa;
+            z-index: 2;
+        }
     </style>
 </head>
 <body class="bg-light">
@@ -235,14 +246,13 @@
             </ul>
             <div class="tab-content mt-3">
                 <div class="tab-pane fade show active" id="invoicePane" role="tabpanel" aria-labelledby="invoiceTab">
-                    <div class="table-responsive">
-                        <table class="table table-hover table-sm">
+                    <div class="table-responsive report-detail-scroll-wrap">
+                        <table class="table table-hover table-sm align-middle mb-0">
                             <thead class="table-light">
                             <tr>
                                 <th>ID Hóa đơn</th>
                                 <th>Bệnh nhân</th>
                                 <th class="text-end">Tổng tiền</th>
-                                <th class="text-end">Khấu trừ BHYT</th>
                                 <th class="text-end">Tiền thanh toán</th>
                                 <th>Ngày thanh toán</th>
                                 <th>Hành động</th>
@@ -256,7 +266,6 @@
                                             <td><c:out value="${item.invoiceId}" /></td>
                                             <td><c:out value="${item.patientName}" /></td>
                                             <td class="text-end"><fmt:formatNumber value="${item.totalAmount}" type="number" maxFractionDigits="0" groupingUsed="true" /> VNĐ</td>
-                                            <td class="text-end"><fmt:formatNumber value="${item.bhytDeduction}" type="number" maxFractionDigits="0" groupingUsed="true" /> VNĐ</td>
                                             <td class="text-end fw-semibold"><fmt:formatNumber value="${item.finalAmount}" type="number" maxFractionDigits="0" groupingUsed="true" /> VNĐ</td>
                                             <td><c:out value="${item.paymentDate}" /></td>
                                             <td><button class="btn btn-sm btn-outline-primary" onclick="viewInvoiceDetail('${item.invoiceId}')">Xem chi tiết</button></td>
@@ -264,7 +273,7 @@
                                     </c:forEach>
                                 </c:when>
                                 <c:otherwise>
-                                    <tr><td colspan="7" class="text-center text-muted py-3">Không có dữ liệu</td></tr>
+                                    <tr><td colspan="6" class="text-center text-muted py-3">Không có dữ liệu</td></tr>
                                 </c:otherwise>
                             </c:choose>
                             </tbody>
@@ -272,8 +281,8 @@
                     </div>
                 </div>
                 <div class="tab-pane fade" id="appointmentPane" role="tabpanel" aria-labelledby="appointmentTab">
-                    <div class="table-responsive">
-                        <table class="table table-hover table-sm">
+                    <div class="table-responsive report-detail-scroll-wrap">
+                        <table class="table table-hover table-sm align-middle mb-0">
                             <thead class="table-light">
                             <tr>
                                 <th>Mã lượt khám</th>
@@ -367,7 +376,7 @@
     window.AdminConfig.initialInvoices = ${empty initialInvoicesJson ? '[]' : initialInvoicesJson};
     window.AdminConfig.initialAppointments = ${empty initialAppointmentsJson ? '[]' : initialAppointmentsJson};
 </script>
-<script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/admin/reports.js?v=20260723-v3"></script>
+<script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/admin/reports.js?v=20260723-v4"></script>
 </body>
 </html>
 

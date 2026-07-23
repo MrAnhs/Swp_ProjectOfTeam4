@@ -258,7 +258,7 @@ let revenueChart = null;
         tbody.innerHTML = '';
 
         if (!invoices || invoices.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-3">Kh\u00F4ng c\u00F3 d\u1EEF li\u1EC7u</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">Kh\u00F4ng c\u00F3 d\u1EEF li\u1EC7u</td></tr>';
             return;
         }
 
@@ -269,7 +269,6 @@ let revenueChart = null;
             html += '<td>' + escapeHtml(item.invoiceId) + '</td>';
             html += '<td>' + escapeHtml(item.patientName) + '</td>';
             html += '<td class="text-end">' + formatCurrency(item.totalAmount) + '</td>';
-            html += '<td class="text-end">' + formatCurrency(item.bhytDeduction) + '</td>';
             html += '<td class="text-end fw-semibold">' + formatCurrency(item.finalAmount) + '</td>';
             html += '<td>' + escapeHtml(item.paymentDate) + '</td>';
             html += '<td><button class="btn btn-sm btn-outline-primary" onclick="viewInvoiceDetail(\'' + safeInvoiceId + '\')">Xem chi ti\u1EBFt</button></td>';
