@@ -3011,18 +3011,22 @@ public class AdminRepository {
                 ? "FORMAT(ap.appointment_time, 'yyyy-MM-dd') = ?"
                 : "FORMAT(ap.appointment_time, 'yyyy-MM') = ?";
 
+        boolean hasDirectDoctorId = hasColumn("Appointment", "doctor_id");
+        String directDocSelect = hasDirectDoctorId ? "d_direct.full_name" : "NULL";
+        String directDocJoin = hasDirectDoctorId ? "LEFT JOIN Doctor d_direct ON d_direct.doctor_id = ap.doctor_id " : "";
+
         String appointmentSql = "SELECT ap.appointment_id, "
                 + "p.full_name AS patient_name, "
-                + "COALESCE(d_direct.full_name, d_schedule.full_name, N'Chưa phân bác sĩ') AS doctor_name, "
+                + "COALESCE(" + directDocSelect + ", d_schedule.full_name, N'Chưa phân bác sĩ') AS doctor_name, "
                 + "COALESCE(ds.time_slot, FORMAT(ap.appointment_time, 'HH:mm')) AS time_slot, "
                 + "ap.status AS appointment_status, "
                 + "FORMAT(ap.appointment_time, 'yyyy-MM-dd') AS appointment_date "
                 + "FROM Appointment ap "
                 + "JOIN Patient p ON p.patient_id = ap.patient_id "
-                + "LEFT JOIN Doctor d_direct ON d_direct.doctor_id = ap.doctor_id "
+                + directDocJoin
                 + "LEFT JOIN Doctor_Schedule ds ON ds.schedule_id = ap.schedule_id "
                 + "LEFT JOIN Doctor d_schedule ON d_schedule.doctor_id = ds.doctor_id "
-            + "WHERE LOWER(ap.status) IN ('completed', 'absent') AND " + periodFilter + " "
+                + "WHERE " + periodFilter + " "
                 + "ORDER BY ap.appointment_time DESC";
 
         try (Connection connection = DatabaseConnection.getConnection(); PreparedStatement statement = connection.prepareStatement(appointmentSql)) {
