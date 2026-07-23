@@ -139,7 +139,8 @@
         const allCards = document.querySelectorAll('.doctor-booking-card');
         let visibleCount = 0;
         allCards.forEach(function (card) {
-            if (card.style.display !== 'none') {
+            const parentCol = card.closest('.col-md-6');
+            if (parentCol && !parentCol.classList.contains('d-none')) {
                 visibleCount++;
             }
         });
