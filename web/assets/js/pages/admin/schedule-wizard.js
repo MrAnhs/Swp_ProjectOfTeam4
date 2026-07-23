@@ -1457,6 +1457,60 @@ safeOnReady(function () {
         });
     });
 
+    function bindManualShiftModalEvents() {
+        const doctorSelect = document.getElementById('createScheduleDoctorId');
+        const roomSelect = document.getElementById('createScheduleRoomId');
+        if (doctorSelect && roomSelect) {
+            doctorSelect.addEventListener('change', function () {
+                const opt = doctorSelect.options[doctorSelect.selectedIndex];
+                if (!opt) return;
+                const dept = (opt.getAttribute('data-department') || opt.text || '').toLowerCase();
+                for (let i = 0; i < roomSelect.options.length; i++) {
+                    const roomOpt = roomSelect.options[i];
+                    const roomText = roomOpt.text.toLowerCase();
+                    if ((dept.includes('nội tiết') || dept.includes('endocrin')) && (roomText.includes('nội tiết') || roomText.includes('endocrin'))) {
+                        roomSelect.selectedIndex = i; break;
+                    } else if ((dept.includes('tim mạch') || dept.includes('cardio')) && (roomText.includes('tim mạch') || roomText.includes('cardio'))) {
+                        roomSelect.selectedIndex = i; break;
+                    } else if ((dept.includes('thận') || dept.includes('nephro')) && (roomText.includes('thận') || roomText.includes('nephro'))) {
+                        roomSelect.selectedIndex = i; break;
+                    } else if ((dept.includes('da liễu') || dept.includes('dermatol')) && (roomText.includes('da liễu') || roomText.includes('dermatol'))) {
+                        roomSelect.selectedIndex = i; break;
+                    } else if ((dept.includes('tổng quát') || dept.includes('general')) && (roomText.includes('tổng quát') || roomText.includes('general'))) {
+                        roomSelect.selectedIndex = i; break;
+                    }
+                }
+            });
+        }
+
+        const labTimeSelect = document.getElementById('createLabTimeSlotSelect');
+        const labStartInput = document.getElementById('createLabStartTime');
+        const labEndInput = document.getElementById('createLabEndTime');
+        if (labTimeSelect && labStartInput && labEndInput) {
+            labTimeSelect.addEventListener('change', function () {
+                const val = labTimeSelect.value || '07:00-11:30';
+                const parts = val.split('-');
+                if (parts.length === 2) {
+                    labStartInput.value = parts[0].trim();
+                    labEndInput.value = parts[1].trim();
+                }
+            });
+        }
+
+        ['createScheduleModal', 'createReceptionistScheduleModal', 'createLabScheduleModal'].forEach(modalId => {
+            const modalEl = document.getElementById(modalId);
+            if (modalEl) {
+                modalEl.addEventListener('show.bs.modal', function () {
+                    const dateInput = modalEl.querySelector('input[type="date"][name="workDate"]');
+                    if (dateInput && (!dateInput.value || dateInput.value.trim() === '')) {
+                        dateInput.value = formatDateIso(new Date());
+                    }
+                });
+            }
+        });
+    }
+    bindManualShiftModalEvents();
+
     // Tải lịch ngay khi DOM ready
     loadWeeklyCalendar();
 });

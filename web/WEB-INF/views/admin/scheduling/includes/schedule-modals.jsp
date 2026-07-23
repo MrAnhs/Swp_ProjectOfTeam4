@@ -48,110 +48,106 @@
     </c:if>
 
     <div class="modal fade" id="createScheduleModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form method="post" action="${pageContext.request.contextPath}/admin">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+                <form method="post" action="${pageContext.request.contextPath}/admin" id="createScheduleForm">
                     <input type="hidden" name="action" value="createSchedule">
                     <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Tạo ca bác sĩ</h5>
+                    <div class="modal-header border-bottom-0 pb-0">
+                        <h5 class="modal-title fw-bold text-teal"><i class="fa-solid fa-user-doctor me-2"></i>Tạo ca bác sĩ khám</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <div class="mb-3">
-                            <label class="form-label">Bác sĩ</label>
-                            <select class="form-select" name="doctorId" id="createScheduleDoctorId" required>
-                                <option value="">-- Chọn bác sĩ --</option>
-                                <c:forEach var="d" items="${doctors}">
-                                    <option value="${d.doctorId}" data-department="${d.department}">${d.fullName}
-                                        (${d.department})</option>
-                                </c:forEach>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Phòng trực</label>
-                            <select class="form-select" name="roomId" id="createScheduleRoomId" required>
-                                <option value="">-- Chọn phòng --</option>
-                                <c:forEach var="room" items="${rooms}">
-                                    <option value="${room.roomId}">${room.roomNumber} - ${room.roomName}</option>
-                                </c:forEach>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Ngày trực</label>
-                            <input type="date" class="form-control" name="workDate" required>
-                            <div class="mt-1 d-flex justify-content-between align-items-center">
-                                <a href="#" id="aiSuggestTimeBtn"
-                                    class="text-purple fw-bold small text-decoration-none d-none"
-                                    style="color: #7c3aed; cursor: pointer;">
-                                    <i class="bi bi-cpu me-1"></i>Xem giờ gợi ý của AI
-                                </a>
-                                <span id="aiSuggestionFeedback" class="small text-muted"></span>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-secondary">Bác sĩ khám</label>
+                                <select class="form-select" name="doctorId" id="createScheduleDoctorId" required>
+                                    <option value="">-- Chọn bác sĩ --</option>
+                                    <c:forEach var="d" items="${doctors}">
+                                        <option value="${d.doctorId}" data-department="${d.department}">${d.fullName} (${d.department})</option>
+                                    </c:forEach>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-secondary">Ngày trực</label>
+                                <input type="date" class="form-control" name="workDate" id="createScheduleWorkDate" value="${modalTodayIso}" min="${modalTodayIso}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-secondary">Phòng khám trực</label>
+                                <select class="form-select" name="roomId" id="createScheduleRoomId" required>
+                                    <option value="">-- Chọn phòng khám --</option>
+                                    <c:forEach var="room" items="${rooms}">
+                                        <option value="${room.roomId}" data-room-name="${room.roomName}">${room.roomNumber} - ${room.roomName}</option>
+                                    </c:forEach>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-secondary">Khung ca trực</label>
+                                <select class="form-select" name="timeSlot" id="createScheduleTimeSlot" required>
+                                    <option value="07:00-11:30" selected>Ca sáng (07:00 - 11:30)</option>
+                                    <option value="13:30-17:30">Ca chiều (13:30 - 17:30)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-secondary">Số bệnh nhân tối đa</label>
+                                <input type="number" class="form-control" name="maxPatients" value="20" min="1" max="50" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-secondary">Suất đăng ký Online</label>
+                                <input type="number" class="form-control" name="onlineQuota" value="10" min="0" placeholder="10">
                             </div>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Khung giờ</label>
-                            <input class="form-control" name="timeSlot" placeholder="07:00-09:00" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Số bệnh nhân tối đa</label>
-                            <input type="number" class="form-control" name="maxPatients" min="1" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Suất online</label>
-                            <input type="number" class="form-control" name="onlineQuota" min="0"
-                                placeholder="Tự động nếu bỏ trống">
-                            <div class="form-text">Nếu để trống, hệ thống sẽ tự dùng cấu hình an toàn mặc định.</div>
-                        </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn btn-primary">Lưu lịch trực</button>
+                    <div class="modal-footer border-top-0 pt-0">
+                        <button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal">Hủy bỏ</button>
+                        <button type="submit" class="btn btn-teal text-white fw-bold px-4"><i class="fa-solid fa-check me-1"></i>Lưu ca trực</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-
-
     <div class="modal fade" id="createReceptionistScheduleModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content">
-                <form method="post" action="${pageContext.request.contextPath}/admin">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Tạo ca lễ tân</h5>
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+                <form method="post" action="${pageContext.request.contextPath}/admin" id="createReceptionistForm">
+                    <input type="hidden" name="action" value="create-staff-schedule">
+                    <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
+                    <input type="hidden" name="staffType" value="Receptionist">
+                    <input type="hidden" name="department" value="Tiếp nhận">
+                    <input type="hidden" name="workArea" value="">
+                    <input type="hidden" name="maxWorkload" value="50">
+                    <div class="modal-header border-bottom-0 pb-0">
+                        <h5 class="modal-title fw-bold text-primary"><i class="fa-solid fa-headset me-2"></i>Tạo ca lễ tân</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <input type="hidden" name="action" value="create-staff-schedule">
-                        <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
-                        <input type="hidden" name="staffType" value="Receptionist">
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label class="form-label">Lễ tân</label>
+                                <label class="form-label small fw-semibold text-secondary">Nhân viên lễ tân</label>
                                 <select class="form-select" name="accountId" required>
+                                    <option value="">-- Chọn lễ tân --</option>
                                     <c:forEach var="staff" items="${receptionists}">
                                         <option value="${staff.accountId}">${staff.fullName}</option>
                                     </c:forEach>
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Ngày trực</label>
-                                <input type="date" class="form-control" name="workDate" required>
+                                <label class="form-label small fw-semibold text-secondary">Ngày trực</label>
+                                <input type="date" class="form-control" name="workDate" id="createReceptionistWorkDate" value="${modalTodayIso}" min="${modalTodayIso}" required>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Khung giờ</label>
-                                <input class="form-control" name="timeSlot" placeholder="07:00-11:00" required>
+                            <div class="col-md-12">
+                                <label class="form-label small fw-semibold text-secondary">Khung ca trực</label>
+                                <select class="form-select" name="timeSlot" id="createReceptionistTimeSlot" required>
+                                    <option value="07:00-11:30" selected>Ca sáng (07:00 - 11:30)</option>
+                                    <option value="13:30-17:30">Ca chiều (13:30 - 17:30)</option>
+                                </select>
                             </div>
-                            <input type="hidden" name="department" value="Tiếp nhận">
-                            <input type="hidden" name="workArea" value="">
-                            <input type="hidden" name="maxWorkload" value="50">
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn btn-primary">Lưu ca lễ tân</button>
+                    <div class="modal-footer border-top-0 pt-0">
+                        <button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal">Hủy bỏ</button>
+                        <button type="submit" class="btn btn-primary fw-bold px-4"><i class="fa-solid fa-check me-1"></i>Lưu ca lễ tân</button>
                     </div>
                 </form>
             </div>
@@ -159,59 +155,57 @@
     </div>
 
     <div class="modal fade" id="createLabScheduleModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content">
-                <form method="post" action="${pageContext.request.contextPath}/admin">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Tạo ca bác sĩ xét nghiệm</h5>
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+                <form method="post" action="${pageContext.request.contextPath}/admin" id="createLabScheduleForm">
+                    <input type="hidden" name="action" value="create-staff-schedule">
+                    <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
+                    <input type="hidden" name="staffType" value="doctor_lab">
+                    <input type="hidden" name="department" value="Xét nghiệm">
+                    <input type="hidden" name="workArea" value="">
+                    <input type="hidden" name="maxWorkload" value="50">
+                    <input type="hidden" name="startTime" id="createLabStartTime" value="07:00">
+                    <input type="hidden" name="endTime" id="createLabEndTime" value="11:30">
+                    <div class="modal-header border-bottom-0 pb-0">
+                        <h5 class="modal-title fw-bold text-warning"><i class="fa-solid fa-flask-vial me-2"></i>Tạo ca bác sĩ xét nghiệm</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <input type="hidden" name="action" value="create-staff-schedule">
-                        <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
-                        <input type="hidden" name="staffType" value="doctor_lab">
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label class="form-label">Bác sĩ xét nghiệm</label>
+                                <label class="form-label small fw-semibold text-secondary">Bác sĩ xét nghiệm</label>
                                 <select class="form-select" name="accountId" required>
+                                    <option value="">-- Chọn bác sĩ xét nghiệm --</option>
                                     <c:forEach var="staff" items="${labDoctors}">
                                         <option value="${staff.accountId}">${staff.fullName}</option>
                                     </c:forEach>
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Ngày trực</label>
-                                <input type="date" class="form-control" name="workDate" required>
-                            </div>
-                            <input type="hidden" name="timeSlot" data-lab-time-slot>
-                            <input type="hidden" name="workArea" value="">
-                            <div class="col-md-6">
-                                <label class="form-label">Giờ bắt đầu</label>
-                                <input type="time" class="form-control" name="startTime" required>
-                                <div class="invalid-feedback">Vui lòng chọn giờ bắt đầu.</div>
+                                <label class="form-label small fw-semibold text-secondary">Ngày trực</label>
+                                <input type="date" class="form-control" name="workDate" id="createLabWorkDate" value="${modalTodayIso}" min="${modalTodayIso}" required>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Giờ kết thúc</label>
-                                <input type="time" class="form-control" name="endTime" required>
-                                <div class="invalid-feedback">Giờ kết thúc phải sau giờ bắt đầu.</div>
-                            </div>
-                            <div class="col-md-12">
-                                <label class="form-label">Phòng xét nghiệm</label>
+                                <label class="form-label small fw-semibold text-secondary">Phòng xét nghiệm</label>
                                 <select class="form-select" name="roomId" required>
                                     <option value="">-- Chọn phòng xét nghiệm --</option>
                                     <c:forEach var="room" items="${labRooms}">
                                         <option value="${room.roomId}">${room.roomNumber} - ${room.roomName}</option>
                                     </c:forEach>
                                 </select>
-                                <div class="invalid-feedback">Vui lòng chọn phòng xét nghiệm.</div>
                             </div>
-                            <input type="hidden" name="department" value="Xét nghiệm">
-                            <input type="hidden" name="maxWorkload" value="50">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-secondary">Khung ca trực</label>
+                                <select class="form-select" name="timeSlot" id="createLabTimeSlotSelect" required>
+                                    <option value="07:00-11:30" selected>Ca sáng (07:00 - 11:30)</option>
+                                    <option value="13:30-17:30">Ca chiều (13:30 - 17:30)</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn btn-primary">Lưu ca xét nghiệm</button>
+                    <div class="modal-footer border-top-0 pt-0">
+                        <button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal">Hủy bỏ</button>
+                        <button type="submit" class="btn btn-warning text-dark fw-bold px-4"><i class="fa-solid fa-check me-1"></i>Lưu ca xét nghiệm</button>
                     </div>
                 </form>
             </div>
