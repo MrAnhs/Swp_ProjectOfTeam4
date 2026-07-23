@@ -89,8 +89,9 @@ public class AdminAiSchedulingRepository {
                     } else {
                         currentLoad = (int) Math.round(activeCount * 100.0 / totalCapacity);
                     }
+                    String docName = rs.getString("full_name");
                     String rawDepartment = rs.getString("department");
-                    String normalizedDepartment = normalizeDepartmentForAi(rawDepartment);
+                    String normalizedDepartment = deriveDepartmentFromDoctor(rawDepartment, docName);
 
                     if (selectedDepartments != null && !selectedDepartments.isEmpty()) {
                         boolean match = false;
@@ -142,10 +143,33 @@ public class AdminAiSchedulingRepository {
         if (lower.contains("thận") || lower.contains("tiết niệu") || lower.contains("nephro")) {
             return "Nephrology";
         }
-        if (lower.contains("tổng quát") || lower.contains("general") || lower.contains("mắt") || lower.contains("thần kinh")) {
+        if (lower.contains("da liễu") || lower.contains("da lieu") || lower.contains("dermatol")) {
+            return "Da liễu";
+        }
+        if (lower.contains("tổng quát") || lower.contains("general")) {
             return "General";
         }
-        return "General";
+        return trimmed;
+    }
+
+    private String deriveDepartmentFromDoctor(String rawDepartment, String doctorName) {
+        String norm = normalizeDepartmentForAi(rawDepartment);
+        if (("General".equalsIgnoreCase(norm) || rawDepartment == null || rawDepartment.isBlank()) && doctorName != null) {
+            String lowerName = doctorName.toLowerCase();
+            if (lowerName.contains("da liễu") || lowerName.contains("da lieu")) {
+                return "Da liễu";
+            }
+            if (lowerName.contains("nội tiết") || lowerName.contains("noi tiet") || lowerName.contains("endocrin")) {
+                return "Endocrinology";
+            }
+            if (lowerName.contains("tim mạch") || lowerName.contains("tim mach") || lowerName.contains("cardio")) {
+                return "Cardiology";
+            }
+            if (lowerName.contains("thận") || lowerName.contains("than hoc") || lowerName.contains("nephro")) {
+                return "Nephrology";
+            }
+        }
+        return norm;
     }
 
     public List<Map<String, Object>> createGeminiSchedules(List<Map<String, Object>> assignments,
