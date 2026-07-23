@@ -397,6 +397,41 @@ public class ReceptionistDAO {
         }
     }
 
+    public int payPendingInvoiceById(int invoiceId, String paymentMethod, int receptionistAccountId)
+            throws SQLException, ReceptionistException {
+        Connection connection = null;
+        try {
+            connection = openConnection();
+            connection.setAutoCommit(false);
+
+            String sql = "UPDATE Invoice SET status = 'Paid', payment_method = ?, "
+                    + "receptionist_id = ?, exported_at = GETDATE() WHERE invoice_id = ? AND status = 'Pending'";
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setString(1, paymentMethod);
+                statement.setInt(2, receptionistAccountId);
+                statement.setInt(3, invoiceId);
+                if (statement.executeUpdate() == 0) {
+                    throw new ReceptionistException("Hóa đơn không tồn tại hoặc đã được xử lý trước đó.");
+                }
+            }
+
+            String detailSql = "UPDATE Invoice_Detail SET lab_status = 'Requested' "
+                    + "WHERE invoice_id = ? AND lab_status = 'Waiting_Payment'";
+            try (PreparedStatement statement = connection.prepareStatement(detailSql)) {
+                statement.setInt(1, invoiceId);
+                statement.executeUpdate();
+            }
+            connection.commit();
+            return invoiceId;
+        } catch (SQLException | ReceptionistException e) {
+            rollback(connection);
+            throw e;
+        } finally {
+            close(connection);
+        }
+    }
+
+
     public List<Map<String, Object>> findInvoiceDetails(int invoiceId) throws SQLException {
         String sql = "SELECT id.invoice_detail_id, id.service_id, ms.service_name, ms.service_type, "
                 + "id.quantity, id.price "

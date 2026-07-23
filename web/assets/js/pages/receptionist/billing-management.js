@@ -34,7 +34,10 @@
                         + ' data-created-at="' + utils.escapeHtml(invoice.createdAt) + '"'
                         + ' data-final-amount="' + utils.escapeHtml(invoice.finalAmount) + '"'
                         + ' data-status="' + utils.escapeHtml(invoice.status) + '">In h\u00F3a \u0111\u01A1n</button></div>'
-                    : '')
+                    : '<div><button class="btn btn-sm btn-success mt-2 invoice-pay-btn"'
+                        + ' data-invoice-id="' + utils.escapeHtml(invoice.invoiceId) + '"'
+                        + ' data-patient-name="' + utils.escapeHtml(invoice.patientName) + '"'
+                        + ' data-final-amount="' + utils.escapeHtml(invoice.finalAmount) + '">X\u00E1c nh\u1EADn thanh to\u00E1n</button></div>')
                 + '</div></div>'
                 + '<div class="invoice-details" id="details-' + utils.escapeHtml(invoice.invoiceId) + '" style="display: none;">'
                 + '<div class="text-center py-2"><div class="spinner-border spinner-border-sm text-primary" role="status"></div> \u0110ang t\u1EA3i chi ti\u1EBFt...</div>'
@@ -62,6 +65,38 @@
         const paymentMethod = document.getElementById('paymentMethod').value;
         const body = new URLSearchParams();
         body.set('patientKeyword', patientKeyword);
+        body.set('paymentMethod', paymentMethod);
+        try {
+            const data = await utils.requestJson(utils.apiBase() + '/invoices/pay', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: body.toString()
+            });
+            setMessage(data.message || 'Thanh to\u00E1n th\u00E0nh c\u00F4ng.', 'success');
+            await loadStats();
+            await loadInvoices(currentStatus);
+        } catch (error) {
+            setMessage(error.message, 'danger');
+        }
+    }
+
+    async function payInvoiceById(invoiceId, patientName, amount) {
+        const paymentMethod = document.getElementById('paymentMethod').value;
+        const methodOption = document.querySelector('#paymentMethod option[value="' + paymentMethod + '"]');
+        const methodText = methodOption ? methodOption.textContent : paymentMethod;
+        const confirmMsg = 'X\u00E1c nh\u1EADn thanh to\u00E1n h\u00F3a \u0111\u01A1n #' + invoiceId 
+            + ' cho b\u1EC7nh nh\u00E2n ' + patientName 
+            + ' v\u1EDBi s\u1ED1 ti\u1EC1n ' + utils.formatCurrency(amount) 
+            + ' b\u1EB1ng ph\u01B0\u01A1ng th\u1EE9c ' + methodText + '?';
+        if (!confirm(confirmMsg)) {
+            return;
+        }
+        const body = new URLSearchParams();
+        body.set('invoiceId', invoiceId);
         body.set('paymentMethod', paymentMethod);
         try {
             const data = await utils.requestJson(utils.apiBase() + '/invoices/pay', {
@@ -138,6 +173,15 @@
     }
 
     list.addEventListener('click', async function (event) {
+        const payBtn = event.target.closest('.invoice-pay-btn');
+        if (payBtn) {
+            const invoiceId = payBtn.dataset.invoiceId;
+            const patientName = payBtn.dataset.patientName;
+            const amount = parseFloat(payBtn.dataset.finalAmount);
+            await payInvoiceById(invoiceId, patientName, amount);
+            return;
+        }
+
         const printBtn = event.target.closest('.invoice-print');
         if (printBtn) {
             printInvoice(printBtn);

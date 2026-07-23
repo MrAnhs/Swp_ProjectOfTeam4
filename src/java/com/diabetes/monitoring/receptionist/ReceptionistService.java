@@ -116,6 +116,15 @@ public class ReceptionistService {
         return dao.payPendingInvoice(trim(keyword), paymentMethod, receptionistAccountId);
     }
 
+    public int payInvoiceById(int invoiceId, String paymentMethod, int receptionistAccountId)
+            throws SQLException, ReceptionistException {
+        if (!PAYMENT_METHODS.contains(paymentMethod)) {
+            throw new ReceptionistException("Phương thức thanh toán không hợp lệ.");
+        }
+        return dao.payPendingInvoiceById(invoiceId, paymentMethod, receptionistAccountId);
+    }
+
+
     public List<Map<String, Object>> getTodayQueue(String status)
             throws SQLException, ReceptionistException {
         String normalized = trim(status);

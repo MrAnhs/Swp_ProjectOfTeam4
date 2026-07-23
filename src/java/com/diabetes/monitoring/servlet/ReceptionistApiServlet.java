@@ -140,8 +140,15 @@ public class ReceptionistApiServlet extends HttpServlet {
             }
             if ("/invoices/pay".equals(path)) {
                 User currentUser = currentUser(request);
-                int invoiceId = service.payInvoice(request.getParameter("patientKeyword"),
-                        request.getParameter("paymentMethod"), currentUser.getId());
+                String invoiceIdStr = request.getParameter("invoiceId");
+                int invoiceId;
+                if (invoiceIdStr != null && !invoiceIdStr.trim().isEmpty()) {
+                    invoiceId = service.payInvoiceById(parseInt(invoiceIdStr),
+                            request.getParameter("paymentMethod"), currentUser.getId());
+                } else {
+                    invoiceId = service.payInvoice(request.getParameter("patientKeyword"),
+                            request.getParameter("paymentMethod"), currentUser.getId());
+                }
                 write(response, "{\"success\":true,\"message\":\"Thanh toán thành công.\",\"invoiceId\":"
                         + invoiceId + "}");
                 return;

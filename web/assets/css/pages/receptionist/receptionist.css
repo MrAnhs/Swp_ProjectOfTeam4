@@ -433,3 +433,88 @@ body.receptionist-page {
     color: #7c3aed;
 }
 
+/* Modal Customizations */
+.modal-content {
+    border: none;
+    border-radius: 24px !important;
+    box-shadow: 0 24px 48px rgba(16, 35, 63, 0.12) !important;
+}
+
+.modal-header {
+    padding: 24px 32px 16px 32px !important;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.6) !important;
+}
+
+.modal-header .modal-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--receptionist-text);
+}
+
+.modal-body {
+    padding: 24px 32px !important;
+}
+
+.modal-body .form-label {
+    color: var(--receptionist-text);
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.modal-body .form-control,
+.modal-body .form-select {
+    padding: 12px 16px !important;
+    border-radius: 14px !important;
+    border: 1.5px solid var(--receptionist-border) !important;
+    color: var(--receptionist-text) !important;
+    font-size: 15px !important;
+    transition: all 0.2s ease !important;
+}
+
+.modal-body .form-control:focus,
+.modal-body .form-select:focus {
+    border-color: var(--receptionist-primary) !important;
+    box-shadow: 0 0 0 4px rgba(0, 135, 90, 0.12) !important;
+    outline: none !important;
+}
+
+.modal-footer {
+    padding: 16px 32px 24px 32px !important;
+    border-top: 1px solid rgba(226, 232, 240, 0.6) !important;
+    gap: 12px !important;
+}
+
+.modal-footer .btn {
+    padding: 11px 24px !important;
+    font-weight: 700 !important;
+    font-size: 15px !important;
+    border-radius: 14px !important;
+    transition: all 0.2s ease !important;
+}
+
+.modal-footer .btn-secondary {
+    background-color: #f1f5f9 !important;
+    border: none !important;
+    color: #475569 !important;
+}
+
+.modal-footer .btn-secondary:hover {
+    background-color: #e2e8f0 !important;
+    color: #1e293b !important;
+    transform: translateY(-2px) !important;
+}
+
+.modal-footer .btn-success {
+    background-color: var(--receptionist-primary) !important;
+    border: none !important;
+    color: #fff !important;
+}
+
+.modal-footer .btn-success:hover {
+    background-color: var(--receptionist-primary-dark) !important;
+    box-shadow: 0 8px 16px rgba(0, 135, 90, 0.2) !important;
+    transform: translateY(-2px) !important;
+}
+
+
