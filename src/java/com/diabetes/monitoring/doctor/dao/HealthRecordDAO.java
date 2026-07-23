@@ -2029,19 +2029,5 @@ public class HealthRecordDAO {
         return false;
     }
 
-    public boolean updateVitals(int recordId, int doctorId, double weight, double height, double bmi) throws SQLException {
-        String sql = "UPDATE Healthy_Record SET weight = ?, height = ?, bmi = ? "
-                + "WHERE health_record_id = ? AND doctor_id = ? "
-                + "AND status IN ('Accepted', 'AI_Processed', 'Editing')";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setBigDecimal(1, BigDecimal.valueOf(weight));
-            ps.setBigDecimal(2, BigDecimal.valueOf(height));
-            ps.setBigDecimal(3, BigDecimal.valueOf(bmi));
-            ps.setInt(4, recordId);
-            ps.setInt(5, doctorId);
-            return ps.executeUpdate() == 1;
-        }
-    }
 }
 
