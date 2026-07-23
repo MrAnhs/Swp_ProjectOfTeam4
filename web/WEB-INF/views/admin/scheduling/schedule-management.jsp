@@ -1,18 +1,10 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-    <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-        <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
-            <fmt:setLocale value="vi_VN" />
-            <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-                <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
-                    <fmt:setLocale value="vi_VN" />
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<fmt:setLocale value="vi_VN" />
+<c:set var="currentAction" value="schedule" />
 
-                    <c:set var="currentAction" value="schedule" />
-                    <c:set var="currentAction" value="schedule" />
-
-                    <%-- Trang Quản lý lịch trực bác sĩ: - Lọc, xem tải ca trực theo bác sĩ/khoa/ngày - Tạo ca thủ công
-                        và hủy ca - Tích hợp modal AI lập lịch (Gemini + fallback) --%>
-                        <%-- Trang Quản lý lịch trực bác sĩ: - Lọc, xem tải ca trực theo bác sĩ/khoa/ngày - Tạo ca thủ
-                            công và hủy ca - Tích hợp modal AI lập lịch (Gemini + fallback) --%>
+<%-- Trang Quản lý lịch trực bác sĩ: Lọc, xem tải ca trực, tạo ca thủ công & tích hợp modal AI lập lịch --%>
 
                             <!DOCTYPE html>
                             <html lang="vi">
@@ -422,14 +414,6 @@
                                                 <div class="alert alert-danger">${sessionScope.errorMessage}</div>
                                                 <% session.removeAttribute("errorMessage"); %>
                                             </c:if>
-                                            <c:if test="${not empty sessionScope.successMessage}">
-                                                <div class="alert alert-success">${sessionScope.successMessage}</div>
-                                                <% session.removeAttribute("successMessage"); %>
-                                            </c:if>
-                                            <c:if test="${not empty sessionScope.errorMessage}">
-                                                <div class="alert alert-danger">${sessionScope.errorMessage}</div>
-                                                <% session.removeAttribute("errorMessage"); %>
-                                            </c:if>
 
                                             <div id="aiScheduleLoading"
                                                 class="alert ai-schedule-loading d-none align-items-center gap-2 mb-3">
@@ -440,375 +424,71 @@
                                                 <span id="aiScheduleLoadingDetail" class="small text-muted ms-2"></span>
                                             </div>
 
-                                            <%@ include
-                                                file="/WEB-INF/views/admin/scheduling/includes/schedule-modals.jsp" %>
+                                            <%@ include file="/WEB-INF/views/admin/scheduling/includes/schedule-modals.jsp" %>
 
                                         </div>
                                     </div>
                                 </div>
 
-                                document.addEventListener('DOMContentLoaded', function () {
-                                // Logic Toggle Custom Dropdowns
-                                (function() {
-                                function initCustomDropdown(btnId, menuId) {
-                                const btn = document.getElementById(btnId);
-                                const menu = document.getElementById(menuId);
-                                if (!btn || !menu) return;
-                                btn.addEventListener('click', function(e) {
-                                e.stopPropagation();
-                                // Ẩn dropdown kia nếu đang mở
-                                const otherMenuId = btnId === 'aiScheduleGeminiBtn' ? 'createScheduleToolbarMenu' :
-                                'aiScheduleGeminiMenu';
-                                const otherMenu = document.getElementById(otherMenuId);
-                                if (otherMenu) otherMenu.classList.remove('show');
+                                <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+                                <script>
+                                    window.AdminConfig = window.AdminConfig || {};
+                                    window.AdminConfig.contextPath = '${pageContext.request.contextPath}';
+                                    window.AdminConfig.csrfToken = '${sessionScope.csrfToken}';
+                                    window.AdminConfig.adminEndpoint = '${pageContext.request.contextPath}/admin';
+                                    window.AdminConfig.loginUrl = '${pageContext.request.contextPath}/login.jsp';
 
-                                menu.classList.toggle('show');
-                                });
-                                }
-                                initCustomDropdown('aiScheduleGeminiBtn', 'aiScheduleGeminiMenu');
-                                initCustomDropdown('createScheduleToolbarBtn', 'createScheduleToolbarMenu');
-
-                                document.addEventListener('click', function() {
-                                const m1 = document.getElementById('aiScheduleGeminiMenu');
-                                const m2 = document.getElementById('createScheduleToolbarMenu');
-                                if (m1) m1.classList.remove('show');
-                                if (m2) m2.classList.remove('show');
-                                });
-
-                                const menus = ['aiScheduleGeminiMenu', 'createScheduleToolbarMenu'];
-                                menus.forEach(id => {
-                                const el = document.getElementById(id);
-                                if (el) {
-                                el.addEventListener('click', function(e) {
-                                if (e.target.closest('.dropdown-item')) {
-                                el.classList.remove('show');
-                                } else {
-                                e.stopPropagation();
-                                }
-                                });
-                                }
-                                });
-                                })();
-
-                                var roleTabs = Array.prototype.slice.call(document.querySelectorAll('#scheduleRoleTabs
-                                [data-role-target]'));
-                                var tabByHash = {
-                                '#doctorRolePane': '#doctor-role-tab',
-                                '#receptionistRolePane': '#receptionist-role-tab',
-                                '#labRolePane': '#lab-role-tab'
-                                };
-
-                                <div id="aiScheduleLoading"
-                                    class="alert ai-schedule-loading d-none align-items-center gap-2 mb-3">
-                                    <span class="spinner-grow spinner-grow-sm text-purple" aria-hidden="true"></span>
-                                    <span class="fw-semibold">AI đang phân tích dữ liệu hiệu suất và tự động phân bổ ca
-                                        trực...</span><span id="aiScheduleLoadingDetail"
-                                        class="small text-muted ms-2"></span>
-                                </div>
-
-                                <div class="tab-content" id="scheduleRoleTabContent">
-                                    <%@ include file="/WEB-INF/views/admin/scheduling/includes/doctor-role-pane.jsp" %>
-                                        <%@ include
-                                            file="/WEB-INF/views/admin/scheduling/includes/receptionist-role-pane.jsp"
-                                            %>
-                                            <%@ include
-                                                file="/WEB-INF/views/admin/scheduling/includes/lab-role-pane.jsp" %>
-
-                                                <!-- Weekly Calendar Pane (Lịch theo tuần) -->
-                                                <div class="schedule-role-pane" id="weeklyCalendarPane" hidden>
-                                                    <div class="card mb-3 border-0 shadow-sm"
-                                                        style="border-radius: 16px;">
-                                                        <div class="card-body p-3">
-                                                            <div class="row g-3 align-items-end">
-                                                                <div class="col-lg-4 col-md-4">
-                                                                    <label
-                                                                        class="form-label mb-1 fw-bold text-secondary text-xs">Chọn
-                                                                        tuần (Week Picker)</label>
-                                                                    <div class="input-group input-group-sm">
-                                                                        <button type="button"
-                                                                            class="btn btn-outline-secondary"
-                                                                            id="calPrevWeekBtn" title="Tuần trước"><i
-                                                                                class="bi bi-chevron-left"></i></button>
-                                                                        <button type="button"
-                                                                            class="btn btn-outline-secondary fw-semibold px-2"
-                                                                            id="calTodayBtn">Hôm nay</button>
-                                                                        <input type="date"
-                                                                            class="form-control text-center fw-bold"
-                                                                            id="calendarWeekPicker">
-                                                                        <button type="button"
-                                                                            class="btn btn-outline-secondary"
-                                                                            id="calNextWeekBtn" title="Tuần sau"><i
-                                                                                class="bi bi-chevron-right"></i></button>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-lg-4 col-md-4">
-                                                                    <label
-                                                                        class="form-label mb-1 fw-bold text-secondary text-xs">Lọc
-                                                                        theo vai trò (Role)</label>
-                                                                    <select class="form-select form-select-sm"
-                                                                        id="calendarRoleFilter">
-                                                                        <option value="all">Tất cả vai trò</option>
-                                                                        <option value="Doctor">Bác sĩ khám (Doctor)
-                                                                        </option>
-                                                                        <option value="Lab">Bác sĩ xét nghiệm (Lab)
-                                                                        </option>
-                                                                        <option value="Reception">Lễ tân (Reception)
-                                                                        </option>
-                                                                    </select>
-                                                                </div>
-                                                                <div class="col-lg-4 col-md-4">
-                                                                    <label
-                                                                        class="form-label mb-1 fw-bold text-secondary text-xs">Lọc
-                                                                        theo phòng (Room)</label>
-                                                                    <div class="input-group input-group-sm">
-                                                                        <select class="form-select form-select-sm"
-                                                                            id="calendarRoomFilter">
-                                                                            <option value="all">Tất cả phòng khám
-                                                                            </option>
-                                                                            <c:forEach var="r" items="${rooms}">
-                                                                                <option value="${r.roomId}">
-                                                                                    ${r.roomNumber} - ${r.roomName}
-                                                                                </option>
-                                                                            </c:forEach>
-                                                                        </select>
-                                                                        <button type="button"
-                                                                            class="btn btn-primary fw-semibold px-3"
-                                                                            id="calFilterSubmitBtn">
-                                                                            <i class="bi bi-funnel-fill me-1"></i>Lọc
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <!-- Alert Cảnh báo xung đột nếu có -->
-                                                    <div id="calendarConflictAlert"
-                                                        class="alert alert-danger d-none mb-3 py-2 px-3 align-items-center gap-2"
-                                                        style="border-radius: 12px;">
-                                                        <i
-                                                            class="bi bi-exclamation-triangle-fill fs-5 text-danger me-2"></i>
-                                                        <span id="calendarConflictSummaryText" class="fw-semibold">Phát
-                                                            hiện xung đột trùng ca hoặc trùng phòng làm việc! Thẻ bị
-                                                            trùng đang được khoanh viền đỏ ⚠</span>
-                                                    </div>
-
-                                                    <!-- Weekly Grid Calendar -->
-                                                    <div class="card border-0 shadow-sm mb-4"
-                                                        style="border-radius: 16px; overflow: hidden;">
-                                                        <div class="table-responsive">
-                                                            <table
-                                                                class="table table-bordered align-middle text-center mb-0 calendar-table">
-                                                                <thead class="table-light">
-                                                                    <tr id="calendarWeekHeadRow">
-                                                                        <th style="width: 120px;"
-                                                                            class="bg-light align-middle">Ca / Giờ</th>
-                                                                        <th class="cal-head-col" data-day="1">Thứ
-                                                                            2<br><small class="text-muted fw-normal"
-                                                                                id="date-head-mon">-</small></th>
-                                                                        <th class="cal-head-col" data-day="2">Thứ
-                                                                            3<br><small class="text-muted fw-normal"
-                                                                                id="date-head-tue">-</small></th>
-                                                                        <th class="cal-head-col" data-day="3">Thứ
-                                                                            4<br><small class="text-muted fw-normal"
-                                                                                id="date-head-wed">-</small></th>
-                                                                        <th class="cal-head-col" data-day="4">Thứ
-                                                                            5<br><small class="text-muted fw-normal"
-                                                                                id="date-head-thu">-</small></th>
-                                                                        <th class="cal-head-col" data-day="5">Thứ
-                                                                            6<br><small class="text-muted fw-normal"
-                                                                                id="date-head-fri">-</small></th>
-                                                                        <th class="cal-head-col" data-day="6">Thứ
-                                                                            7<br><small class="text-muted fw-normal"
-                                                                                id="date-head-sat">-</small></th>
-                                                                        <th class="cal-head-col" data-day="0">Chủ
-                                                                            nhật<br><small class="text-muted fw-normal"
-                                                                                id="date-head-sun">-</small></th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                    <tr>
-                                                                        <td
-                                                                            class="bg-light text-primary fw-bold text-center align-middle">
-                                                                            <i
-                                                                                class="bi bi-sun fs-5 d-block mb-1 text-warning"></i>
-                                                                            Sáng<br><small
-                                                                                class="text-muted fw-normal">08:00 -
-                                                                                12:00</small>
-                                                                        </td>
-                                                                        <td class="cal-cell" id="cell-mon-0800"></td>
-                                                                        <td class="cal-cell" id="cell-tue-0800"></td>
-                                                                        <td class="cal-cell" id="cell-wed-0800"></td>
-                                                                        <td class="cal-cell" id="cell-thu-0800"></td>
-                                                                        <td class="cal-cell" id="cell-fri-0800"></td>
-                                                                        <td class="cal-cell" id="cell-sat-0800"></td>
-                                                                        <td class="cal-cell" id="cell-sun-0800"></td>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <td
-                                                                            class="bg-light text-warning fw-bold text-center align-middle">
-                                                                            <i
-                                                                                class="bi bi-sunset fs-5 d-block mb-1 text-primary"></i>
-                                                                            Chiều<br><small
-                                                                                class="text-muted fw-normal">13:00 -
-                                                                                17:00</small>
-                                                                        </td>
-                                                                        <td class="cal-cell" id="cell-mon-1300"></td>
-                                                                        <td class="cal-cell" id="cell-tue-1300"></td>
-                                                                        <td class="cal-cell" id="cell-wed-1300"></td>
-                                                                        <td class="cal-cell" id="cell-thu-1300"></td>
-                                                                        <td class="cal-cell" id="cell-fri-1300"></td>
-                                                                        <td class="cal-cell" id="cell-sat-1300"></td>
-                                                                        <td class="cal-cell" id="cell-sun-1300"></td>
-                                                                    </tr>
-                                                                </tbody>
-                                                            </table>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <!-- Modal Chi tiết ca làm việc (Shift Detail Modal) -->
-                                                <div class="modal fade" id="shiftDetailModal" tabindex="-1"
-                                                    aria-hidden="true">
-                                                    <div class="modal-dialog modal-dialog-centered">
-                                                        <div class="modal-content border-0 shadow-lg"
-                                                            style="border-radius: 16px;">
-                                                            <div class="modal-header bg-light">
-                                                                <h5 class="modal-title fw-bold" id="shiftDetailTitle">
-                                                                    <i
-                                                                        class="bi bi-calendar-event me-2 text-primary"></i>Chi
-                                                                    tiết ca làm việc (Shift Detail)
-                                                                </h5>
-                                                                <button type="button" class="btn-close"
-                                                                    data-bs-dismiss="modal" aria-label="Close"></button>
-                                                            </div>
-                                                            <div class="modal-body p-4">
-                                                                <div id="shiftDetailConflictAlert"
-                                                                    class="alert alert-danger d-none mb-3">
-                                                                    <i
-                                                                        class="bi bi-exclamation-triangle-fill me-2"></i><span
-                                                                        id="shiftDetailConflictText"></span>
-                                                                </div>
-                                                                <div class="row g-3">
-                                                                    <div class="col-6">
-                                                                        <label
-                                                                            class="form-label text-secondary small mb-1">Nhân
-                                                                            sự (Staff)</label>
-                                                                        <div class="fw-bold fs-6" id="shiftDetailStaff">
-                                                                            -</div>
-                                                                    </div>
-                                                                    <div class="col-6">
-                                                                        <label
-                                                                            class="form-label text-secondary small mb-1">Vai
-                                                                            trò (Role)</label>
-                                                                        <div><span class="badge bg-primary"
-                                                                                id="shiftDetailRole">-</span></div>
-                                                                    </div>
-                                                                    <div class="col-6">
-                                                                        <label
-                                                                            class="form-label text-secondary small mb-1">Phòng
-                                                                            làm việc (Room)</label>
-                                                                        <div class="fw-semibold" id="shiftDetailRoom">-
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="col-6">
-                                                                        <label
-                                                                            class="form-label text-secondary small mb-1">Ngày
-                                                                            làm việc (Date)</label>
-                                                                        <div class="fw-semibold" id="shiftDetailDate">-
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="col-6">
-                                                                        <label
-                                                                            class="form-label text-secondary small mb-1">Khung
-                                                                            giờ (Time)</label>
-                                                                        <div class="fw-semibold text-primary"
-                                                                            id="shiftDetailTime">-</div>
-                                                                    </div>
-                                                                    <div class="col-6">
-                                                                        <label
-                                                                            class="form-label text-secondary small mb-1">Trạng
-                                                                            thái (Status)</label>
-                                                                        <div><span class="badge bg-success"
-                                                                                id="shiftDetailStatus">Confirmed</span>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="modal-footer bg-light">
-                                                                <button type="button"
-                                                                    class="btn btn-secondary rounded-pill px-4"
-                                                                    data-bs-dismiss="modal">Đóng</button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                </div>
-                                <%@ include file="/WEB-INF/views/admin/scheduling/includes/schedule-modals.jsp" %>
-                                    </div>
-                                    </div>
-                                    </div>
-                                    <script
-                                        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-                                    <script>
-                                        window.AdminConfig = window.AdminConfig || {};
-                                        window.AdminConfig.contextPath = '${pageContext.request.contextPath}';
-                                        window.AdminConfig.csrfToken = '${sessionScope.csrfToken}';
-                                        window.AdminConfig.adminEndpoint = '${pageContext.request.contextPath}/admin';
-                                        window.AdminConfig.loginUrl = '${pageContext.request.contextPath}/login.jsp';
-
-                                        document.addEventListener('DOMContentLoaded', function () {
-                                            var roleTabs = Array.prototype.slice.call(document.querySelectorAll('#scheduleRoleTabs [data-role-target]'));
-                                            var tabByHash = {
-                                                '#doctorRolePane': '#doctor-role-tab',
-                                                '#receptionistRolePane': '#receptionist-role-tab',
-                                                '#labRolePane': '#lab-role-tab'
-                                            };
-
-                                            if (window.history && window.history.replaceState) {
-                                                window.history.replaceState(null, '', window.location.pathname + window.location.search + targetSelector);
-                                            }
-                                        }
-                            function limitScheduleTablesToTenRows() {
-                                                document.querySelectorAll('.schedule-list-scroll').forEach(function (wrap) {
-                                                    wrap.style.removeProperty('max-height');
-                                                    wrap.style.removeProperty('height');
-                                                    wrap.style.removeProperty('overflow');
-                                                    wrap.classList.add('is-scroll-limited');
-                                                });
-                                            }
-
-                            forceSchedulePane(resolveInitialTab());
-                                        limitScheduleTablesToTenRows();
-                                        roleTabs.forEach(function (tab) {
-                                            tab.addEventListener('click', function () {
-                                                forceSchedulePane(tab);
-                                                limitScheduleTablesToTenRows();
-                                            });
-                                        });
-                                        window.addEventListener('resize', limitScheduleTablesToTenRows);
-                        });
-                                    </script>
-                                    <script>
-                                        window.activeRoomsList = [];
-                                        <c:forEach var="r" items="${rooms}">
-                                            window.activeRoomsList.push({
-                                                roomId: "${r.roomId}",
+                                    window.activeRoomsList = [];
+                                    <c:forEach var="r" items="${rooms}">
+                                        window.activeRoomsList.push({
+                                            roomId: "${r.roomId}",
                                             roomName: "${r.roomName}",
                                             department: "${r.department}",
                                             status: "${r.status}"
-                        });
-                                        </c:forEach>
-                                    </script>
-                                    <script charset="UTF-8"
-                                        src="${pageContext.request.contextPath}/assets/js/pages/admin/schedule-common.js?v=20260722-v1"></script>
-                                    <script charset="UTF-8"
-                                        src="${pageContext.request.contextPath}/assets/js/pages/admin/schedule-staff.js?v=20260722-v1"></script>
-                                    <script charset="UTF-8"
-                                        src="${pageContext.request.contextPath}/assets/js/pages/admin/schedule-wizard.js?v=20260722-v1"></script>
+                                        });
+                                    </c:forEach>
+                                </script>
+                                <script>
+                                    document.addEventListener('DOMContentLoaded', function () {
+                                        function initCustomDropdown(btnId, menuId) {
+                                            const btn = document.getElementById(btnId);
+                                            const menu = document.getElementById(menuId);
+                                            if (!btn || !menu) return;
+                                            btn.addEventListener('click', function(e) {
+                                                e.stopPropagation();
+                                                const otherMenuId = btnId === 'aiScheduleGeminiBtn' ? 'createScheduleToolbarMenu' : 'aiScheduleGeminiMenu';
+                                                const otherMenu = document.getElementById(otherMenuId);
+                                                if (otherMenu) otherMenu.classList.remove('show');
+                                                menu.classList.toggle('show');
+                                            });
+                                        }
+                                        initCustomDropdown('aiScheduleGeminiBtn', 'aiScheduleGeminiMenu');
+                                        initCustomDropdown('createScheduleToolbarBtn', 'createScheduleToolbarMenu');
+
+                                        document.addEventListener('click', function() {
+                                            const m1 = document.getElementById('aiScheduleGeminiMenu');
+                                            const m2 = document.getElementById('createScheduleToolbarMenu');
+                                            if (m1) m1.classList.remove('show');
+                                            if (m2) m2.classList.remove('show');
+                                        });
+
+                                        const menus = ['aiScheduleGeminiMenu', 'createScheduleToolbarMenu'];
+                                        menus.forEach(id => {
+                                            const el = document.getElementById(id);
+                                            if (el) {
+                                                el.addEventListener('click', function(e) {
+                                                    if (e.target.closest('.dropdown-item')) {
+                                                        el.classList.remove('show');
+                                                    } else {
+                                                        e.stopPropagation();
+                                                    }
+                                                });
+                                            }
+                                        });
+                                    });
+                                </script>
+                                <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/admin/schedule-common.js?v=20260722-v1"></script>
+                                <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/admin/schedule-staff.js?v=20260722-v1"></script>
+                                <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/admin/schedule-wizard.js?v=20260722-v1"></script>
                             </body>
-
-                            </html>
-
                             </html>
