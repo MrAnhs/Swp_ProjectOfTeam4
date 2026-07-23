@@ -10,9 +10,12 @@
 // 1. CẤU HÌNH TOÀN CỤC (GLOBAL SYSTEM CONFIG)
 // ==========================================
 const adminContextPath = window.AdminConfig && window.AdminConfig.contextPath ? window.AdminConfig.contextPath : '';
+window.adminContextPath = adminContextPath;
 const adminCsrfToken = window.AdminConfig && window.AdminConfig.csrfToken ? window.AdminConfig.csrfToken : '';
 const adminLoginUrl = window.AdminConfig && window.AdminConfig.loginUrl ? window.AdminConfig.loginUrl : adminContextPath + '/login.jsp';
+window.adminLoginUrl = adminLoginUrl;
 const adminScheduleEndpoint = window.AdminConfig && window.AdminConfig.adminEndpoint ? window.AdminConfig.adminEndpoint : adminContextPath + '/admin';
+window.adminScheduleEndpoint = adminScheduleEndpoint;
 
 // ==========================================
 // 2. CÁC HÀM TIỆN ÍCH AN TOÀN & ĐỊNH DẠNG (SECURITY & FORMAT HELPERS)
@@ -29,6 +32,7 @@ function escapeHtml(s) {
         return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": "&#39;" }[c];
     });
 }
+window.escapeHtml = escapeHtml;
 
 /**
  * Mã hóa chuỗi HTML dùng riêng cho in-place rendering ca trực
@@ -41,6 +45,7 @@ function escapeHtmlForSchedule(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+window.escapeHtmlForSchedule = escapeHtmlForSchedule;
 
 /**
  * Hiển thị hộp thông báo tạm thời góc màn hình rồi tự tắt sau 3 giây
@@ -153,10 +158,19 @@ const departmentMapping = {
     'General': 'General'
 };
 
+function onReady(fn) {
+    if (document.readyState === 'interactive' || document.readyState === 'complete') {
+        setTimeout(fn, 0);
+    } else {
+        document.addEventListener('DOMContentLoaded', fn);
+    }
+}
+window.onReady = onReady;
+
 // ==========================================
 // 4. SAAS UI/UX INTERACTION & FILTER LOGIC
 // ==========================================
-document.addEventListener('DOMContentLoaded', function () {
+onReady(function () {
     const viewCalendarBtn = document.getElementById('viewModeCalendarBtn');
     const viewListBtn = document.getElementById('viewModeListBtn');
     const detailedListPane = document.getElementById('detailedListPane');
@@ -228,9 +242,16 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             if (selectedViewTabInput) selectedViewTabInput.value = 'calendar';
-            if (typeof window.loadWeeklyCalendar === 'function') {
-                window.loadWeeklyCalendar();
-            }
+            // Fix race condition: schedule-wizard.js may not have loaded/executed yet
+            // when schedule-common.js DOMContentLoaded fires. Defer to next event loop tick,
+            // then retry up to 10 times (every 100ms) until loadWeeklyCalendar is defined.
+            (function tryLoadCalendar(attempts) {
+                if (typeof window.loadWeeklyCalendar === 'function') {
+                    window.loadWeeklyCalendar();
+                } else if (attempts > 0) {
+                    setTimeout(function() { tryLoadCalendar(attempts - 1); }, 100);
+                }
+            })(10);
         } else {
             // Cập nhật nút
             viewListBtn.className = "btn btn-sm px-3 rounded-2 fw-bold text-white bg-primary";
@@ -274,6 +295,7 @@ document.addEventListener('DOMContentLoaded', function () {
             updateDetailedListPanes();
         }
     }
+    window.switchViewMode = switchViewMode;
 
     if (viewCalendarBtn && viewListBtn) {
         viewCalendarBtn.addEventListener('click', () => switchViewMode('calendar'));
@@ -613,22 +635,38 @@ document.addEventListener('DOMContentLoaded', function () {
             status: 'Confirmed'
         };
 
-        const modalEl = document.getElementById('shiftDetailModal');
-        if (modalEl) {
-            const staffEl = document.getElementById('shiftDetailStaff');
-            const roleEl = document.getElementById('shiftDetailRole');
-            const roomEl = document.getElementById('shiftDetailRoom');
-            const dateEl = document.getElementById('shiftDetailDate');
-            const timeEl = document.getElementById('shiftDetailTime');
+        document.querySelectorAll('.dropdown-menu.show').forEach(m => m.classList.remove('show'));
+        if (typeof window.openShiftDetailModal === 'function') {
+            window.openShiftDetailModal(shiftObj);
+        } else {
+            const modalEl = document.getElementById('shiftDetailModal');
+            if (modalEl) {
+                const staffEl = document.getElementById('shiftDetailStaff');
+                const roleEl = document.getElementById('shiftDetailRole');
+                const roomEl = document.getElementById('shiftDetailRoom');
+                const dateEl = document.getElementById('shiftDetailDate');
+                const timeEl = document.getElementById('shiftDetailTime');
+                const editBtn = document.getElementById('shiftDetailEditBtn');
 
-            if (staffEl) staffEl.textContent = shiftObj.staff;
-            if (roleEl) roleEl.textContent = shiftObj.role;
-            if (roomEl) roomEl.textContent = shiftObj.room;
-            if (dateEl) dateEl.textContent = shiftObj.date;
-            if (timeEl) timeEl.textContent = shiftObj.timeSlot;
+                if (staffEl) staffEl.textContent = shiftObj.staff;
+                if (roleEl) roleEl.textContent = shiftObj.role;
+                if (roomEl) roomEl.textContent = shiftObj.room;
+                if (dateEl) dateEl.textContent = shiftObj.date;
+                if (timeEl) timeEl.textContent = shiftObj.timeSlot;
 
-            const modal = new bootstrap.Modal(modalEl);
-            modal.show();
+                if (editBtn) {
+                    if (scheduleId) {
+                        editBtn.setAttribute('data-schedule-id', scheduleId);
+                        editBtn.style.display = 'inline-block';
+                    } else {
+                        editBtn.removeAttribute('data-schedule-id');
+                        editBtn.style.display = 'none';
+                    }
+                }
+
+                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                modal.show();
+            }
         }
     });
 });

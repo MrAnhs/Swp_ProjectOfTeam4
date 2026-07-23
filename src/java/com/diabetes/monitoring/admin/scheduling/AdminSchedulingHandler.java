@@ -486,22 +486,41 @@ class AdminStaffScheduleHandler {
         String roleFilter = request.getParameter("role");
         String roomFilter = request.getParameter("room");
 
-        Date startDate = nullableDate(weekDateStr);
-        if (startDate == null) startDate = new java.sql.Date(System.currentTimeMillis());
-        java.util.Calendar cal = java.util.Calendar.getInstance();
-        cal.setTime(startDate);
-        cal.add(java.util.Calendar.DAY_OF_MONTH, 6);
-        Date endDate = new java.sql.Date(cal.getTimeInMillis());
+        Date selectedDate = nullableDate(weekDateStr);
+        if (selectedDate == null) selectedDate = new java.sql.Date(System.currentTimeMillis());
 
-        List<Map<String, Object>> rows = staffScheduleRepository.getWeeklyCalendarSchedules(startDate, endDate, roleFilter, roomFilter);
-        try (PrintWriter out = response.getWriter()) {
-            out.print(AdminJsonUtil.toJsonSimpleRows(rows));
-        } catch (Exception ex) {
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        cal.setTime(selectedDate);
+        cal.setFirstDayOfWeek(java.util.Calendar.MONDAY);
+        int dayOfWeek = cal.get(java.util.Calendar.DAY_OF_WEEK);
+        int daysToMonday = (dayOfWeek == java.util.Calendar.SUNDAY) ? -6 : (java.util.Calendar.MONDAY - dayOfWeek);
+        cal.add(java.util.Calendar.DAY_OF_MONTH, daysToMonday);
+        Date mondayDate = new java.sql.Date(cal.getTimeInMillis());
+
+        cal.add(java.util.Calendar.DAY_OF_MONTH, 6);
+        Date sundayDate = new java.sql.Date(cal.getTimeInMillis());
+
+        try {
+            List<Map<String, Object>> rows = staffScheduleRepository.getWeeklyCalendarSchedules(mondayDate, sundayDate, roleFilter, roomFilter);
+            java.util.logging.Logger.getLogger(getClass().getName()).info(
+                "[getCalendarSchedule] weekDate=" + weekDateStr + " role=" + roleFilter + " room=" + roomFilter
+                + " -> mondayDate=" + mondayDate + " sundayDate=" + sundayDate + " rows=" + rows.size());
             try (PrintWriter out = response.getWriter()) {
-                out.print("[]");
+                out.print(AdminJsonUtil.toJsonSimpleRows(rows));
+            }
+        } catch (Exception ex) {
+            java.util.logging.Logger.getLogger(getClass().getName()).log(
+                java.util.logging.Level.SEVERE,
+                "[getCalendarSchedule] Cannot load weekly schedule",
+                ex
+            );
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            try (PrintWriter out = response.getWriter()) {
+                out.print("{\"success\":false,\"message\":\"Không thể tải lịch tuần: " + AdminJsonUtil.escapeJson(ex.getMessage()) + "\",\"items\":[]}");
             }
         }
     }
+
 
     public void loadStaffForSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException {
         response.setContentType("application/json;charset=UTF-8");
@@ -882,7 +901,12 @@ class AdminStaffScheduleHandler {
         try {
             return Date.valueOf(LocalDate.parse(raw));
         } catch (Exception ex) {
-            return null;
+            try {
+                java.time.format.DateTimeFormatter dtf = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
+                return Date.valueOf(LocalDate.parse(raw, dtf));
+            } catch (Exception ex2) {
+                return null;
+            }
         }
     }
 }
@@ -927,9 +951,27 @@ class AdminAiSchedulingHandler {
             aiRequest.endTime = request.getParameter("endTime");
             aiRequest.slotMinutes = parseInt(request.getParameter("slotMinutes"), 120);
             aiRequest.maxPatients = parseInt(request.getParameter("maxPatients"), 20);
-            aiRequest.maxSchedules = parseInt(request.getParameter("maxSchedules"), 12);
-            aiRequest.doctorsPerShift = parseInt(request.getParameter("doctorsPerShift"), 1);
+            int dPerShift = parseInt(request.getParameter("doctorsPerShift"), -1);
+            if (dPerShift <= 0) {
+                dPerShift = parseInt(request.getParameter("staffPerShift"), 1);
+            }
+            aiRequest.doctorsPerShift = Math.max(1, dPerShift);
+
             aiRequest.department = request.getParameter("department");
+            String[] reqDepts = request.getParameterValues("department");
+            if (reqDepts != null && reqDepts.length > 0) {
+                List<String> list = new ArrayList<>();
+                for (String d : reqDepts) {
+                    if (d != null && d.contains(",")) {
+                        for (String sub : d.split(",")) {
+                            if (!sub.trim().isEmpty()) list.add(sub.trim());
+                        }
+                    } else if (d != null && !d.trim().isEmpty()) {
+                        list.add(d.trim());
+                    }
+                }
+                aiRequest.selectedDepartments = list;
+            }
             aiRequest.shiftsPerDay = parseShiftTemplates(request.getParameter("shiftTemplates"));
             aiRequest.selectedWeekdays = parseSelectedWeekdays(request.getParameterValues("selectedWeekdays"));
             aiRequest.preview = "true".equalsIgnoreCase(request.getParameter("preview"));
@@ -1039,9 +1081,18 @@ class AdminAiSchedulingHandler {
             return weekdays;
         }
         for (String value : values) {
-            int day = parseInt(value, -1);
-            if (day >= 1 && day <= 7 && !weekdays.contains(day)) {
-                weekdays.add(day);
+            if (value != null && value.contains(",")) {
+                for (String part : value.split(",")) {
+                    int day = parseInt(part.trim(), -1);
+                    if (day >= 1 && day <= 7 && !weekdays.contains(day)) {
+                        weekdays.add(day);
+                    }
+                }
+            } else {
+                int day = parseInt(value, -1);
+                if (day >= 1 && day <= 7 && !weekdays.contains(day)) {
+                    weekdays.add(day);
+                }
             }
         }
         return weekdays;

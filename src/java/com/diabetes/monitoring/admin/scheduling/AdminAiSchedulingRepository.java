@@ -102,26 +102,49 @@ public class AdminAiSchedulingRepository {
 
     private String normalizeDepartmentForAi(String rawDepartment) {
         if (rawDepartment == null) {
-            return "General";
+            return "Tổng quát";
         }
         String trimmed = rawDepartment.trim();
         if (trimmed.isEmpty()) {
-            return "General";
+            return "Tổng quát";
         }
         String lower = trimmed.toLowerCase();
         if (lower.contains("nội tiết") || lower.contains("tiểu đường") || lower.contains("endocrin")) {
-            return "Endocrinology";
+            return "Nội tiết";
         }
         if (lower.contains("tim mạch") || lower.contains("cardio")) {
-            return "Cardiology";
+            return "Tim mạch";
         }
         if (lower.contains("thận") || lower.contains("tiết niệu") || lower.contains("nephro")) {
-            return "Nephrology";
+            return "Thận học";
         }
-        if (lower.contains("tổng quát") || lower.contains("general") || lower.contains("mắt") || lower.contains("thần kinh")) {
-            return "General";
+        if (lower.contains("da liễu") || lower.contains("da lieu") || lower.contains("dermatol")) {
+            return "Da liễu";
         }
-        return "General";
+        if (lower.contains("tổng quát") || lower.contains("general")) {
+            return "Tổng quát";
+        }
+        return trimmed;
+    }
+
+    private String deriveDepartmentFromDoctor(String rawDepartment, String doctorName) {
+        String norm = normalizeDepartmentForAi(rawDepartment);
+        if (("Tổng quát".equalsIgnoreCase(norm) || "General".equalsIgnoreCase(norm) || rawDepartment == null || rawDepartment.isBlank()) && doctorName != null) {
+            String lowerName = doctorName.toLowerCase();
+            if (lowerName.contains("da liễu") || lowerName.contains("da lieu")) {
+                return "Da liễu";
+            }
+            if (lowerName.contains("nội tiết") || lowerName.contains("noi tiet") || lowerName.contains("endocrin")) {
+                return "Nội tiết";
+            }
+            if (lowerName.contains("tim mạch") || lowerName.contains("tim mach") || lowerName.contains("cardio")) {
+                return "Tim mạch";
+            }
+            if (lowerName.contains("thận") || lowerName.contains("than hoc") || lowerName.contains("nephro")) {
+                return "Thận học";
+            }
+        }
+        return norm;
     }
 
     public List<Map<String, Object>> createGeminiSchedules(List<Map<String, Object>> assignments,
@@ -1055,6 +1078,77 @@ public class AdminAiSchedulingRepository {
             rooms.add("R103");
         }
         return rooms;
+    }
+
+    private List<Map<String, String>> getActiveDoctorRoomDetails(Connection conn) throws SQLException {
+        List<Map<String, String>> roomList = new ArrayList<>();
+        String sql = "SELECT room_id, room_name FROM Room "
+                   + "WHERE LOWER(status) = 'active' "
+                   + "  AND room_id NOT IN ('R101') "
+                   + "  AND LOWER(room_name) NOT LIKE N'%xét nghiệm%' "
+                   + "  AND LOWER(room_name) NOT LIKE N'%lab%' "
+                   + "  AND LOWER(room_name) NOT LIKE N'%quầy%' "
+                   + "ORDER BY room_id ASC";
+        try (PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Map<String, String> map = new HashMap<>();
+                map.put("roomId", rs.getString("room_id"));
+                map.put("roomName", rs.getString("room_name"));
+                roomList.add(map);
+            }
+        }
+        if (roomList.isEmpty()) {
+            Map<String, String> r1 = new HashMap<>();
+            r1.put("roomId", "R102"); r1.put("roomName", "Phòng Khám Nội Tiết");
+            roomList.add(r1);
+            Map<String, String> r2 = new HashMap<>();
+            r2.put("roomId", "R103"); r2.put("roomName", "Phòng Khám Tim Mạch");
+            roomList.add(r2);
+        }
+        return roomList;
+    }
+
+    private String findBestMatchingRoom(Connection conn,
+                                        List<Map<String, String>> activeRooms,
+                                        String doctorDepartment,
+                                        Date workDate,
+                                        String timeSlot,
+                                        Set<String> usedRoomSlotKeys,
+                                        Integer excludeScheduleId) throws SQLException {
+        String doctorDeptNorm = normalizeDepartmentForAi(doctorDepartment);
+
+        // Pass 1: Match room name by doctor's specialty
+        for (Map<String, String> room : activeRooms) {
+            String roomId = room.get("roomId");
+            String roomName = room.get("roomName") == null ? "" : room.get("roomName").toLowerCase();
+
+            boolean isSpecialtyMatch = false;
+            if ("Nội tiết".equalsIgnoreCase(doctorDeptNorm) || "Endocrinology".equalsIgnoreCase(doctorDeptNorm)) {
+                isSpecialtyMatch = roomName.contains("nội tiết") || roomName.contains("endocrin");
+            } else if ("Tim mạch".equalsIgnoreCase(doctorDeptNorm) || "Cardiology".equalsIgnoreCase(doctorDeptNorm)) {
+                isSpecialtyMatch = roomName.contains("tim mạch") || roomName.contains("cardio");
+            } else if ("Thận học".equalsIgnoreCase(doctorDeptNorm) || "Nephrology".equalsIgnoreCase(doctorDeptNorm)) {
+                isSpecialtyMatch = roomName.contains("thận") || roomName.contains("nephro");
+            } else if ("Da liễu".equalsIgnoreCase(doctorDeptNorm) || (doctorDepartment != null && doctorDepartment.toLowerCase().contains("da liễu"))) {
+                isSpecialtyMatch = roomName.contains("da liễu") || roomName.contains("dermatol");
+            } else if ("Tổng quát".equalsIgnoreCase(doctorDeptNorm) || "General".equalsIgnoreCase(doctorDeptNorm)) {
+                isSpecialtyMatch = roomName.contains("tổng quát") || roomName.contains("general");
+            } else if (doctorDepartment != null && !doctorDepartment.isBlank()) {
+                isSpecialtyMatch = roomName.contains(doctorDepartment.toLowerCase());
+            }
+
+            if (isSpecialtyMatch) {
+                String slotRoomKey = workDate + "_" + timeSlot + "_" + roomId;
+                if (!usedRoomSlotKeys.contains(slotRoomKey)
+                        && !roomRepository.hasRoomOverlap(conn, roomId, workDate, timeSlot, excludeScheduleId, null)) {
+                    return roomId;
+                }
+            }
+        }
+
+        // STRICT ENFORCEMENT: Never assign a room of a different specialty
+        return null;
     }
 }
 

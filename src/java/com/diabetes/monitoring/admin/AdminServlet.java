@@ -143,7 +143,7 @@ public class AdminServlet extends HttpServlet {
             return;
         }
 
-        if ("getShiftDetail".equals(action)) {
+        if ("getShiftDetail".equals(action) || "getStaffSchedule".equals(action)) {
             schedulingHandler.getShiftDetail(request, response);
             return;
         }

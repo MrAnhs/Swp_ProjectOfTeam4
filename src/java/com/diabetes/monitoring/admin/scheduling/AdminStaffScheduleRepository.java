@@ -555,11 +555,34 @@ public class AdminStaffScheduleRepository {
      */
     public List<Map<String, Object>> getWeeklyCalendarSchedules(Date startDate, Date endDate, String roleFilter, String roomFilter) {
         List<Map<String, Object>> list = new ArrayList<>();
+        // Helper time-slot classification expression (SQL Server compatible, no CAST that could fail on Vietnamese strings)
+        // Detects "morning" shift by checking many patterns: sáng, morning, 07:, 08:, 07h, 08h, 07:00-12:00, 08:00-12:00
+        // Anything not detected as morning defaults to afternoon (13:00-17:00)
+        final String morningExpr = "("
+                + "LOWER(ts_col) LIKE '%s%ng%' "                   // sáng / sang
+                + "OR LOWER(ts_col) LIKE '%morning%' "
+                + "OR LOWER(ts_col) LIKE '%am%' "
+                + "OR ts_col LIKE '07%' "
+                + "OR ts_col LIKE '08%' "
+                + "OR ts_col LIKE '7:%' "
+                + "OR ts_col LIKE '8:%' "
+                + "OR ts_col LIKE '07h%' "
+                + "OR ts_col LIKE '08h%' "
+                + "OR ts_col = '08:00-12:00' "
+                + "OR ts_col = '07:00-12:00' "
+                + "OR ts_col = '07:00-11:30' "
+                + "OR ts_col = '08:00-11:30'"
+                + ")";
+
+        String dsMorning  = morningExpr.replace("ts_col", "ds.time_slot");
+        String lsMorning  = morningExpr.replace("ts_col", "ls.time_slot");
+        String rsMorning  = morningExpr.replace("ts_col", "rs.time_slot");
+
         String sql = "SELECT * FROM ("
                 + "SELECT 'Doctor' AS staff_type, ds.schedule_id AS id, acc.account_id, acc.full_name AS staff, 'Doctor' AS role, "
                 + "ISNULL(r.room_name, N'Chưa xếp') AS room, ds.room_id, ds.work_date AS date, "
-                + "CASE WHEN LOWER(ds.time_slot) LIKE '%morning%' OR ds.time_slot = '08:00-12:00' OR CAST(LEFT(ds.time_slot, 2) AS INT) < 12 THEN '08:00' ELSE '13:00' END AS start_time, "
-                + "CASE WHEN LOWER(ds.time_slot) LIKE '%morning%' OR ds.time_slot = '08:00-12:00' OR CAST(LEFT(ds.time_slot, 2) AS INT) < 12 THEN '12:00' ELSE '17:00' END AS end_time, "
+                + "CASE WHEN " + dsMorning + " THEN '08:00' ELSE '13:00' END AS start_time, "
+                + "CASE WHEN " + dsMorning + " THEN '12:00' ELSE '17:00' END AS end_time, "
                 + "ds.time_slot, ds.status "
                 + "FROM Doctor_Schedule ds "
                 + "JOIN Doctor d ON d.doctor_id = ds.doctor_id "
@@ -569,8 +592,8 @@ public class AdminStaffScheduleRepository {
                 + "UNION ALL "
                 + "SELECT 'Lab' AS staff_type, ls.lab_sched_id AS id, acc.account_id, acc.full_name AS staff, 'Lab' AS role, "
                 + "ISNULL(r.room_name, N'Phòng Lab') AS room, ls.room_id, ls.work_date AS date, "
-                + "CASE WHEN LOWER(ls.time_slot) LIKE '%morning%' OR ls.time_slot = '08:00-12:00' OR CAST(LEFT(ls.time_slot, 2) AS INT) < 12 THEN '08:00' ELSE '13:00' END AS start_time, "
-                + "CASE WHEN LOWER(ls.time_slot) LIKE '%morning%' OR ls.time_slot = '08:00-12:00' OR CAST(LEFT(ls.time_slot, 2) AS INT) < 12 THEN '12:00' ELSE '17:00' END AS end_time, "
+                + "CASE WHEN " + lsMorning + " THEN '08:00' ELSE '13:00' END AS start_time, "
+                + "CASE WHEN " + lsMorning + " THEN '12:00' ELSE '17:00' END AS end_time, "
                 + "ls.time_slot, ls.status "
                 + "FROM Lab_Schedule ls "
                 + "JOIN Doctor_Lab dl ON dl.lab_id = ls.lab_id "
@@ -580,8 +603,8 @@ public class AdminStaffScheduleRepository {
                 + "UNION ALL "
                 + "SELECT 'Reception' AS staff_type, rs.reception_sched_id AS id, acc.account_id, acc.full_name AS staff, 'Reception' AS role, "
                 + "N'Quầy lễ tân' AS room, NULL AS room_id, rs.work_date AS date, "
-                + "CASE WHEN LOWER(rs.time_slot) LIKE '%morning%' OR rs.time_slot = '08:00-12:00' OR CAST(LEFT(rs.time_slot, 2) AS INT) < 12 THEN '08:00' ELSE '13:00' END AS start_time, "
-                + "CASE WHEN LOWER(rs.time_slot) LIKE '%morning%' OR rs.time_slot = '08:00-12:00' OR CAST(LEFT(rs.time_slot, 2) AS INT) < 12 THEN '12:00' ELSE '17:00' END AS end_time, "
+                + "CASE WHEN " + rsMorning + " THEN '08:00' ELSE '13:00' END AS start_time, "
+                + "CASE WHEN " + rsMorning + " THEN '12:00' ELSE '17:00' END AS end_time, "
                 + "rs.time_slot, rs.status "
                 + "FROM Reception_Schedule rs "
                 + "JOIN Reception rec ON rec.reception_id = rs.reception_id "
@@ -639,7 +662,8 @@ public class AdminStaffScheduleRepository {
                 }
             }
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Failed to get weekly calendar schedules", e);
+            LOGGER.log(Level.SEVERE, "Failed to get weekly calendar schedules: " + e.getMessage(), e);
+            throw new RuntimeException("SQL Error in getWeeklyCalendarSchedules: " + e.getMessage(), e);
         }
 
         // Phát hiện Conflict (Trùng lịch nhân sự hoặc Trùng phòng khám)
