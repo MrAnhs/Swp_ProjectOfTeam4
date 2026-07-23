@@ -147,6 +147,42 @@
                 return;
             }
 
+            const editSpecBtn = event.target.closest('.edit-specialty-btn');
+            if (editSpecBtn) {
+                const accountId = editSpecBtn.getAttribute('data-account-id');
+                const accountName = editSpecBtn.getAttribute('data-account-name');
+                if (!accountId) return;
+
+                fetchAccountProfile(accountId).then(function (item) {
+                    const specModalEl = document.getElementById('editSpecialtyModal');
+                    if (!specModalEl) return;
+
+                    document.getElementById('specAccountId').value = item.accountId || accountId;
+                    document.getElementById('specFullNameHidden').value = item.fullName || '';
+                    document.getElementById('specEmailHidden').value = item.email || '';
+                    document.getElementById('specPhoneHidden').value = item.phone || '';
+                    document.getElementById('specAccountName').textContent = (item.fullName || accountName) + ' (' + (roleText(item.role)) + ')';
+
+                    const selectEl = document.getElementById('specDepartmentSelect');
+                    const inputEl = document.getElementById('specDepartmentInput');
+                    const currDept = item.department || '';
+
+                    if (['Endocrinology', 'Cardiology', 'Nephrology', 'General'].includes(currDept)) {
+                        selectEl.value = currDept;
+                        inputEl.value = currDept;
+                    } else {
+                        selectEl.value = 'custom';
+                        inputEl.value = currDept;
+                    }
+
+                    const bsSpecModal = new bootstrap.Modal(specModalEl);
+                    bsSpecModal.show();
+                }).catch(function (err) {
+                    alert('Không thể tải thông tin chuyên khoa: ' + err.message);
+                });
+                return;
+            }
+
             const row = event.target.closest('tr.account-row');
             if (!row) {
                 return;
@@ -236,5 +272,18 @@
             }
             event.preventDefault();
             actionConfirmSubmitBtn.click();
+        });
+
+        document.addEventListener('change', function (e) {
+            if (e.target && e.target.id === 'specDepartmentSelect') {
+                const inputEl = document.getElementById('specDepartmentInput');
+                if (!inputEl) return;
+                if (e.target.value === 'custom') {
+                    inputEl.value = '';
+                    inputEl.focus();
+                } else {
+                    inputEl.value = e.target.value;
+                }
+            }
         });
     })();
