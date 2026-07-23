@@ -364,6 +364,21 @@ public class HealthRecordDAO {
         }
     }
 
+    public boolean updateVitals(int recordId, int doctorId, double weight, double height, double bmi) throws SQLException {
+        String sql = "UPDATE Healthy_Record SET weight = ?, height = ?, bmi = ? "
+                + "WHERE health_record_id = ? AND doctor_id = ? "
+                + "AND status IN ('Accepted', 'AI_Processed', 'Editing')";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setDouble(1, weight);
+            ps.setDouble(2, height);
+            ps.setDouble(3, bmi);
+            ps.setInt(4, recordId);
+            ps.setInt(5, doctorId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
     private void setNullableDecimal(PreparedStatement ps, int index, Double value)
             throws SQLException {
         if (value == null || value.isNaN() || value.isInfinite()) {
