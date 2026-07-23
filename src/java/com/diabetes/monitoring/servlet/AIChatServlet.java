@@ -12,6 +12,11 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 public class AIChatServlet extends HttpServlet {
@@ -102,48 +107,170 @@ public class AIChatServlet extends HttpServlet {
     }
 
     // ──────────────────────────────────────────────────────────────
-    //  FINISH → lưu vào AI_Summary
+    //  FINISH → lưu vào AI_Summary / AI_Conversation
     // ──────────────────────────────────────────────────────────────
     private void finishConversation(HttpServletRequest request,
             HttpServletResponse response, int patientId)
             throws SQLException, IOException, ChatAccessException {
 
         String symptoms = nullToEmpty(request.getParameter("symptoms"));
+        String clientHistory = nullToEmpty(request.getParameter("chatHistory"));
         String history = nullToEmpty((String) getServletContext()
                 .getAttribute("chatHistory_" + patientId));
 
         if (history.isBlank()) {
+            history = clientHistory;
+        }
+
+        if (history.isBlank() && symptoms.isBlank()) {
             throw new ChatAccessException(HttpServletResponse.SC_CONFLICT,
                     "Cu\u1ed9c tr\u00f2 chuy\u1ec7n ch\u01b0a c\u00f3 n\u1ed9i dung.");
         }
 
         // AI tóm tắt triệu chứng
-        String summaryPrompt = "H\u00e3y t\u00f3m t\u1eaft ng\u1eafn g\u1ecdn c\u00e1c tri\u1ec7u ch\u1ee9ng ch\u00ednh b\u1ec7nh nh\u00e2n \u0111\u00e3 chia s\u1ebb trong cu\u1ed9c tr\u00f2 chuy\u1ec7n sau "
-                + "(ch\u1ec9 li\u1ec7t k\u00ea tri\u1ec7u ch\u1ee9ng, kh\u00f4ng ch\u1ea9n \u0111o\u00e1n):\n\n" + history;
-        String summaryJson = normalizeAiJson(geminiIntegration.getChatResponse(summaryPrompt));
-        String aiSummary = extractJsonString(summaryJson, "reply");
+        String aiSummary = "";
+        if (!history.isBlank()) {
+            try {
+                String summaryPrompt = "H\u00e3y t\u00f3m t\u1eaft ng\u1eafn g\u1ecdn c\u00e1c tri\u1ec7u ch\u1ee9ng ch\u00ednh b\u1ec7nh nh\u00e2n \u0111\u00e3 chia s\u1ebb trong cu\u1ed9c tr\u00f2 chuy\u1ec7n sau "
+                        + "(ch\u1ec9 li\u1ec7t k\u00ea tri\u1ec7u ch\u1ee9ng, kh\u00f4ng ch\u1ea9n \u0111o\u00e1n):\n\n" + history;
+                String summaryJson = normalizeAiJson(geminiIntegration.getChatResponse(summaryPrompt));
+                aiSummary = extractJsonString(summaryJson, "reply");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
         if (aiSummary.isEmpty()) {
-            // Fallback: dùng symptoms do user cung cấp
+            // Fallback: dùng symptoms do user cung cấp hoặc fallbackSummary từ history
             aiSummary = symptoms.isEmpty() ? fallbackSummary(history) : symptoms;
         }
 
-        // Lưu vào AI_Summary
-        String summaryId = UUID.randomUUID().toString().replace("-", "").substring(0, 20);
-        String sql = "INSERT INTO AI_Summary (summary_id, patient_id, appointment_id, ai_summary, created_at) "
-                + "VALUES (?, ?, NULL, ?, GETDATE())";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, summaryId);
-            ps.setInt(2, patientId);
-            ps.setString(3, aiSummary);
-            ps.executeUpdate();
-        }
+        // Save into DB
+        saveAiSummaryToDatabase(patientId, aiSummary, symptoms, history);
 
         // Xóa lịch sử chat trong memory
         getServletContext().removeAttribute("chatHistory_" + patientId);
 
         response.getWriter().print("{\"success\":true,\"summary\":\""
                 + escapeJson(aiSummary) + "\"}");
+    }
+
+    private void saveAiSummaryToDatabase(int patientId, String aiSummary, String symptoms, String history) throws SQLException {
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            boolean hasAiSummaryTable = false;
+            boolean hasAiConvTable = false;
+
+            try (ResultSet rs = conn.getMetaData().getTables(null, null, "AI_Summary", null)) {
+                if (rs.next()) hasAiSummaryTable = true;
+            }
+            try (ResultSet rs = conn.getMetaData().getTables(null, null, "AI_Conversation", null)) {
+                if (rs.next()) hasAiConvTable = true;
+            }
+
+            if (!hasAiSummaryTable && !hasAiConvTable) {
+                try (Statement stmt = conn.createStatement()) {
+                    stmt.execute("CREATE TABLE AI_Summary (" +
+                                 "summary_id INT IDENTITY(1,1) PRIMARY KEY, " +
+                                 "patient_id INT NOT NULL, " +
+                                 "ai_summary NVARCHAR(MAX) NULL, " +
+                                 "created_at DATETIME DEFAULT GETDATE())");
+                    hasAiSummaryTable = true;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            String targetTable = hasAiSummaryTable ? "AI_Summary" : "AI_Conversation";
+
+            Set<String> existingColumns = new HashSet<>();
+            try (ResultSet rs = conn.getMetaData().getColumns(null, null, targetTable, null)) {
+                while (rs.next()) {
+                    existingColumns.add(rs.getString("COLUMN_NAME").toLowerCase());
+                }
+            }
+
+            List<String> colNames = new ArrayList<>();
+            List<Object> values = new ArrayList<>();
+
+            if (existingColumns.contains("summary_id") && isVarcharColumn(conn, targetTable, "summary_id")) {
+                colNames.add("summary_id");
+                values.add(UUID.randomUUID().toString().replace("-", "").substring(0, 20));
+            }
+
+            if (existingColumns.contains("patient_id")) {
+                colNames.add("patient_id");
+                values.add(patientId);
+            }
+
+            if (existingColumns.contains("ai_summary")) {
+                colNames.add("ai_summary");
+                values.add(aiSummary);
+            } else if (existingColumns.contains("symptoms")) {
+                colNames.add("symptoms");
+                values.add(aiSummary);
+            }
+
+            if (existingColumns.contains("symptoms") && !colNames.contains("symptoms") && !symptoms.isBlank()) {
+                colNames.add("symptoms");
+                values.add(symptoms);
+            }
+
+            if (existingColumns.contains("chat_history") && !history.isBlank()) {
+                colNames.add("chat_history");
+                values.add(history);
+            }
+
+            if (existingColumns.contains("created_at")) {
+                colNames.add("created_at");
+                values.add("GETDATE()");
+            }
+
+            StringBuilder sql = new StringBuilder("INSERT INTO ").append(targetTable).append(" (");
+            StringBuilder valPlaceholders = new StringBuilder();
+
+            int paramCount = 0;
+            for (int i = 0; i < colNames.size(); i++) {
+                if (i > 0) {
+                    sql.append(", ");
+                    valPlaceholders.append(", ");
+                }
+                sql.append(colNames.get(i));
+                if ("created_at".equalsIgnoreCase(colNames.get(i))) {
+                    valPlaceholders.append("GETDATE()");
+                } else {
+                    valPlaceholders.append("?");
+                    paramCount++;
+                }
+            }
+            sql.append(") VALUES (").append(valPlaceholders).append(")");
+
+            try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+                int paramIdx = 1;
+                for (int i = 0; i < colNames.size(); i++) {
+                    if (!"created_at".equalsIgnoreCase(colNames.get(i))) {
+                        ps.setObject(paramIdx++, values.get(i));
+                    }
+                }
+                int rows = ps.executeUpdate();
+                if (rows > 0) {
+                    System.out.println("[AIChatServlet] Summary inserted successfully into " + targetTable);
+                    return;
+                }
+            } catch (SQLException ex) {
+                System.err.println("[AIChatServlet] Dynamic insert into " + targetTable + " failed: " + ex.getMessage());
+                throw ex;
+            }
+        }
+    }
+
+    private boolean isVarcharColumn(Connection conn, String tableName, String colName) {
+        try (ResultSet rs = conn.getMetaData().getColumns(null, null, tableName, colName)) {
+            if (rs.next()) {
+                String typeName = rs.getString("TYPE_NAME");
+                return typeName != null && (typeName.toLowerCase().contains("char") || typeName.toLowerCase().contains("text"));
+            }
+        } catch (Exception ignored) {}
+        return false;
     }
 
     // ──────────────────────────────────────────────────────────────

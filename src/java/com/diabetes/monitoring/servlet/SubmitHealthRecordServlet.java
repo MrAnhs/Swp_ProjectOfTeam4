@@ -71,7 +71,7 @@ public class SubmitHealthRecordServlet extends HttpServlet {
 
         String validationError = validateHealthData(
                 ureaStr, creatinineStr, hba1cStr, cholesterolStr, tgStr, hdlStr, ldlStr, vldlStr,
-                weightStr, heightStr, urea, creatinine, hba1c, cholesterol, tg, hdl, ldl, weight, height);
+                weightStr, heightStr, urea, creatinine, hba1c, cholesterol, tg, hdl, ldl, vldl, weight, height);
         if (validationError != null) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             response.getWriter().print("{\"error\":\"" + escapeJson(validationError) + "\"}");
@@ -226,7 +226,7 @@ public class SubmitHealthRecordServlet extends HttpServlet {
             String cholesterolRaw, String tgRaw, String hdlRaw, String ldlRaw, String vldlRaw,
             String weightRaw, String heightRaw, BigDecimal urea, BigDecimal creatinine,
             BigDecimal hba1c, BigDecimal cholesterol, BigDecimal tg, BigDecimal hdl,
-            BigDecimal ldl, BigDecimal weight, BigDecimal height) {
+            BigDecimal ldl, BigDecimal vldl, BigDecimal weight, BigDecimal height) {
         String invalidNumber = firstInvalidNumber(
                 new String[]{"Urea", "Creatinine", "HbA1c", "Cholesterol", "Triglycerides",
                     "HDL", "LDL", "VLDL", "Cân nặng", "Chiều cao"},
@@ -243,6 +243,7 @@ public class SubmitHealthRecordServlet extends HttpServlet {
         if (outsideInclusive(tg, "0.1", "50")) return "Triglycerides: " + HARD_LIMIT_MESSAGE;
         if (outsideInclusive(hdl, "0.1", "5")) return "HDL: " + HARD_LIMIT_MESSAGE;
         if (outsideInclusive(ldl, "0.1", "15")) return "LDL: " + HARD_LIMIT_MESSAGE;
+        if (outsideInclusive(vldl, "0.05", "10")) return "VLDL: " + HARD_LIMIT_MESSAGE;
         if (outsideExclusiveMin(weight, BigDecimal.ZERO, new BigDecimal("800"))) {
             return "Cân nặng: " + HARD_LIMIT_MESSAGE;
         }

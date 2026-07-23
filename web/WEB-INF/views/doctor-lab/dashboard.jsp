@@ -515,32 +515,26 @@
                     </c:if>
                 </a>
                 <div class="sub-menu" id="rooms-sub-menu">
-                    <a href="javascript:void(0)" class="nav-item-sub d-flex align-items-center justify-content-between" id="sub-room-mau" onclick="toggleBloodSubMenu()">
-                        <div class="d-flex align-items-center gap-2">
-                            <i class="bi bi-droplet-fill text-danger"></i>
-                            <span>Xét nghiệm máu</span>
-                        </div>
-                        <i class="bi bi-chevron-down small" id="blood-chevron" style="transition: transform 0.2s ease;"></i>
+                    <a href="javascript:void(0)" class="nav-item-sub" id="sub-room-mau" onclick="selectSidebarRoom('phòng xét nghiệm máu')">
+                        <i class="bi bi-droplet-fill text-danger"></i>
+                        <span>Xét nghiệm máu</span>
                     </a>
-                    <div class="sub-menu-level2 ps-3" id="blood-sub-menu" style="display: none; flex-direction: column;">
-                        <a href="javascript:void(0)" class="nav-item-sub py-1 my-1" id="sub-room-duonghuyet" onclick="selectSidebarRoom('phòng xét nghiệm máu - đường huyết')">
-                            <i class="bi bi-activity text-danger"></i>
-                            <span>Đường huyết</span>
-                        </a>
-                        <a href="javascript:void(0)" class="nav-item-sub py-1 my-1" id="sub-room-gan" onclick="selectSidebarRoom('phòng xét nghiệm máu - chức năng gan')">
-                            <i class="bi bi-heart-pulse-fill text-success"></i>
-                            <span>Chức năng gan</span>
-                        </a>
-                        <a href="javascript:void(0)" class="nav-item-sub py-1 my-1" id="sub-room-than" onclick="selectSidebarRoom('phòng xét nghiệm máu - chức năng thận')">
-                            <i class="bi bi-prescription text-warning"></i>
-                            <span>Chức năng thận</span>
-                        </a>
-                        <a href="javascript:void(0)" class="nav-item-sub py-1 my-1" id="sub-room-momau" onclick="selectSidebarRoom('phòng xét nghiệm máu - mỡ máu')">
-                            <i class="bi bi-droplet-half text-info"></i>
-                            <span>Mỡ máu</span>
-                        </a>
-                    </div>
-
+                    <a href="javascript:void(0)" class="nav-item-sub" id="sub-room-duonghuyet" onclick="selectSidebarRoom('phòng xét nghiệm đường huyết')">
+                        <i class="bi bi-activity text-warning"></i>
+                        <span>Đường huyết</span>
+                    </a>
+                    <a href="javascript:void(0)" class="nav-item-sub" id="sub-room-gan" onclick="selectSidebarRoom('phòng xét nghiệm máu - chức năng gan')">
+                        <i class="bi bi-heart-pulse-fill text-success"></i>
+                        <span>Chức năng gan</span>
+                    </a>
+                    <a href="javascript:void(0)" class="nav-item-sub" id="sub-room-than" onclick="selectSidebarRoom('phòng xét nghiệm máu - chức năng thận')">
+                        <i class="bi bi-prescription text-warning"></i>
+                        <span>Chức năng thận</span>
+                    </a>
+                    <a href="javascript:void(0)" class="nav-item-sub" id="sub-room-momau" onclick="selectSidebarRoom('phòng xét nghiệm máu - mỡ máu')">
+                        <i class="bi bi-droplet-half text-info"></i>
+                        <span>Mỡ máu</span>
+                    </a>
                     <a href="javascript:void(0)" class="nav-item-sub" id="sub-room-nuoctieu" onclick="selectSidebarRoom('phòng xét nghiệm nước tiểu')">
                         <i class="bi bi-droplet text-info"></i>
                         <span>Xét nghiệm nước tiểu</span>
@@ -959,8 +953,11 @@
                                                             <c:when test="${fn:contains(r.otherInfo, 'nước tiểu')}">
                                                                 <span class="badge bg-info text-dark"><i class="bi bi-droplet me-1"></i>Xét nghiệm nước tiểu</span>
                                                             </c:when>
-                                                            <c:when test="${fn:contains(r.otherInfo, 'đường huyết') or fn:contains(r.otherInfo, 'xét nghiệm máu')}">
-                                                                <span class="badge bg-danger"><i class="bi bi-activity me-1"></i>Xét nghiệm đường huyết</span>
+                                                            <c:when test="${r.otherInfo eq 'phòng xét nghiệm máu' or (fn:contains(r.otherInfo, 'máu') and not fn:contains(r.otherInfo, 'đường huyết') and not fn:contains(r.otherInfo, 'gan') and not fn:contains(r.otherInfo, 'thận') and not fn:contains(r.otherInfo, 'mỡ máu'))}">
+                                                                <span class="badge bg-danger"><i class="bi bi-droplet-fill me-1"></i>Xét nghiệm máu</span>
+                                                            </c:when>
+                                                            <c:when test="${fn:contains(r.otherInfo, 'đường huyết')}">
+                                                                <span class="badge bg-warning text-dark"><i class="bi bi-activity me-1"></i>Xét nghiệm đường huyết</span>
                                                             </c:when>
                                                             <c:otherwise>
                                                                 <c:choose>
@@ -990,6 +987,9 @@
                                                                  <input type="hidden" name="patientId" value="${r.patientId}">
                                                                  <select name="newRoom" class="form-select form-select-xs py-0 px-2" style="font-size: 0.75rem; height: 28px; max-width: 155px;" required>
                                                                      <option value="">-- Chỉ định XN --</option>
+                                                                     <option value="phòng xét nghiệm máu">Xét nghiệm máu</option>
+                                                                     <option value="phòng xét nghiệm máu - đường huyết">Đường huyết</option>
+                                                                     <option value="phòng xét nghiệm nước tiểu">Nước tiểu</option>
                                                                      <option value="phòng xét nghiệm máu - chức năng gan">Chức năng gan</option>
                                                                      <option value="phòng xét nghiệm máu - chức năng thận">Chức năng thận</option>
                                                                      <option value="phòng xét nghiệm máu - mỡ máu">Mỡ máu</option>
@@ -1079,8 +1079,11 @@
                                                     </td>
                                                     <td>
                                                         <c:choose>
-                                                            <c:when test="${p.labRoom eq 'phòng xét nghiệm máu' or p.labRoom eq 'phòng xét nghiệm máu - đường huyết'}">
-                                                                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle"><i class="bi bi-activity me-1"></i>Xét nghiệm đường huyết</span>
+                                                            <c:when test="${p.labRoom eq 'phòng xét nghiệm máu'}">
+                                                                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle"><i class="bi bi-droplet-fill me-1"></i>Xét nghiệm máu</span>
+                                                            </c:when>
+                                                            <c:when test="${p.labRoom eq 'phòng xét nghiệm máu - đường huyết'}">
+                                                                <span class="badge bg-warning bg-opacity-10 text-warning border border-warning-subtle"><i class="bi bi-activity me-1"></i>Xét nghiệm đường huyết</span>
                                                             </c:when>
                                                             <c:when test="${p.labRoom eq 'phòng xét nghiệm nước tiểu'}">
                                                                 <span class="badge bg-info bg-opacity-10 text-info border border-info-subtle"><i class="bi bi-droplet me-1"></i>Xét nghiệm nước tiểu</span>
@@ -1142,6 +1145,11 @@
                                                                         <i class="bi bi-file-earmark-plus-fill me-1"></i> Nhập xét nghiệm
                                                                     </button>
                                                                     <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size: 0.8rem;">
+                                                                        <li>
+                                                                            <a class="dropdown-item py-1" href="javascript:void(0)" onclick="selectPatientForTestType('${p.patientId}', 'phòng xét nghiệm máu')">
+                                                                                <i class="bi bi-droplet-fill text-danger me-1"></i> Xét nghiệm máu
+                                                                            </a>
+                                                                        </li>
                                                                         <li>
                                                                             <a class="dropdown-item py-1" href="javascript:void(0)" onclick="selectPatientForTestType('${p.patientId}', 'phòng xét nghiệm máu - đường huyết')">
                                                                                 <i class="bi bi-activity text-danger me-1"></i> Đường huyết
@@ -1417,48 +1425,29 @@
                 subMenu.classList.add('show');
             }
 
-            // Expand level 2 blood menu if active room belongs to blood test
-            const bloodSub = document.getElementById('blood-sub-menu');
-            const chevron = document.getElementById('blood-chevron');
-            if (room.startsWith('phòng xét nghiệm máu')) {
-                if (bloodSub) {
-                    bloodSub.style.display = 'flex';
-                    bloodSub.classList.add('show');
-                }
-                if (chevron) chevron.style.transform = 'rotate(180deg)';
-            }
-
             // Highlight sub-items (clean active highlights first)
             document.querySelectorAll('.nav-item-sub').forEach(item => {
                 item.classList.remove('active');
             });
 
             // Highlight chosen item
-            if (room === 'phòng xét nghiệm máu - đường huyết') {
+            if (room === 'phòng xét nghiệm máu') {
+                const el = document.getElementById('sub-room-mau');
+                if (el) el.classList.add('active');
+            } else if (room === 'phòng xét nghiệm máu - đường huyết') {
                 const el = document.getElementById('sub-room-duonghuyet');
                 if (el) el.classList.add('active');
-                const parentEl = document.getElementById('sub-room-mau');
-                if (parentEl) parentEl.classList.add('active');
             } else if (room === 'phòng xét nghiệm máu - chức năng gan') {
                 const el = document.getElementById('sub-room-gan');
                 if (el) el.classList.add('active');
-                const parentEl = document.getElementById('sub-room-mau');
-                if (parentEl) parentEl.classList.add('active');
             } else if (room === 'phòng xét nghiệm máu - chức năng thận') {
                 const el = document.getElementById('sub-room-than');
                 if (el) el.classList.add('active');
-                const parentEl = document.getElementById('sub-room-mau');
-                if (parentEl) parentEl.classList.add('active');
             } else if (room === 'phòng xét nghiệm máu - mỡ máu') {
                 const el = document.getElementById('sub-room-momau');
                 if (el) el.classList.add('active');
-                const parentEl = document.getElementById('sub-room-mau');
-                if (parentEl) parentEl.classList.add('active');
             } else if (room === 'phòng xét nghiệm nước tiểu') {
                 const el = document.getElementById('sub-room-nuoctieu');
-                if (el) el.classList.add('active');
-            } else if (room === 'phòng xét nghiệm máu') {
-                const el = document.getElementById('sub-room-mau');
                 if (el) el.classList.add('active');
             }
 
@@ -1469,15 +1458,15 @@
                 if (room === 'phòng xét nghiệm nước tiểu') {
                     displayName = 'Phòng xét nghiệm nước tiểu';
                 } else if (room.includes('đường huyết')) {
-                    displayName = 'Xét nghiệm máu - Đường huyết';
+                    displayName = 'Phòng xét nghiệm đường huyết';
                 } else if (room.includes('gan')) {
-                    displayName = 'Xét nghiệm máu - Chức năng gan';
+                    displayName = 'Phòng xét nghiệm chức năng gan';
                 } else if (room.includes('thận')) {
-                    displayName = 'Xét nghiệm máu - Chức năng thận';
+                    displayName = 'Phòng xét nghiệm chức năng thận';
                 } else if (room.includes('mỡ máu')) {
-                    displayName = 'Xét nghiệm máu - Mỡ máu';
+                    displayName = 'Phòng xét nghiệm mỡ máu';
                 } else {
-                    displayName = 'Xét nghiệm máu';
+                    displayName = 'Phòng xét nghiệm máu';
                 }
                 titleSpan.innerHTML = `<i class="bi bi-door-closed me-2"></i> ` + displayName;
             }
@@ -1618,13 +1607,22 @@
                  <c:set var="isKidneyTest"     value="false" />
                  <c:set var="isUrineTest"      value="true"  />
              </c:when>
-             <c:when test="${fn:contains(r.otherInfo, 'đường huyết') or fn:contains(r.otherInfo, 'máu')}">
-                 <c:set var="isBloodSugarTest" value="true"  />
-                 <c:set var="isLiverTest"      value="false" />
-                 <c:set var="isLipidsTest"     value="false" />
-                 <c:set var="isKidneyTest"     value="false" />
-                 <c:set var="isUrineTest"      value="false" />
-             </c:when>
+             <c:when test="${r.otherInfo eq 'phòng xét nghiệm máu' or (fn:contains(r.otherInfo, 'máu') and not fn:contains(r.otherInfo, 'đường huyết') and not fn:contains(r.otherInfo, 'gan') and not fn:contains(r.otherInfo, 'thận') and not fn:contains(r.otherInfo, 'mỡ máu'))}">
+                  <c:set var="isFullBloodTest"  value="true"  />
+                  <c:set var="isBloodSugarTest" value="false" />
+                  <c:set var="isLiverTest"      value="false" />
+                  <c:set var="isLipidsTest"     value="false" />
+                  <c:set var="isKidneyTest"     value="false" />
+                  <c:set var="isUrineTest"      value="false" />
+              </c:when>
+              <c:when test="${fn:contains(r.otherInfo, 'đường huyết')}">
+                  <c:set var="isFullBloodTest"  value="false" />
+                  <c:set var="isBloodSugarTest" value="true"  />
+                  <c:set var="isLiverTest"      value="false" />
+                  <c:set var="isLipidsTest"     value="false" />
+                  <c:set var="isKidneyTest"     value="false" />
+                  <c:set var="isUrineTest"      value="false" />
+              </c:when>
              <c:otherwise>
                  <%-- fallback: detect by which fields are populated --%>
                  <c:set var="isLiverTest"  value="${(empty r.hba1c or r.hba1c eq '0' or r.hba1c eq '0.0') and (empty r.cr or r.cr eq '0' or r.cr eq '0.0') and (empty r.ldl or r.ldl eq '0' or r.ldl eq '0.0') and not empty r.chol and r.chol ne '0'}" />
@@ -1657,6 +1655,33 @@
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    <%-- ===== XÉT NGHIỆM MÁU TỔNG QUÁT: 8 chỉ số ===== --%>
+                                    <c:if test="${isFullBloodTest}">
+                                        <c:if test="${not empty r.urea and r.urea ne '0' and r.urea ne '0.0' and r.urea ne '0.00'}">
+                                            <tr><td>Urea (Ure)</td><td class="fw-bold"><c:out value="${r.urea}" /> mmol/L</td></tr>
+                                        </c:if>
+                                        <c:if test="${not empty r.cr and r.cr ne '0' and r.cr ne '0.0' and r.cr ne '0.00'}">
+                                            <tr><td>Creatinine (Cr)</td><td class="fw-bold"><c:out value="${r.cr}" /> &micro;mol/L</td></tr>
+                                        </c:if>
+                                        <c:if test="${not empty r.hba1c and r.hba1c ne '0' and r.hba1c ne '0.0' and r.hba1c ne '0.00'}">
+                                            <tr><td>Đường huyết (HbA1c)</td><td class="fw-bold text-danger"><c:out value="${r.hba1c}" /> %</td></tr>
+                                        </c:if>
+                                        <c:if test="${not empty r.chol and r.chol ne '0' and r.chol ne '0.0' and r.chol ne '0.00'}">
+                                            <tr><td>Cholesterol toàn phần</td><td class="fw-bold"><c:out value="${r.chol}" /> mmol/L</td></tr>
+                                        </c:if>
+                                        <c:if test="${not empty r.tg and r.tg ne '0' and r.tg ne '0.0' and r.tg ne '0.00'}">
+                                            <tr><td>Triglyceride (TG)</td><td class="fw-bold"><c:out value="${r.tg}" /> mmol/L</td></tr>
+                                        </c:if>
+                                        <c:if test="${not empty r.hdl and r.hdl ne '0' and r.hdl ne '0.0' and r.hdl ne '0.00'}">
+                                            <tr><td>HDL-Cholesterol</td><td class="fw-bold"><c:out value="${r.hdl}" /> mmol/L</td></tr>
+                                        </c:if>
+                                        <c:if test="${not empty r.ldl and r.ldl ne '0' and r.ldl ne '0.0' and r.ldl ne '0.00'}">
+                                            <tr><td>LDL-Cholesterol</td><td class="fw-bold"><c:out value="${r.ldl}" /> mmol/L</td></tr>
+                                        </c:if>
+                                        <c:if test="${not empty r.vldl and r.vldl ne '0' and r.vldl ne '0.0' and r.vldl ne '0.00'}">
+                                            <tr><td>VLDL-Cholesterol</td><td class="fw-bold"><c:out value="${r.vldl}" /> mmol/L</td></tr>
+                                        </c:if>
+                                    </c:if>
                                     <%-- ===== BLOOD SUGAR: chỉ hiện Đường huyết + HbA1c ===== --%>
                                     <c:if test="${isBloodSugarTest}">
                                         <c:if test="${not empty r.urea and r.urea ne '0' and r.urea ne '0.0' and r.urea ne '0.00'}">

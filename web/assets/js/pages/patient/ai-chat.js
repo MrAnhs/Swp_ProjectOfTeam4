@@ -188,6 +188,7 @@ function submitHealthRecordFromChat() {
     const params = new URLSearchParams();
     params.append('action', 'finish');
     if (symptoms) params.append('symptoms', symptoms);
+    if (chatHistory) params.append('chatHistory', chatHistory);
 
     fetch(endpoint, {
         method: 'POST',

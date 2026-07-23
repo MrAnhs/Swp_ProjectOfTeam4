@@ -1,6 +1,7 @@
 <%@page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
+<%@taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -226,14 +227,14 @@
         <div class="row g-3 align-items-end">
             <div class="col-md-3">
                 <label class="form-label fw-semibold">Chiều cao (cm)</label>
-                <input id="vitalsHeight" type="number" step="0.1" class="form-control" 
+                <input id="vitalsHeight" type="number" step="0.1" min="30" max="300" class="form-control" 
                        value="${record.height > 0 ? record.height : ''}" 
                        placeholder="Nhập chiều cao (cm)" 
                        ${!canEditDiagnosis ? 'disabled' : ''}>
             </div>
             <div class="col-md-3">
                 <label class="form-label fw-semibold">Cân nặng (kg)</label>
-                <input id="vitalsWeight" type="number" step="0.1" class="form-control" 
+                <input id="vitalsWeight" type="number" step="0.1" min="2" max="500" class="form-control" 
                        value="${record.weight > 0 ? record.weight : ''}" 
                        placeholder="Nhập cân nặng (kg)" 
                        ${!canEditDiagnosis ? 'disabled' : ''}>
@@ -305,6 +306,7 @@
                 <div class="doctor-muted small">Chọn loại xét nghiệm và xem giá trước khi gửi yêu cầu.</div>
             </div>
         </div>
+
         <c:set var="hasPendingPayment" value="false" />
         <c:forEach var="lab" items="${laboratoryRequests}">
             <c:if test="${lab.status == 'Waiting_Payment'}">
@@ -325,34 +327,61 @@
                   action="${pageContext.request.contextPath}/doctor/laboratory-requests/create">
                 <input type="hidden" name="record_id" value="${record.healthRecordId}">
                 <div class="col-12">
-                    <label class="form-label fw-semibold">Chọn một hoặc nhiều loại xét nghiệm</label>
-                    <div class="row g-2">
+                    <label class="form-label fw-semibold mb-3">Chọn loại xét nghiệm chỉ định</label>
+                    <div class="row row-cols-1 row-cols-md-3 row-cols-xl-6 g-3">
                         <c:forEach var="service" items="${laboratoryServices}">
-                            <div class="col-md-6 col-xl-4">
-                                <label class="lab-service-option">
-                                    <input class="form-check-input" type="checkbox"
-                                           name="service_id" value="${service.serviceId}">
+                            <div class="col">
+                                <c:set var="iconClass" value="bi-clipboard-pulse" />
+                                <c:set var="iconColor" value="text-secondary" />
+                                <c:choose>
+                                    <c:when test="${service.serviceName == 'Xét nghiệm máu'}">
+                                        <c:set var="iconClass" value="bi-droplet-fill" />
+                                        <c:set var="iconColor" value="text-danger" />
+                                    </c:when>
+                                    <c:when test="${service.serviceName == 'Chức năng gan'}">
+                                        <c:set var="iconClass" value="bi-hospital" />
+                                        <c:set var="iconColor" value="text-success" />
+                                    </c:when>
+                                    <c:when test="${service.serviceName == 'Chức năng thận'}">
+                                        <c:set var="iconClass" value="bi-shield-shaded" />
+                                        <c:set var="iconColor" value="text-info" />
+                                    </c:when>
+                                    <c:when test="${service.serviceName == 'Xét nghiệm đường huyết'}">
+                                        <c:set var="iconClass" value="bi-activity" />
+                                        <c:set var="iconColor" value="text-warning" />
+                                    </c:when>
+                                    <c:when test="${service.serviceName == 'Xét nghiệm nước tiểu'}">
+                                        <c:set var="iconClass" value="bi-droplet" />
+                                        <c:set var="iconColor" value="text-primary" />
+                                    </c:when>
+                                    <c:when test="${service.serviceName == 'Xét nghiệm mỡ máu'}">
+                                        <c:set var="iconClass" value="bi-speedometer2" />
+                                        <c:set var="iconColor" value="text-danger" />
+                                    </c:when>
+                                </c:choose>
+                                <label class="lab-service-option mb-2 w-100 h-100">
+                                    <input class="form-check-input" type="checkbox" name="service_id" value="${service.serviceId}">
+                                    <i class="bi ${iconClass} ${iconColor} fs-4"></i>
                                     <span>
-                                        <strong>${service.serviceNameDisplay}</strong>
-                                        <small><fmt:formatNumber value="${service.price}"
-                                                type="number" groupingUsed="true"/> VNĐ</small>
+                                        <strong class="d-block text-white" style="font-size: 0.9rem;">${service.serviceName}</strong>
+                                        <small class="text-secondary"><fmt:formatNumber value="${service.price}" type="number" groupingUsed="true"/> VNĐ</small>
                                     </span>
                                 </label>
                             </div>
                         </c:forEach>
                     </div>
                 </div>
-                <div class="col-lg-5">
+                <div class="col-lg-4">
                     <label class="form-label fw-semibold">Ghi chú cho phòng xét nghiệm</label>
                     <input class="form-control" name="request_note" maxlength="1000"
                            placeholder="Nội dung cần lưu ý">
                 </div>
-                <div class="col-lg-4">
+                <div class="col-lg-5">
                     <label class="form-label fw-semibold">Bác sĩ phòng xét nghiệm</label>
                     <select class="form-select" name="lab_id" required>
                         <option value="" disabled selected>-- Chọn bác sĩ --</option>
                         <c:forEach var="doc" items="${labDoctors}">
-                            <option value="${doc.labId}">${doc.fullName} (${doc.labName})</option>
+                            <option value="${doc.labId}">${doc.fullName} (${fn:replace(doc.labName, 'Phòng Xét nghiệm ', '')}) - Chờ: ${doc.waitingPatients} BN</option>
                         </c:forEach>
                     </select>
                 </div>
@@ -422,7 +451,6 @@
                     <div class="exam-metric"><div class="exam-metric-label">HDL</div><input id="metricHdl" class="form-control form-control-sm bg-light text-dark fw-bold" type="text" value="${record.hdl != null ? record.hdl : 'Chưa có'}" readonly disabled></div>
                     <div class="exam-metric"><div class="exam-metric-label">LDL</div><input id="metricIdl" class="form-control form-control-sm bg-light text-dark fw-bold" type="text" value="${record.ldl != null ? record.ldl : 'Chưa có'}" readonly disabled></div>
                     <div class="exam-metric"><div class="exam-metric-label">VLDL</div><input id="metricVldl" class="form-control form-control-sm bg-light text-dark fw-bold" type="text" value="${record.vldl != null ? record.vldl : 'Chưa có'}" readonly disabled></div>
-                    <div class="exam-metric"><div class="exam-metric-label">BMI</div><input id="metricBmi" class="form-control form-control-sm bg-light text-dark fw-bold" type="text" value="${record.bmi != null ? record.bmi : 'Chưa có'}" readonly disabled></div>
                 </div>
             </section>
 
@@ -580,12 +608,15 @@ function saveVitals(recordId) {
     const heightVal = document.getElementById("vitalsHeight").value;
     const weightVal = document.getElementById("vitalsWeight").value;
     
-    if (!heightVal || parseFloat(heightVal) <= 0) {
-        alert("Vui lòng nhập chiều cao hợp lệ (> 0)");
+    const height = parseFloat(heightVal);
+    const weight = parseFloat(weightVal);
+    
+    if (!heightVal || isNaN(height) || height < 30 || height > 300) {
+        alert("Chiều cao hợp lệ phải nằm trong khoảng từ 30 cm đến 300 cm.");
         return;
     }
-    if (!weightVal || parseFloat(weightVal) <= 0) {
-        alert("Vui lòng nhập cân nặng hợp lệ (> 0)");
+    if (!weightVal || isNaN(weight) || weight < 2 || weight > 500) {
+        alert("Cân nặng hợp lệ phải nằm trong khoảng từ 2 kg đến 500 kg.");
         return;
     }
     
@@ -658,16 +689,14 @@ document.querySelectorAll(".lab-multi-form").forEach(form => {
             if (checkbox.checked && select) {
                 const serviceText = option.querySelector('strong').textContent.toLowerCase();
                 let targetKeyword = "";
-                if (serviceText.includes("m\u00e1u") || serviceText.includes("\u0111\u01b0\u1eddng huy\u1ebft") || serviceText.includes("hba1c") || serviceText.includes("blood")) {
-                    targetKeyword = "m\u00e1u";
+                if (serviceText.includes("gan") || serviceText.includes("ast") || serviceText.includes("alt") || serviceText.includes("ggt") || serviceText.includes("bilirubin") || serviceText.includes("protein")) {
+                    targetKeyword = "gan";
+                } else if (serviceText.includes("th\u1eadn") || serviceText.includes("ure") || serviceText.includes("creatinine") || serviceText.includes("egfr")) {
+                    targetKeyword = "th\u1eadn";
                 } else if (serviceText.includes("n\u01b0\u1edbc ti\u1ec3u") || serviceText.includes("urine")) {
                     targetKeyword = "n\u01b0\u1edbc ti\u1ec3u";
-                } else if (serviceText.includes("gan") || serviceText.includes("liver")) {
-                    targetKeyword = "gan";
-                } else if (serviceText.includes("th\u1eadn") || serviceText.includes("kidney")) {
-                    targetKeyword = "th\u1eadn";
-                } else if (serviceText.includes("m\u1ee1") || serviceText.includes("lipid")) {
-                    targetKeyword = "m\u1ee1";
+                } else {
+                    targetKeyword = "m\u00e1u";
                 }
                 if (targetKeyword) {
                     for (let i = 0; i < select.options.length; i++) {

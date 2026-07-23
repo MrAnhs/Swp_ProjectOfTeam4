@@ -104,9 +104,6 @@
             
             <!-- Filter Dropdowns -->
             <div class="d-flex align-items-center gap-2">
-                <button type="button" class="btn btn-sm text-white fw-bold px-3 py-2 d-flex align-items-center gap-2" style="background: linear-gradient(135deg, #2ab5a3, #0284c7); border: none; border-radius: 8px;" data-bs-toggle="modal" data-bs-target="#proposeScheduleModal">
-                    <i class="bi bi-calendar-plus"></i> Đăng ký lịch trực
-                </button>
                 <div class="d-flex align-items-center gap-1">
                     <label class="fw-bold text-uppercase small m-0" style="color: #cbd5e1;" for="yearSelect">Năm</label>
                     <select id="yearSelect" class="form-select form-select-sm doctor-filter" style="width: 90px;" onchange="generateWeekOptions(); renderScheduleGrid();">
@@ -297,50 +294,8 @@ document.addEventListener("DOMContentLoaded", () => {
     populateYearSelect();
     generateWeekOptions();
     renderScheduleGrid();
-    
-    // Set min date of workDate input to today
-    const workDateInput = document.getElementById("workDateInput");
-    if (workDateInput) {
-        workDateInput.min = new Date().toISOString().split('T')[0];
-    }
 });
 </script>
-
-<!-- Modal Đăng Ký Lịch Trực -->
-<div class="modal fade" id="proposeScheduleModal" tabindex="-1" aria-labelledby="proposeScheduleModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content" style="background-color: #1e293b; color: #ffffff; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px;">
-            <div class="modal-header" style="border-bottom: 1px solid rgba(255,255,255,0.08);">
-                <h5 class="modal-title fw-bold" id="proposeScheduleModalLabel"><i class="bi bi-calendar-plus me-2 text-primary"></i>Đăng ký lịch trực mới</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form action="${pageContext.request.contextPath}/doctor/schedule" method="POST">
-                <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="workDateInput" class="form-label small fw-bold">Ngày làm việc</label>
-                        <input type="date" id="workDateInput" name="workDate" class="form-control" style="background-color: #0f172a; border-color: rgba(255,255,255,0.1); color: #ffffff;" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="timeSlot" class="form-label small fw-bold">Ca trực</label>
-                        <select name="timeSlot" class="form-select" style="background-color: #0f172a; border-color: rgba(255,255,255,0.1); color: #ffffff;" required>
-                            <option value="07:30 - 12:00">Ca sáng (07:30 - 12:00)</option>
-                            <option value="13:30 - 16:30">Ca chiều (13:30 - 16:30)</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="maxPatients" class="form-label small fw-bold">Số lượng bệnh nhân tối đa</label>
-                        <input type="number" name="maxPatients" class="form-control" style="background-color: #0f172a; border-color: rgba(255,255,255,0.1); color: #ffffff;" min="1" max="50" value="15" required>
-                    </div>
-                </div>
-                <div class="modal-footer" style="border-top: 1px solid rgba(255,255,255,0.08);">
-                    <button type="button" class="btn btn-secondary btn-sm px-3" style="background-color: #475569; border: none;" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-sm px-3 text-white fw-semibold" style="background: linear-gradient(135deg, #2ab5a3, #0284c7); border: none;">Gửi đăng ký</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
