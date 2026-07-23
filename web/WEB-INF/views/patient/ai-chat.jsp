@@ -11,10 +11,10 @@
     <title>Chat AI - DiabetesCare</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/base/variables.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/layouts/patient-shell.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/pages/patient/ai-chat.css?v=20260722-v2">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/base/variables.css?v=20260721-ui2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/layouts/patient-shell.css?v=20260721-ui2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/pages/patient/ai-chat.css?v=20260721-ui2">
 </head>
 <body>
     <c:set var="activePatientPage" value="ai-chat" />

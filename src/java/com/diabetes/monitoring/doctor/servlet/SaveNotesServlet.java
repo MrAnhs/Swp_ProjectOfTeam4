@@ -59,6 +59,12 @@ public class SaveNotesServlet extends HttpServlet {
                 return;
             }
 
+            if (dao.hasUnpaidLaboratoryRequest(recordId)) {
+                sendJson(response, HttpServletResponse.SC_BAD_REQUEST, false,
+                        "Bệnh nhân chưa thanh toán đầy đủ các chỉ định xét nghiệm bổ sung. Vui lòng yêu cầu bệnh nhân thanh toán hóa đơn trước khi hoàn thành.");
+                return;
+            }
+
 
 
             String revisitDateStr = request.getParameter("revisit_date");

@@ -369,10 +369,41 @@ public class DoctorLabServlet extends HttpServlet {
                 return;
             }
 
-            // 2. Validate phone (10 digits starting with 0)
+            // 2. Validate phone format – Vietnam mobile numbers (2024 number plan)
             phone = phone.trim();
-            if (!phone.matches("^0\\d{9}$")) {
-                session.setAttribute("errorMsg", "Số điện thoại không hợp lệ! Vui lòng nhập số điện thoại gồm đúng 10 chữ số bắt đầu bằng số 0 (Ví dụ: 0987654321).");
+            // Accepted prefixes: 03x(Viettel), 05x(VM/Reddi/Gmobile), 07x(Mobifone),
+            //                    08x(Vinaphone/Viettel/MBF), 09x(all carriers)
+            String vnPhoneRegex = "^(03[2-9]|05[25689]|07[06-9]|08[1-9]|09[0-9])\\d{7}$";
+            if (!phone.matches(vnPhoneRegex)) {
+                session.setAttribute("errorMsg",
+                    "Số điện thoại không hợp lệ! Vui lòng nhập số điện thoại Việt Nam đúng định dạng "
+                    + "(10 số, bắt đầu bằng đầu số: 03x, 05x, 07x, 08x, 09x). "
+                    + "Ví dụ: 0987654321 (Viettel), 0912345678 (Vinaphone).");
+                response.sendRedirect(request.getContextPath() + "/doctor-lab/dashboard");
+                return;
+            }
+
+            // 3. Check duplicate phone – reject if another doctor already uses this number
+            try (Connection connCheck = DatabaseConnection.getConnection()) {
+                String sqlCheckPhone = "SELECT account_id, full_name FROM Doctor_Lab WHERE phone = ? AND account_id <> ?";
+                try (PreparedStatement stmtCheck = connCheck.prepareStatement(sqlCheckPhone)) {
+                    stmtCheck.setString(1, phone);
+                    stmtCheck.setInt(2, currentUser.getId());
+                    try (java.sql.ResultSet rs = stmtCheck.executeQuery()) {
+                        if (rs.next()) {
+                            String existingName = rs.getString("full_name");
+                            session.setAttribute("errorMsg",
+                                "Số điện thoại " + phone + " đã được sử dụng bởi tài khoản khác"
+                                + (existingName != null && !existingName.isEmpty() ? " (" + existingName + ")" : "")
+                                + ". Vui lòng sử dụng số điện thoại khác.");
+                            response.sendRedirect(request.getContextPath() + "/doctor-lab/dashboard");
+                            return;
+                        }
+                    }
+                }
+            } catch (Exception exCheck) {
+                exCheck.printStackTrace();
+                session.setAttribute("errorMsg", "Lỗi kiểm tra số điện thoại: " + exCheck.getMessage());
                 response.sendRedirect(request.getContextPath() + "/doctor-lab/dashboard");
                 return;
             }
@@ -947,28 +978,246 @@ public class DoctorLabServlet extends HttpServlet {
                     }
                 }
 
-                // 2. Insert the Healthy_Record
+                // 2. Fetch invoice_id and check if Healthy_Record already exists for this invoice
                 int healthRecordId = -1;
-                String sqlInsert = "INSERT INTO Healthy_Record (urea, cr, hba1c, chol, tg, hdl, ldl, vldl, bmi, patient_id, weight, height, other_information, status, created_at) " +
-                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved', GETDATE())";
-                try (PreparedStatement stmt = conn.prepareStatement(sqlInsert, PreparedStatement.RETURN_GENERATED_KEYS)) {
-                    stmt.setBigDecimal(1, urea);
-                    stmt.setBigDecimal(2, cr);
-                    stmt.setBigDecimal(3, hba1c);
-                    stmt.setBigDecimal(4, chol);
-                    stmt.setBigDecimal(5, tg);
-                    stmt.setBigDecimal(6, hdl);
-                    stmt.setBigDecimal(7, ldl);
-                    stmt.setBigDecimal(8, vldl);
-                    stmt.setBigDecimal(9, bmi);
-                    stmt.setInt(10, patientId);
-                    stmt.setBigDecimal(11, weight);
-                    stmt.setBigDecimal(12, height);
-                    stmt.setString(13, otherInfo);
-                    stmt.executeUpdate();
-                    try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
-                        if (generatedKeys.next()) {
-                            healthRecordId = generatedKeys.getInt(1);
+                int invoiceId = -1;
+                int invoiceDetailId = -1;
+                int appointmentId = 0;
+
+                if (waitingIdStr != null && !waitingIdStr.trim().isEmpty()) {
+                    // Try to resolve appointment_id from Lab_Order
+                    String sqlGetAppt = "SELECT appointment_id FROM Lab_Order WHERE order_id = ?";
+                    try (PreparedStatement ps = conn.prepareStatement(sqlGetAppt)) {
+                        ps.setString(1, waitingIdStr.trim());
+                        try (ResultSet rs = ps.executeQuery()) {
+                            if (rs.next()) {
+                                appointmentId = rs.getInt("appointment_id");
+                            }
+                        }
+                    }
+
+                    String cleanWaitingId = waitingIdStr.trim();
+                    if (cleanWaitingId.startsWith("LAB-")) {
+                        cleanWaitingId = cleanWaitingId.substring(4);
+                    }
+                    if (cleanWaitingId.matches("\\d+")) {
+                        invoiceDetailId = Integer.parseInt(cleanWaitingId);
+                        String sqlGetInvoice = "SELECT invoice_id FROM Invoice_Detail WHERE invoice_detail_id = ?";
+                        try (PreparedStatement ps = conn.prepareStatement(sqlGetInvoice)) {
+                            ps.setInt(1, invoiceDetailId);
+                            try (ResultSet rs = ps.executeQuery()) {
+                                if (rs.next()) {
+                                    invoiceId = rs.getInt("invoice_id");
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Step A: If we have a valid invoiceDetailId, check if Invoice_Detail already has health_record_id
+                if (invoiceDetailId > 0) {
+                    String sqlCheckDetail = "SELECT health_record_id FROM Invoice_Detail WHERE invoice_detail_id = ?";
+                    try (PreparedStatement ps = conn.prepareStatement(sqlCheckDetail)) {
+                        ps.setInt(1, invoiceDetailId);
+                        try (ResultSet rs = ps.executeQuery()) {
+                            if (rs.next()) {
+                                int hrId = rs.getInt("health_record_id");
+                                if (!rs.wasNull() && hrId > 0) {
+                                    healthRecordId = hrId;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Step B: If not found, look up via Medical_record using appointmentId
+                if (healthRecordId <= 0 && appointmentId > 0) {
+                    String sqlGetHR = "SELECT health_record_id FROM Medical_record WHERE appointment_id = ?";
+                    try (PreparedStatement ps = conn.prepareStatement(sqlGetHR)) {
+                        ps.setInt(1, appointmentId);
+                        try (ResultSet rs = ps.executeQuery()) {
+                            if (rs.next()) {
+                                int hrId = rs.getInt("health_record_id");
+                                if (!rs.wasNull() && hrId > 0) {
+                                    healthRecordId = hrId;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Step C: If not found, check Healthy_Record by invoiceId
+                if (healthRecordId <= 0 && invoiceId > 0) {
+                    String sqlFindRecord = "SELECT health_record_id FROM Healthy_Record WHERE invoice_id = ?";
+                    try (PreparedStatement ps = conn.prepareStatement(sqlFindRecord)) {
+                        ps.setInt(1, invoiceId);
+                        try (ResultSet rs = ps.executeQuery()) {
+                            if (rs.next()) {
+                                healthRecordId = rs.getInt("health_record_id");
+                            }
+                        }
+                    }
+                }
+
+                // Step D: Fallback to the latest active Healthy_Record for this patient
+                if (healthRecordId <= 0) {
+                    String sqlFindLatest = "SELECT TOP 1 health_record_id FROM Healthy_Record WHERE patient_id = ? AND status <> 'Completed' ORDER BY created_at DESC";
+                    try (PreparedStatement ps = conn.prepareStatement(sqlFindLatest)) {
+                        ps.setInt(1, patientId);
+                        try (ResultSet rs = ps.executeQuery()) {
+                            if (rs.next()) {
+                                healthRecordId = rs.getInt("health_record_id");
+                            }
+                        }
+                    }
+                }
+
+                // Fetch the examining doctor's ID associated with this lab order
+                int doctorId = 0;
+                if (waitingIdStr != null && !waitingIdStr.trim().isEmpty()) {
+                    String sqlGetDoctorId = "SELECT ds.doctor_id " +
+                            "FROM Lab_Order lo " +
+                            "JOIN Appointment a ON lo.appointment_id = a.appointment_id " +
+                            "JOIN Doctor_Schedule ds ON a.schedule_id = ds.schedule_id " +
+                            "WHERE lo.order_id = ?";
+                    try (PreparedStatement ps = conn.prepareStatement(sqlGetDoctorId)) {
+                        ps.setString(1, waitingIdStr.trim());
+                        try (ResultSet rs = ps.executeQuery()) {
+                            if (rs.next()) {
+                                doctorId = rs.getInt("doctor_id");
+                            }
+                        }
+                    }
+                }
+                if (doctorId == 0) {
+                    String sqlGetLatestDoctor = "SELECT TOP 1 ds.doctor_id " +
+                            "FROM Appointment a " +
+                            "JOIN Doctor_Schedule ds ON a.schedule_id = ds.schedule_id " +
+                            "WHERE a.patient_id = ? AND a.status <> 'Cancelled' " +
+                            "ORDER BY a.created_at DESC";
+                    try (PreparedStatement ps = conn.prepareStatement(sqlGetLatestDoctor)) {
+                        ps.setInt(1, patientId);
+                        try (ResultSet rs = ps.executeQuery()) {
+                            if (rs.next()) {
+                                doctorId = rs.getInt("doctor_id");
+                            }
+                        }
+                    }
+                }
+
+                if (healthRecordId > 0) {
+                    // Update existing Healthy_Record with non-null values
+                    String sqlUpdate = "UPDATE Healthy_Record SET " +
+                            "urea = COALESCE(?, urea), " +
+                            "cr = COALESCE(?, cr), " +
+                            "hba1c = COALESCE(?, hba1c), " +
+                            "chol = COALESCE(?, chol), " +
+                            "tg = COALESCE(?, tg), " +
+                            "hdl = COALESCE(?, hdl), " +
+                            "ldl = COALESCE(?, ldl), " +
+                            "vldl = COALESCE(?, vldl), " +
+                            "bmi = COALESCE(?, bmi), " +
+                            "weight = COALESCE(?, weight), " +
+                            "height = COALESCE(?, height), " +
+                            "other_information = CASE WHEN ? IS NOT NULL AND LTRIM(RTRIM(?)) <> '' THEN ? ELSE other_information END, " +
+                            "status = 'Accepted', " +
+                            "doctor_id = COALESCE(doctor_id, ?), " +
+                            "invoice_id = COALESCE(invoice_id, ?) " +
+                            "WHERE health_record_id = ?";
+                    try (PreparedStatement stmt = conn.prepareStatement(sqlUpdate)) {
+                        stmt.setBigDecimal(1, urea);
+                        stmt.setBigDecimal(2, cr);
+                        stmt.setBigDecimal(3, hba1c);
+                        stmt.setBigDecimal(4, chol);
+                        stmt.setBigDecimal(5, tg);
+                        stmt.setBigDecimal(6, hdl);
+                        stmt.setBigDecimal(7, ldl);
+                        stmt.setBigDecimal(8, vldl);
+                        stmt.setBigDecimal(9, bmi);
+                        stmt.setBigDecimal(10, weight);
+                        stmt.setBigDecimal(11, height);
+                        stmt.setString(12, otherInfo);
+                        stmt.setString(13, otherInfo);
+                        stmt.setString(14, otherInfo);
+                        if (doctorId > 0) {
+                            stmt.setInt(15, doctorId);
+                        } else {
+                            stmt.setNull(15, java.sql.Types.INTEGER);
+                        }
+                        if (invoiceId > 0) {
+                            stmt.setInt(16, invoiceId);
+                        } else {
+                            stmt.setNull(16, java.sql.Types.INTEGER);
+                        }
+                        stmt.setInt(17, healthRecordId);
+                        stmt.executeUpdate();
+                    }
+                } else {
+                    // Insert a new Healthy_Record
+                    String sqlInsert = "INSERT INTO Healthy_Record (urea, cr, hba1c, chol, tg, hdl, ldl, vldl, bmi, patient_id, weight, height, other_information, status, created_at, invoice_id, doctor_id) " +
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Accepted', GETDATE(), ?, ?)";
+                    try (PreparedStatement stmt = conn.prepareStatement(sqlInsert, PreparedStatement.RETURN_GENERATED_KEYS)) {
+                        stmt.setBigDecimal(1, urea);
+                        stmt.setBigDecimal(2, cr);
+                        stmt.setBigDecimal(3, hba1c);
+                        stmt.setBigDecimal(4, chol);
+                        stmt.setBigDecimal(5, tg);
+                        stmt.setBigDecimal(6, hdl);
+                        stmt.setBigDecimal(7, ldl);
+                        stmt.setBigDecimal(8, vldl);
+                        stmt.setBigDecimal(9, bmi);
+                        stmt.setInt(10, patientId);
+                        stmt.setBigDecimal(11, weight);
+                        stmt.setBigDecimal(12, height);
+                        stmt.setString(13, otherInfo);
+                        if (invoiceId > 0) {
+                            stmt.setInt(14, invoiceId);
+                        } else {
+                            stmt.setNull(14, java.sql.Types.INTEGER);
+                        }
+                        if (doctorId > 0) {
+                            stmt.setInt(15, doctorId);
+                        } else {
+                            stmt.setNull(15, java.sql.Types.INTEGER);
+                        }
+                        stmt.executeUpdate();
+                        try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                            if (generatedKeys.next()) {
+                                healthRecordId = generatedKeys.getInt(1);
+                            }
+                        }
+                    }
+                }
+
+                // Step E: Ensure new/existing Healthy_Record is linked back to Medical_record
+                if (appointmentId > 0 && healthRecordId > 0) {
+                    String sqlLinkRecord = "UPDATE Medical_record SET health_record_id = ? WHERE appointment_id = ? AND health_record_id IS NULL";
+                    try (PreparedStatement stmtLink = conn.prepareStatement(sqlLinkRecord)) {
+                        stmtLink.setInt(1, healthRecordId);
+                        stmtLink.setInt(2, appointmentId);
+                        stmtLink.executeUpdate();
+                    }
+                }
+
+                // 2.5 Update Invoice_Detail if this was ordered via an invoice
+                if (waitingIdStr != null && !waitingIdStr.trim().isEmpty()) {
+                    String cleanWaitingId = waitingIdStr.trim();
+                    if (cleanWaitingId.startsWith("LAB-")) {
+                        cleanWaitingId = cleanWaitingId.substring(4);
+                    }
+                    if (cleanWaitingId.matches("\\d+")) {
+                        int invoiceDetailId_local = Integer.parseInt(cleanWaitingId);
+                        String sqlUpdateInvoiceDetail = "UPDATE Invoice_Detail SET " +
+                                "lab_status = 'Completed', " +
+                                "completed_at = GETDATE(), " +
+                                "lab_result = ?, " +
+                                "health_record_id = ? " +
+                                "WHERE invoice_detail_id = ?";
+                        try (PreparedStatement stmtDetail = conn.prepareStatement(sqlUpdateInvoiceDetail)) {
+                            stmtDetail.setString(1, "Hoàn thành xét nghiệm");
+                            stmtDetail.setInt(2, healthRecordId);
+                            stmtDetail.setInt(3, invoiceDetailId_local);
+                            stmtDetail.executeUpdate();
                         }
                     }
                 }
@@ -1007,7 +1256,8 @@ public class DoctorLabServlet extends HttpServlet {
             }
 
         } catch (NumberFormatException e) {
-            session.setAttribute("errorMsg", "Lỗi định dạng dữ liệu số.");
+            e.printStackTrace();
+            session.setAttribute("errorMsg", "Lỗi định dạng dữ liệu số: " + e.getMessage());
         }
 
         response.sendRedirect(request.getContextPath() + "/doctor-lab/dashboard");

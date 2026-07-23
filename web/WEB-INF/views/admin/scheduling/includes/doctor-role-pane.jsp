@@ -39,6 +39,7 @@
                                 <option value="Full" ${selectedDoctorStatus == 'Full' ? 'selected' : ''}>Đã đầy</option>
                                 <option value="Cancelled" ${selectedDoctorStatus == 'Cancelled' ? 'selected' : ''}>Đã hủy</option>
                                 <option value="Expired" ${selectedDoctorStatus == 'Expired' ? 'selected' : ''}>Đã qua</option>
+                                <option value="Pending" ${selectedDoctorStatus == 'Pending' ? 'selected' : ''}>Chờ duyệt</option>
                             </select>
                         </div>
                         
@@ -135,6 +136,9 @@
                                     </td>
                                     <td>
                                         <c:choose>
+                                             <c:when test="${s.effectiveStatus == 'Pending'}">
+                                                 <span class="badge" style="background:#ffc107;color:#000;"><i class="bi bi-hourglass-split me-1"></i>Chờ duyệt</span>
+                                             </c:when>
                                             <c:when test="${s.effectiveStatus == 'Expired'}">
                                                 <span class="badge" style="background:#6c757d;"><i class="bi bi-clock me-1"></i>Đã qua</span>
                                             </c:when>
@@ -159,8 +163,45 @@
                                         </c:choose>
                                     </td>
                                     <td>
-                                        <c:choose>
-                                            <c:when test="${s.effectiveStatus == 'Expired'}">
+                                         <c:choose>
+                                             <c:when test="${s.effectiveStatus == 'Pending'}">
+                                                 <div class="dropdown table-actions">
+                                                     <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle"
+                                                             data-bs-toggle="dropdown" aria-expanded="false" aria-label="Thao tác lịch chờ duyệt">
+                                                         <i class="bi bi-three-dots-vertical"></i>
+                                                     </button>
+                                                     <ul class="dropdown-menu dropdown-menu-end">
+                                                         <li>
+                                                             <button type="button" class="dropdown-item schedule-detail-action" data-schedule-id="${s.scheduleId}">
+                                                                 <i class="bi bi-eye me-2"></i>Xem chi tiết
+                                                             </button>
+                                                         </li>
+                                                         <li>
+                                                             <form method="post" action="${pageContext.request.contextPath}/admin"
+                                                                   onsubmit="return confirm('Bạn chắc chắn muốn duyệt ca trực này?');" style="display:inline;">
+                                                                 <input type="hidden" name="action" value="approveSchedule">
+                                                                 <input type="hidden" name="scheduleId" value="${s.scheduleId}">
+                                                                 <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
+                                                                 <button type="submit" class="dropdown-item text-success">
+                                                                     <i class="bi bi-check-circle me-2 text-success"></i>Duyệt ca trực
+                                                                 </button>
+                                                             </form>
+                                                         </li>
+                                                         <li>
+                                                             <form method="post" action="${pageContext.request.contextPath}/admin"
+                                                                   onsubmit="return confirm('Bạn chắc chắn muốn từ chối ca trực này? (Ca trực sẽ bị xóa)');" style="display:inline;">
+                                                                 <input type="hidden" name="action" value="deleteSchedule">
+                                                                 <input type="hidden" name="scheduleId" value="${s.scheduleId}">
+                                                                 <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
+                                                                 <button type="submit" class="dropdown-item text-danger">
+                                                                     <i class="bi bi-x-circle me-2 text-danger"></i>Từ chối (Xóa)
+                                                                 </button>
+                                                             </form>
+                                                         </li>
+                                                     </ul>
+                                                 </div>
+                                             </c:when>
+                                             <c:when test="${s.effectiveStatus == 'Expired'}">
                                                 <div class="dropdown table-actions">
                                                     <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle"
                                                             data-bs-toggle="dropdown" aria-expanded="false" aria-label="Thao tác lịch đã qua">

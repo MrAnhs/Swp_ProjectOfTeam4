@@ -47,17 +47,18 @@
                     <label>Giới tính<select name="gender" data-field="gender" disabled><option value="">Chưa cập nhật</option><option value="male">Nam</option><option value="female">Nữ</option><option value="other">Khác</option></select></label>
                     <label>Số điện thoại<input name="phone" data-field="phone" readonly required></label>
                     <label class="settings-wide">Địa chỉ<textarea name="address" data-field="address" readonly rows="3"></textarea></label>
+                    
+                    <c:set var="settingsRole" value="${fn:toLowerCase(sessionScope.currentUser.role)}" />
+                    <c:if test="${settingsRole eq 'doctor'}">
+                        <label class="settings-wide">Khoa / chuyên khoa<input data-field="department" readonly style="cursor: not-allowed;" placeholder="Chưa cập nhật"></label>
+                    </c:if>
+                    <c:if test="${settingsRole eq 'doctor_lab' or settingsRole eq 'doctor-lab'}">
+                        <label class="settings-wide">Phòng xét nghiệm<input data-field="labName" readonly style="cursor: not-allowed;" placeholder="Chưa cập nhật"></label>
+                    </c:if>
+                    <c:if test="${settingsRole eq 'receptionist'}">
+                        <label class="settings-wide">Vị trí quầy<input data-field="deskLocation" readonly style="cursor: not-allowed;" placeholder="Chưa cập nhật"></label>
+                    </c:if>
                 </div>
-                <c:set var="settingsRole" value="${fn:toLowerCase(sessionScope.currentUser.role)}" />
-                <c:if test="${settingsRole eq 'doctor'}">
-                    <div class="settings-readonly"><span>Khoa / chuyên khoa</span><strong data-field="department">Chưa cập nhật</strong></div>
-                </c:if>
-                <c:if test="${settingsRole eq 'doctor_lab' or settingsRole eq 'doctor-lab'}">
-                    <div class="settings-readonly"><span>Phòng xét nghiệm</span><strong data-field="labName">Chưa cập nhật</strong></div>
-                </c:if>
-                <c:if test="${settingsRole eq 'receptionist'}">
-                    <div class="settings-readonly"><span>Vị trí quầy</span><strong data-field="deskLocation">Chưa cập nhật</strong></div>
-                </c:if>
                 <div class="settings-form-actions" data-edit-actions="personal" hidden style="display:none"><button type="button" class="settings-secondary" data-cancel="personal">Hủy</button><button class="settings-primary" type="submit">Lưu thông tin</button></div>
             </form>
         </section>

@@ -94,6 +94,25 @@
 
 <aside class="doctor-sidebar">
     <div class="doctor-brand"><span class="doctor-brand-icon"><i class="bi bi-heart-pulse"></i></span> Cổng bác sĩ</div>
+    <div class="doctor-profile-card">
+        <div class="doctor-avatar">
+            <c:choose>
+                <c:when test="${not empty sessionScope.currentUser.fullName}">
+                    <c:out value="${sessionScope.currentUser.fullName.substring(0, 1)}" />
+                </c:when>
+                <c:otherwise>D</c:otherwise>
+            </c:choose>
+        </div>
+        <div class="doctor-info">
+            <div class="doctor-name" title="<c:out value='${sessionScope.currentUser.fullName}' />">
+                <c:out value="${sessionScope.currentUser.fullName}" default="Bác sĩ" />
+            </div>
+            <div class="doctor-role-tag">Bác sĩ</div>
+        </div>
+        <a href="${pageContext.request.contextPath}/settings" class="doctor-edit-profile-btn" title="Chỉnh sửa hồ sơ">
+            <i class="bi bi-pencil-square"></i>
+        </a>
+    </div>
     <nav class="doctor-nav">
         <a href="${pageContext.request.contextPath}/doctor/dashboard"><i class="bi bi-grid"></i> Tiếp nhận bệnh nhân</a>
         <a class="${!isDetailedStage ? 'active' : ''}" href="${pageContext.request.contextPath}/doctor/general-examinations"><i class="bi bi-person-vcard"></i> Khám tổng quát</a>
@@ -102,7 +121,6 @@
         <a href="${pageContext.request.contextPath}/doctor/completed-records"><i class="bi bi-archive"></i> Đã hoàn thành</a>
         <a href="${pageContext.request.contextPath}/doctor/patients/search"><i class="bi bi-search"></i> Tra cứu</a>
         <a href="${pageContext.request.contextPath}/doctor/schedule"><i class="bi bi-calendar3"></i> Lịch trực</a>
-        <a href="${pageContext.request.contextPath}/settings"><i class="bi bi-gear"></i> Cài đặt</a>
         <a class="text-danger mt-lg-4" href="${pageContext.request.contextPath}/logout"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a>
     </nav>
 </aside>
@@ -145,6 +163,7 @@
 
     <nav class="exam-section-nav" aria-label="Các phần của hồ sơ khám">
         <a href="#patientContext"><i class="bi bi-person-vcard"></i> Bệnh nhân và hội thoại</a>
+        <a href="#vitalsSection"><i class="bi bi-heart-pulse"></i> Chỉ số thể chất</a>
         <a href="#laboratoryOrder"><i class="bi bi-clipboard2-plus"></i> Chỉ định xét nghiệm</a>
         <c:if test="${hasCompletedLaboratoryRequest}">
             <a href="#examinationResult"><i class="bi bi-activity"></i> Kết quả khám</a>
@@ -192,6 +211,46 @@
                     </c:otherwise>
                 </c:choose>
             </div>
+        </div>
+    </section>
+
+    <section id="vitalsSection" class="doctor-card mb-4">
+        <div class="d-flex align-items-center gap-3 mb-3">
+            <span class="section-icon"><i class="bi bi-heart-pulse"></i></span>
+            <div>
+                <h2 class="doctor-section-title h5 mb-0">Chỉ số thể chất</h2>
+                <div class="doctor-muted small">Cập nhật chiều cao, cân nặng và tự động tính chỉ số BMI của bệnh nhân.</div>
+            </div>
+        </div>
+        
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Chiều cao (cm)</label>
+                <input id="vitalsHeight" type="number" step="0.1" class="form-control" 
+                       value="${record.height > 0 ? record.height : ''}" 
+                       placeholder="Nhập chiều cao (cm)" 
+                       ${!canEditDiagnosis ? 'disabled' : ''}>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Cân nặng (kg)</label>
+                <input id="vitalsWeight" type="number" step="0.1" class="form-control" 
+                       value="${record.weight > 0 ? record.weight : ''}" 
+                       placeholder="Nhập cân nặng (kg)" 
+                       ${!canEditDiagnosis ? 'disabled' : ''}>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Chỉ số BMI</label>
+                <input id="vitalsBmi" type="text" class="form-control bg-light fw-bold" 
+                       value="${record.bmi > 0 ? record.bmi : 'Chưa tính'}" 
+                       readonly disabled>
+            </div>
+            <c:if test="${canEditDiagnosis}">
+                <div class="col-md-3">
+                    <button class="btn btn-doctor w-100" type="button" onclick="saveVitals('${record.healthRecordId}')">
+                        <i class="bi bi-save"></i> Lưu chỉ số
+                    </button>
+                </div>
+            </c:if>
         </div>
     </section>
 
@@ -246,7 +305,22 @@
                 <div class="doctor-muted small">Chọn loại xét nghiệm và xem giá trước khi gửi yêu cầu.</div>
             </div>
         </div>
-        <c:if test="${(record.status == 'Accepted' || record.status == 'AI_Processed' || record.status == 'Editing') && !hasPaidLaboratoryRequest}">
+        <c:set var="hasPendingPayment" value="false" />
+        <c:forEach var="lab" items="${laboratoryRequests}">
+            <c:if test="${lab.status == 'Waiting_Payment'}">
+                <c:set var="hasPendingPayment" value="true" />
+            </c:if>
+        </c:forEach>
+        <c:if test="${hasPendingPayment}">
+            <div class="alert alert-warning d-flex align-items-center gap-2 mb-3 py-2 px-3 small border-0" style="background: rgba(255, 193, 7, 0.15); color: #ffc107; border-radius: 10px;">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <div>
+                    <strong>Lưu ý:</strong> Bệnh nhân có chỉ định xét nghiệm bổ sung đang chờ thanh toán. Yêu cầu sẽ được gửi đến phòng xét nghiệm sau khi bệnh nhân hoàn tất thanh toán hóa đơn.
+                </div>
+            </div>
+        </c:if>
+
+        <c:if test="${record.status == 'Accepted' || record.status == 'AI_Processed' || record.status == 'Editing'}">
             <form class="row g-3 mb-4 lab-request-form lab-multi-form" method="post"
                   action="${pageContext.request.contextPath}/doctor/laboratory-requests/create">
                 <input type="hidden" name="record_id" value="${record.healthRecordId}">
@@ -427,7 +501,13 @@
                     <label class="form-check-label" for="canView">Cho phép bệnh nhân xem kết quả</label>
                 </div>
                 <c:if test="${canEditDiagnosis}">
-                    <button class="btn btn-doctor w-100" onclick="saveNotes('${record.healthRecordId}')">
+                    <c:if test="${hasPendingPayment}">
+                        <div class="alert alert-danger py-2 px-3 small mb-3 border-0 d-flex align-items-center gap-2" style="background: rgba(220, 53, 69, 0.1); color: #dc3545; border-radius: 8px;">
+                            <i class="bi bi-exclamation-circle-fill"></i>
+                            <span>Bệnh nhân chưa thanh toán xét nghiệm bổ sung. Bạn không thể hoàn thành hồ sơ lúc này.</span>
+                        </div>
+                    </c:if>
+                    <button class="btn btn-doctor w-100" onclick="saveNotes('${record.healthRecordId}')" ${hasPendingPayment ? 'disabled' : ''}>
                         <i class="bi bi-save"></i> Lưu và hoàn thành
                     </button>
                 </c:if>
@@ -461,7 +541,79 @@ document.addEventListener("DOMContentLoaded", () => {
     if (revisitInput) {
         revisitInput.min = new Date().toISOString().split('T')[0];
     }
+
+    // Live BMI calculation
+    const hInput = document.getElementById("vitalsHeight");
+    const wInput = document.getElementById("vitalsWeight");
+    
+    function calculateLiveBmi() {
+        const heightVal = parseFloat(hInput.value);
+        const weightVal = parseFloat(wInput.value);
+        const bmiInput = document.getElementById("vitalsBmi");
+        const metricBmiInput = document.getElementById("metricBmi");
+        
+        if (heightVal > 0 && weightVal > 0) {
+            const heightInMeters = heightVal / 100;
+            const bmi = weightVal / (heightInMeters * heightInMeters);
+            const roundedBmi = bmi.toFixed(2);
+            bmiInput.value = roundedBmi;
+            if (metricBmiInput) {
+                metricBmiInput.value = roundedBmi;
+            }
+        } else {
+            bmiInput.value = "Chưa tính";
+            if (metricBmiInput) {
+                metricBmiInput.value = "Chưa có";
+            }
+        }
+    }
+    
+    if (hInput && wInput) {
+        hInput.addEventListener("input", calculateLiveBmi);
+        wInput.addEventListener("input", calculateLiveBmi);
+        // Run once on load to ensure sync if height and weight are pre-populated
+        calculateLiveBmi();
+    }
 });
+
+function saveVitals(recordId) {
+    const heightVal = document.getElementById("vitalsHeight").value;
+    const weightVal = document.getElementById("vitalsWeight").value;
+    
+    if (!heightVal || parseFloat(heightVal) <= 0) {
+        alert("Vui lòng nhập chiều cao hợp lệ (> 0)");
+        return;
+    }
+    if (!weightVal || parseFloat(weightVal) <= 0) {
+        alert("Vui lòng nhập cân nặng hợp lệ (> 0)");
+        return;
+    }
+    
+    const body = new URLSearchParams({
+        record_id: recordId,
+        height: heightVal,
+        weight: weightVal
+    });
+    
+    fetch("${pageContext.request.contextPath}/doctor/records/save-vitals", {
+        method: "POST",
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body: body.toString()
+    })
+    .then(async response => {
+        const data = await response.json();
+        if (!response.ok || !data.success) throw new Error(data.message || "Không thể lưu chỉ số thể chất");
+        alert(data.message);
+        if (data.bmi > 0) {
+            document.getElementById("vitalsBmi").value = data.bmi;
+            const metricBmiInput = document.getElementById("metricBmi");
+            if (metricBmiInput) {
+                metricBmiInput.value = data.bmi;
+            }
+        }
+    })
+    .catch(error => alert(error.message));
+}
 
 function saveNotes(recordId) {
     const revisitDateVal = document.getElementById("revisitDate").value;

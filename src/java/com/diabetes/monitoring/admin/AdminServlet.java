@@ -311,6 +311,10 @@ public class AdminServlet extends HttpServlet {
             schedulingHandler.deleteSchedule(request, response);
             return;
         }
+        if ("approveSchedule".equals(action)) {
+            schedulingHandler.approveSchedule(request, response);
+            return;
+        }
         if ("cancelSchedule".equals(action)) {
             schedulingHandler.cancelSchedule(request, response);
             return;
