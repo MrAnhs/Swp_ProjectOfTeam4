@@ -84,7 +84,38 @@
         }
     }
 
-    async function loadDoctors() {
+    function updateMatchingSummary() {
+        const selectedDep = document.getElementById('filterDepartment').value;
+        const selectedDate = document.getElementById('filterDate').value;
+        
+        const allCards = document.querySelectorAll('.doctor-booking-card');
+        let visibleCount = 0;
+        allCards.forEach(function (card) {
+            const parentCol = card.closest('.col-md-6');
+            if (parentCol && !parentCol.classList.contains('d-none')) {
+                visibleCount++;
+            }
+        });
+        
+        document.getElementById('bookingDoctorCount').innerHTML = `<i class="bi bi-people-fill me-1"></i> T\u00ECm th\u1EA5y ${visibleCount} b\u00E1c s\u0129 ph\u00F9 h\u1EE3p`;
+        
+        let desc = '';
+        if (selectedDep) {
+            desc += `Khoa ${selectedDep}, `;
+        } else {
+            desc += `T\u1EA5t c\u1EA3 c\u00E1c khoa, `;
+        }
+        desc += `l\u1ECBch c\u00F2n tr\u1ED1ng ng\u00E0y ${formatDate(selectedDate)} theo b\u1ED9 l\u1ECDc \u0111\u00E3 ch\u1ECDn.`;
+        document.getElementById('bookingFilterDescription').textContent = desc;
+    }
+
+    async function loadDoctorCards() {
+        const department = document.getElementById('filterDepartment').value;
+        const searchName = document.getElementById('searchDoctorName').value.toLowerCase().trim();
+        const cardsList = document.getElementById('doctorCardsList');
+        
+        cardsList.innerHTML = '<div class="text-center py-4 col-12"><div class="spinner-border text-primary" role="status"></div> \u0110ang t\u1EA3i danh s\u00E1ch b\u00E1c s\u0129...</div>';
+        
         try {
             const data = await utils.requestJson(utils.apiBase() + '/doctors');
             doctorSelect.innerHTML = '<option value="">Ch\u1ECDn b\u00E1c s\u0129</option>';
