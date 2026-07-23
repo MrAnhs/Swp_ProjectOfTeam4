@@ -361,13 +361,19 @@ let revenueChart = null;
         invoiceDetailModalInstance.show();
     }
 
-    document.getElementById('invoiceTab').addEventListener('shown.bs.tab', function () {
-        renderInvoiceTable(currentDetailData.invoices);
-    });
+    const invoiceTabEl = document.getElementById('invoiceTab');
+    if (invoiceTabEl) {
+        invoiceTabEl.addEventListener('shown.bs.tab', function () {
+            renderInvoiceTable(currentDetailData.invoices);
+        });
+    }
 
-    document.getElementById('appointmentTab').addEventListener('shown.bs.tab', function () {
-        renderAppointmentTable(currentDetailData.appointments);
-    });
+    const appointmentTabEl = document.getElementById('appointmentTab');
+    if (appointmentTabEl) {
+        appointmentTabEl.addEventListener('shown.bs.tab', function () {
+            renderAppointmentTable(currentDetailData.appointments);
+        });
+    }
 
     window.viewInvoiceDetail = viewInvoiceDetail;
 

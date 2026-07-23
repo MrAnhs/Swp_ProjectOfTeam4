@@ -377,6 +377,8 @@ class AdminReportHandler {
         request.setAttribute("revenueJson", toJsonSeries(revenueSeries));
         request.setAttribute("visitJson", toJsonSeries(visitSeries));
         request.setAttribute("initialPeriod", initialPeriod);
+        request.setAttribute("initialInvoices", initialInvoices);
+        request.setAttribute("initialAppointments", initialAppointments);
         request.setAttribute("initialInvoicesJson", AdminJsonUtil.toJsonInvoices(initialInvoices));
         request.setAttribute("initialAppointmentsJson", AdminJsonUtil.toJsonAppointments(initialAppointments));
 
