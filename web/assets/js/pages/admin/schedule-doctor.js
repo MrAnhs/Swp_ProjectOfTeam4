@@ -160,12 +160,18 @@ async function openEditScheduleModal(scheduleId) {
                                     <select id="editDoctorId" name="doctorId" class="form-select" required></select>
                                 </div>
                                 <div class="mb-3">
+                                    <label class="form-label">Phòng khám</label>
+                                    <select id="editRoomId" name="roomId" class="form-select" required></select>
+                                </div>
+                                <div class="mb-3">
                                     <label class="form-label">Khung giờ</label>
                                     <select id="editTimeSlot" name="timeSlot" class="form-select" required>
                                         <option value="07:00-09:00">07:00-09:00</option>
+                                        <option value="07:00-11:30">07:00-11:30</option>
                                         <option value="09:00-11:00">09:00-11:00</option>
                                         <option value="11:00-13:00">11:00-13:00</option>
                                         <option value="13:00-15:00">13:00-15:00</option>
+                                        <option value="13:30-17:30">13:30-17:30</option>
                                         <option value="15:00-17:00">15:00-17:00</option>
                                         <option value="17:00-19:00">17:00-19:00</option>
                                     </select>
@@ -230,6 +236,19 @@ async function openEditScheduleModal(scheduleId) {
         }
         doctorSelect.innerHTML = opts;
 
+        const roomSelect = document.getElementById('editRoomId');
+        if (roomSelect) {
+            const rooms = (data.rooms && data.rooms.length > 0) ? data.rooms : (window.activeRoomsList || []);
+            let roomOpts = '<option value="">-- Chọn phòng --</option>';
+            for (const r of rooms) {
+                const rId = r.roomId || r.id || '';
+                const rName = r.roomName || r.name || rId;
+                const isSelected = String(rId) === String(data.schedule.roomId || '');
+                roomOpts += '<option value="' + escapeHtml(rId) + '"' + (isSelected ? ' selected' : '') + '>' + escapeHtml(rName) + ' (' + escapeHtml(rId) + ')</option>';
+            }
+            roomSelect.innerHTML = roomOpts;
+        }
+
     } catch (err) {
         const alert = document.getElementById('editScheduleAlert');
         if (alert) {
@@ -245,6 +264,7 @@ async function openEditScheduleModal(scheduleId) {
         const payload = {
             scheduleId: form.scheduleId.value,
             doctorId: form.doctorId.value,
+            roomId: form.roomId ? form.roomId.value : '',
             timeSlot: form.timeSlot.value,
             maxPatients: form.maxPatients.value,
             onlineQuota: form.onlineQuota.value,

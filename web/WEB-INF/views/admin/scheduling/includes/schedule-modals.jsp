@@ -669,7 +669,10 @@
                     </div>
                 </div>
                 <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal" style="border-radius: 8px;">Đóng</button>
+                    <button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal" style="border-radius: 8px;">Đóng</button>
+                    <button type="button" class="btn btn-primary px-4 fw-bold" id="shiftDetailEditBtn" style="border-radius: 8px; display: none;">
+                        <i class="bi bi-pencil-square me-1"></i>Chỉnh sửa ca trực
+                    </button>
                 </div>
             </div>
         </div>

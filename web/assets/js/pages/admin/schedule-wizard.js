@@ -1117,6 +1117,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const dateEl = document.getElementById('shiftDetailDate');
         const timeEl = document.getElementById('shiftDetailTime');
         const statusEl = document.getElementById('shiftDetailStatus');
+        const editBtn = document.getElementById('shiftDetailEditBtn');
 
         if (staffEl) staffEl.textContent = shift.staff || '-';
         if (roleEl) roleEl.textContent = shift.role || '-';
@@ -1128,6 +1129,17 @@ document.addEventListener('DOMContentLoaded', function () {
             : (shift.timeSlot || 'Ca trực');
         if (timeEl) timeEl.textContent = timeText;
         if (statusEl) statusEl.textContent = shift.status || 'Đã xếp lịch';
+
+        if (editBtn) {
+            const schId = shift.scheduleId || shift.id || '';
+            if (schId) {
+                editBtn.setAttribute('data-schedule-id', schId);
+                editBtn.style.display = 'inline-block';
+            } else {
+                editBtn.removeAttribute('data-schedule-id');
+                editBtn.style.display = 'none';
+            }
+        }
 
         const alertEl = document.getElementById('shiftDetailConflictAlert');
         const textEl = document.getElementById('shiftDetailConflictText');
@@ -1146,6 +1158,8 @@ document.addEventListener('DOMContentLoaded', function () {
             modal.show();
         }
     }
+
+    window.openShiftDetailModal = openShiftDetailModal;
 
     // Mở Modal xem danh sách đầy đủ ca trực trong 1 ô ngày/ca
     function openCellMoreSchedulesModal(cellId, listInCell) {
