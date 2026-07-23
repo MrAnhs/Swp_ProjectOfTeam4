@@ -9,43 +9,43 @@ import java.util.logging.Logger;
 
 public class EmailUtil {
     private static final Logger LOGGER = Logger.getLogger(EmailUtil.class.getName());
-    private static final Properties PROPS = new Properties();
-
-    static {
-        try (InputStream in = EmailUtil.class.getClassLoader().getResourceAsStream("application.properties")) {
-            if (in != null) {
-                PROPS.load(in);
-            } else {
-                LOGGER.log(Level.SEVERE, "application.properties not found in classpath!");
-            }
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Failed to load application.properties", e);
-        }
-    }
 
     public static void sendAccountDetails(String toEmail, String fullName, String password) throws MessagingException {
+        Properties props = new Properties();
+        try (InputStream in = EmailUtil.class.getClassLoader().getResourceAsStream("application.properties")) {
+            if (in != null) {
+                props.load(in);
+            } else {
+                throw new MessagingException("Không tìm thấy tệp application.properties trong classpath của máy chủ.");
+            }
+        } catch (Exception e) {
+            throw new MessagingException("Lỗi khi đọc tệp cấu hình application.properties: " + e.getMessage(), e);
+        }
+
         String envUsername = System.getenv("DIABETESCARE_SMTP_USERNAME");
         String envPassword = System.getenv("DIABETESCARE_SMTP_PASSWORD");
         String envFrom = System.getenv("DIABETESCARE_SMTP_FROM");
 
-        String host = PROPS.getProperty("mail.smtp.host", "smtp.gmail.com");
-        String port = PROPS.getProperty("mail.smtp.port", "587");
+        String host = props.getProperty("mail.smtp.host", "smtp.gmail.com");
+        String port = props.getProperty("mail.smtp.port", "587");
         
         final String username = (envUsername != null && !envUsername.trim().isEmpty()) 
                 ? envUsername.trim() 
-                : PROPS.getProperty("DIABETESCARE_SMTP_USERNAME");
+                : props.getProperty("DIABETESCARE_SMTP_USERNAME");
                 
         final String passwordAuth = (envPassword != null && !envPassword.trim().isEmpty()) 
                 ? envPassword.trim() 
-                : PROPS.getProperty("DIABETESCARE_SMTP_PASSWORD");
+                : props.getProperty("DIABETESCARE_SMTP_PASSWORD");
                 
         final String fromEmail = (envFrom != null && !envFrom.trim().isEmpty())
                 ? envFrom.trim()
-                : (PROPS.getProperty("DIABETESCARE_SMTP_FROM") != null ? PROPS.getProperty("DIABETESCARE_SMTP_FROM") : username);
+                : (props.getProperty("DIABETESCARE_SMTP_FROM") != null ? props.getProperty("DIABETESCARE_SMTP_FROM") : username);
 
         if (username == null || username.trim().isEmpty() || username.contains("your_email")) {
-            LOGGER.log(Level.WARNING, "SMTP Username not configured. Skipping email sending.");
-            return;
+            throw new MessagingException("Tài khoản gửi email (SMTP Username) chưa được cấu hình.");
+        }
+        if (passwordAuth == null || passwordAuth.trim().isEmpty()) {
+            throw new MessagingException("Mật khẩu tài khoản gửi email (SMTP Password) chưa được cấu hình.");
         }
 
         Properties mailProps = new Properties();

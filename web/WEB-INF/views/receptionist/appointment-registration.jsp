@@ -20,6 +20,8 @@
         <h1 class="page-title">Đăng ký khám</h1>
         <p class="page-subtitle">Tạo bệnh nhân nếu chưa có, chọn bác sĩ và ca khám còn chỗ.</p>
 
+        <section id="registrationResult" class="result-card mt-4 d-none"></section>
+
         <section class="panel-card mt-4">
             <div class="row g-2 align-items-end mb-4 pb-4 border-bottom">
                 <div class="col-md-8">
@@ -27,76 +29,107 @@
                     <input id="patientLookupKeyword" class="form-control" placeholder="Nhập số điện thoại hoặc họ tên chính xác">
                 </div>
                 <div class="col-md-4">
-                    <button id="patientLookupBtn" class="btn btn-outline-primary w-100" type="button"><i class="bi bi-search me-1"></i>Tìm và điền thông tin</button>
+                    <button id="patientLookupBtn" class="btn btn-outline-primary w-100" type="button"><i class="bi bi-search me-1"></i>Tìm bệnh nhân</button>
                 </div>
                 <div class="col-12"><small class="text-muted">Bệnh nhân mới tạo từ màn hình Đăng ký bệnh nhân sẽ được điền tự động.</small></div>
             </div>
             <form id="appointmentRegistrationForm" class="row g-3">
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Họ tên bệnh nhân</label>
-                    <input id="registerPatientName" name="patientName" class="form-control" required>
+                <!-- Hidden inputs for patient details -->
+                <input type="hidden" id="registerPatientName" name="patientName">
+                <input type="hidden" id="registerPatientPhone" name="patientPhone">
+                <input type="hidden" id="registerPatientEmail" name="patientEmail">
+                <input type="hidden" id="registerPatientDob" name="patientDob">
+                <input type="hidden" id="registerPatientGender" name="patientGender">
+                <input type="hidden" id="registerPatientAddress" name="patientAddress">
+                <input type="hidden" id="registerVisitType" name="visitType" value="New">
+                <input type="hidden" id="registerDoctor" name="doctorId" required>
+                <input type="hidden" id="registerScheduleSlot" name="scheduleId" required>
+                <input type="hidden" id="registerNote" name="note" value="">
+
+                <!-- Selected Patient Card -->
+                <div id="selectedPatientCard" class="col-12 d-none">
+                    <div class="card bg-light border-light shadow-sm mb-3">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                                <h4 class="h6 mb-0 text-uppercase fw-bold text-secondary">
+                                    <i class="bi bi-person-check-fill me-1"></i> Bệnh nhân đã chọn
+                                </h4>
+                            </div>
+                            <div class="row text-dark" style="font-size: 14px;">
+                                <div class="col-md-4 mb-1"><strong>Họ tên:</strong> <span id="previewName">-</span></div>
+                                <div class="col-md-4 mb-1"><strong>Số điện thoại:</strong> <span id="previewPhone">-</span></div>
+                                <div class="col-md-4 mb-1"><strong>Ngày sinh:</strong> <span id="previewDob">-</span></div>
+                                <div class="col-md-4 mb-1"><strong>Giới tính:</strong> <span id="previewGender">-</span></div>
+                                <div class="col-md-8 mb-1"><strong>Địa chỉ:</strong> <span id="previewAddress">-</span></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Số điện thoại</label>
-                    <input id="registerPatientPhone" name="patientPhone" class="form-control" required>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Email</label>
-                    <input id="registerPatientEmail" name="patientEmail" type="email" class="form-control">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label fw-semibold">Ngày sinh</label>
-                    <input id="registerPatientDob" name="patientDob" type="date" class="form-control" required>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label fw-semibold">Giới tính</label>
-                    <select id="registerPatientGender" name="patientGender" class="form-select">
-                        <option value="Male">Nam</option>
-                        <option value="Female">Nữ</option>
-                        <option value="Other">Khác</option>
-                    </select>
-                </div>
-                <div class="col-12">
-                    <label class="form-label fw-semibold">Địa chỉ</label>
-                    <input id="registerPatientAddress" name="patientAddress" class="form-control">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">Loại đăng ký</label>
-                    <select id="registerVisitType" name="visitType" class="form-select">
-                        <option value="New">Khám mới</option>
-                        <option value="Revisit">Tái khám</option>
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">Mã lịch hẹn cũ (nếu tái khám)</label>
-                    <input id="registerRevisitAppointmentId" name="revisitAppointmentId" class="form-control" placeholder="Ví dụ: 12">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">Bác sĩ</label>
-                    <select id="registerDoctor" name="doctorId" class="form-select" required>
-                        <option value="">Đang tải danh sách bác sĩ...</option>
-                    </select>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Ca khám</label>
-                    <select id="registerScheduleSlot" name="scheduleId" class="form-select" required>
-                        <option value="">Chọn bác sĩ trước</option>
-                    </select>
-                </div>
-                <div class="col-12">
-                    <label class="form-label fw-semibold">Ghi chú</label>
-                    <textarea id="registerNote" name="note" class="form-control" rows="3"></textarea>
-                </div>
-                <div class="col-12 d-flex gap-2">
-                    <button class="btn btn-primary btn-lg" type="submit">
-                        <i class="bi bi-calendar-check me-1"></i>Đăng ký khám
-                    </button>
-                    <button class="btn btn-outline-secondary btn-lg" id="resetRegistrationBtn" type="button">Làm mới</button>
+
+                <!-- Doctor & Schedule Selection Area (Visual like Patient Booking) -->
+                <div id="bookingSelectionArea" class="col-12">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3 class="h5 mb-0 fw-bold text-dark">
+                            <i class="bi bi-calendar2-week-fill me-1"></i> Chọn bác sĩ & ca khám
+                        </h3>
+                    </div>
+                    <div class="row g-2 align-items-end mb-4 bg-light p-3 rounded-3 border m-0">
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold small text-secondary">Khoa khám</label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white"><i class="bi bi-hospital text-primary"></i></span>
+                                <select id="filterDepartment" class="form-select">
+                                    <option value="">Tất cả các khoa</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold small text-secondary">Ngày khám</label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white"><i class="bi bi-calendar3 text-primary"></i></span>
+                                <input id="filterDate" type="date" class="form-control">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold small text-secondary">Buổi khám</label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white"><i class="bi bi-clock text-primary"></i></span>
+                                <select id="filterSession" class="form-select">
+                                    <option value="all">Tất cả các buổi</option>
+                                    <option value="morning">Buổi sáng</option>
+                                    <option value="afternoon">Buổi chiều</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold small text-secondary">Tìm theo tên bác sĩ</label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white"><i class="bi bi-search text-primary"></i></span>
+                                <input id="searchDoctorName" class="form-control" placeholder="Nhập tên bác sĩ...">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Doctor search results summary -->
+                    <div class="d-flex justify-content-between align-items-center mb-3 mt-4 px-2">
+                        <div>
+                            <h4 class="h6 mb-1 fw-bold text-dark" id="bookingFilterTitle">Bác sĩ có lịch phù hợp</h4>
+                            <p class="text-muted mb-0 small" id="bookingFilterDescription">Vui lòng chọn bộ lọc lịch khám.</p>
+                        </div>
+                        <span id="bookingDoctorCount" class="badge bg-info text-dark p-2">
+                            <i class="bi bi-people-fill me-1"></i> Chưa chọn khoa
+                        </span>
+                    </div>
+
+                    <!-- Doctors and Slots List -->
+                    <div id="doctorCardsList" class="row g-3 m-0">
+                        <!-- Dynamically rendered doctor cards -->
+                    </div>
+
+
                 </div>
             </form>
         </section>
-
-        <section id="registrationResult" class="result-card mt-4 d-none"></section>
     </main>
 </div>
 <script>

@@ -35,21 +35,12 @@
 
         <section class="panel-card">
             <div class="row g-3 align-items-end">
-                <div class="col-md-5">
+                <div class="col-md-9">
                     <label class="form-label fw-semibold">Tìm bệnh nhân</label>
                     <input id="billingPatientKeyword" class="form-control" placeholder="Tên hoặc số điện thoại">
                 </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">Phương thức thanh toán</label>
-                    <select id="paymentMethod" class="form-select">
-                        <option value="Cash">Tiền mặt</option>
-                        <option value="Momo">Momo</option>
-                        <option value="VNPay">VNPay</option>
-                        <option value="Bank_Transfer">Chuyển khoản</option>
-                    </select>
-                </div>
                 <div class="col-md-3 d-grid">
-                    <button id="payInvoiceBtn" class="btn btn-primary" type="button">Xác nhận thanh toán</button>
+                    <button id="searchInvoiceBtn" class="btn btn-primary" type="button">Tìm kiếm hóa đơn</button>
                 </div>
             </div>
             <div id="billingMessage" class="mt-3"></div>
