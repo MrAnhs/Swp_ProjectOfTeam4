@@ -53,12 +53,12 @@ public class AdminServlet extends HttpServlet {
             analyticsHandler.loadReports(request, response);
             return;
         }
-        if ("getReportDetail".equals(action) || "getInvoiceItems".equals(action)) {
-            response.setContentType("application/json;charset=UTF-8");
-            try (java.io.PrintWriter out = response.getWriter()) {
-                out.print(
-                        "{\"success\":false,\"message\":\"Chức năng báo cáo cũ đã được tích hợp vào Dashboard mới.\"}");
-            }
+        if ("getReportDetail".equals(action)) {
+            analyticsHandler.loadReportDetailByPeriod(request, response);
+            return;
+        }
+        if ("getInvoiceItems".equals(action)) {
+            analyticsHandler.loadInvoiceItems(request, response);
             return;
         }
 

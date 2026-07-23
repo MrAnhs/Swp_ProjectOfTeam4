@@ -102,48 +102,111 @@ public class AIChatServlet extends HttpServlet {
     }
 
     // ──────────────────────────────────────────────────────────────
-    //  FINISH → lưu vào AI_Summary
+    //  FINISH → lưu vào AI_Summary / AI_Conversation
     // ──────────────────────────────────────────────────────────────
     private void finishConversation(HttpServletRequest request,
             HttpServletResponse response, int patientId)
             throws SQLException, IOException, ChatAccessException {
 
         String symptoms = nullToEmpty(request.getParameter("symptoms"));
+        String clientHistory = nullToEmpty(request.getParameter("chatHistory"));
         String history = nullToEmpty((String) getServletContext()
                 .getAttribute("chatHistory_" + patientId));
 
         if (history.isBlank()) {
+            history = clientHistory;
+        }
+
+        if (history.isBlank() && symptoms.isBlank()) {
             throw new ChatAccessException(HttpServletResponse.SC_CONFLICT,
                     "Cu\u1ed9c tr\u00f2 chuy\u1ec7n ch\u01b0a c\u00f3 n\u1ed9i dung.");
         }
 
         // AI tóm tắt triệu chứng
-        String summaryPrompt = "H\u00e3y t\u00f3m t\u1eaft ng\u1eafn g\u1ecdn c\u00e1c tri\u1ec7u ch\u1ee9ng ch\u00ednh b\u1ec7nh nh\u00e2n \u0111\u00e3 chia s\u1ebb trong cu\u1ed9c tr\u00f2 chuy\u1ec7n sau "
-                + "(ch\u1ec9 li\u1ec7t k\u00ea tri\u1ec7u ch\u1ee9ng, kh\u00f4ng ch\u1ea9n \u0111o\u00e1n):\n\n" + history;
-        String summaryJson = normalizeAiJson(geminiIntegration.getChatResponse(summaryPrompt));
-        String aiSummary = extractJsonString(summaryJson, "reply");
+        String aiSummary = "";
+        if (!history.isBlank()) {
+            try {
+                String summaryPrompt = "H\u00e3y t\u00f3m t\u1eaft ng\u1eafn g\u1ecdn c\u00e1c tri\u1ec7u ch\u1ee9ng ch\u00ednh b\u1ec7nh nh\u00e2n \u0111\u00e3 chia s\u1ebb trong cu\u1ed9c tr\u00f2 chuy\u1ec7n sau "
+                        + "(ch\u1ec9 li\u1ec7t k\u00ea tri\u1ec7u ch\u1ee9ng, kh\u00f4ng ch\u1ea9n \u0111o\u00e1n):\n\n" + history;
+                String summaryJson = normalizeAiJson(geminiIntegration.getChatResponse(summaryPrompt));
+                aiSummary = extractJsonString(summaryJson, "reply");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
         if (aiSummary.isEmpty()) {
-            // Fallback: dùng symptoms do user cung cấp
+            // Fallback: dùng symptoms do user cung cấp hoặc fallbackSummary từ history
             aiSummary = symptoms.isEmpty() ? fallbackSummary(history) : symptoms;
         }
 
-        // Lưu vào AI_Summary
-        String summaryId = UUID.randomUUID().toString().replace("-", "").substring(0, 20);
-        String sql = "INSERT INTO AI_Summary (summary_id, patient_id, appointment_id, ai_summary, created_at) "
-                + "VALUES (?, ?, NULL, ?, GETDATE())";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, summaryId);
-            ps.setInt(2, patientId);
-            ps.setString(3, aiSummary);
-            ps.executeUpdate();
-        }
+        // Save into DB
+        saveAiSummaryToDatabase(patientId, aiSummary, symptoms, history);
 
         // Xóa lịch sử chat trong memory
         getServletContext().removeAttribute("chatHistory_" + patientId);
 
         response.getWriter().print("{\"success\":true,\"summary\":\""
                 + escapeJson(aiSummary) + "\"}");
+    }
+
+    private void saveAiSummaryToDatabase(int patientId, String aiSummary, String symptoms, String history) {
+        // Attempt 1: Ensure appointment_id is nullable if AI_Summary table exists
+        try (Connection conn = DatabaseConnection.getConnection();
+             java.sql.Statement stmt = conn.createStatement()) {
+            stmt.execute("IF OBJECT_ID('dbo.AI_Summary', 'U') IS NOT NULL " +
+                         "AND EXISTS (SELECT 1 FROM sys.columns c JOIN sys.objects o ON c.object_id = o.object_id " +
+                         "WHERE o.name = 'AI_Summary' AND c.name = 'appointment_id' AND c.is_nullable = 0) " +
+                         "BEGIN ALTER TABLE dbo.AI_Summary ALTER COLUMN appointment_id INT NULL; END");
+        } catch (Exception ignored) {}
+
+        // Attempt 2: Ensure AI_Summary table exists if missing
+        try (Connection conn = DatabaseConnection.getConnection();
+             java.sql.Statement stmt = conn.createStatement()) {
+            stmt.execute("IF OBJECT_ID('dbo.AI_Summary', 'U') IS NULL " +
+                         "BEGIN CREATE TABLE dbo.AI_Summary (" +
+                         "summary_id VARCHAR(50) PRIMARY KEY, " +
+                         "patient_id INT NOT NULL, " +
+                         "appointment_id INT NULL, " +
+                         "ai_summary NVARCHAR(MAX) NOT NULL, " +
+                         "created_at DATETIME DEFAULT GETDATE()); END");
+        } catch (Exception ignored) {}
+
+        // Attempt 3: Insert into AI_Summary with UUID summary_id
+        String summaryId = UUID.randomUUID().toString().replace("-", "").substring(0, 20);
+        String sql1 = "INSERT INTO AI_Summary (summary_id, patient_id, appointment_id, ai_summary, created_at) "
+                + "VALUES (?, ?, NULL, ?, GETDATE())";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql1)) {
+            ps.setString(1, summaryId);
+            ps.setInt(2, patientId);
+            ps.setString(3, aiSummary);
+            ps.executeUpdate();
+            return;
+        } catch (Exception e1) {
+            System.err.println("Notice: AI_Summary insert with summary_id failed: " + e1.getMessage());
+        }
+
+        // Attempt 4: Insert into AI_Summary without summary_id (in case summary_id is identity int)
+        String sql2 = "INSERT INTO AI_Summary (patient_id, appointment_id, ai_summary, created_at) "
+                + "VALUES (?, NULL, ?, GETDATE())";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql2)) {
+            ps.setInt(1, patientId);
+            ps.setString(2, aiSummary);
+            ps.executeUpdate();
+            return;
+        } catch (Exception e2) {
+            System.err.println("Notice: AI_Summary insert without summary_id failed: " + e2.getMessage());
+        }
+
+        // Attempt 5: Fallback to AI_Conversation table if present
+        try {
+            com.diabetes.monitoring.doctor.dao.AIConversationDAO dao = new com.diabetes.monitoring.doctor.dao.AIConversationDAO();
+            dao.saveLatestConversation(patientId, history, aiSummary);
+        } catch (Exception e3) {
+            System.err.println("Notice: AIConversationDAO fallback failed: " + e3.getMessage());
+        }
     }
 
     // ──────────────────────────────────────────────────────────────

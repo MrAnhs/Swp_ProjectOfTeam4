@@ -35,8 +35,18 @@ public class SaveVitalsServlet extends DoctorServlet {
             double weight = Double.parseDouble(weightStr.trim());
             double height = Double.parseDouble(heightStr.trim());
 
-            if (recordId <= 0 || weight <= 0 || height <= 0) {
-                sendJson(response, HttpServletResponse.SC_BAD_REQUEST, false, "Chiều cao và cân nặng phải lớn hơn 0.", 0);
+            if (recordId <= 0) {
+                sendJson(response, HttpServletResponse.SC_BAD_REQUEST, false, "Mã hồ sơ không hợp lệ.", 0);
+                return;
+            }
+
+            if (height < 30 || height > 300) {
+                sendJson(response, HttpServletResponse.SC_BAD_REQUEST, false, "Chiều cao hợp lệ phải nằm trong khoảng từ 30 cm đến 300 cm.", 0);
+                return;
+            }
+
+            if (weight < 2 || weight > 500) {
+                sendJson(response, HttpServletResponse.SC_BAD_REQUEST, false, "Cân nặng hợp lệ phải nằm trong khoảng từ 2 kg đến 500 kg.", 0);
                 return;
             }
 
