@@ -912,34 +912,46 @@ document.addEventListener('DOMContentLoaded', function () {
     // 4. BỘ ĐIỀU HƯỚNG LỊCH TRỰC TUẦN (WEEKLY CALENDAR)
     // ==========================================
 
-    function getMondayOfDate(d) {
-        if (!d) return new Date();
-        if (typeof d === 'string') {
-            const parts = d.split('-');
-            if (parts.length === 3) {
-                const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-                const day = date.getDay();
-                const diff = date.getDate() - day + (day === 0 ? -6 : 1);
-                date.setDate(diff);
-                return date;
-            }
+    function parseAnyDate(raw) {
+        if (!raw) return new Date();
+        if (raw instanceof Date) {
+            return isNaN(raw.getTime()) ? new Date() : raw;
         }
-        const date = new Date(d);
+        const str = String(raw).trim();
+        if (!str) return new Date();
+
+        if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+            const parts = str.substring(0, 10).split('-');
+            return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+        }
+        if (/^\d{1,2}\/\d{1,2}\/\d{4}/.test(str)) {
+            const parts = str.substring(0, 10).split('/');
+            return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+        }
+
+        const d = new Date(str);
+        return isNaN(d.getTime()) ? new Date() : d;
+    }
+
+    function getMondayOfDate(d) {
+        const date = parseAnyDate(d);
         const day = date.getDay();
         const diff = date.getDate() - day + (day === 0 ? -6 : 1);
-        return new Date(date.setDate(diff));
+        return new Date(date.getFullYear(), date.getMonth(), diff);
     }
 
     function formatDateIso(d) {
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
+        const date = parseAnyDate(d);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
     }
 
     function formatDateDisplay(d) {
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
+        const date = parseAnyDate(d);
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
         return `${day}/${month}`;
     }
 
@@ -1013,15 +1025,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const picker = document.getElementById('unifiedWeekPicker') || document.getElementById('calendarWeekPicker');
         if (!picker) return;
 
-        if (!picker.value || isNaN(new Date(picker.value).getTime())) {
-            picker.value = formatDateIso(new Date());
-        }
+        const baseDate = parseAnyDate(picker.value);
+        picker.value = formatDateIso(baseDate);
 
-        let baseDate = new Date(picker.value);
-        if (isNaN(baseDate.getTime())) {
-            baseDate = new Date();
-            picker.value = formatDateIso(baseDate);
-        }
         const monday = getMondayOfDate(baseDate);
 
         const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
@@ -1050,7 +1056,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const room = roomFilterEl ? roomFilterEl.value : 'all';
 
         try {
-            const url = `${adminContextPath}/admin?action=getCalendarSchedule&weekDate=${encodeURIComponent(picker.value)}&role=${encodeURIComponent(role)}&room=${encodeURIComponent(room)}`;
+            const url = `${adminContextPath}/admin?action=getCalendarSchedule&weekDate=${encodeURIComponent(formatDateIso(baseDate))}&role=${encodeURIComponent(role)}&room=${encodeURIComponent(room)}`;
             const resp = await fetch(url, { headers: { 'Accept': 'application/json' } });
             if (!resp.ok) throw new Error('HTTP ' + resp.status);
             const data = await resp.json();
@@ -1086,7 +1092,8 @@ document.addEventListener('DOMContentLoaded', function () {
         // Nhóm các ca trực theo ô (Cell)
         const shiftsByCell = {};
         schedules.forEach(shift => {
-            const dateStr = shift.date || shift.workDate || shift.work_date || '';
+            const rawDate = shift.date || shift.workDate || shift.work_date;
+            const dateStr = formatDateIso(rawDate);
             const dayKey = daysMapByDate[dateStr];
             if (!dayKey) return;
             const slotStr = (shift.time_slot || shift.timeSlot || '').toLowerCase();
