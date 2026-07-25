@@ -39,9 +39,9 @@
                     } else {
                         const parts = selectedDate.split('-');
                         if (parts.length === 3) {
-                            dateTitle.textContent = `ng\u00E0y ${parts[2]}/${parts[1]}/${parts[0]}`;
+                            dateTitle.textContent = `ngày ${parts[2]}/${parts[1]}/${parts[0]}`;
                         } else {
-                            dateTitle.textContent = `ng\u00E0y ${selectedDate}`;
+                            dateTitle.textContent = `ngày ${selectedDate}`;
                         }
                     }
                 }
@@ -54,7 +54,7 @@
             const patients = data.patients || [];
             
             if (badge) {
-                badge.textContent = `${patients.length} b\u1EC7nh nh\u00E2n`;
+                badge.textContent = `${patients.length} bệnh nhân`;
             }
 
             tableBody.innerHTML = '';
@@ -70,15 +70,15 @@
                     if (selectedDate !== todayStr) {
                         const parts = selectedDate.split('-');
                         if (parts.length === 3) {
-                            dateLabel = `ng\u00E0y ${parts[2]}/${parts[1]}/${parts[0]}`;
+                            dateLabel = `ngày ${parts[2]}/${parts[1]}/${parts[0]}`;
                         } else {
-                            dateLabel = `ng\u00E0y ${selectedDate}`;
+                            dateLabel = `ngày ${selectedDate}`;
                         }
                     }
                 }
                 tableBody.innerHTML = `
                     <tr>
-                        <td colspan="6" class="text-center text-muted py-4">Kh\u00F4ng c\u00F3 b\u1EC7nh nh\u00E2n n\u00E0o t\u00E1i kh\u00E1m ${dateLabel}.</td>
+                        <td colspan="6" class="text-center text-muted py-4">Không có bệnh nhân nào tái khám ${dateLabel}.</td>
                     </tr>
                 `;
                 return;
@@ -104,22 +104,22 @@
                 let actionHtml = '';
                 if (p.activeAppointmentId) {
                     actionHtml = `<span class="badge bg-success-subtle text-success border border-success-subtle py-2 px-3 d-inline-flex align-items-center" style="font-size: 0.85rem; font-weight: 600;">
-                                      <i class="bi bi-check-circle-fill me-1"></i>\u0110\u00e3 \u0111\u0103ng k\u00fd
+                                      <i class="bi bi-check-circle-fill me-1"></i>Đã đăng ký
                                   </span>`;
                 } else {
-                    actionHtml = `<a href="${registerUrl}" class="btn btn-sm btn-primary" title="\u0110\u0103ng k\u00FD kh\u00E1m">
-                                      <i class="bi bi-calendar-plus me-1"></i>\u0110\u0103ng k\u00FD kh\u00E1m
+                    actionHtml = `<a href="${registerUrl}" class="btn btn-sm btn-primary" title="Đăng ký khám">
+                                      <i class="bi bi-calendar-plus me-1"></i>Đăng ký khám
                                   </a>`;
                 }
 
                 tr.innerHTML = `
                     <td class="ps-3 fw-medium text-dark">${utils.escapeHtml(p.patientName)}</td>
                     <td>${utils.escapeHtml(p.patientPhone)}</td>
-                    <td>${utils.escapeHtml(p.patientEmail || 'Ch\u01B0a c\u1EADp nh\u1EADt')}</td>
+                    <td>${utils.escapeHtml(p.patientEmail || 'Chưa cập nhật')}</td>
                     <td><span class="badge bg-warning-subtle text-dark border border-warning-subtle" style="font-size: 0.85rem;">${utils.escapeHtml(p.revisitDate)}</span></td>
                     <td>${utils.escapeHtml(p.doctorName)}</td>
                     <td class="text-end pe-3">
-                        <a href="tel:${p.patientPhone}" class="btn btn-sm btn-outline-success me-1" title="G\u1EDDi \u0111i\u1EC7n nh\u1EAFc nh\u1EDF">
+                        <a href="tel:${p.patientPhone}" class="btn btn-sm btn-outline-success me-1" title="Gời điện nhắc nhở">
                             <i class="bi bi-telephone"></i>
                         </a>
                         ${actionHtml}
@@ -131,7 +131,7 @@
             console.error(error);
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="6" class="text-center text-danger py-4">L\u1ED7i t\u1EA3i danh s\u00E1ch: ${utils.escapeHtml(error.message)}</td>
+                    <td colspan="6" class="text-center text-danger py-4">Lỗi tải danh sách: ${utils.escapeHtml(error.message)}</td>
                 </tr>
             `;
         }

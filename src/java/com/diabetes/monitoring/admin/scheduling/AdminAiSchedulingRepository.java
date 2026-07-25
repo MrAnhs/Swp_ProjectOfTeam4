@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.Set;
 
 /**
  * Repository tạo lịch bằng Gemini và thuật toán fallback cục bộ.
@@ -35,6 +36,9 @@ public class AdminAiSchedulingRepository {
 
     private final AdminScheduleRepository scheduleRepository =
             new AdminScheduleRepository();
+
+    private final AdminRoomRepository roomRepository =
+            new AdminRoomRepository();
 
     public List<Map<String, Object>> getDoctorSchedulesByDate(int doctorId, Date workDate) {
         String sql = "SELECT schedule_id, time_slot, status FROM Doctor_Schedule "
@@ -815,7 +819,7 @@ public class AdminAiSchedulingRepository {
                             int id = staffRepository.insert(connection,
                                     accountId, normalizedStaffType, workDate,
                                     timeSlot, shiftDepartment, shiftWorkArea,
-                                    maxWorkload, "Scheduled", "AI",
+                                    maxWorkload, "Available", "AI",
                                     AdminScheduleValidator.requiresRoom(normalizedStaffType) ? roomId : null);
                             Map<String, Object> row = new HashMap<>();
                             row.put("staffScheduleId", id);
@@ -827,7 +831,7 @@ public class AdminAiSchedulingRepository {
                             row.put("department", shiftDepartment);
                             row.put("workArea", shiftWorkArea);
                             row.put("maxWorkload", maxWorkload);
-                            row.put("status", "Scheduled");
+                            row.put("status", "Available");
                             row.put("scheduleSource", "AI");
                             row.put("roomId", AdminScheduleValidator.requiresRoom(normalizedStaffType) ? roomId : null);
                             created.add(row);

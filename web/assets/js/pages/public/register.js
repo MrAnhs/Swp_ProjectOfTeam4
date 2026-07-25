@@ -18,26 +18,26 @@
     ].join("-");
 
     dob.max = today;
-    phoneFeedback.textContent = "Vui l\u00F2ng nh\u1EADp s\u1ED1 \u0111i\u1EC7n tho\u1EA1i Vi\u1EC7t Nam h\u1EE3p l\u1EC7, v\u00ED d\u1EE5 0912345678 ho\u1EB7c +84912345678.";
+    phoneFeedback.textContent = "Vui lòng nhập số điện thoại Việt Nam hợp lệ, ví dụ 0912345678 hoặc +84912345678.";
 
     function validatePasswordConfirmation() {
         if (confirmPassword.value && password.value !== confirmPassword.value) {
-            confirmPassword.setCustomValidity("M\u1EADt kh\u1EA9u x\u00E1c nh\u1EADn kh\u00F4ng kh\u1EDBp");
-            confirmFeedback.textContent = "M\u1EADt kh\u1EA9u x\u00E1c nh\u1EADn kh\u00F4ng kh\u1EDBp.";
+            confirmPassword.setCustomValidity("Mật khẩu xác nhận không khớp");
+            confirmFeedback.textContent = "Mật khẩu xác nhận không khớp.";
             return;
         }
         confirmPassword.setCustomValidity("");
-        confirmFeedback.textContent = "Vui l\u00F2ng x\u00E1c nh\u1EADn m\u1EADt kh\u1EA9u.";
+        confirmFeedback.textContent = "Vui lòng xác nhận mật khẩu.";
     }
 
     function validateDob() {
         if (dob.value && (dob.value < dob.min || dob.value > today)) {
-            dob.setCustomValidity("Ng\u00E0y sinh kh\u00F4ng h\u1EE3p l\u1EC7");
-            dobFeedback.textContent = "Ng\u00E0y sinh ph\u1EA3i n\u1EB1m trong kho\u1EA3ng t\u1EEB 01/01/1900 \u0111\u1EBFn h\u00F4m nay.";
+            dob.setCustomValidity("Ngày sinh không hợp lệ");
+            dobFeedback.textContent = "Ngày sinh phải nằm trong khoảng từ 01/01/1900 đến hôm nay.";
             return;
         }
         dob.setCustomValidity("");
-        dobFeedback.textContent = "Ng\u00E0y sinh ph\u1EA3i h\u1EE3p l\u1EC7 v\u00E0 kh\u00F4ng \u0111\u01B0\u1EE3c v\u01B0\u1EE3t qu\u00E1 ng\u00E0y hi\u1EC7n t\u1EA1i.";
+        dobFeedback.textContent = "Ngày sinh phải hợp lệ và không được vượt quá ngày hiện tại.";
     }
 
     function normalizePhone(value) {
@@ -50,7 +50,7 @@
     function validatePhone() {
         const cleaned = phone.value.trim().replace(/[\s.\-()]/g, "");
         if (phone.value && !phonePattern.test(cleaned)) {
-            phone.setCustomValidity("S\u1ED1 \u0111i\u1EC7n tho\u1EA1i Vi\u1EC7t Nam kh\u00F4ng h\u1EE3p l\u1EC7");
+            phone.setCustomValidity("Số điện thoại Việt Nam không hợp lệ");
             return;
         }
         phone.setCustomValidity("");
@@ -76,14 +76,14 @@
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
             if (!email || !emailRegex.test(email)) {
-                showOtpStatus("Vui l\u00f2ng nh\u1eadp email h\u1ee3p l\u1ec7 tr\u01b0\u1edbc khi g\u1eedi m\u00e3 OTP.", true);
+                showOtpStatus("Vui lòng nhập email hợp lệ trước khi gửi mã OTP.", true);
                 emailInput.focus();
                 return;
             }
 
             btnSendOtp.disabled = true;
-            btnSendOtp.textContent = "\u0110ang g\u1eedi...";
-            showOtpStatus("\u0110ang g\u1eedi m\u00e3 OTP t\u1edbi email c\u1ee7a b\u1ea1n...", false);
+            btnSendOtp.textContent = "Đang gửi...";
+            showOtpStatus("Đang gửi mã OTP tới email của bạn...", false);
 
             try {
                 const params = new URLSearchParams();
@@ -98,18 +98,18 @@
                 const data = await res.json();
 
                 if (res.ok && data.success) {
-                    showOtpStatus(data.message || "M\u00e3 OTP \u0111\u00e3 \u0111\u01b0\u1ee3c g\u1eedi v\u1ec1 email c\u1ee7a b\u1ea1n.", false);
+                    showOtpStatus(data.message || "Mã OTP đã được gửi về email của bạn.", false);
                     startCooldown(60);
                 } else {
-                    showOtpStatus(data.message || "Kh\u00f4ng th\u1ec3 g\u1eedi m\u00e3 OTP. Vui l\u00f2ng th\u1eed l\u1ea1i.", true);
+                    showOtpStatus(data.message || "Không thể gửi mã OTP. Vui lòng thử lại.", true);
                     btnSendOtp.disabled = false;
-                    btnSendOtp.textContent = "G\u1eedi l\u1ea1i OTP";
+                    btnSendOtp.textContent = "Gửi lại OTP";
                 }
             } catch (err) {
                 console.error("Send OTP error:", err);
-                showOtpStatus("L\u1ed7i k\u1ebft n\u1ed1i. Vui l\u00f2ng th\u1eed l\u1ea1i.", true);
+                showOtpStatus("Lỗi kết nối. Vui lòng thử lại.", true);
                 btnSendOtp.disabled = false;
-                btnSendOtp.textContent = "G\u1eedi l\u1ea1i OTP";
+                btnSendOtp.textContent = "Gửi lại OTP";
             }
         });
 
@@ -123,7 +123,7 @@
         function startCooldown(seconds) {
             let remain = seconds;
             btnSendOtp.disabled = true;
-            btnSendOtp.textContent = `G\u1eedi l\u1ea1i (${remain}s)`;
+            btnSendOtp.textContent = `Gửi lại (${remain}s)`;
 
             if (cooldownTimer) clearInterval(cooldownTimer);
             cooldownTimer = setInterval(() => {
@@ -131,9 +131,9 @@
                 if (remain <= 0) {
                     clearInterval(cooldownTimer);
                     btnSendOtp.disabled = false;
-                    btnSendOtp.textContent = "G\u1eedi l\u1ea1i OTP";
+                    btnSendOtp.textContent = "Gửi lại OTP";
                 } else {
-                    btnSendOtp.textContent = `G\u1eedi l\u1ea1i (${remain}s)`;
+                    btnSendOtp.textContent = `Gửi lại (${remain}s)`;
                 }
             }, 1000);
         }

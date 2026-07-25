@@ -32,7 +32,7 @@ const dashboardBasePath = window.AdminConfig && window.AdminConfig.contextPath ?
                                                         return Number(value || 0).toLocaleString('vi-VN', {
                                                             minimumFractionDigits: 0,
                                                             maximumFractionDigits: 2
-                                                        }) + ' VN\u0110';
+                                                        }) + ' VNĐ';
                                                     }
 
                                                     function escapeHtml(text) {
@@ -43,26 +43,26 @@ const dashboardBasePath = window.AdminConfig && window.AdminConfig.contextPath ?
 
                                                     function translateRole(role) {
                                                         const roleMap = {
-                                                            'Patient': 'B\u1EC7nh nh\u00E2n',
-                                                            'Doctor': 'B\u00E1c s\u0129',
-                                                            'Receptionist': 'L\u1EC5 t\u00E2n',
-                                                            'Admin': 'Qu\u1EA3n tr\u1ECB vi\u00EAn'
+                                                            'Patient': 'Bệnh nhân',
+                                                            'Doctor': 'Bác sĩ',
+                                                            'Receptionist': 'Lễ tân',
+                                                            'Admin': 'Quản trị viên'
                                                         };
                                                         return roleMap[role] || role;
                                                     }
 
                                                     function translateAccountStatus(status) {
                                                         const statusMap = {
-                                                            'Active': 'Ho\u1EA1t \u0111\u1ED9ng',
-                                                            'Locked': '\u0110\u00E3 kh\u00F3a'
+                                                            'Active': 'Hoạt động',
+                                                            'Locked': 'Đã khóa'
                                                         };
                                                         return statusMap[status] || status;
                                                     }
 
                                                     function translateServiceStatus(status) {
                                                         const statusMap = {
-                                                            'Active': 'Ho\u1EA1t \u0111\u1ED9ng',
-                                                            'Inactive': 'Ng\u1EEBng ho\u1EA1t \u0111\u1ED9ng'
+                                                            'Active': 'Hoạt động',
+                                                            'Inactive': 'Ngừng hoạt động'
                                                         };
                                                         return statusMap[status] || status;
                                                     }
@@ -134,32 +134,32 @@ const dashboardBasePath = window.AdminConfig && window.AdminConfig.contextPath ?
                                                         switch (rawStatus) {
                                                             case 'Waiting':
                                                                 return {
-                                                                    label: 'Ch\u1EDD \u0111\u1EE3i',
+                                                                    label: 'Chờ đợi',
                                                                     className: 'badge bg-warning text-dark status-badge-soft'
                                                                 };
                                                             case 'Checked_In':
                                                                 return {
-                                                                    label: '\u0110\u00E3 check-in',
+                                                                    label: 'Đã check-in',
                                                                     className: 'badge bg-primary text-white status-badge-soft'
                                                                 };
                                                             case 'In_Progress':
                                                                 return {
-                                                                    label: '\u0110ang kh\u00E1m',
+                                                                    label: 'Đang khám',
                                                                     className: 'badge bg-info text-white status-badge-soft'
                                                                 };
                                                             case 'Completed':
                                                                 return {
-                                                                    label: 'Ho\u00E0n t\u1EA5t',
+                                                                    label: 'Hoàn tất',
                                                                     className: 'badge bg-success text-white status-badge-soft'
                                                                 };
                                                             case 'Absent':
                                                                 return {
-                                                                    label: 'Kh\u00F4ng \u0111\u1EBFn',
+                                                                    label: 'Không đến',
                                                                     className: 'badge bg-secondary text-white status-badge-soft'
                                                                 };
                                                             default:
                                                                 return {
-                                                                    label: rawStatus || 'Kh\u00F4ng x\u00E1c \u0111\u1ECBnh',
+                                                                    label: rawStatus || 'Không xác định',
                                                                     className: 'badge bg-secondary text-white status-badge-soft'
                                                                 };
                                                         }
@@ -172,7 +172,7 @@ const dashboardBasePath = window.AdminConfig && window.AdminConfig.contextPath ?
                                                         }
 
                                                         if (!Array.isArray(items) || items.length === 0) {
-                                                            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Kh\u00F4ng c\u00F3 l\u1ECBch h\u1EB9n h\u00F4m nay.</td></tr>';
+                                                            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Không có lịch hẹn hôm nay.</td></tr>';
                                                             return;
                                                         }
 
@@ -182,7 +182,7 @@ const dashboardBasePath = window.AdminConfig && window.AdminConfig.contextPath ?
                                                             html += '<tr>'
                                                                     + '<td>' + (index + 1) + '</td>'
                                                                     + '<td>' + escapeHtml(item.patientName || 'N/A') + '</td>'
-                                                                    + '<td>' + escapeHtml(item.doctorName || 'Ch\u01B0a ph\u00E2n c\u00F4ng') + '</td>'
+                                                                    + '<td>' + escapeHtml(item.doctorName || 'Chưa phân công') + '</td>'
                                                                     + '<td>' + escapeHtml(item.appointmentDate || '') + '</td>'
                                                                     + '<td>' + escapeHtml(item.appointmentTime || '--:--') + '</td>'
                                                                     + '<td><span class="' + statusMeta.className + '">' + escapeHtml(statusMeta.label) + '</span></td>'
@@ -198,7 +198,7 @@ const dashboardBasePath = window.AdminConfig && window.AdminConfig.contextPath ?
                                                         }
 
                                                         if (!Array.isArray(items) || items.length === 0) {
-                                                            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Kh\u00F4ng c\u00F3 b\u1EC7nh nh\u00E2n \u0111\u00E3 check-in trong ng\u00E0y.</td></tr>';
+                                                            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Không có bệnh nhân đã check-in trong ngày.</td></tr>';
                                                             return;
                                                         }
 
@@ -209,10 +209,10 @@ const dashboardBasePath = window.AdminConfig && window.AdminConfig.contextPath ?
                                                             html += '<tr>'
                                                                     + '<td>' + (index + 1) + '</td>'
                                                                     + '<td>' + escapeHtml(item.patientName || 'N/A') + '</td>'
-                                                                    + '<td>' + escapeHtml(item.department || 'Ch\u01B0a x\u00E1c \u0111\u1ECBnh') + '</td>'
+                                                                    + '<td>' + escapeHtml(item.department || 'Chưa xác định') + '</td>'
                                                                     + '<td>' + escapeHtml(item.appointmentTime || '--:--') + '</td>'
                                                                     + '<td><span class="' + statusMeta.className + '">' + escapeHtml(statusMeta.label) + '</span></td>'
-                                                                    + '<td>' + waitMinutes + ' ph\u00FAt</td>'
+                                                                    + '<td>' + waitMinutes + ' phút</td>'
                                                                     + '</tr>';
                                                         });
                                                         tbody.innerHTML = html;
@@ -222,7 +222,7 @@ const dashboardBasePath = window.AdminConfig && window.AdminConfig.contextPath ?
                                                         ensureQuickModals();
                                                         const tbody = document.getElementById('todayAppointmentsTableBody');
                                                         if (tbody) {
-                                                            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">\u0110ang t\u1EA3i d\u1EEF li\u1EC7u...</td></tr>';
+                                                            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Đang tải dữ liệu...</td></tr>';
                                                         }
                                                         todayAppointmentsModalInstance.show();
                                                         try {
@@ -230,7 +230,7 @@ const dashboardBasePath = window.AdminConfig && window.AdminConfig.contextPath ?
                                                             renderTodayAppointmentsRows(data.items || []);
                                                         } catch (error) {
                                                             if (tbody) {
-                                                                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">Kh\u00F4ng th\u1EC3 t\u1EA3i danh s\u00E1ch ca kh\u00E1m h\u00F4m nay.</td></tr>';
+                                                                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">Không thể tải danh sách ca khám hôm nay.</td></tr>';
                                                             }
                                                         }
                                                     }
@@ -239,7 +239,7 @@ const dashboardBasePath = window.AdminConfig && window.AdminConfig.contextPath ?
                                                         ensureQuickModals();
                                                         const tbody = document.getElementById('todayWaitingTableBody');
                                                         if (tbody) {
-                                                            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">\u0110ang t\u1EA3i d\u1EEF li\u1EC7u...</td></tr>';
+                                                            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Đang tải dữ liệu...</td></tr>';
                                                         }
                                                         todayWaitingModalInstance.show();
                                                         try {
@@ -247,7 +247,7 @@ const dashboardBasePath = window.AdminConfig && window.AdminConfig.contextPath ?
                                                             renderTodayWaitingRows(data.items || []);
                                                         } catch (error) {
                                                             if (tbody) {
-                                                                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">Kh\u00F4ng th\u1EC3 t\u1EA3i danh s\u00E1ch b\u1EC7nh nh\u00E2n \u0111\u00E3 check-in.</td></tr>';
+                                                                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">Không thể tải danh sách bệnh nhân đã check-in.</td></tr>';
                                                             }
                                                         }
                                                     }
@@ -264,7 +264,7 @@ const dashboardBasePath = window.AdminConfig && window.AdminConfig.contextPath ?
                                                         }
 
                                                         if (!Array.isArray(items) || items.length === 0) {
-                                                            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Kh\u00F4ng c\u00F3 b\u1EC7nh nh\u00E2n \u0111\u00E3 check-in cho b\u00E1c s\u0129 n\u00E0y h\u00F4m nay.</td></tr>';
+                                                            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Không có bệnh nhân đã check-in cho bác sĩ này hôm nay.</td></tr>';
                                                             return;
                                                         }
 
@@ -278,7 +278,7 @@ const dashboardBasePath = window.AdminConfig && window.AdminConfig.contextPath ?
                                                             html += '<td>' + escapeHtml(item.patientName || 'N/A') + '</td>';
                                                             html += '<td>' + escapeHtml(item.appointmentTime || '--:--') + '</td>';
                                                             html += '<td><span class="' + statusMeta.className + '">' + escapeHtml(statusMeta.label) + '</span></td>';
-                                                            html += '<td class="text-end"><a class="btn btn-sm btn-warning text-dark" href="' + dashboardBasePath + '/admin?action=exception&appointmentId=' + appointmentId + '">\u0110i\u1EC1u ph\u1ED1i ca n\u00E0y</a></td>';
+                                                            html += '<td class="text-end"><a class="btn btn-sm btn-warning text-dark" href="' + dashboardBasePath + '/admin?action=exception&appointmentId=' + appointmentId + '">Điều phối ca này</a></td>';
                                                             html += '</tr>';
                                                         });
                                                         tbody.innerHTML = html;
@@ -289,10 +289,10 @@ const dashboardBasePath = window.AdminConfig && window.AdminConfig.contextPath ?
                                                         const title = document.getElementById('doctorQueueModalLabel');
                                                         const tbody = document.getElementById('doctorQueueTableBody');
                                                         if (title) {
-                                                            title.textContent = 'Chi ti\u1EBFt h\u00E0ng \u0111\u1EE3i - B\u00E1c s\u0129: ' + (doctorName || '') + ' (' + (department || '') + ')';
+                                                            title.textContent = 'Chi tiết hàng đợi - Bác sĩ: ' + (doctorName || '') + ' (' + (department || '') + ')';
                                                         }
                                                         if (tbody) {
-                                                            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">\u0110ang t\u1EA3i d\u1EEF li\u1EC7u...</td></tr>';
+                                                            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Đang tải dữ liệu...</td></tr>';
                                                         }
 
                                                         doctorQueueModalInstance.show();
@@ -307,7 +307,7 @@ const dashboardBasePath = window.AdminConfig && window.AdminConfig.contextPath ?
                                                             renderDoctorQueueRows(data.items || []);
                                                         } catch (error) {
                                                             if (tbody) {
-                                                                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">Kh\u00F4ng th\u1EC3 t\u1EA3i danh s\u00E1ch b\u1EC7nh nh\u00E2n \u0111\u00E3 check-in.</td></tr>';
+                                                                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">Không thể tải danh sách bệnh nhân đã check-in.</td></tr>';
                                                             }
                                                         }
                                                     }
@@ -315,14 +315,14 @@ const dashboardBasePath = window.AdminConfig && window.AdminConfig.contextPath ?
                                                     function setQuickModalContent(title, bodyHtml, footerHtml) {
                                                         document.getElementById('dashboardQuickModalLabel').textContent = title;
                                                         document.getElementById('dashboardQuickModalBody').innerHTML = bodyHtml;
-                                                        document.getElementById('dashboardQuickModalFooter').innerHTML = footerHtml || '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">\u0110\u00F3ng</button>';
+                                                        document.getElementById('dashboardQuickModalFooter').innerHTML = footerHtml || '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>';
                                                     }
 
                                                     function renderAccountQuickModal(data) {
                                                         const items = Array.isArray(data.items) ? data.items : [];
                                                         let rows = '';
                                                         if (items.length === 0) {
-                                                            rows = '<tr><td colspan="5" class="text-center text-muted py-4">Kh\u00F4ng c\u00F3 t\u00E0i kho\u1EA3n ph\u00F9 h\u1EE3p</td></tr>';
+                                                            rows = '<tr><td colspan="5" class="text-center text-muted py-4">Không có tài khoản phù hợp</td></tr>';
                                                         } else {
                                                             items.forEach(item => {
                                                                 const isLocked = String(item.status).toLowerCase() === 'locked';
@@ -331,15 +331,15 @@ const dashboardBasePath = window.AdminConfig && window.AdminConfig.contextPath ?
                                                                 rows += '<td>' + escapeHtml(item.email) + '</td>';
                                                                 rows += '<td>' + escapeHtml(translateRole(item.role)) + '</td>';
                                                                 rows += '<td><span class="badge ' + (isLocked ? 'bg-danger' : 'bg-success') + '">' + escapeHtml(translateAccountStatus(item.status)) + '</span></td>';
-                                                                rows += '<td class="text-end"><button type="button" class="btn btn-sm ' + (isLocked ? 'btn-success' : 'btn-outline-danger') + ' quick-toggle-account quick-action-btn" data-account-id="' + item.accountId + '" data-next-status="' + (isLocked ? 'active' : 'locked') + '">' + (isLocked ? 'M\u1EDF kh\u00F3a' : 'Kh\u00F3a') + '</button></td>';
+                                                                rows += '<td class="text-end"><button type="button" class="btn btn-sm ' + (isLocked ? 'btn-success' : 'btn-outline-danger') + ' quick-toggle-account quick-action-btn" data-account-id="' + item.accountId + '" data-next-status="' + (isLocked ? 'active' : 'locked') + '">' + (isLocked ? 'Mở khóa' : 'Khóa') + '</button></td>';
                                                                 rows += '</tr>';
                                                             });
                                                         }
 
                                                         setQuickModalContent(
-                                                                'Qu\u1EA3n l\u00FD nhanh t\u00E0i kho\u1EA3n nh\u00E2n s\u1EF1',
-                                                                '<div class="table-responsive"><table class="table table-sm table-hover quick-modal-table"><thead class="table-light"><tr><th>H\u1ECD t\u00EAn</th><th>Email</th><th>Vai tr\u00F2</th><th>Tr\u1EA1ng th\u00E1i</th><th class="text-end">Thao t\u00E1c</th></tr></thead><tbody>' + rows + '</tbody></table></div>',
-                                                                '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">\u0110\u00F3ng</button><a class="btn btn-primary" href="' + dashboardBasePath + '/admin?action=listUsers">M\u1EDF qu\u1EA3n l\u00FD t\u00E0i kho\u1EA3n</a>'
+                                                                'Quản lý nhanh tài khoản nhân sự',
+                                                                '<div class="table-responsive"><table class="table table-sm table-hover quick-modal-table"><thead class="table-light"><tr><th>Họ tên</th><th>Email</th><th>Vai trò</th><th>Trạng thái</th><th class="text-end">Thao tác</th></tr></thead><tbody>' + rows + '</tbody></table></div>',
+                                                                '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button><a class="btn btn-primary" href="' + dashboardBasePath + '/admin?action=listUsers">Mở quản lý tài khoản</a>'
                                                                 );
                                                         if (data.summary) {
                                                             document.getElementById('kpiTotalAccounts').textContent = data.summary.totalAccounts;
@@ -351,7 +351,7 @@ const dashboardBasePath = window.AdminConfig && window.AdminConfig.contextPath ?
                                                     function renderLockedAccountModalRows(items) {
                                                         let rows = '';
                                                         if (!Array.isArray(items) || items.length === 0) {
-                                                            rows = '<tr><td colspan="4" class="text-center text-muted py-4">Kh\u00F4ng c\u00F3 t\u00E0i kho\u1EA3n ph\u00F9 h\u1EE3p</td></tr>';
+                                                            rows = '<tr><td colspan="4" class="text-center text-muted py-4">Không có tài khoản phù hợp</td></tr>';
                                                         } else {
                                                             items.forEach(item => {
                                                                 const status = String(item.status || 'locked');
@@ -366,9 +366,9 @@ const dashboardBasePath = window.AdminConfig && window.AdminConfig.contextPath ?
                                                         }
 
                                                         setQuickModalContent(
-                                                                'Danh s\u00E1ch t\u00E0i kho\u1EA3n \u0111\u00E3 kh\u00F3a',
-                                                                '<div class="table-responsive"><table class="table table-sm table-hover quick-modal-table"><thead class="table-light"><tr><th>H\u1ECD t\u00EAn</th><th>Email</th><th>Vai tr\u00F2</th><th>Tr\u1EA1ng th\u00E1i</th></tr></thead><tbody>' + rows + '</tbody></table></div>',
-                                                                '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">\u0110\u00F3ng</button><a class="btn btn-primary" href="' + dashboardBasePath + '/admin?action=listUsers">M\u1EDF qu\u1EA3n l\u00FD t\u00E0i kho\u1EA3n</a>'
+                                                                'Danh sách tài khoản đã khóa',
+                                                                '<div class="table-responsive"><table class="table table-sm table-hover quick-modal-table"><thead class="table-light"><tr><th>Họ tên</th><th>Email</th><th>Vai trò</th><th>Trạng thái</th></tr></thead><tbody>' + rows + '</tbody></table></div>',
+                                                                '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button><a class="btn btn-primary" href="' + dashboardBasePath + '/admin?action=listUsers">Mở quản lý tài khoản</a>'
                                                                 );
                                                     }
 
@@ -376,7 +376,7 @@ const dashboardBasePath = window.AdminConfig && window.AdminConfig.contextPath ?
                                                         const items = Array.isArray(data.items) ? data.items : [];
                                                         let rows = '';
                                                         if (items.length === 0) {
-                                                            rows = '<tr><td colspan="5" class="text-center text-muted py-4">H\u00F4m nay ch\u01B0a c\u00F3 h\u00F3a \u0111\u01A1n thu ti\u1EC1n</td></tr>';
+                                                            rows = '<tr><td colspan="5" class="text-center text-muted py-4">Hôm nay chưa có hóa đơn thu tiền</td></tr>';
                                                         } else {
                                                             items.forEach(item => {
                                                                 rows += '<tr>';
@@ -384,15 +384,15 @@ const dashboardBasePath = window.AdminConfig && window.AdminConfig.contextPath ?
                                                                 rows += '<td>' + escapeHtml(item.patientName) + '</td>';
                                                                 rows += '<td>' + escapeHtml(item.payment_time || '--/--/---- --:--') + '</td>';
                                                                 rows += '<td class="text-end fw-semibold">' + formatCurrency(item.finalAmount) + '</td>';
-                                                                rows += '<td class="text-end"><button type="button" class="btn btn-sm btn-outline-primary quick-view-invoice" data-invoice-id="' + escapeHtml(item.invoiceId) + '">Xem chi ti\u1EBFt</button></td>';
+                                                                rows += '<td class="text-end"><button type="button" class="btn btn-sm btn-outline-primary quick-view-invoice" data-invoice-id="' + escapeHtml(item.invoiceId) + '">Xem chi tiết</button></td>';
                                                                 rows += '</tr>';
                                                             });
                                                         }
 
                                                         setQuickModalContent(
-                                                                'H\u00F3a \u0111\u01A1n thu ti\u1EC1n g\u1EA7n nh\u1EA5t trong ng\u00E0y',
-                                                                '<div class="table-responsive"><table class="table table-sm table-hover quick-modal-table"><thead class="table-light"><tr><th>M\u00E3 HD</th><th>T\u00EAn BN</th><th>Th\u1EDDi gian</th><th class="text-end">Th\u1EF1c thu</th><th class="text-end">Thao t\u00E1c</th></tr></thead><tbody>' + rows + '</tbody></table></div>',
-                                                                '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">\u0110\u00F3ng</button><a class="btn btn-primary" href="' + dashboardBasePath + '/admin?action=reports">M\u1EDF B\u00E1o c\u00E1o chuy\u00EAn s\u00E2u</a>'
+                                                                'Hóa đơn thu tiền gần nhất trong ngày',
+                                                                '<div class="table-responsive"><table class="table table-sm table-hover quick-modal-table"><thead class="table-light"><tr><th>Mã HD</th><th>Tên BN</th><th>Thời gian</th><th class="text-end">Thực thu</th><th class="text-end">Thao tác</th></tr></thead><tbody>' + rows + '</tbody></table></div>',
+                                                                '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button><a class="btn btn-primary" href="' + dashboardBasePath + '/admin?action=reports">Mở Báo cáo chuyên sâu</a>'
                                                                 );
                                                     }
 
@@ -400,7 +400,7 @@ const dashboardBasePath = window.AdminConfig && window.AdminConfig.contextPath ?
                                                         const items = Array.isArray(data.items) ? data.items : [];
                                                         let rows = '';
                                                         if (items.length === 0) {
-                                                            rows = '<tr><td colspan="5" class="text-center text-muted py-4">Kh\u00F4ng c\u00F3 d\u1ECBch v\u1EE5 \u0111\u1EC3 hi\u1EC3n th\u1ECB</td></tr>';
+                                                            rows = '<tr><td colspan="5" class="text-center text-muted py-4">Không có dịch vụ để hiển thị</td></tr>';
                                                         } else {
                                                             items.forEach(item => {
                                                                 const isActive = String(item.status).toLowerCase() === 'active';
@@ -409,15 +409,15 @@ const dashboardBasePath = window.AdminConfig && window.AdminConfig.contextPath ?
                                                                 rows += '<td>' + escapeHtml(item.serviceType) + '</td>';
                                                                 rows += '<td class="text-end">' + formatCurrency(item.price) + '</td>';
                                                                 rows += '<td><span class="badge ' + (isActive ? 'bg-success' : 'bg-secondary') + '">' + escapeHtml(translateServiceStatus(item.status)) + '</span></td>';
-                                                                rows += '<td class="text-end"><button type="button" class="btn btn-sm ' + (isActive ? 'btn-outline-secondary' : 'btn-success') + ' quick-toggle-service quick-action-btn" data-service-id="' + item.serviceId + '" data-next-status="' + (isActive ? 'Inactive' : 'Active') + '">' + (isActive ? 'Ng\u01B0ng d\u00F9ng' : 'K\u00EDch ho\u1EA1t') + '</button></td>';
+                                                                rows += '<td class="text-end"><button type="button" class="btn btn-sm ' + (isActive ? 'btn-outline-secondary' : 'btn-success') + ' quick-toggle-service quick-action-btn" data-service-id="' + item.serviceId + '" data-next-status="' + (isActive ? 'Inactive' : 'Active') + '">' + (isActive ? 'Ngưng dùng' : 'Kích hoạt') + '</button></td>';
                                                                 rows += '</tr>';
                                                             });
                                                         }
 
                                                         setQuickModalContent(
-                                                                'Danh s\u00E1ch d\u1ECBch v\u1EE5 y t\u1EBF hi\u1EC7n t\u1EA1i',
-                                                                '<div class="table-responsive"><table class="table table-sm table-hover quick-modal-table"><thead class="table-light"><tr><th>D\u1ECBch v\u1EE5</th><th>Lo\u1EA1i</th><th class="text-end">\u0110\u01A1n gi\u00E1</th><th>Tr\u1EA1ng th\u00E1i</th><th class="text-end">Thao t\u00E1c</th></tr></thead><tbody>' + rows + '</tbody></table></div>',
-                                                                '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">\u0110\u00F3ng</button><a class="btn btn-primary" href="' + dashboardBasePath + '/admin?action=manageServices">M\u1EDF qu\u1EA3n l\u00FD d\u1ECBch v\u1EE5</a>'
+                                                                'Danh sách dịch vụ y tế hiện tại',
+                                                                '<div class="table-responsive"><table class="table table-sm table-hover quick-modal-table"><thead class="table-light"><tr><th>Dịch vụ</th><th>Loại</th><th class="text-end">Đơn giá</th><th>Trạng thái</th><th class="text-end">Thao tác</th></tr></thead><tbody>' + rows + '</tbody></table></div>',
+                                                                '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button><a class="btn btn-primary" href="' + dashboardBasePath + '/admin?action=manageServices">Mở quản lý dịch vụ</a>'
                                                                 );
                                                         if (data.summary) {
                                                             document.getElementById('kpiTotalServices').textContent = data.summary.activeServices;
@@ -428,53 +428,53 @@ const dashboardBasePath = window.AdminConfig && window.AdminConfig.contextPath ?
                                                         const items = Array.isArray(data.items) ? data.items : [];
                                                         let rows = '';
                                                         if (items.length === 0) {
-                                                            rows = '<tr><td colspan="6" class="text-center text-muted py-4">Ch\u01B0a c\u00F3 l\u01B0\u1EE3t kh\u00E1m ho\u00E0n t\u1EA5t</td></tr>';
+                                                            rows = '<tr><td colspan="6" class="text-center text-muted py-4">Chưa có lượt khám hoàn tất</td></tr>';
                                                         } else {
                                                             items.forEach((item, index) => {
                                                                 rows += '<tr>';
                                                                 rows += '<td>' + (index + 1) + '</td>';
                                                                 rows += '<td>' + escapeHtml(item.patientName || '') + '</td>';
-                                                                rows += '<td>' + escapeHtml(item.doctorName || 'Ch\u01B0a ph\u00E2n c\u00F4ng') + '</td>';
+                                                                rows += '<td>' + escapeHtml(item.doctorName || 'Chưa phân công') + '</td>';
                                                                 rows += '<td>' + escapeHtml(item.appointmentDate || '') + '</td>';
                                                                 rows += '<td>' + escapeHtml(item.appointmentTime || '') + '</td>';
-                                                                rows += '<td><span class="badge bg-success">\u0110\u00E3 ho\u00E0n t\u1EA5t</span></td>';
+                                                                rows += '<td><span class="badge bg-success">Đã hoàn tất</span></td>';
                                                                 rows += '</tr>';
                                                             });
                                                         }
 
                                                         setQuickModalContent(
-                                                                'Danh s\u00E1ch l\u01B0\u1EE3t kh\u00E1m ho\u00E0n t\u1EA5t',
+                                                                'Danh sách lượt khám hoàn tất',
                                                                 '<div class="table-responsive">'
                                                                 + '<table class="table table-sm table-hover quick-modal-table align-middle">'
                                                                 + '<thead class="table-light">'
                                                                 + '<tr>'
                                                                 + '<th>STT</th>'
-                                                                + '<th>B\u1EC6NH NH\u00C2N</th>'
-                                                                + '<th>B\u00C1C S\u0128</th>'
-                                                                + '<th>NG\u00C0Y KH\u00C1M</th>'
-                                                                + '<th>GI\u1EDC H\u1EB8N</th>'
-                                                                + '<th>TR\u1EA0NG TH\u00C1I</th>'
+                                                                + '<th>BỆNH NHÂN</th>'
+                                                                + '<th>BÁC SĨ</th>'
+                                                                + '<th>NGÀY KHÁM</th>'
+                                                                + '<th>GIỜ HẸN</th>'
+                                                                + '<th>TRẠNG THÁI</th>'
                                                                 + '</tr>'
                                                                 + '</thead>'
                                                                 + '<tbody>' + rows + '</tbody>'
                                                                 + '</table>'
                                                                 + '</div>',
-                                                                '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">\u0110\u00F3ng</button>'
-                                                                + '<a class="btn btn-primary" href="' + dashboardBasePath + '/admin?action=reports">M\u1EDF B\u00E1o c\u00E1o chuy\u00EAn s\u00E2u</a>'
+                                                                '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>'
+                                                                + '<a class="btn btn-primary" href="' + dashboardBasePath + '/admin?action=reports">Mở Báo cáo chuyên sâu</a>'
                                                                 );
                                                     }
 
                                                     function renderCompletedAppointmentsModalRows(items) {
                                                         let rows = '';
                                                         if (!Array.isArray(items) || items.length === 0) {
-                                                            rows = '<tr><td colspan="6" class="text-center text-muted py-4">Kh\u00F4ng c\u00F3 l\u01B0\u1EE3t kh\u00E1m ho\u00E0n t\u1EA5t</td></tr>';
+                                                            rows = '<tr><td colspan="6" class="text-center text-muted py-4">Không có lượt khám hoàn tất</td></tr>';
                                                         } else {
                                                             items.forEach((item, index) => {
                                                                 const statusMeta = getStatusMeta(item.status || 'Completed');
                                                                 rows += '<tr>';
                                                                 rows += '<td>' + (index + 1) + '</td>';
                                                                 rows += '<td>' + escapeHtml(item.patientName || item.patient_name || 'N/A') + '</td>';
-                                                                rows += '<td>' + escapeHtml(item.doctorName || item.doctor_name || 'Ch\u01B0a ph\u00E2n c\u00F4ng') + '</td>';
+                                                                rows += '<td>' + escapeHtml(item.doctorName || item.doctor_name || 'Chưa phân công') + '</td>';
                                                                 rows += '<td>' + escapeHtml(item.appointmentDate || item.appointment_date || '') + '</td>';
                                                                 rows += '<td>' + escapeHtml(item.appointmentTime || item.appointment_time || '--:--') + '</td>';
                                                                 rows += '<td><span class="' + statusMeta.className + '">' + escapeHtml(statusMeta.label) + '</span></td>';
@@ -483,79 +483,79 @@ const dashboardBasePath = window.AdminConfig && window.AdminConfig.contextPath ?
                                                         }
 
                                                         setQuickModalContent(
-                                                                'Danh s\u00E1ch l\u01B0\u1EE3t kh\u00E1m ho\u00E0n t\u1EA5t',
+                                                                'Danh sách lượt khám hoàn tất',
                                                                 '<div class="table-responsive">'
                                                                 + '<table class="table table-sm table-hover quick-modal-table">'
                                                                 + '<thead class="table-light">'
                                                                 + '<tr>'
                                                                 + '<th>STT</th>'
-                                                                + '<th>B\u1EC7nh nh\u00E2n</th>'
-                                                                + '<th>B\u00E1c s\u0129</th>'
-                                                                + '<th>Ng\u00E0y kh\u00E1m</th>'
-                                                                + '<th>Gi\u1EDD h\u1EB9n</th>'
-                                                                + '<th>Tr\u1EA1ng th\u00E1i</th>'
+                                                                + '<th>Bệnh nhân</th>'
+                                                                + '<th>Bác sĩ</th>'
+                                                                + '<th>Ngày khám</th>'
+                                                                + '<th>Giờ hẹn</th>'
+                                                                + '<th>Trạng thái</th>'
                                                                 + '</tr>'
                                                                 + '</thead>'
                                                                 + '<tbody>' + rows + '</tbody>'
                                                                 + '</table>'
                                                                 + '</div>',
-                                                                '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">\u0110\u00F3ng</button>'
-                                                                + '<a class="btn btn-primary" href="' + dashboardBasePath + '/admin?action=reports">M\u1EDF B\u00E1o c\u00E1o chuy\u00EAn s\u00E2u</a>'
+                                                                '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>'
+                                                                + '<a class="btn btn-primary" href="' + dashboardBasePath + '/admin?action=reports">Mở Báo cáo chuyên sâu</a>'
                                                                 );
                                                     }
 
                                                     async function openAccountQuickModal(filter) {
                                                         ensureQuickModals();
                                                         currentAccountFilter = filter || 'all';
-                                                        setQuickModalContent('Qu\u1EA3n l\u00FD nhanh t\u00E0i kho\u1EA3n nh\u00E2n s\u1EF1', '<div class="text-muted py-4 text-center">\u0110ang t\u1EA3i d\u1EEF li\u1EC7u...</div>');
+                                                        setQuickModalContent('Quản lý nhanh tài khoản nhân sự', '<div class="text-muted py-4 text-center">Đang tải dữ liệu...</div>');
                                                         dashboardQuickModalInstance.show();
                                                         try {
                                                             const data = await fetchQuickData('quickAccountsData', {filter: currentAccountFilter});
                                                             renderAccountQuickModal(data);
                                                         } catch (error) {
-                                                            setQuickModalContent('Qu\u1EA3n l\u00FD nhanh t\u00E0i kho\u1EA3n nh\u00E2n s\u1EF1', '<div class="alert alert-danger mb-0">Kh\u00F4ng th\u1EC3 t\u1EA3i d\u1EEF li\u1EC7u t\u00E0i kho\u1EA3n.</div>');
+                                                            setQuickModalContent('Quản lý nhanh tài khoản nhân sự', '<div class="alert alert-danger mb-0">Không thể tải dữ liệu tài khoản.</div>');
                                                         }
                                                     }
 
                                                     async function openRevenueQuickModal() {
                                                         ensureQuickModals();
-                                                        setQuickModalContent('H\u00F3a \u0111\u01A1n thu ti\u1EC1n g\u1EA7n nh\u1EA5t trong ng\u00E0y', '<div class="text-muted py-4 text-center">\u0110ang t\u1EA3i d\u1EEF li\u1EC7u...</div>');
+                                                        setQuickModalContent('Hóa đơn thu tiền gần nhất trong ngày', '<div class="text-muted py-4 text-center">Đang tải dữ liệu...</div>');
                                                         dashboardQuickModalInstance.show();
                                                         try {
                                                             const data = await fetchQuickData('quickRevenueData');
                                                             renderRevenueQuickModal(data);
                                                         } catch (error) {
-                                                            setQuickModalContent('H\u00F3a \u0111\u01A1n thu ti\u1EC1n g\u1EA7n nh\u1EA5t trong ng\u00E0y', '<div class="alert alert-danger mb-0">Kh\u00F4ng th\u1EC3 t\u1EA3i d\u1EEF li\u1EC7u h\u00F3a \u0111\u01A1n.</div>');
+                                                            setQuickModalContent('Hóa đơn thu tiền gần nhất trong ngày', '<div class="alert alert-danger mb-0">Không thể tải dữ liệu hóa đơn.</div>');
                                                         }
                                                     }
 
                                                     async function openServiceQuickModal() {
                                                         ensureQuickModals();
-                                                        setQuickModalContent('Danh s\u00E1ch d\u1ECBch v\u1EE5 y t\u1EBF hi\u1EC7n t\u1EA1i', '<div class="text-muted py-4 text-center">\u0110ang t\u1EA3i d\u1EEF li\u1EC7u...</div>');
+                                                        setQuickModalContent('Danh sách dịch vụ y tế hiện tại', '<div class="text-muted py-4 text-center">Đang tải dữ liệu...</div>');
                                                         dashboardQuickModalInstance.show();
                                                         try {
                                                             const data = await fetchQuickData('quickServicesData');
                                                             renderServiceQuickModal(data);
                                                         } catch (error) {
-                                                            setQuickModalContent('Danh s\u00E1ch d\u1ECBch v\u1EE5 y t\u1EBF hi\u1EC7n t\u1EA1i', '<div class="alert alert-danger mb-0">Kh\u00F4ng th\u1EC3 t\u1EA3i d\u1EEF li\u1EC7u d\u1ECBch v\u1EE5.</div>');
+                                                            setQuickModalContent('Danh sách dịch vụ y tế hiện tại', '<div class="alert alert-danger mb-0">Không thể tải dữ liệu dịch vụ.</div>');
                                                         }
                                                     }
 
                                                     async function openAppointmentQuickModal() {
                                                         ensureQuickModals();
-                                                        setQuickModalContent('Ca b\u1EC7nh v\u1EEBa ho\u00E0n t\u1EA5t trong ng\u00E0y', '<div class="text-muted py-4 text-center">\u0110ang t\u1EA3i d\u1EEF li\u1EC7u...</div>');
+                                                        setQuickModalContent('Ca bệnh vừa hoàn tất trong ngày', '<div class="text-muted py-4 text-center">Đang tải dữ liệu...</div>');
                                                         dashboardQuickModalInstance.show();
                                                         try {
                                                             const data = await fetchQuickData('quickAppointmentsData');
                                                             renderAppointmentQuickModal(data);
                                                         } catch (error) {
-                                                            setQuickModalContent('Ca b\u1EC7nh v\u1EEBa ho\u00E0n t\u1EA5t trong ng\u00E0y', '<div class="alert alert-danger mb-0">Kh\u00F4ng th\u1EC3 t\u1EA3i d\u1EEF li\u1EC7u l\u01B0\u1EE3t kh\u00E1m.</div>');
+                                                            setQuickModalContent('Ca bệnh vừa hoàn tất trong ngày', '<div class="alert alert-danger mb-0">Không thể tải dữ liệu lượt khám.</div>');
                                                         }
                                                     }
 
                                                     async function openLockedAccountsModal() {
                                                         ensureQuickModals();
-                                                        setQuickModalContent('Danh s\u00E1ch t\u00E0i kho\u1EA3n \u0111\u00E3 kh\u00F3a', '<div class="text-muted py-4 text-center">\u0110ang t\u1EA3i d\u1EEF li\u1EC7u...</div>');
+                                                        setQuickModalContent('Danh sách tài khoản đã khóa', '<div class="text-muted py-4 text-center">Đang tải dữ liệu...</div>');
                                                         dashboardQuickModalInstance.show();
                                                         try {
                                                             const data = await fetchQuickData('quickAccountsData', {
@@ -564,34 +564,34 @@ const dashboardBasePath = window.AdminConfig && window.AdminConfig.contextPath ?
                                                             const items = Array.isArray(data) ? data : (Array.isArray(data.items) ? data.items : []);
                                                             renderLockedAccountModalRows(items);
                                                         } catch (error) {
-                                                            setQuickModalContent('Danh s\u00E1ch t\u00E0i kho\u1EA3n \u0111\u00E3 kh\u00F3a', '<div class="alert alert-danger mb-0">Kh\u00F4ng th\u1EC3 t\u1EA3i d\u1EEF li\u1EC7u t\u00E0i kho\u1EA3n \u0111\u00E3 kh\u00F3a.</div>');
+                                                            setQuickModalContent('Danh sách tài khoản đã khóa', '<div class="alert alert-danger mb-0">Không thể tải dữ liệu tài khoản đã khóa.</div>');
                                                         }
                                                     }
 
                                                     async function openCompletedAppointmentsModal() {
                                                         ensureQuickModals();
-                                                        setQuickModalContent('Danh s\u00E1ch l\u01B0\u1EE3t kh\u00E1m ho\u00E0n t\u1EA5t', '<div class="text-muted py-4 text-center">\u0110ang t\u1EA3i d\u1EEF li\u1EC7u...</div>');
+                                                        setQuickModalContent('Danh sách lượt khám hoàn tất', '<div class="text-muted py-4 text-center">Đang tải dữ liệu...</div>');
                                                         dashboardQuickModalInstance.show();
                                                         try {
                                                             const data = await fetchQuickData('quickAppointmentsData');
                                                             const items = Array.isArray(data) ? data : (Array.isArray(data.items) ? data.items : []);
                                                             renderCompletedAppointmentsModalRows(items);
                                                         } catch (error) {
-                                                            setQuickModalContent('Danh s\u00E1ch l\u01B0\u1EE3t kh\u00E1m ho\u00E0n t\u1EA5t', '<div class="alert alert-danger mb-0">Kh\u00F4ng th\u1EC3 t\u1EA3i danh s\u00E1ch ca kh\u00E1m \u0111\u00E3 ho\u00E0n t\u1EA5t.</div>');
+                                                            setQuickModalContent('Danh sách lượt khám hoàn tất', '<div class="alert alert-danger mb-0">Không thể tải danh sách ca khám đã hoàn tất.</div>');
                                                         }
                                                     }
 
                                                     async function openInvoiceQuickDetail(invoiceId) {
                                                         ensureQuickModals();
-                                                        document.getElementById('dashboardInvoiceDetailModalLabel').textContent = 'Chi ti\u1EBFt h\u00F3a \u0111\u01A1n #' + invoiceId;
-                                                        document.getElementById('dashboardInvoiceDetailModalBody').innerHTML = '<div class="text-muted py-4 text-center">\u0110ang t\u1EA3i d\u1EEF li\u1EC7u...</div>';
+                                                        document.getElementById('dashboardInvoiceDetailModalLabel').textContent = 'Chi tiết hóa đơn #' + invoiceId;
+                                                        document.getElementById('dashboardInvoiceDetailModalBody').innerHTML = '<div class="text-muted py-4 text-center">Đang tải dữ liệu...</div>';
                                                         dashboardInvoiceDetailModalInstance.show();
                                                         try {
                                                             const data = await fetchQuickData('getInvoiceItems', {invoiceId: invoiceId});
                                                             const items = Array.isArray(data.items) ? data.items : [];
                                                             let rows = '';
                                                             if (items.length === 0) {
-                                                                rows = '<tr><td colspan="4" class="text-center text-muted py-4">H\u00F3a \u0111\u01A1n ch\u01B0a c\u00F3 d\u00F2ng d\u1ECBch v\u1EE5</td></tr>';
+                                                                rows = '<tr><td colspan="4" class="text-center text-muted py-4">Hóa đơn chưa có dòng dịch vụ</td></tr>';
                                                             } else {
                                                                 items.forEach(item => {
                                                                     rows += '<tr>';
@@ -602,9 +602,9 @@ const dashboardBasePath = window.AdminConfig && window.AdminConfig.contextPath ?
                                                                     rows += '</tr>';
                                                                 });
                                                             }
-                                                            document.getElementById('dashboardInvoiceDetailModalBody').innerHTML = '<div class="table-responsive"><table class="table table-sm table-hover quick-modal-table"><thead class="table-light"><tr><th>D\u1ECBch v\u1EE5</th><th class="text-end">SL</th><th class="text-end">\u0110\u01A1n gi\u00E1</th><th class="text-end">Th\u00E0nh ti\u1EC1n</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+                                                            document.getElementById('dashboardInvoiceDetailModalBody').innerHTML = '<div class="table-responsive"><table class="table table-sm table-hover quick-modal-table"><thead class="table-light"><tr><th>Dịch vụ</th><th class="text-end">SL</th><th class="text-end">Đơn giá</th><th class="text-end">Thành tiền</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
                                                         } catch (error) {
-                                                            document.getElementById('dashboardInvoiceDetailModalBody').innerHTML = '<div class="alert alert-danger mb-0">Kh\u00F4ng th\u1EC3 t\u1EA3i chi ti\u1EBFt h\u00F3a \u0111\u01A1n.</div>';
+                                                            document.getElementById('dashboardInvoiceDetailModalBody').innerHTML = '<div class="alert alert-danger mb-0">Không thể tải chi tiết hóa đơn.</div>';
                                                         }
                                                     }
 
@@ -719,7 +719,7 @@ const dashboardBasePath = window.AdminConfig && window.AdminConfig.contextPath ?
                                                         const hasFlowData = flowValues.some(value => Number(value || 0) > 0);
 
                                                         if (!hasFlowData) {
-                                                            showChartEmptyState('todayHourlyFlowChart', 'Kh\u00F4ng c\u00F3 l\u01B0\u1EE3t kh\u00E1m h\u00F4m nay');
+                                                            showChartEmptyState('todayHourlyFlowChart', 'Không có lượt khám hôm nay');
                                                         } else if (flowCanvas) {
                                                             hideChartEmptyState('todayHourlyFlowChart');
 
@@ -728,7 +728,7 @@ const dashboardBasePath = window.AdminConfig && window.AdminConfig.contextPath ?
                                                                 data: {
                                                                     labels: flowLabels,
                                                                     datasets: [{
-                                                                            label: 'S\u1ED1 l\u01B0\u1EE3t kh\u00E1m',
+                                                                            label: 'Số lượt khám',
                                                                             data: flowValues,
                                                                             borderWidth: 1,
                                                                             borderRadius: 8,
@@ -769,14 +769,14 @@ const dashboardBasePath = window.AdminConfig && window.AdminConfig.contextPath ?
                                                         const hasRevenueData = revenueValues.some(value => Number(value || 0) > 0);
 
                                                         if (!hasRevenueData) {
-                                                            showChartEmptyState('todayRevenueServiceChart', 'H\u00F4m nay ch\u01B0a c\u00F3 doanh thu');
+                                                            showChartEmptyState('todayRevenueServiceChart', 'Hôm nay chưa có doanh thu');
                                                         } else if (revenueCanvas) {
                                                             hideChartEmptyState('todayRevenueServiceChart');
 
                                                             new Chart(revenueCanvas, {
                                                                 type: 'bar',
                                                                 data: {
-                                                                    labels: ['Kh\u00E1m b\u1EC7nh', 'X\u00E9t nghi\u1EC7m'],
+                                                                    labels: ['Khám bệnh', 'Xét nghiệm'],
                                                                     datasets: [{
                                                                             label: 'Doanh thu',
                                                                             data: revenueValues,
@@ -813,14 +813,14 @@ const dashboardBasePath = window.AdminConfig && window.AdminConfig.contextPath ?
                                                         const hasStatusData = statusValues.some(value => Number(value || 0) > 0);
 
                                                         if (!hasStatusData) {
-                                                            showChartEmptyState('todayStatusPieChart', 'H\u00F4m nay ch\u01B0a c\u00F3 ca kh\u00E1m');
+                                                            showChartEmptyState('todayStatusPieChart', 'Hôm nay chưa có ca khám');
                                                         } else if (statusCanvas) {
                                                             hideChartEmptyState('todayStatusPieChart');
 
                                                             new Chart(statusCanvas, {
                                                                 type: 'doughnut',
                                                                 data: {
-                                                                    labels: ['\u0110ang ch\u1EDD', '\u0110\u00E3 check-in', '\u0110ang kh\u00E1m', '\u0110\u00E3 ho\u00E0n t\u1EA5t', 'Kh\u00F4ng \u0111\u1EBFn', '\u0110\u00E3 h\u1EE7y'],
+                                                                    labels: ['Đang chờ', 'Đã check-in', 'Đang khám', 'Đã hoàn tất', 'Không đến', 'Đã hủy'],
                                                                     datasets: [{
                                                                             data: statusValues,
                                                                             backgroundColor: ['#f4a261', '#4361ee', '#4cc9f0', '#2a9d8f', '#6c757d', '#dc3545']

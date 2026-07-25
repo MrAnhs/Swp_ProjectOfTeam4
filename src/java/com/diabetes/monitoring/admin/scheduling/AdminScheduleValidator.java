@@ -195,13 +195,16 @@ public class AdminScheduleValidator {
         if (role == null) {
             return false;
         }
+        String normalizedRole = role.toLowerCase();
         String sql = "SELECT 1 FROM Account "
                 + "WHERE account_id = ? "
                 + "AND LOWER(LTRIM(RTRIM(status))) = 'active' "
-                + "AND LOWER(REPLACE(REPLACE(LTRIM(RTRIM(role)), '-', '_'), ' ', '_')) = ?";
+                + "AND (LOWER(REPLACE(REPLACE(LTRIM(RTRIM(role)), '-', '_'), ' ', '_')) IN ('receptionist', 'reception') AND ? IN ('receptionist', 'reception') "
+                + "OR LOWER(REPLACE(REPLACE(LTRIM(RTRIM(role)), '-', '_'), ' ', '_')) = ?)";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, accountId);
-            statement.setString(2, role.toLowerCase());
+            statement.setString(2, normalizedRole);
+            statement.setString(3, normalizedRole);
             try (ResultSet rs = statement.executeQuery()) {
                 return rs.next();
             }
@@ -230,7 +233,7 @@ public class AdminScheduleValidator {
 
         String sql;
         int dbExcludeId = -1;
-        if ("receptionist".equalsIgnoreCase(role)) {
+        if ("receptionist".equalsIgnoreCase(role) || "reception".equalsIgnoreCase(role)) {
             dbExcludeId = (excludeScheduleId != null && excludeScheduleId > 1000000) ? excludeScheduleId - 1000000 : -1;
             sql = "SELECT COUNT(*) AS total_count "
                 + "FROM Reception_Schedule rs "
@@ -279,7 +282,7 @@ public class AdminScheduleValidator {
 
         String sql;
         int dbExcludeId = -1;
-        if ("receptionist".equalsIgnoreCase(role)) {
+        if ("receptionist".equalsIgnoreCase(role) || "reception".equalsIgnoreCase(role)) {
             dbExcludeId = (excludeScheduleId != null && excludeScheduleId > 1000000) ? excludeScheduleId - 1000000 : -1;
             sql = "SELECT COUNT(*) AS overlap_count "
                 + "FROM Reception_Schedule rs "
@@ -323,15 +326,21 @@ public class AdminScheduleValidator {
     }
 
     public String normalizeTimeSlot(String timeSlot) {
-        if (timeSlot == null) {
+        if (timeSlot == null || timeSlot.isBlank()) {
             return null;
         }
         String compact = timeSlot.trim().replaceAll("\\s+", "");
-        return parseTimeSlotRange(compact) == null ? null : compact;
+        LocalTime[] range = parseTimeSlotRange(compact);
+        if (range == null) {
+            return null;
+        }
+        return String.format("%02d:%02d-%02d:%02d",
+                range[0].getHour(), range[0].getMinute(),
+                range[1].getHour(), range[1].getMinute());
     }
 
     LocalTime[] parseTimeSlotRange(String timeSlot) {
-        if (timeSlot == null) {
+        if (timeSlot == null || !timeSlot.contains("-")) {
             return null;
         }
         String[] parts = timeSlot.split("-", 2);
@@ -339,8 +348,12 @@ public class AdminScheduleValidator {
             return null;
         }
         try {
-            LocalTime start = LocalTime.parse(parts[0]);
-            LocalTime end = LocalTime.parse(parts[1]);
+            String p0 = parts[0].trim();
+            String p1 = parts[1].trim();
+            if (p0.length() == 4 && p0.contains(":")) p0 = "0" + p0;
+            if (p1.length() == 4 && p1.contains(":")) p1 = "0" + p1;
+            LocalTime start = LocalTime.parse(p0);
+            LocalTime end = LocalTime.parse(p1);
             if (!start.isBefore(end)) {
                 return null;
             }

@@ -8,17 +8,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="app-context-path" content="${pageContext.request.contextPath}">
     <title>Cài đặt - DiabetesCare</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/base/variables.css?v=20260721-ui2">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/pages/settings/settings.css?v=20260721-ui2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/pages/settings/settings.css?v=20260725-revamp1">
 </head>
 <body class="settings-page">
     <aside class="settings-sidebar">
         <a class="settings-brand" href="${pageContext.request.contextPath}/">
             <span class="settings-brand-icon">+</span><strong>DiabetesCare</strong>
         </a>
-        <div class="settings-user">
+        <div class="settings-user" style="cursor: pointer;" onclick="openGlobalEditProfileModal()">
             <span class="settings-avatar"><c:out value="${sessionScope.currentUser.fullName.substring(0, 1)}" default="U" /></span>
-            <span><strong><c:out value="${sessionScope.currentUser.fullName}" default="Người dùng" /></strong><small>Cài đặt tài khoản</small></span>
+            <span>
+                <strong><c:out value="${sessionScope.currentUser.fullName}" default="Người dùng" /></strong>
+                <small><i class="bi bi-pencil-square me-1"></i>Chỉnh sửa hồ sơ</small>
+            </span>
         </div>
         <a class="settings-back" href="javascript:history.back()">← Quay lại</a>
     </aside>
@@ -38,7 +43,7 @@
         <section class="settings-panel" data-panel="personal">
             <div class="settings-panel-heading">
                 <div><span class="settings-icon">◉</span><h2>Thông tin cá nhân</h2></div>
-                <button type="button" class="settings-action" data-edit="personal">✎ Chỉnh sửa</button>
+                <button type="button" class="settings-action" onclick="openGlobalEditProfileModal()">✎ Chỉnh sửa</button>
             </div>
             <form id="personalForm" class="settings-form" novalidate>
                 <div class="settings-grid">
@@ -86,8 +91,17 @@
             <button class="settings-primary" id="dialogSubmit" value="default" type="submit">Lưu thay đổi</button>
         </form>
     </dialog>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="${pageContext.request.contextPath}/assets/js/core/app-config.js"></script>
     <script src="${pageContext.request.contextPath}/assets/js/core/api-client.js"></script>
-    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/settings/settings.js?v=20260714-profile5"></script>
+    <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/settings/settings.js?v=20260725-revamp1"></script>
+    <%@ include file="/WEB-INF/views/components/edit-profile-modal.jspf" %>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof openGlobalEditProfileModal === 'function') {
+                setTimeout(openGlobalEditProfileModal, 100);
+            }
+        });
+    </script>
 </body>
 </html>

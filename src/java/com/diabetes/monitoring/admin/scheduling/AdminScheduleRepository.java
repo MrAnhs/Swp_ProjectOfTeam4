@@ -50,6 +50,7 @@ public class AdminScheduleRepository {
         ALLOWED_SCHEDULE_STATUS.add("Available");
         ALLOWED_SCHEDULE_STATUS.add("Full");
         ALLOWED_SCHEDULE_STATUS.add("Cancelled");
+        ALLOWED_SCHEDULE_STATUS.add("Completed");
         ALLOWED_SCHEDULE_STATUS.add("Expired");
         ALLOWED_SCHEDULE_STATUS.add("Pending");
     }
@@ -59,7 +60,7 @@ public class AdminScheduleRepository {
         String sql = "SELECT d.doctor_id, d.full_name, d.department "
                 + "FROM Doctor d "
                 + "JOIN Account a ON a.account_id = d.account_id "
-                + "WHERE LOWER(a.status) = 'active' "
+                + "WHERE LOWER(a.status) = 'active' AND LOWER(a.role) = 'doctor' "
                 + "ORDER BY d.full_name";
 
         try (Connection connection = DatabaseConnection.getConnection(); PreparedStatement statement = connection.prepareStatement(sql); ResultSet rs = statement.executeQuery()) {
@@ -628,7 +629,9 @@ public class AdminScheduleRepository {
                 sql.append(" AND ds.work_date >= DATEADD(day, -30, CAST(GETDATE() AS DATE))");
             }
         } else {
-            sql.append(" AND ds.work_date >= CAST(GETDATE() AS DATE) AND LOWER(ds.status) NOT IN ('cancelled', 'expired', 'completed')");
+            if (workDate == null) {
+                sql.append(" AND ds.work_date >= CAST(GETDATE() AS DATE) AND LOWER(ds.status) NOT IN ('cancelled', 'expired', 'completed')");
+            }
         }
     }
 
@@ -689,7 +692,7 @@ public class AdminScheduleRepository {
         LocalDate scheduleDate = workDate.toLocalDate();
         LocalDate today = LocalDate.now();
         if (scheduleDate.isBefore(today)) {
-            return "Expired";
+            return "Completed";
         }
         if (scheduleDate.isAfter(today)) {
             return bookedCount >= maxPatients ? "Full" : "Upcoming";
@@ -701,7 +704,7 @@ public class AdminScheduleRepository {
         if (now.isBefore(range[1])) {
             return bookedCount >= maxPatients ? "Full" : "Ongoing";
         }
-        return "Expired";
+        return "Completed";
     }
 
     private int countRows(String sql, List<Object> params) {
@@ -1072,11 +1075,10 @@ public class AdminScheduleRepository {
 
         String sql = "UPDATE ds SET ds.status = CASE "
                 + "WHEN LOWER(ds.status) = 'cancelled' THEN 'Cancelled' "
-                + "WHEN LOWER(ds.status) = 'expired' THEN 'Expired' "
-                + "WHEN ds.work_date < CAST(GETDATE() AS DATE) THEN 'Expired' "
+                + "WHEN ds.work_date < CAST(GETDATE() AS DATE) THEN 'Completed' "
                 + "WHEN ds.work_date = CAST(GETDATE() AS DATE) "
                 + "     AND TRY_CONVERT(time, LEFT(LTRIM(RTRIM(SUBSTRING(ds.time_slot, CHARINDEX('-', ds.time_slot) + 1, 20))), 5)) <= CAST(GETDATE() AS time) "
-                + "THEN 'Expired' "
+                + "THEN 'Completed' "
                 + "WHEN counts.booked_appointments >= ds.max_patients THEN 'Full' "
                 + "ELSE 'Available' END "
                 + "FROM Doctor_Schedule ds "

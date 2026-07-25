@@ -122,7 +122,7 @@ public class FamilyDashboardServlet extends HttpServlet {
                     }
                 }
             } else if ("invoices".equals(type)) {
-                String sql = "SELECT i.invoice_id, i.total_amount, i.final_amount, i.status, i.created_at "
+                String sql = "SELECT i.invoice_id, i.final_amount, i.status, i.created_at "
                         + "FROM Invoice i "
                         + "JOIN Patient p ON p.patient_id = i.patient_id "
                         + "WHERE p.account_id = ? "
@@ -138,7 +138,7 @@ public class FamilyDashboardServlet extends HttpServlet {
 
                             json.append("{")
                                 .append("\"id\":").append(rs.getInt("invoice_id")).append(",")
-                                .append("\"totalAmount\":").append(rs.getBigDecimal("total_amount")).append(",")
+                                .append("\"totalAmount\":").append(rs.getBigDecimal("final_amount")).append(",")
                                 .append("\"finalAmount\":").append(rs.getBigDecimal("final_amount")).append(",")
                                 .append("\"status\":\"").append(escapeJson(rs.getString("status"))).append("\",")
                                 .append("\"createdAt\":\"").append(createdAtStr).append("\"")

@@ -11,71 +11,50 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link href="${pageContext.request.contextPath}/assets/css/pages/doctor/doctor.css?v=20260721-ui2" rel="stylesheet">
     <style>
-        .grid-header-cell {
-            background-color: #0F172A !important;
-            border: 1px solid rgba(255, 255, 255, 0.08) !important;
-            color: #2AB5A3 !important;
+        .doctor-table thead th.grid-header-cell {
+            background: #E8F7F4 !important;
+            border: 1px solid #D0EFE8 !important;
+            border-bottom: 3px solid #00C8A5 !important;
+            color: #005C47 !important;
             text-align: center;
-            font-weight: 700;
+            padding: 14px 8px !important;
         }
         .schedule-cell-card {
-            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-left: 4px solid #00C8A5 !important;
+            border-top: 1px solid #e2e8f0 !important;
+            border-right: 1px solid #e2e8f0 !important;
+            border-bottom: 1px solid #e2e8f0 !important;
             border-radius: 12px;
-            background-color: rgba(30, 41, 59, 0.45) !important;
-            color: #ffffff !important;
-            backdrop-filter: blur(12px) !important;
+            background-color: #ffffff !important;
+            color: #1a202c !important;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
             transition: all 0.2s ease;
         }
         .schedule-cell-card:hover {
             transform: translateY(-2px);
-            border-color: rgba(42, 181, 163, 0.4) !important;
-            box-shadow: 0 6px 16px rgba(42, 181, 163, 0.15);
+            box-shadow: 0 8px 20px rgba(0, 200, 165, 0.2);
+            border-top-color: #00C8A5 !important;
+            border-right-color: #00C8A5 !important;
+            border-bottom-color: #00C8A5 !important;
         }
         .slot-badge {
             font-size: 0.8rem;
-            font-weight: 600;
-            background-color: rgba(42, 181, 163, 0.15) !important;
-            color: #2AB5A3 !important;
-            border: 1px solid rgba(42, 181, 163, 0.3) !important;
+            font-weight: 700;
+            background-color: #ffffff !important;
+            color: #007f61 !important;
+            border: 1px solid #00C8A5 !important;
+            border-radius: 20px !important;
+            padding: 4px 10px !important;
+            box-shadow: 0 2px 6px rgba(0, 200, 165, 0.15);
         }
         .text-xs {
-            font-size: 0.72rem;
+            font-size: 0.73rem;
         }
     </style>
 </head>
 <body class="doctor-app">
-<aside class="doctor-sidebar">
-    <div class="doctor-brand"><span class="doctor-brand-icon"><i class="bi bi-heart-pulse"></i></span> Cổng bác sĩ</div>
-    <div class="doctor-profile-card">
-        <div class="doctor-avatar">
-            <c:choose>
-                <c:when test="${not empty sessionScope.currentUser.fullName}">
-                    <c:out value="${sessionScope.currentUser.fullName.substring(0, 1)}" />
-                </c:when>
-                <c:otherwise>D</c:otherwise>
-            </c:choose>
-        </div>
-        <div class="doctor-info">
-            <div class="doctor-name" title="<c:out value='${sessionScope.currentUser.fullName}' />">
-                <c:out value="${sessionScope.currentUser.fullName}" default="Bác sĩ" />
-            </div>
-            <div class="doctor-role-tag">Bác sĩ</div>
-        </div>
-        <a href="${pageContext.request.contextPath}/settings" class="doctor-edit-profile-btn" title="Chỉnh sửa hồ sơ">
-            <i class="bi bi-pencil-square"></i>
-        </a>
-    </div>
-    <nav class="doctor-nav">
-        <a href="${pageContext.request.contextPath}/doctor/dashboard"><i class="bi bi-grid"></i> Tiếp nhận hồ sơ</a>
-        <a href="${pageContext.request.contextPath}/doctor/general-examinations"><i class="bi bi-person-vcard"></i> Khám tổng quát</a>
-        <a href="${pageContext.request.contextPath}/doctor/laboratory-requests"><i class="bi bi-eyedropper"></i> Xét nghiệm</a>
-        <a href="${pageContext.request.contextPath}/doctor/examinations"><i class="bi bi-clipboard2-pulse"></i> Khám chi tiết</a>
-        <a href="${pageContext.request.contextPath}/doctor/completed-records"><i class="bi bi-archive"></i> Đã hoàn thành</a>
-        <a href="${pageContext.request.contextPath}/doctor/patients/search"><i class="bi bi-search"></i> Tra cứu</a>
-        <a class="active" href="${pageContext.request.contextPath}/doctor/schedule"><i class="bi bi-calendar3"></i> Lịch trực</a>
-        <a class="text-danger mt-lg-4" href="${pageContext.request.contextPath}/logout"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a>
-    </nav>
-</aside>
+<c:set var="activeDoctorPage" value="schedule" />
+<%@ include file="/WEB-INF/views/components/doctor/sidebar.jspf" %>
 
 <main class="doctor-main">
     <!-- Alert Messages -->
@@ -105,13 +84,13 @@
             <!-- Filter Dropdowns -->
             <div class="d-flex align-items-center gap-2">
                 <div class="d-flex align-items-center gap-1">
-                    <label class="fw-bold text-uppercase small m-0" style="color: #cbd5e1;" for="yearSelect">Năm</label>
-                    <select id="yearSelect" class="form-select form-select-sm doctor-filter" style="width: 90px;" onchange="generateWeekOptions(); renderScheduleGrid();">
+                    <label class="fw-bold text-uppercase small m-0 text-secondary" for="yearSelect">Năm</label>
+                    <select id="yearSelect" class="form-select form-select-sm doctor-filter" style="width: 95px;" onchange="generateWeekOptions(); renderScheduleGrid();">
                     </select>
                 </div>
                 <div class="d-flex align-items-center gap-1">
-                    <label class="fw-bold text-uppercase small m-0" style="color: #cbd5e1;" for="weekSelect">Tuần</label>
-                    <select id="weekSelect" class="form-select form-select-sm doctor-filter" style="width: 250px;" onchange="renderScheduleGrid();">
+                    <label class="fw-bold text-uppercase small m-0 text-secondary" for="weekSelect">Tuần</label>
+                    <select id="weekSelect" class="form-select form-select-sm doctor-filter" style="width: 260px;" onchange="renderScheduleGrid();">
                     </select>
                 </div>
             </div>
@@ -119,12 +98,12 @@
     </section>
 
     <!-- Schedule Grid Table -->
-    <div class="doctor-card p-0 overflow-hidden">
+    <div class="doctor-card p-0 overflow-hidden shadow-sm" style="border-radius: 18px;">
         <div class="table-responsive">
             <table class="table doctor-table m-0">
                 <thead>
                     <tr id="headerRow">
-                        <th class="grid-header-cell" style="width: 140px; background-color: #0F172A !important;">Khung giờ</th>
+                        <th class="grid-header-cell" style="width: 140px;">Khung giờ</th>
                     </tr>
                 </thead>
                 <tbody id="gridBody">
@@ -180,9 +159,23 @@ function populateYearSelect() {
     if (!select) return;
     
     const currentYear = new Date().getFullYear();
-    select.innerHTML = "";
+    let minYear = currentYear - 1;
+    let maxYear = currentYear + 1;
     
-    for (let y = currentYear - 1; y <= currentYear + 1; y++) {
+    if (typeof schedules !== 'undefined' && Array.isArray(schedules)) {
+        schedules.forEach(s => {
+            if (s.workDate) {
+                const y = parseInt(String(s.workDate).split('-')[0], 10);
+                if (!isNaN(y)) {
+                    if (y < minYear) minYear = y;
+                    if (y > maxYear) maxYear = y;
+                }
+            }
+        });
+    }
+    
+    select.innerHTML = "";
+    for (let y = minYear; y <= maxYear; y++) {
         const option = document.createElement("option");
         option.value = y;
         option.textContent = y;
@@ -226,14 +219,20 @@ function generateWeekOptions() {
 }
 
 function getStandardShift(dbTimeSlot) {
-    if (!dbTimeSlot) return null;
-    const timeStr = dbTimeSlot.toLowerCase().replace(/\s/g, '');
-    const match = timeStr.match(/^(\d{1,2})[\:\s\-\_]/);
-    if (match) {
-        const startHour = parseInt(match[1]);
-        return startHour < 12 ? "7:30 - 12:00" : "13:30 - 16:30";
+    if (!dbTimeSlot) return "7:30 - 12:00";
+    const timeStr = dbTimeSlot.toLowerCase().trim();
+    if (timeStr.includes("ca 2") || timeStr.includes("chiều") || timeStr.includes("chieu") || timeStr.includes("afternoon")) {
+        return "13:30 - 16:30";
     }
-    return timeStr.includes("12:") || timeStr.includes("13:") || timeStr.includes("14:") || timeStr.includes("15:") || timeStr.includes("16:") || timeStr.includes("17:") || timeStr.includes("18:") ? "13:30 - 16:30" : "7:30 - 12:00";
+    if (timeStr.includes("ca 1") || timeStr.includes("sáng") || timeStr.includes("sang") || timeStr.includes("morning")) {
+        return "7:30 - 12:00";
+    }
+    const match = timeStr.replace(/\s/g, '').match(/^(\d{1,2})[\:\s\-\_]/);
+    if (match) {
+        const startHour = parseInt(match[1], 10);
+        return startHour >= 12 ? "13:30 - 16:30" : "7:30 - 12:00";
+    }
+    return "7:30 - 12:00";
 }
 
 function renderScheduleGrid() {
@@ -241,14 +240,14 @@ function renderScheduleGrid() {
     if (!mondayStr) return;
     const mondayDate = parseLocalDate(mondayStr);
     const headerRow = document.getElementById("headerRow");
-    headerRow.innerHTML = '<th class="grid-header-cell" style="width: 140px; background-color: #0F172A !important;">Khung giờ</th>';
+    headerRow.innerHTML = '<th class="grid-header-cell" style="width: 140px; color: #005C47 !important; font-weight: 800; font-size: 0.88rem;">KHUNG GIỜ</th>';
     const weekDates = [];
     const dayNames = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
     for (let i = 0; i < 7; i++) {
         const current = new Date(mondayDate);
         current.setDate(mondayDate.getDate() + i);
         weekDates.push(current);
-        headerRow.innerHTML += '<th class="grid-header-cell" style="min-width: 130px;"><div>' + dayNames[i] + '</div><div class="fw-normal text-xs opacity-75 mt-0.5">' + formatDateShort(current) + '</div></th>';
+        headerRow.innerHTML += '<th class="grid-header-cell" style="min-width: 130px;"><div style="color: #005C47 !important; font-weight: 800; font-size: 0.88rem; letter-spacing: 0.05em;">' + dayNames[i] + '</div><div style="color: #007F61 !important; font-weight: 700; font-size: 0.78rem; margin-top: 2px;">' + formatDateShort(current) + '</div></th>';
     }
     const weekStart = new Date(mondayDate);
     const weekEnd = new Date(mondayDate);
@@ -257,32 +256,37 @@ function renderScheduleGrid() {
     const timeSlots = ["7:30 - 12:00", "13:30 - 16:30"];
     const tbody = document.getElementById("gridBody");
     tbody.innerHTML = "";
+    const todayStr = formatDateLocal(new Date());
     timeSlots.forEach((slot, index) => {
         let rowHtml = '<tr>' +
-            '<td class="fw-semibold text-nowrap text-center py-4" style="width: 140px; background: rgba(15, 23, 42, 0.6); color: #cbd5e1; border-color: rgba(255,255,255,0.06);">' +
-                '<div class="small text-secondary mb-1" style="color: #94a3b8 !important;">Ca ' + (index + 1) + '</div>' +
+            '<td class="fw-bold text-nowrap text-center py-4" style="width: 140px; background: #f1f8f6; border-right: 2px solid #00C8A5; border-bottom: 1px solid #e2e8f0;">' +
+                '<div class="fw-extrabold mb-1.5" style="color: #007f61; font-size: 0.9rem;">Ca ' + (index + 1) + '</div>' +
                 '<span class="badge slot-badge">' + slot + '</span>' +
             '</td>';
         for (let i = 0; i < 7; i++) {
             const dateStr = formatDateLocal(weekDates[i]);
             const matchedSchedules = weekSchedules.filter(s => s.workDate === dateStr && getStandardShift(s.timeSlot) === slot);
             if (matchedSchedules.length > 0) {
-                let cellHtml = '<td class="p-2 align-top" style="background-color: transparent; border-color: rgba(255,255,255,0.06);"><div class="d-flex flex-column gap-2">';
+                let cellHtml = '<td class="p-2 align-top" style="background-color: #fafbfc; border-bottom: 1px solid #e2e8f0;"><div class="d-flex flex-column gap-2">';
                 matchedSchedules.forEach(matched => {
-                    let badgeClass = "bg-success-subtle text-success";
+                    let badgeClass = "bg-success text-white";
                     let statusText = "Sẵn sàng";
-                    if (matched.status === "Full" || matched.status === "full") { badgeClass = "bg-danger-subtle text-danger"; statusText = "Đầy lịch"; }
-                    else if (matched.status === "Expired" || matched.status === "expired") { badgeClass = "bg-secondary-subtle text-secondary"; statusText = "Đã qua"; }
-                    else if (matched.status === "Pending" || matched.status === "pending") { badgeClass = "bg-warning-subtle text-warning"; statusText = "Chờ duyệt"; }
-                    else if (matched.status === "Cancelled" || matched.status === "cancelled") { badgeClass = "bg-danger-subtle text-danger"; statusText = "Đã hủy"; }
-                    cellHtml += '<div class="schedule-cell-card p-2 text-start w-100 shadow-xs">' +
-                        '<div class="small mb-1" style="font-size: 0.78rem; color: #94a3b8;"><span class="fw-semibold" style="color: #ffffff;"><i class="bi bi-clock me-1" style="color: #2AB5A3;"></i>' + matched.timeSlot + '</span></div>' +
-                        '<div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-top-style: dashed !important; border-top-color: rgba(255,255,255,0.1) !important;"><span class="badge ' + badgeClass + ' text-xs py-0.5 px-1">' + statusText + '</span><span class="fw-semibold text-xs" style="color: #94a3b8;"><i class="bi bi-people me-1"></i>' + matched.bookedPatients + '/' + matched.maxPatients + '</span></div></div>';
+                    const isPast = matched.workDate < todayStr;
+                    const st = (matched.status || '').toLowerCase().trim();
+                    if (st === "full") { badgeClass = "bg-danger text-white"; statusText = "Đầy lịch"; }
+                    else if (st === "expired" || st === "completed" || isPast) { badgeClass = "bg-secondary text-white"; statusText = "Hoàn thành"; }
+                    else if (st === "pending") { badgeClass = "bg-warning text-dark"; statusText = "Chờ duyệt"; }
+                    else if (st === "cancelled") { badgeClass = "bg-danger text-white"; statusText = "Đã hủy"; }
+                    const roomDisplayName = matched.roomName ? matched.roomName : (matched.roomId ? ('Phòng ' + matched.roomId) : 'Phòng khám');
+                    cellHtml += '<div class="schedule-cell-card p-2 text-start w-100">' +
+                        '<div class="d-flex align-items-center justify-content-between mb-1" style="font-size: 0.8rem;"><span class="fw-bold text-dark"><i class="bi bi-clock-fill me-1" style="color: #00C8A5;"></i>' + matched.timeSlot + '</span></div>' +
+                        '<div class="mb-2" style="font-size: 0.73rem;"><span style="background: rgba(2, 132, 199, 0.12); color: #0284c7; padding: 2px 7px; border-radius: 6px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;"><i class="bi bi-door-open-fill"></i>' + roomDisplayName + '</span></div>' +
+                        '<div class="d-flex align-items-center justify-content-between pt-1.5 border-top" style="border-top-style: dashed !important; border-top-color: #e2e8f0 !important;"><span class="badge ' + badgeClass + ' text-xs py-1 px-2 fw-bold" style="border-radius: 6px;">' + statusText + '</span><span class="fw-bold text-xs" style="color: #475569;"><i class="bi bi-people-fill me-1" style="color: #00C8A5;"></i>' + matched.bookedPatients + '/' + matched.maxPatients + '</span></div></div>';
                 });
                 cellHtml += '</div></td>';
                 rowHtml += cellHtml;
             } else {
-                rowHtml += '<td class="text-center opacity-25 py-4" style="color: #94a3b8; border-color: rgba(255,255,255,0.06);">-</td>';
+                rowHtml += '<td class="text-center py-4" style="color: #cbd5e1; border-bottom: 1px solid #e2e8f0; font-weight: 600;">-</td>';
             }
         }
         rowHtml += '</tr>';

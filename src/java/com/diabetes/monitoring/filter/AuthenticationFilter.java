@@ -30,11 +30,23 @@ public class AuthenticationFilter implements Filter {
             return;
         }
 
+        if (currentUser.getPhone() == null || currentUser.getDob() == null || currentUser.getAddress() == null) {
+            new com.diabetes.monitoring.dao.UserDAO().syncUserDetails(currentUser);
+        }
+
         chain.doFilter(request, response);
     }
 
     private boolean isPageRequest(HttpServletRequest request) {
+        String requestedWith = request.getHeader("X-Requested-With");
+        String accept = request.getHeader("Accept");
+        if ("XMLHttpRequest".equalsIgnoreCase(requestedWith) || (accept != null && accept.toLowerCase().contains("application/json"))) {
+            return false;
+        }
         String path = request.getRequestURI().substring(request.getContextPath().length());
+        if (path.startsWith("/doctor/records/save") || path.startsWith("/doctor/records/save-vitals") || path.startsWith("/doctor/records/transfer")) {
+            return false;
+        }
         return (path.startsWith("/patient/") && !path.startsWith("/patient/api/"))
                 || "/admin".equals(path)
                 || path.startsWith("/admin/")

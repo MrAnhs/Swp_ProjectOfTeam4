@@ -4,8 +4,8 @@
     const height = document.getElementById("height");
     const bmi = document.getElementById("bmi");
     const message = document.getElementById("formMessage");
-    const warningText = "Ch\u1ec9 s\u1ed1 n\u00e0y kh\u00f4ng b\u00ecnh th\u01b0\u1eddng, b\u1ea1n c\u00f3 ch\u1eafc ch\u1eafn \u0111\u00e3 nh\u1eadp \u0111\u00fang d\u1eef li\u1ec7u t\u1eeb k\u1ebft qu\u1ea3 x\u00e9t nghi\u1ec7m kh\u00f4ng?";
-    const hardLimitText = "Gi\u00e1 tr\u1ecb n\u00e0y n\u1eb1m ngo\u00e0i ph\u1ea1m vi sinh l\u00fd c\u1ee7a con ng\u01b0\u1eddi, vui l\u00f2ng ki\u1ec3m tra l\u1ea1i.";
+    const warningText = "Chỉ số này không bình thường, bạn có chắc chắn đã nhập đúng dữ liệu từ kết quả xét nghiệm không?";
+    const hardLimitText = "Giá trị này nằm ngoài phạm vi sinh lý của con người, vui lòng kiểm tra lại.";
 
     const rules = {
         urea: rule(0.5, 60, between(2.5, 7.5)),
@@ -151,7 +151,7 @@
                 new URLSearchParams(new FormData(form))
             );
             if (!result.success) {
-                throw new Error(result.error || "Kh\u00f4ng th\u1ec3 g\u1eedi h\u1ed3 s\u01a1");
+                throw new Error(result.error || "Không thể gửi hồ sơ");
             }
             window.location.href = ApiClient.buildUrl(`/patient/health-records/detail?id=${result.healthRecordId}`);
         } catch (error) {

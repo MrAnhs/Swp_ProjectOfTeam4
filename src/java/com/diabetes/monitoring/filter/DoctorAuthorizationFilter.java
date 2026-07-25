@@ -44,6 +44,9 @@ public class DoctorAuthorizationFilter implements Filter {
         String requestedWith = request.getHeader("X-Requested-With");
         String contentType = request.getContentType();
         return path.startsWith("/doctor/api/")
+                || path.startsWith("/doctor/records/save")
+                || path.startsWith("/doctor/records/save-vitals")
+                || path.startsWith("/doctor/records/transfer")
                 || "XMLHttpRequest".equalsIgnoreCase(requestedWith)
                 || (accept != null && accept.toLowerCase().contains("application/json"))
                 || (contentType != null && contentType.toLowerCase().contains("application/json"));

@@ -93,38 +93,8 @@
 <c:set var="hasAIResult" value="${record.status == 'AI_Processed' || record.status == 'Editing' || record.status == 'Completed'}"/>
 <c:set var="isDetailedStage" value="${hasCompletedLaboratoryRequest || hasAIResult}"/>
 
-<aside class="doctor-sidebar">
-    <div class="doctor-brand"><span class="doctor-brand-icon"><i class="bi bi-heart-pulse"></i></span> Cổng bác sĩ</div>
-    <div class="doctor-profile-card">
-        <div class="doctor-avatar">
-            <c:choose>
-                <c:when test="${not empty sessionScope.currentUser.fullName}">
-                    <c:out value="${sessionScope.currentUser.fullName.substring(0, 1)}" />
-                </c:when>
-                <c:otherwise>D</c:otherwise>
-            </c:choose>
-        </div>
-        <div class="doctor-info">
-            <div class="doctor-name" title="<c:out value='${sessionScope.currentUser.fullName}' />">
-                <c:out value="${sessionScope.currentUser.fullName}" default="Bác sĩ" />
-            </div>
-            <div class="doctor-role-tag">Bác sĩ</div>
-        </div>
-        <a href="${pageContext.request.contextPath}/settings" class="doctor-edit-profile-btn" title="Chỉnh sửa hồ sơ">
-            <i class="bi bi-pencil-square"></i>
-        </a>
-    </div>
-    <nav class="doctor-nav">
-        <a href="${pageContext.request.contextPath}/doctor/dashboard"><i class="bi bi-grid"></i> Tiếp nhận bệnh nhân</a>
-        <a class="${!isDetailedStage ? 'active' : ''}" href="${pageContext.request.contextPath}/doctor/general-examinations"><i class="bi bi-person-vcard"></i> Khám tổng quát</a>
-        <a href="${pageContext.request.contextPath}/doctor/laboratory-requests"><i class="bi bi-eyedropper"></i> Xét nghiệm</a>
-        <a class="${isDetailedStage ? 'active' : ''}" href="${pageContext.request.contextPath}/doctor/examinations"><i class="bi bi-clipboard2-pulse-fill"></i> Khám chi tiết</a>
-        <a href="${pageContext.request.contextPath}/doctor/completed-records"><i class="bi bi-archive"></i> Đã hoàn thành</a>
-        <a href="${pageContext.request.contextPath}/doctor/patients/search"><i class="bi bi-search"></i> Tra cứu</a>
-        <a href="${pageContext.request.contextPath}/doctor/schedule"><i class="bi bi-calendar3"></i> Lịch trực</a>
-        <a class="text-danger mt-lg-4" href="${pageContext.request.contextPath}/logout"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a>
-    </nav>
-</aside>
+<c:set var="activeDoctorPage" value="examinations" />
+<%@ include file="/WEB-INF/views/components/doctor/sidebar.jspf" %>
 
 <main class="doctor-main">
     <c:if test="${not empty sessionScope.doctorMessage}">
@@ -363,7 +333,7 @@
                                     <input class="form-check-input" type="checkbox" name="service_id" value="${service.serviceId}">
                                     <i class="bi ${iconClass} ${iconColor} fs-4"></i>
                                     <span>
-                                        <strong class="d-block text-white" style="font-size: 0.9rem;">${service.serviceName}</strong>
+                                        <strong class="d-block text-dark" style="font-size: 0.9rem;">${service.serviceName}</strong>
                                         <small class="text-secondary"><fmt:formatNumber value="${service.price}" type="number" groupingUsed="true"/> VNĐ</small>
                                     </span>
                                 </label>
@@ -379,10 +349,17 @@
                 <div class="col-lg-5">
                     <label class="form-label fw-semibold">Bác sĩ phòng xét nghiệm</label>
                     <select class="form-select" name="lab_id" required>
-                        <option value="" disabled selected>-- Chọn bác sĩ --</option>
-                        <c:forEach var="doc" items="${labDoctors}">
-                            <option value="${doc.labId}">${doc.fullName} (${fn:replace(doc.labName, 'Phòng Xét nghiệm ', '')}) - Chờ: ${doc.waitingPatients} BN</option>
-                        </c:forEach>
+                        <c:choose>
+                            <c:when test="${empty labDoctors}">
+                                <option value="" disabled selected>-- Chưa có bác sĩ xét nghiệm trực hôm nay --</option>
+                            </c:when>
+                            <c:otherwise>
+                                <option value="" disabled selected>-- Chọn bác sĩ --</option>
+                                <c:forEach var="doc" items="${labDoctors}">
+                                    <option value="${doc.labId}"><c:out value="${empty doc.displayLabel ? doc.fullName : doc.displayLabel}" /></option>
+                                </c:forEach>
+                            </c:otherwise>
+                        </c:choose>
                     </select>
                 </div>
                 <div class="col-lg-3 d-flex align-items-end">
@@ -517,7 +494,9 @@
                     <select id="finalDiagnosis" class="form-select" ${!canEditDiagnosis ? 'disabled' : ''}>
                         <option value="Bình thường" ${record.finalDiagnosis == 'Bình thường' ? 'selected' : ''}>Bình thường</option>
                         <option value="Tiền tiểu đường" ${record.finalDiagnosis == 'Tiền tiểu đường' ? 'selected' : ''}>Tiền tiểu đường</option>
-                        <option value="Tiểu đường" ${record.finalDiagnosis == 'Tiểu đường' ? 'selected' : ''}>Tiểu đường</option>
+                        <option value="Tiểu đường Type 1" ${record.finalDiagnosis == 'Tiểu đường Type 1' or record.finalDiagnosis == 'Tiểu Đường Type 1' ? 'selected' : ''}>Tiểu Đường Type 1</option>
+                        <option value="Tiểu đường Type 2" ${record.finalDiagnosis == 'Tiểu đường Type 2' or record.finalDiagnosis == 'Tiểu Đường Type 2' or record.finalDiagnosis == 'Tiểu đường' ? 'selected' : ''}>Tiểu Đường Type 2</option>
+                        <option value="Tiểu đường Thai Kỳ" ${record.finalDiagnosis == 'Tiểu đường Thai Kỳ' or record.finalDiagnosis == 'Tiểu đường Thai kỳ' ? 'selected' : ''}>Tiểu Đường Thai Kỳ</option>
                     </select>
                 </div>
                 <div class="mb-3">
@@ -669,12 +648,27 @@ function saveNotes(recordId) {
     });
     fetch("${pageContext.request.contextPath}/doctor/records/save", {
         method: "POST",
-        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Accept": "application/json",
+            "X-Requested-With": "XMLHttpRequest"
+        },
         body: body.toString()
     })
     .then(async response => {
-        const data = await response.json();
-        if (!response.ok || !data.success) throw new Error(data.message || "Không thể lưu hồ sơ");
+        const text = await response.text();
+        let data = {};
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            if (response.status === 401 || text.includes("login")) {
+                throw new Error("Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.");
+            }
+            throw new Error("Không thể xử lý phản hồi từ máy chủ.");
+        }
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || data.error || "Không thể lưu hồ sơ");
+        }
     })
     .then(() => window.location.href = "${pageContext.request.contextPath}/doctor/completed-records")
     .catch(error => alert(error.message));

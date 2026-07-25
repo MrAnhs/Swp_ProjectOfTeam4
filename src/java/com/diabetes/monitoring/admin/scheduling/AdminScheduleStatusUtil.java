@@ -22,7 +22,7 @@ public class AdminScheduleStatusUtil {
         LocalDate scheduleDate = workDate.toLocalDate();
         LocalDate today = LocalDate.now();
         if (scheduleDate.isBefore(today)) {
-            return "Expired";
+            return "Completed";
         }
         if (scheduleDate.isAfter(today)) {
             return "Upcoming";
@@ -34,7 +34,7 @@ public class AdminScheduleStatusUtil {
         if (now.isBefore(range[1])) {
             return "Ongoing";
         }
-        return "Expired";
+        return "Completed";
     }
 
     private static LocalTime[] parseTimeSlotRange(String timeSlot) {

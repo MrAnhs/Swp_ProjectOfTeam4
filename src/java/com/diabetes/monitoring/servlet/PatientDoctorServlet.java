@@ -160,7 +160,9 @@ public class PatientDoctorServlet extends HttpServlet {
                     .append("\"workDate\":\"").append(schedule.getWorkDate()).append("\",")
                     .append("\"timeSlot\":\"").append(escapeJson(schedule.getTimeSlot())).append("\",")
                     .append("\"maxPatients\":").append(schedule.getMaxPatients()).append(',')
+                    .append("\"onlineQuota\":").append(schedule.getEffectiveOnlineQuota()).append(',')
                     .append("\"bookedPatients\":").append(schedule.getBookedPatients()).append(',')
+                    .append("\"onlineBookedPatients\":").append(schedule.getOnlineBookedPatients()).append(',')
                     .append("\"availableSlots\":").append(schedule.getAvailableSlots()).append(',')
                     .append("\"roomId\":")
                     .append(schedule.getRoomId() == null

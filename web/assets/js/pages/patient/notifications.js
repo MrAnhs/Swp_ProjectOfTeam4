@@ -15,13 +15,13 @@
     let mode = 'recent';
 
     const labels = {
-        loading: '\u0110ang t\u1ea3i th\u00f4ng b\u00e1o...',
-        emptyTitle: 'Ch\u01b0a c\u00f3 th\u00f4ng b\u00e1o',
-        emptyText: 'C\u00e1c c\u1eadp nh\u1eadt m\u1edbi t\u1eeb h\u1ec7 th\u1ed1ng s\u1ebd xu\u1ea5t hi\u1ec7n t\u1ea1i \u0111\u00e2y.',
-        error: 'Kh\u00f4ng th\u1ec3 t\u1ea3i th\u00f4ng b\u00e1o. Vui l\u00f2ng th\u1eed l\u1ea1i.',
-        defaultTitle: 'Th\u00f4ng b\u00e1o',
-        recentDescription: 'Hi\u1ec3n th\u1ecb 5 th\u00f4ng b\u00e1o m\u1edbi nh\u1ea5t.',
-        allDescription: 'Hi\u1ec3n th\u1ecb t\u1ea5t c\u1ea3 th\u00f4ng b\u00e1o g\u1ea7n \u0111\u00e2y.'
+        loading: 'Đang tải thông báo...',
+        emptyTitle: 'Chưa có thông báo',
+        emptyText: 'Các cập nhật mới từ hệ thống sẽ xuất hiện tại đây.',
+        error: 'Không thể tải thông báo. Vui lòng thử lại.',
+        defaultTitle: 'Thông báo',
+        recentDescription: 'Hiển thị 5 thông báo mới nhất.',
+        allDescription: 'Hiển thị tất cả thông báo gần đây.'
     };
 
     function formatDate(value) {
@@ -45,12 +45,20 @@
         return { icon: 'bi-bell', className: '' };
     }
 
-    function resolveTargetUrl(targetUrl) {
-        if (!targetUrl) return '';
-        if (/^https?:\/\//i.test(targetUrl) || targetUrl.startsWith(context + '/')) {
-            return targetUrl;
+    function resolveTargetUrl(targetUrl, type, title, content) {
+        if (targetUrl) {
+            if (/^https?:\/\//i.test(targetUrl) || targetUrl.startsWith(context + '/')) {
+                return targetUrl;
+            }
+            return context + (targetUrl.startsWith('/') ? targetUrl : '/' + targetUrl);
         }
-        return context + (targetUrl.startsWith('/') ? targetUrl : '/' + targetUrl);
+        const normType = String(type || '').toLowerCase();
+        const normTitle = String(title || '').toLowerCase();
+        const normContent = String(content || '').toLowerCase();
+        if (normType.includes('appointment') || normTitle.includes('lịch') || normContent.includes('lịch')) {
+            return context + '/patient/appointments';
+        }
+        return '';
     }
 
     function updateSummary() {
@@ -103,17 +111,18 @@
         element.append(icon, content, chevron);
 
         function openNotification() {
+            const destUrl = resolveTargetUrl(item.targetUrl, item.type, item.title, item.content);
             const finish = function () {
                 item.isRead = true;
                 updateSummary();
-                if (item.targetUrl) {
-                    window.location.assign(resolveTargetUrl(item.targetUrl));
+                if (destUrl) {
+                    window.location.assign(destUrl);
                 } else {
                     render();
                 }
             };
             if (item.isRead) {
-                if (item.targetUrl) window.location.assign(resolveTargetUrl(item.targetUrl));
+                if (destUrl) window.location.assign(destUrl);
                 return;
             }
             fetch(context + '/notifications/' + encodeURIComponent(item.id) + '/read', {
@@ -122,7 +131,7 @@
                 if (!response.ok) throw new Error();
                 return response.json();
             }).then(finish).catch(function () {
-                if (item.targetUrl) window.location.assign(resolveTargetUrl(item.targetUrl));
+                if (destUrl) window.location.assign(destUrl);
             });
         }
 

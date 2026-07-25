@@ -39,7 +39,7 @@
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) {
-            throw new Error(data.error || "C\u00F3 l\u1ED7i x\u1EA3y ra. Vui l\u00F2ng th\u1EED l\u1EA1i.");
+            throw new Error(data.error || "Có lỗi xảy ra. Vui lòng thử lại.");
         }
         return data;
     }
@@ -50,7 +50,7 @@
         resendButton.disabled = true;
         const update = () => {
             countdown.textContent = remaining > 0
-                    ? `G\u1EEDi l\u1EA1i sau ${remaining} gi\u00E2y` : "";
+                    ? `Gửi lại sau ${remaining} giây` : "";
             if (remaining <= 0) {
                 clearInterval(countdownTimer);
                 countdownTimer = null;
@@ -66,7 +66,7 @@
         event.preventDefault();
         email = document.getElementById("resetEmail").value.trim();
         if (!email) {
-            showMessage("Vui l\u00F2ng nh\u1EADp email t\u00E0i kho\u1EA3n.", true);
+            showMessage("Vui lòng nhập email tài khoản.", true);
             return;
         }
         const button = event.submitter;
@@ -90,7 +90,7 @@
         event.preventDefault();
         const otp = document.getElementById("resetOtp").value.trim();
         if (!/^\d{6}$/.test(otp)) {
-            showMessage("M\u00E3 x\u00E1c th\u1EF1c ph\u1EA3i g\u1ED3m 6 ch\u1EEF s\u1ED1.", true);
+            showMessage("Mã xác thực phải gồm 6 chữ số.", true);
             return;
         }
         const button = event.submitter;
@@ -131,11 +131,11 @@
         const newPassword = document.getElementById("resetNewPassword").value;
         const confirmation = document.getElementById("resetPasswordConfirmation").value;
         if (newPassword.length < 8) {
-            showMessage("M\u1EADt kh\u1EA9u m\u1EDBi ph\u1EA3i c\u00F3 \u00EDt nh\u1EA5t 8 k\u00FD t\u1EF1.", true);
+            showMessage("Mật khẩu mới phải có ít nhất 8 ký tự.", true);
             return;
         }
         if (newPassword !== confirmation) {
-            showMessage("M\u1EADt kh\u1EA9u x\u00E1c nh\u1EADn kh\u00F4ng kh\u1EDBp.", true);
+            showMessage("Mật khẩu xác nhận không khớp.", true);
             return;
         }
         const button = event.submitter;

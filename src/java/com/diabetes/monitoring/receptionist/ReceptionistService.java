@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class ReceptionistService {
-    private static final Set<String> PAYMENT_METHODS = Set.of("Cash", "Momo", "VNPay", "Bank_Transfer");
+    private static final Set<String> PAYMENT_METHODS = Set.of("Cash", "VNPay");
     private static final Set<String> QUEUE_STATUSES = Set.of("Waiting", "Checked_In", "In_Progress");
     private final ReceptionistDAO dao = new ReceptionistDAO();
 
@@ -87,6 +87,7 @@ public class ReceptionistService {
         }
         request.gender = normalizeGender(params.get("patientGender"));
         request.address = trim(params.get("patientAddress"));
+        request.visitType = trim(params.get("visitType"));
         request.doctorId = parsePositiveInt(params.get("doctorId"), "Bác sĩ không hợp lệ.");
         request.scheduleId = parsePositiveInt(params.get("scheduleId"), "Ca khám không hợp lệ.");
         request.revisitAppointmentId = parseOptionalPositiveInt(params.get("revisitAppointmentId"));
@@ -100,8 +101,13 @@ public class ReceptionistService {
 
     public List<Map<String, Object>> getInvoices(String status, String invoiceType)
             throws SQLException, ReceptionistException {
+        return getInvoices(status, invoiceType, null);
+    }
+
+    public List<Map<String, Object>> getInvoices(String status, String invoiceType, String keyword)
+            throws SQLException, ReceptionistException {
         String normalized = "Paid".equalsIgnoreCase(status) ? "Paid" : "Pending";
-        return dao.findInvoicesByStatus(normalized, invoiceType);
+        return dao.findInvoicesByStatus(normalized, invoiceType, keyword);
     }
 
     public List<Map<String, Object>> getInvoiceDetails(int invoiceId) throws SQLException {
@@ -272,6 +278,30 @@ public class ReceptionistService {
 
     private boolean isVietnamesePhone(String phone) {
         return phone != null && phone.matches("^0(3|5|7|8|9)\\d{8}$");
+    }
+
+    public Map<String, Object> getCurrentShiftStatus(int accountId) {
+        LocalDate today = LocalDate.now();
+        java.time.LocalTime now = java.time.LocalTime.now();
+        Map<String, Object> activeShift = dao.findActiveShiftForNow(accountId, today, now);
+        
+        Map<String, Object> status = new java.util.HashMap<>();
+        if (activeShift != null) {
+            status.put("inShift", true);
+            status.put("shiftInfo", activeShift);
+            status.put("message", "Đang trong ca trực (" + activeShift.get("timeSlot") + ")");
+        } else {
+            status.put("inShift", false);
+            status.put("message", "Bạn hiện không nằm trong ca trực active hiện tại (" + today.toString() + " " + String.format("%02d:%02d", now.getHour(), now.getMinute()) + "). Mọi thao tác tiếp đón/check-in sẽ bị khóa!");
+        }
+        return status;
+    }
+
+    public boolean cancelAppointment(int appointmentId, String reason, int receptionistAccountId) throws SQLException, ReceptionistException {
+        if (appointmentId <= 0) {
+            throw new ReceptionistException("Mã lịch hẹn không hợp lệ.");
+        }
+        return dao.cancelAppointmentByReceptionist(appointmentId, reason, receptionistAccountId);
     }
 
     private String trim(String value) {

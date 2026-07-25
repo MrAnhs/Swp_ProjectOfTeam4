@@ -42,29 +42,46 @@ body {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    padding: 0.75rem 1rem;
+    padding: 0.55rem 1.1rem;
     border: 1px solid transparent;
-    border-radius: var(--radius-sm);
+    border-radius: 20px;
+    font-size: 0.85rem;
     font-weight: 600;
     text-decoration: none;
+    transition: all 0.2s ease;
 }
 
 .btn-page-primary {
-    background: linear-gradient(135deg, #2AB5A3, #208A7C) !important;
+    background: linear-gradient(135deg, #00C8A5, #009688) !important;
     color: #fff !important;
-    box-shadow: 0 4px 12px rgba(42, 181, 163, 0.25) !important;
+    box-shadow: 0 3px 10px rgba(0, 200, 165, 0.3) !important;
+}
+
+.btn-page-primary:hover {
+    background: linear-gradient(135deg, #00B394, #008073) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 5px 14px rgba(0, 200, 165, 0.4) !important;
 }
 
 .btn-page-secondary {
-    background: #f1f5f9 !important;
-    border-color: #e2e8f0 !important;
-    color: #475569 !important;
+    background: #0dcaf0 !important;
+    border-color: transparent !important;
+    color: #000000 !important;
+    font-weight: 700 !important;
+    box-shadow: 0 3px 10px rgba(13, 202, 240, 0.3) !important;
+}
+
+.btn-page-secondary:hover {
+    background: #31d2f2 !important;
+    transform: translateY(-1px);
+    color: #000000 !important;
 }
 
 .btn-page-danger {
     background: #dc3545;
     color: #fff;
     border: none;
+    border-radius: 20px;
     cursor: pointer;
     transition: background-color 0.2s ease;
 }
@@ -259,38 +276,51 @@ body {
     display: grid;
     grid-template-columns: 1fr auto;
     gap: 1rem;
-    padding: 1rem;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
+    padding: 1.15rem 1.4rem;
+    border: 1px solid var(--border-color, #e8ecf0);
+    border-radius: var(--radius-card, 16px);
+    background: var(--bg-card, #ffffff);
+    box-shadow: var(--card-shadow, 0 2px 12px rgba(0,0,0,0.04));
+    transition: all 0.25s ease;
+    align-items: center;
+}
+
+.record-item:hover {
+    border-color: rgba(0, 200, 165, 0.35) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
 }
 
 .record-item h3 {
     margin: 0 0 0.45rem;
-    font-size: 1rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-primary, #1a202c);
 }
 
 .record-item p {
-    margin: 0.2rem 0;
-    color: var(--color-muted);
+    margin: 0.25rem 0;
+    color: var(--text-secondary, #64748b);
+    font-size: 0.88rem;
 }
 
 .status-pill {
     display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: fit-content;
-    padding: 0.25rem 0.6rem;
+    padding: 0.35rem 0.85rem;
     border-radius: 999px;
-    background: #fef3c7;
-    color: #92400e;
     font-size: 0.78rem;
     font-weight: 700;
+    white-space: nowrap;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
-.status-pill.completed { background: #dcfce7; color: #166534; }
-.status-pill.rejected { background: #fee2e2; color: #991b1b; }
-.status-pill.waiting { background: #fef3c7; color: #92400e; }
-.status-pill.in-progress { background: #dbeafe; color: #1d4ed8; }
-.status-pill.cancelled { background: #fee2e2; color: #991b1b; }
-.status-pill.absent { background: #f1f5f9; color: #475569; }
+.status-pill.completed { background: #198754 !important; color: #ffffff !important; }
+.status-pill.rejected, .status-pill.cancelled { background: #dc3545 !important; color: #ffffff !important; }
+.status-pill.waiting { background: #ffc107 !important; color: #000000 !important; }
+.status-pill.in-progress { background: #0d6efd !important; color: #ffffff !important; }
+.status-pill.absent { background: #6c757d !important; color: #ffffff !important; }
 
 .metric-grid {
     display: grid;
@@ -560,23 +590,23 @@ body {
 
 .doctor-booking-card {
     overflow: hidden;
-    background: rgba(30, 41, 59, 0.45) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    border-radius: 14px;
-    box-shadow: 0 5px 16px rgba(0, 0, 0, 0.2);
-    backdrop-filter: blur(12px) !important;
+    background: var(--bg-card, #ffffff) !important;
+    border: 1px solid var(--border-color, #e8ecf0) !important;
+    border-radius: var(--radius-card, 16px);
+    box-shadow: var(--card-shadow, 0 2px 16px rgba(0, 0, 0, 0.06));
+    backdrop-filter: none !important;
     transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .doctor-booking-card:hover {
-    border-color: rgba(42, 181, 163, 0.4) !important;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    border-color: rgba(0, 200, 165, 0.4) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
     transform: translateY(-1px);
 }
 
 .doctor-booking-card.active {
-    border-color: #2AB5A3 !important;
-    box-shadow: 0 0 18px rgba(42, 181, 163, 0.25) !important;
+    border-color: var(--primary, #00C8A5) !important;
+    box-shadow: 0 0 18px rgba(0, 200, 165, 0.25) !important;
 }
 
 .doctor-booking-card__header {
@@ -585,8 +615,8 @@ body {
     justify-content: space-between;
     gap: 1rem;
     padding: 1.25rem 1.4rem;
-    background: rgba(15, 23, 42, 0.4) !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+    background: var(--primary-light, rgba(0, 200, 165, 0.06)) !important;
+    border-bottom: 1px solid var(--border-color, #e8ecf0) !important;
 }
 
 .doctor-booking-card__identity {
@@ -598,13 +628,14 @@ body {
 
 .doctor-booking-card__identity h3 {
     margin: 0 0 0.3rem;
-    color: #ffffff !important;
+    color: var(--text-primary, #1a202c) !important;
     font-size: 1.05rem;
+    font-weight: 700;
 }
 
 .doctor-booking-card__identity p {
     margin: 0;
-    color: #2AB5A3 !important;
+    color: var(--primary, #007f61) !important;
     font-size: 0.88rem;
     font-weight: 600;
 }
@@ -615,9 +646,9 @@ body {
     gap: 0.45rem;
     flex: 0 0 auto;
     padding: 0.65rem 0.85rem;
-    background: rgba(42, 181, 163, 0.15) !important;
-    border-radius: var(--radius-sm);
-    color: #2AB5A3 !important;
+    background: var(--primary-light, rgba(0, 200, 165, 0.15)) !important;
+    border-radius: var(--radius-sm, 8px);
+    color: var(--primary, #007f61) !important;
     font-size: 0.82rem;
     font-weight: 600;
     text-transform: capitalize;
@@ -625,6 +656,7 @@ body {
 
 .doctor-booking-card__schedules {
     padding: 1.15rem 1.4rem 1.35rem;
+    background: var(--bg-card, #ffffff);
 }
 
 .doctor-schedule-heading {
@@ -636,7 +668,7 @@ body {
 }
 
 .doctor-schedule-heading span {
-    color: #94a3b8 !important;
+    color: var(--text-secondary, #64748b) !important;
     font-size: 0.8rem;
 }
 
@@ -649,12 +681,13 @@ body {
     align-items: center;
     gap: 0.45rem;
     margin-bottom: 0.65rem;
-    color: #cbd5e1 !important;
+    color: var(--text-primary, #1a202c) !important;
     font-size: 0.88rem;
+    font-weight: 700;
 }
 
 .doctor-session-group h4 i {
-    color: #2AB5A3 !important;
+    color: var(--primary, #00C8A5) !important;
 }
 
 .doctor-time-slots {
@@ -668,21 +701,21 @@ body {
     min-width: 136px;
     gap: 0.1rem;
     padding: 0.65rem 0.85rem;
-    background: rgba(15, 23, 42, 0.6) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    border-radius: 9px;
+    background: var(--bg-page, #f8fafc) !important;
+    border: 1px solid var(--border-color, #cbd5e1) !important;
+    border-radius: 12px;
     cursor: pointer;
     text-align: center;
-    color: #ffffff !important;
+    color: var(--text-primary, #1a202c) !important;
     transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
 }
 
 .doctor-time-slot:hover,
 .doctor-time-slot.active {
-    background: rgba(42, 181, 163, 0.2) !important;
-    border-color: #2AB5A3 !important;
-    color: #2AB5A3 !important;
-    box-shadow: inset 0 0 0 1px #2AB5A3;
+    background: var(--primary-light, rgba(0, 200, 165, 0.15)) !important;
+    border-color: var(--primary, #00C8A5) !important;
+    color: var(--primary, #007f61) !important;
+    box-shadow: inset 0 0 0 1px var(--primary, #00C8A5);
     transform: translateY(-1px);
 }
 
@@ -694,22 +727,23 @@ body {
 
 .doctor-time-slot strong {
     font-size: 0.84rem;
-    color: #ffffff !important;
+    color: var(--text-primary, #1a202c) !important;
+    font-weight: 700;
 }
 
 .doctor-time-slot small {
-    color: #94a3b8 !important;
-    font-size: 0.7rem;
+    color: var(--text-secondary, #64748b) !important;
+    font-size: 0.72rem;
 }
 
 .doctor-time-slot .doctor-time-room {
     margin-top: 0.2rem;
-    color: #2AB5A3 !important;
+    color: var(--primary, #007f61) !important;
     font-weight: 700;
 }
 
 .doctor-time-slot .doctor-time-location {
-    color: #94a3b8 !important;
+    color: var(--text-secondary, #64748b) !important;
     line-height: 1.25;
 }
 
@@ -718,20 +752,20 @@ body {
     justify-items: center;
     gap: 0.5rem;
     padding: 2.5rem 1rem;
-    background: rgba(15, 23, 42, 0.4) !important;
-    border: 1px dashed rgba(255, 255, 255, 0.15) !important;
-    border-radius: var(--radius-md);
+    background: var(--bg-page, #f8fafc) !important;
+    border: 1px dashed var(--border-color, #cbd5e1) !important;
+    border-radius: var(--radius-card, 16px);
     text-align: center;
 }
 
 .booking-empty-state i {
-    color: #2AB5A3 !important;
+    color: var(--primary, #00C8A5) !important;
     font-size: 2rem;
 }
 
 .booking-empty-state p {
     margin: 0;
-    color: #94a3b8 !important;
+    color: var(--text-secondary, #64748b) !important;
 }
 
 .doctor-booking-card__footer {
@@ -741,13 +775,13 @@ body {
     gap: 1rem;
     min-height: 70px;
     padding: 0.85rem 1.4rem;
-    background: rgba(15, 23, 42, 0.4) !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+    background: var(--bg-page, #f8fafc) !important;
+    border-top: 1px solid var(--border-color, #e8ecf0) !important;
 }
 
 .doctor-card-message {
     margin: 0;
-    color: #94a3b8 !important;
+    color: var(--text-secondary, #64748b) !important;
     font-size: 0.82rem;
 }
 
@@ -1596,7 +1630,7 @@ body {
 .stack-form label {
     display: grid;
     gap: 0.45rem;
-    color: #cbd5e1 !important;
+    color: var(--text-secondary, #64748b) !important;
     font-size: 0.88rem;
     font-weight: 600;
 }
@@ -1609,10 +1643,10 @@ body {
     width: 100%;
     min-height: 44px;
     padding: 0.7rem 0.85rem;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid var(--border-color, #e8ecf0) !important;
     border-radius: 10px;
-    background: rgba(15, 23, 42, 0.6) !important;
-    color: #ffffff !important;
+    background: var(--bg-card, #ffffff) !important;
+    color: var(--text-primary, #1a202c) !important;
     font: inherit;
     font-weight: 400;
     outline: none;
@@ -1631,8 +1665,25 @@ body {
 .stack-form input:focus,
 .stack-form select:focus,
 .stack-form textarea:focus {
-    border-color: #2AB5A3 !important;
-    box-shadow: 0 0 0 3px rgba(42, 181, 163, 0.2) !important;
+    border-color: var(--primary, #00C8A5) !important;
+    box-shadow: 0 0 0 3px rgba(0, 200, 165, 0.15) !important;
+}
+
+/* Custom form inputs inside modals */
+.form-control-dark,
+.form-select-dark {
+    background-color: var(--bg-card, #ffffff) !important;
+    border: 1px solid var(--border-color, #cbd5e1) !important;
+    color: var(--text-primary, #1a202c) !important;
+    border-radius: 10px !important;
+}
+
+.form-control-dark:disabled,
+.form-select-dark:disabled,
+.form-control-dark[readonly] {
+    background-color: var(--bg-page, #f1f5f9) !important;
+    color: var(--text-secondary, #64748b) !important;
+    opacity: 0.85;
 }
 
 .stack-form textarea {
@@ -1675,3 +1726,224 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+/* ==========================================================================
+   DOCTOR LAB DESIGN SYSTEM ADAPTATION FOR PATIENT ROLE
+   ========================================================================== */
+
+/* Lab-style Card Component */
+.card-lab-style {
+  background: var(--bg-card, #ffffff) !important;
+  border-radius: var(--radius-card, 16px) !important;
+  box-shadow: var(--card-shadow, 0 2px 16px rgba(0, 0, 0, 0.06)) !important;
+  border: var(--card-border, 1px solid #e8ecf0) !important;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+  transition: var(--transition-theme, all 0.3s ease);
+}
+
+.card-lab-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.4rem;
+  background: var(--primary-light, rgba(0, 200, 165, 0.06));
+  border-bottom: 1px solid var(--border-color, #e8ecf0);
+}
+
+.card-lab-header h2,
+.card-lab-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--primary, #007f61);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.card-lab-header h2 i,
+.card-lab-header h3 i {
+  font-size: 1.25rem;
+  color: var(--primary, #007f61);
+}
+
+/* Lab-style Table Container & Structure */
+.table-lab-responsive {
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.table-lab {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  text-align: left;
+}
+
+.table-lab th {
+  background-color: var(--bg-page, #f8fafc);
+  color: var(--text-secondary, #64748b);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.9rem 1.2rem;
+  border-bottom: 1px solid var(--border-color, #e8ecf0);
+  white-space: nowrap;
+}
+
+.table-lab td {
+  padding: 1rem 1.2rem;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--border-color, #f0f4f8);
+  color: var(--text-primary, #1a202c);
+  font-size: 0.9rem;
+  background-color: var(--bg-card, #ffffff);
+  transition: background-color 0.15s ease;
+}
+
+.table-lab tbody tr:hover td {
+  background-color: rgba(0, 200, 165, 0.03);
+}
+
+.table-lab tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Row identity cell */
+.patient-row-id {
+  font-weight: 700;
+  color: var(--text-secondary, #64748b);
+  font-size: 0.85rem;
+}
+
+.patient-row-title {
+  font-weight: 700;
+  color: var(--text-primary, #1a202c);
+  font-size: 0.95rem;
+  display: block;
+}
+
+.patient-row-subtext {
+  font-size: 0.78rem;
+  color: var(--text-secondary, #64748b);
+  display: block;
+  margin-top: 2px;
+}
+
+/* Lab-style Time Tag Pill */
+.time-tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  background-color: var(--primary-light, #e8f5f1);
+  color: var(--primary, #007f61);
+  font-weight: 600;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.time-tag-pill i {
+  font-size: 0.9rem;
+}
+
+/* Lab-style Status Pills (Bo 999px) */
+.status-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.status-badge-pill.status-blue,
+.status-badge-pill.status-in-progress {
+  background-color: #0d6efd;
+  color: #ffffff;
+}
+
+.status-badge-pill.status-yellow,
+.status-badge-pill.status-pending,
+.status-badge-pill.status-waiting {
+  background-color: #ffc107;
+  color: #000000;
+}
+
+.status-badge-pill.status-green,
+.status-badge-pill.status-completed {
+  background-color: #198754;
+  color: #ffffff;
+}
+
+.status-badge-pill.status-red,
+.status-badge-pill.status-cancelled,
+.status-badge-pill.status-rejected {
+  background-color: #dc3545;
+  color: #ffffff;
+}
+
+.status-badge-pill.status-gray {
+  background-color: #6c757d;
+  color: #ffffff;
+}
+
+/* Lab-style Action Buttons (Pill Rounded 12px / 20px) */
+.btn-action-lab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.45rem 1rem;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border: none;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-action-lab.btn-lab-primary {
+  background: linear-gradient(135deg, #00C8A5, #009688);
+  color: #ffffff !important;
+  box-shadow: 0 3px 10px rgba(0, 200, 165, 0.3);
+}
+
+.btn-action-lab.btn-lab-primary:hover {
+  background: linear-gradient(135deg, #00B394, #008073);
+  transform: translateY(-1px);
+  box-shadow: 0 5px 14px rgba(0, 200, 165, 0.4);
+}
+
+.btn-action-lab.btn-lab-cyan {
+  background: #0dcaf0;
+  color: #000000 !important;
+  box-shadow: 0 3px 10px rgba(13, 202, 240, 0.3);
+}
+
+.btn-action-lab.btn-lab-cyan:hover {
+  background: #31d2f2;
+  transform: translateY(-1px);
+}
+
+.btn-action-lab.btn-lab-secondary {
+  background: #6c757d;
+  color: #ffffff !important;
+}
+
+.btn-action-lab.btn-lab-disabled {
+  background: #adb5bd;
+  color: #ffffff !important;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+

@@ -25,23 +25,28 @@
                 <p>M&#7895;i m&#7909;c t&#432;&#417;ng &#7913;ng m&#7897;t l&#7847;n kh&#225;m; k&#7871;t qu&#7843; ch&#7881; hi&#7875;n th&#7883; khi b&#225;c s&#297; cho ph&#233;p.</p>
             </div>
         </header>
-        <section class="page-card">
-            <div class="filter-row patient-search-bar">
-                <label>Tr&#7841;ng th&#225;i
-                    <select id="visitStatusFilter">
-                        <option value="">T&#7845;t c&#7843;</option>
-                        <option value="processing">&#272;ang x&#7917; l&#253;</option>
-                        <option value="completed">&#272;&#227; ho&#224;n th&#224;nh</option>
-                    </select>
-                </label>
-                <label>T&#236;m ki&#7871;m
-                    <input id="visitSearch" type="search" placeholder="M&#227; l&#7847;n kh&#225;m, b&#225;c s&#297; ho&#7863;c chuy&#234;n khoa">
-                </label>
-                <label>Ng&#224;y kh&#225;m
-                    <input id="visitDateFilter" type="date">
-                </label>
+        <section class="card-lab-style page-card p-0">
+            <div class="card-lab-header px-4 py-3">
+                <h2><i class="bi bi-file-medical"></i> Danh s&#225;ch l&#7883;ch s&#7917; kh&#225;m</h2>
             </div>
-            <div id="visitList" class="record-list loading-state">&#272;ang t&#7843;i l&#7883;ch s&#7917; kh&#225;m...</div>
+            <div class="p-4">
+                <div class="filter-row patient-search-bar mb-3">
+                    <label>Tr&#7841;ng th&#225;i
+                        <select id="visitStatusFilter">
+                            <option value="">T&#7845;t c&#7843;</option>
+                            <option value="processing">&#272;ang x&#7917; l&#253;</option>
+                            <option value="completed">&#272;&#227; ho&#224;n th&#224;nh</option>
+                        </select>
+                    </label>
+                    <label>T&#236;m ki&#7871;m
+                        <input id="visitSearch" type="search" placeholder="M&#227; l&#7847;n kh&#225;m, b&#225;c s&#297; ho&#7863;c chuy&#234;n khoa">
+                    </label>
+                    <label>Ng&#224;y kh&#225;m
+                        <input id="visitDateFilter" type="date">
+                    </label>
+                </div>
+                <div id="visitList" class="record-list loading-state">&#272;ang t&#7843;i l&#7883;ch s&#7917; kh&#225;m...</div>
+            </div>
         </section>
     </main>
     <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/app-config.js?v=20260710-patient-fontfix-all2"></script>

@@ -1,12 +1,13 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', function () {
     let currentDate = new Date();
     const scheduleGrid = document.getElementById('scheduleGrid');
-    const currentWeekRange = document.getElementById('currentWeekRange');
+    const selectYear = document.getElementById('selectYear');
+    const selectWeek = document.getElementById('selectWeek');
 
     function getStartOfWeek(date) {
         const start = new Date(date);
         const day = start.getDay();
-        const diff = start.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+        const diff = start.getDate() - day + (day === 0 ? -6 : 1);
         start.setDate(diff);
         start.setHours(0, 0, 0, 0);
         return start;
@@ -17,29 +18,79 @@ document.addEventListener('DOMContentLoaded', () => {
         let month = '' + (d.getMonth() + 1);
         let day = '' + d.getDate();
         const year = d.getFullYear();
-
         if (month.length < 2) month = '0' + month;
         if (day.length < 2) day = '0' + day;
-
         return [year, month, day].join('-');
     }
 
-    function formatDisplayDate(date) {
+    function formatShortDate(date) {
         const d = new Date(date);
         let month = '' + (d.getMonth() + 1);
         let day = '' + d.getDate();
-        const year = d.getFullYear();
-
         if (month.length < 2) month = '0' + month;
         if (day.length < 2) day = '0' + day;
-
-        return [day, month, year].join('/');
+        return day + '/' + month;
     }
-    
+
     function isToday(d1, d2) {
         return d1.getFullYear() === d2.getFullYear() &&
             d1.getMonth() === d2.getMonth() &&
             d1.getDate() === d2.getDate();
+    }
+
+    function populateYearOptions() {
+        if (!selectYear) return;
+        const currentY = new Date().getFullYear();
+        selectYear.innerHTML = '';
+        for (let y = currentY - 1; y <= currentY + 1; y++) {
+            const opt = document.createElement('option');
+            opt.value = y;
+            opt.textContent = y;
+            if (y === currentDate.getFullYear()) opt.selected = true;
+            selectYear.appendChild(opt);
+        }
+    }
+
+    function populateWeekOptions(year) {
+        if (!selectWeek) return;
+        selectWeek.innerHTML = '';
+
+        let jan1 = new Date(year, 0, 1);
+        let day = jan1.getDay();
+        let diff = jan1.getDate() - day + (day === 0 ? -6 : 1);
+        let monday = new Date(jan1.setDate(diff));
+
+        const currentStartOfWeekStr = formatDate(getStartOfWeek(currentDate));
+
+        for (let w = 0; w < 53; w++) {
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+
+            if (monday.getFullYear() > year && sunday.getFullYear() > year) break;
+
+            const valStr = formatDate(monday);
+            const textStr = formatShortDate(monday) + ' To ' + formatShortDate(sunday);
+
+            const opt = document.createElement('option');
+            opt.value = valStr;
+            opt.textContent = textStr;
+
+            if (valStr === currentStartOfWeekStr) {
+                opt.selected = true;
+            }
+
+            selectWeek.appendChild(opt);
+            monday.setDate(monday.getDate() + 7);
+        }
+    }
+
+    function syncDropdowns() {
+        if (selectYear) selectYear.value = String(currentDate.getFullYear());
+        populateWeekOptions(currentDate.getFullYear());
+        if (selectWeek) {
+            const startOfWeekStr = formatDate(getStartOfWeek(currentDate));
+            selectWeek.value = startOfWeekStr;
+        }
     }
 
     async function loadSchedule() {
@@ -47,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const endOfWeek = new Date(startOfWeek);
         endOfWeek.setDate(startOfWeek.getDate() + 6);
 
-        currentWeekRange.textContent = `${formatDisplayDate(startOfWeek)} - ${formatDisplayDate(endOfWeek)}`;
+        syncDropdowns();
 
         const startStr = formatDate(startOfWeek);
         const endStr = formatDate(endOfWeek);
@@ -55,39 +106,39 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch(`${window.ReceptionistConfig.apiBase}/my-schedule?fromDate=${startStr}&toDate=${endStr}`);
             const data = await response.json();
-            
+
             if (data.success) {
                 renderSchedule(startOfWeek, data.items || []);
             } else {
-                alert('Kh\u00f4ng th\u1ec3 t\u1ea3i l\u1ecbch tr\u1ef1c: ' + (data.error || 'L\u1ed7i kh\u00f4ng x\u00e1c \u0111\u1ecbnh'));
+                scheduleGrid.innerHTML = '<div class="col-12 text-center text-danger py-4">Không thể tải lịch trực: ' + (data.error || 'Lỗi không xác định') + '</div>';
             }
         } catch (error) {
             console.error('Error fetching schedule:', error);
-            alert('L\u1ed7i k\u1ebft n\u1ed1i m\u00e1y ch\u1ee7.');
+            scheduleGrid.innerHTML = '<div class="col-12 text-center text-danger py-4">Lỗi kết nối máy chủ.</div>';
         }
     }
 
     function renderSchedule(startOfWeek, items) {
         scheduleGrid.innerHTML = '';
-        
-        // Render headers
-        scheduleGrid.innerHTML += '<div class="schedule-header">Ca / Gi\u1edd</div>';
-        const days = ['Th\u1ee9 2', 'Th\u1ee9 3', 'Th\u1ee9 4', 'Th\u1ee9 5', 'Th\u1ee9 6', 'Th\u1ee9 7', 'Ch\u1ee7 Nh\u1eadt'];
+
+        // Render headers matching Image 2
+        scheduleGrid.innerHTML += '<div class="sched-hdr-cell"><span class="sched-hdr-title">Ca / Giờ</span></div>';
+        const days = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ Nhật'];
         const today = new Date();
-        
+
         const weekDates = [];
         for (let i = 0; i < 7; i++) {
             const d = new Date(startOfWeek);
             d.setDate(startOfWeek.getDate() + i);
             weekDates.push(d);
-            
-            const isTodayClass = isToday(d, today) ? 'today' : '';
-            
+
+            const isTodayClass = isToday(d, today) ? 'is-today' : '';
+
             scheduleGrid.innerHTML += `
-                <div class="schedule-header ${isTodayClass}">
-                    <div class="day-name">${days[i]}</div>
-                    <div class="date-number">${d.getDate()}</div>
-                    <div class="text-muted small">Th\u00e1ng ${d.getMonth() + 1}</div>
+                <div class="sched-hdr-cell ${isTodayClass}">
+                    <div class="sched-day-name">${days[i]}</div>
+                    <div class="sched-date-num">${d.getDate()}</div>
+                    <div class="sched-month-name">Tháng ${d.getMonth() + 1}</div>
                 </div>
             `;
         }
@@ -99,146 +150,100 @@ document.addEventListener('DOMContentLoaded', () => {
 
         shifts.forEach(shift => {
             scheduleGrid.innerHTML += `
-                <div class="schedule-time">
-                    <div>
-                        <div class="fw-bold">${shift.name}</div>
-                        <div class="text-muted small">${shift.time}</div>
-                    </div>
+                <div class="sched-time-col">
+                    <div class="sched-shift-title">${shift.name}</div>
+                    <div class="sched-shift-time">${shift.time}</div>
                 </div>
             `;
-            
+
             for (let i = 0; i < 7; i++) {
                 const dateStr = formatDate(weekDates[i]);
+                function getShiftCategory(timeSlotStr) {
+                    if (!timeSlotStr) return 'Ca 1';
+                    const str = timeSlotStr.toLowerCase().trim();
+                    if (str.includes('ca 2') || str.includes('chiều') || str.includes('tối') || str.includes('chieu') || str.includes('toi') || str.includes('night') || str.includes('afternoon')) {
+                        return 'Ca 2';
+                    }
+                    if (str.includes('ca 1') || str.includes('sáng') || str.includes('sang') || str.includes('morning')) {
+                        return 'Ca 1';
+                    }
+                    const match = str.match(/^(\d{1,2})/);
+                    if (match) {
+                        const hour = parseInt(match[1], 10);
+                        return hour >= 12 ? 'Ca 2' : 'Ca 1';
+                    }
+                    return 'Ca 1';
+                }
+
                 const shiftItems = items.filter(item => {
                     const itemDate = item.workDate;
-                    const itemTimeSlot = item.timeSlot;
-                    return itemDate === dateStr && itemTimeSlot.includes(shift.time.split(' - ')[0]);
+                    if (itemDate !== dateStr) return false;
+                    return getShiftCategory(item.timeSlot) === shift.name;
                 });
-                
+
                 let cellContent = '';
                 shiftItems.forEach(item => {
+                    const isPastDate = new Date(dateStr + 'T23:59:59') < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                    const st = (item.status || '').toLowerCase().trim();
+
+                    let statusText = 'Sẵn sàng';
                     let statusClass = 'status-scheduled';
-                    let statusText = '\u0110\u00e3 l\u00ean l\u1ecbch';
-                    
-                    if (item.status === 'Completed' || item.status === 'Checked_In') {
-                        statusClass = 'status-completed';
-                        statusText = 'Ho\u00e0n th\u00e0nh';
-                    } else if (item.status === 'Cancelled' || item.status === 'Absent' || item.status === 'Expired') {
-                        statusClass = 'status-cancelled';
-                        statusText = '\u0110\u00e3 h\u1ee7y/Qu\u00e1 h\u1ea1n';
-                    } else if (item.status === 'Waiting' || item.status === 'In_Progress') {
-                        statusClass = 'status-completed';
-                        statusText = '\u0110ang tr\u1ef1c';
+                    let badgeClass = 'shift-badge-scheduled';
+
+                    if (st === 'cancelled' || st === 'absent') {
+                        statusText = 'Đã hủy';
+                        statusClass = 'status-expired';
+                        badgeClass = 'shift-badge-expired';
+                    } else if (st === 'completed') {
+                        statusText = 'Hoàn thành';
+                        statusClass = 'status-scheduled';
+                        badgeClass = 'shift-badge-scheduled';
+                    } else if (st === 'available' || st === 'active' || st === 'scheduled' || st === 'registered') {
+                        statusText = 'Sẵn sàng';
+                        statusClass = 'status-scheduled';
+                        badgeClass = 'shift-badge-scheduled';
+                    } else if (st === 'expired' || isPastDate) {
+                        statusText = 'Hoàn thành';
+                        statusClass = 'status-expired';
+                        badgeClass = 'shift-badge-expired';
                     }
 
+                    const roomName = item.roomName ? item.roomName : (item.roomId ? ('Phòng ' + item.roomId) : 'Quầy lễ tân');
+
                     cellContent += `
-                        <div class="schedule-item ${statusClass}">
-                            <div class="fw-bold mb-1"><i class="bi bi-clock-history"></i> ${item.timeSlot}</div>
-                            <div class="text-secondary small mb-1"><i class="bi bi-person"></i> L\u1ec5 t\u00e2n: ${item.fullName || ''}</div>
-                            <div>Tr\u1ea1ng th\u00e1i: <span class="badge ${statusClass === 'status-completed' ? 'bg-success' : (statusClass === 'status-cancelled' ? 'bg-danger' : 'bg-primary')}">${statusText}</span></div>
+                        <div class="shift-card ${statusClass}">
+                            <div class="shift-time-head"><i class="bi bi-clock me-1"></i>${item.timeSlot}</div>
+                            <div class="shift-room-name text-muted small my-1" style="font-size: 0.76rem;"><i class="bi bi-door-open me-1"></i>${roomName}</div>
+                            <div class="shift-staff-name small text-secondary mb-1" style="font-size: 0.76rem;"><i class="bi bi-person me-1"></i>Lễ tân: ${item.fullName || 'Nhân viên Lễ tân'}</div>
+                            <div>Trạng thái: <span class="badge ${badgeClass}">${statusText}</span></div>
                         </div>
                     `;
                 });
-                
-                scheduleGrid.innerHTML += `<div class="schedule-cell">${cellContent}</div>`;
+
+                scheduleGrid.innerHTML += `<div class="sched-grid-cell">${cellContent}</div>`;
             }
         });
     }
 
-    document.getElementById('btnPrevWeek').addEventListener('click', () => {
-        currentDate.setDate(currentDate.getDate() - 7);
-        loadSchedule();
-    });
+    if (selectYear) {
+        selectYear.addEventListener('change', () => {
+            currentDate.setFullYear(parseInt(selectYear.value, 10));
+            populateWeekOptions(currentDate.getFullYear());
+            loadSchedule();
+        });
+    }
 
-    document.getElementById('btnNextWeek').addEventListener('click', () => {
-        currentDate.setDate(currentDate.getDate() + 7);
-        loadSchedule();
-    });
-
-    document.getElementById('btnToday').addEventListener('click', () => {
-        currentDate = new Date();
-        loadSchedule();
-    });
-
-    // Xử lý sự kiện đăng ký lịch trực mới
-    const registerForm = document.getElementById('registerScheduleForm');
-    const modalAlert = document.getElementById('modalAlert');
-    const registerModalElement = document.getElementById('registerScheduleModal');
-    let registerModal = null;
-
-    if (registerForm) {
-        // Cài đặt ngày tối thiểu là ngày hôm nay
-        const regWorkDate = document.getElementById('regWorkDate');
-        if (regWorkDate) {
-            const today = new Date();
-            const yyyy = today.getFullYear();
-            const mm = String(today.getMonth() + 1).padStart(2, '0');
-            const dd = String(today.getDate()).padStart(2, '0');
-            regWorkDate.min = `${yyyy}-${mm}-${dd}`;
-            regWorkDate.value = `${yyyy}-${mm}-${dd}`;
-        }
-
-        registerForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (modalAlert) modalAlert.innerHTML = '';
-            
-            const workDate = document.getElementById('regWorkDate').value;
-            const timeSlot = document.getElementById('regTimeSlot').value;
-            
-            const body = new URLSearchParams();
-            body.set('workDate', workDate);
-            body.set('timeSlot', timeSlot);
-            
-            try {
-                const response = await fetch(`${window.ReceptionistConfig.apiBase}/my-schedule/register`, {
-                    method: 'POST',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: body.toString()
-                });
-                
-                const data = await response.json();
-                if (data.success) {
-                    alert(data.message || 'Đăng ký lịch trực thành công.');
-                    registerForm.reset();
-                    if (regWorkDate) {
-                        const today = new Date();
-                        const yyyy = today.getFullYear();
-                        const mm = String(today.getMonth() + 1).padStart(2, '0');
-                        const dd = String(today.getDate()).padStart(2, '0');
-                        regWorkDate.value = `${yyyy}-${mm}-${dd}`;
-                    }
-                    
-                    // Đóng modal
-                    if (!registerModal && window.bootstrap && window.bootstrap.Modal) {
-                        registerModal = window.bootstrap.Modal.getInstance(registerModalElement) || new window.bootstrap.Modal(registerModalElement);
-                    }
-                    if (registerModal) {
-                        registerModal.hide();
-                    } else {
-                        const closeBtn = registerModalElement.querySelector('.btn-close');
-                        if (closeBtn) closeBtn.click();
-                    }
-                    
-                    // Tải lại lịch để hiển thị ca trực mới đăng ký
-                    loadSchedule();
-                } else {
-                    if (modalAlert) {
-                        modalAlert.innerHTML = `<div class="alert alert-danger">${data.error || data.message || 'Lỗi không xác định'}</div>`;
-                    }
-                }
-            } catch (error) {
-                console.error('Error registering schedule:', error);
-                if (modalAlert) {
-                    modalAlert.innerHTML = '<div class="alert alert-danger">Lỗi kết nối máy chủ.</div>';
-                }
+    if (selectWeek) {
+        selectWeek.addEventListener('change', () => {
+            if (selectWeek.value) {
+                const parts = selectWeek.value.split('-');
+                currentDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+                loadSchedule();
             }
         });
     }
 
-    // Initial load
+    populateYearOptions();
+    syncDropdowns();
     loadSchedule();
 });

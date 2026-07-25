@@ -2959,13 +2959,8 @@ public class AdminRepository {
                 ? "FORMAT(i.created_at, 'yyyy-MM-dd') = ?"
                 : "FORMAT(i.created_at, 'yyyy-MM') = ?";
 
-        boolean hasInsuranceDeduction = hasColumn("Invoice", "insurance_deduction");
-        String bhytCol = hasInsuranceDeduction
-                ? "i.insurance_deduction"
-                : "CAST(0 AS DECIMAL(18,2))";
-
         String invoiceSql = "SELECT i.invoice_id, p.full_name AS patient_name, "
-                + "i.total_amount, " + bhytCol + " AS bhyt_deduction, i.final_amount, "
+                + "i.final_amount AS total_amount, CAST(0 AS DECIMAL(18,2)) AS bhyt_deduction, i.final_amount, "
                 + "FORMAT(i.created_at, 'yyyy-MM-dd') AS payment_date "
                 + "FROM Invoice i "
                 + "JOIN Patient p ON p.patient_id = i.patient_id "

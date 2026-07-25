@@ -18,7 +18,7 @@
         const field = document.querySelector(`[data-field="${name}"]`);
         if (field) field.value = value || "";
         const text = document.querySelector(`strong[data-field="${name}"]`);
-        if (text) text.textContent = value || "Ch\u01B0a c\u1EADp nh\u1EADt";
+        if (text) text.textContent = value || "Chưa cập nhật";
     }
 
     function render(data) {
@@ -34,7 +34,7 @@
     async function request(path, options) {
         const response = await fetch(context + "/settings" + path, { credentials: "same-origin", ...options });
         const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "C\u00F3 l\u1ED7i x\u1EA3y ra");
+        if (!response.ok) throw new Error(data.error || "Có lỗi xảy ra");
         return data;
     }
 
@@ -61,14 +61,14 @@
         try {
             const result = await request("/profile", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" }, body: new URLSearchParams(new FormData(personalForm)) });
             if (!result.success) throw new Error(result.error);
-            profile = await request("/profile"); render(profile); setEditing(false); showMessage(personalMessage, "\u0110\u00E3 l\u01B0u th\u00F4ng tin c\u00E1 nh\u00E2n.", false);
+            profile = await request("/profile"); render(profile); setEditing(false); showMessage(personalMessage, "Đã lưu thông tin cá nhân.", false);
         } catch (error) { showMessage(personalMessage, error.message, true); }
     });
 
     function openDialog(type) {
         document.getElementById("emailFields").hidden = type !== "email";
         document.getElementById("passwordFields").hidden = type !== "password";
-        document.getElementById("dialogTitle").textContent = type === "email" ? "\u0110\u1ED5i email" : "\u0110\u1ED5i m\u1EADt kh\u1EA9u";
+        document.getElementById("dialogTitle").textContent = type === "email" ? "Đổi email" : "Đổi mật khẩu";
         document.getElementById("dialogMessage").hidden = true;
         document.getElementById("accountDialogForm").dataset.type = type;
         dialog.showModal();
@@ -87,7 +87,7 @@
         try {
             const result = await request("/" + type, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" }, body: new URLSearchParams(params) });
             if (!result.success) throw new Error(result.error);
-            dialog.close(); profile = await request("/profile"); render(profile); showMessage(personalMessage, type === "email" ? "\u0110\u00E3 \u0111\u1ED5i email." : "\u0110\u00E3 \u0111\u1ED5i m\u1EADt kh\u1EA9u.", false);
+            dialog.close(); profile = await request("/profile"); render(profile); showMessage(personalMessage, type === "email" ? "Đã đổi email." : "Đã đổi mật khẩu.", false);
         } catch (error) { showMessage(document.getElementById("dialogMessage"), error.message, true); }
     });
     request("/profile").then(render).catch(error => showMessage(personalMessage, error.message, true));

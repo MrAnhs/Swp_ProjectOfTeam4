@@ -13,7 +13,7 @@
             && (!query || String(invoice.invoiceId).includes(query)));
         list.replaceChildren();
         if (!visible.length) {
-            list.textContent = "Kh\u00F4ng c\u00F3 h\u00F3a \u0111\u01A1n ph\u00F9 h\u1EE3p.";
+            list.textContent = "Không có hóa đơn phù hợp.";
             return;
         }
         visible.forEach((invoice) => {
@@ -21,18 +21,18 @@
             item.className = "record-item";
             const info = document.createElement("div");
             const title = document.createElement("h3");
-            title.textContent = `H\u00F3a \u0111\u01A1n #${invoice.invoiceId}`;
+            title.textContent = `Hóa đơn #${invoice.invoiceId}`;
             const amount = document.createElement("p");
-            amount.textContent = `S\u1ED1 ti\u1EC1n: ${money.format(invoice.finalAmount)}`;
+            amount.textContent = `Số tiền: ${money.format(invoice.finalAmount)}`;
             const method = document.createElement("p");
-            method.textContent = `Ph\u01B0\u01A1ng th\u1EE9c: ${invoice.paymentMethod || "Ch\u01B0a ch\u1ECDn"}`;
+            method.textContent = `Phương thức: ${invoice.paymentMethod || "Chưa chọn"}`;
             const badge = document.createElement("span");
             badge.className = `status-pill ${invoice.status === "Paid" ? "completed" : "waiting"}`;
-            badge.textContent = invoice.status === "Paid" ? "\u0110\u00E3 thanh to\u00E1n" : "Ch\u01B0a thanh to\u00E1n";
+            badge.textContent = invoice.status === "Paid" ? "Đã thanh toán" : "Chưa thanh toán";
             const link = document.createElement("a");
             link.className = "btn-page-secondary";
             link.href = ApiClient.buildUrl(`/patient/invoices/detail?id=${invoice.invoiceId}`);
-            link.textContent = "Xem chi ti\u1EBFt";
+            link.textContent = "Xem chi tiết";
             info.append(title, amount, method, badge);
             item.append(info, link);
             list.append(item);
@@ -48,7 +48,7 @@
         list.classList.add("loading-state");
         ApiClient.get(`/patient/api/invoices${query}`)
             .then((data) => { invoices = data.invoices || []; render(); })
-            .catch((error) => { list.textContent = `Kh\u00F4ng th\u1EC3 t\u1EA3i h\u00F3a \u0111\u01A1n: ${error.message}`; })
+            .catch((error) => { list.textContent = `Không thể tải hóa đơn: ${error.message}`; })
             .finally(() => list.classList.remove("loading-state"));
     }
 

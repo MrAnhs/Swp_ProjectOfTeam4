@@ -17,20 +17,28 @@
         let pendingConfirmForm = null;
 
         const departmentTextMap = {
-            Endocrinology: 'Nội tiết - Tiểu đường',
+            Endocrinology: 'Nội tiết',
+            'Nội tiết - Tiểu đường': 'Nội tiết',
+            'Nội tiết': 'Nội tiết',
             Cardiology: 'Tim mạch',
-            Nephrology: 'Thận học',
-            General: 'Tổng quát'
+            'Tim mạch': 'Tim mạch',
+            Dermatology: 'Da liễu',
+            'Da liễu': 'Da liễu'
         };
 
         function roleText(role) {
             const roleTextMap = {
                 Patient: 'Bệnh nhân',
+                patient: 'Bệnh nhân',
                 Doctor: 'Bác sĩ',
+                doctor: 'Bác sĩ',
+                doctor_lab: 'Bác sĩ xét nghiệm',
                 Receptionist: 'Lễ tân',
-                Admin: 'Quản trị viên'
+                receptionist: 'Lễ tân',
+                Admin: 'Quản trị viên',
+                admin: 'Quản trị viên'
             };
-            return roleTextMap[role] || role || 'Không xác định';
+            return roleTextMap[role] || roleTextMap[String(role || '').toLowerCase()] || role || 'Không xác định';
         }
 
         const viewFields = {
@@ -51,40 +59,45 @@
             email: document.getElementById('editEmail'),
             phone: document.getElementById('editPhone'),
             address: document.getElementById('editAddress'),
-            department: document.getElementById('editDepartment'),
-            roleInfo: document.getElementById('editRoleInfo'),
-            phoneWrap: document.getElementById('editPhoneWrap'),
-            addressWrap: document.getElementById('editAddressWrap'),
-            departmentWrap: document.getElementById('editDepartmentWrap')
+            department: document.getElementById('editDepartment')
         };
 
         function setRoleDisplay(role) {
-            fields.roleInfo.textContent = 'Vai trò: ' + roleText(role);
+            const roleEl = document.getElementById('editRoleInfo');
+            if (roleEl) {
+                roleEl.textContent = 'Vai trò: ' + roleText(role);
+            }
+            const normRole = String(role || '').toLowerCase();
+            const isPatient = normRole === 'patient';
+            const isDoctor = normRole === 'doctor';
 
-            const isPatient = role === 'Patient';
-            const isDoctor = role === 'Doctor';
+            const phoneWrap = document.getElementById('editPhoneWrap');
+            const addressWrap = document.getElementById('editAddressWrap');
+            const deptWrap = document.getElementById('editDepartmentWrap');
 
-            fields.phoneWrap.classList.toggle('d-none', !(isPatient || isDoctor));
-            fields.addressWrap.classList.toggle('d-none', !isPatient);
-            fields.departmentWrap.classList.toggle('d-none', !isDoctor);
-            fields.department.required = isDoctor;
+            if (phoneWrap) phoneWrap.classList.toggle('d-none', !(isPatient || isDoctor));
+            if (addressWrap) addressWrap.classList.toggle('d-none', !isPatient);
+            if (deptWrap) deptWrap.classList.toggle('d-none', !isDoctor);
         }
 
         function fillViewProfile(item) {
             const role = item.role || '';
-            const isPatient = role === 'Patient';
-            const isDoctor = role === 'Doctor';
+            const normRole = String(role).toLowerCase();
+            const isPatient = normRole === 'patient';
+            const isDoctor = normRole === 'doctor';
 
-            viewFields.roleInfo.textContent = 'Vai trò: ' + roleText(role);
-            viewFields.fullName.textContent = item.fullName || '-';
-            viewFields.email.textContent = item.email || '-';
-            viewFields.phone.textContent = item.phone || '-';
-            viewFields.address.textContent = item.address || '-';
-            viewFields.department.textContent = departmentTextMap[item.department] || item.department || '-';
+            if (viewFields.roleInfo) {
+                viewFields.roleInfo.textContent = 'Vai trò: ' + roleText(role);
+            }
+            if (viewFields.fullName) viewFields.fullName.textContent = item.fullName || '-';
+            if (viewFields.email) viewFields.email.textContent = item.email || '-';
+            if (viewFields.phone) viewFields.phone.textContent = item.phone || '-';
+            if (viewFields.address) viewFields.address.textContent = item.address || '-';
+            if (viewFields.department) viewFields.department.textContent = departmentTextMap[item.department] || item.department || '-';
 
-            viewFields.phoneWrap.classList.toggle('d-none', !(isPatient || isDoctor));
-            viewFields.addressWrap.classList.toggle('d-none', !isPatient);
-            viewFields.departmentWrap.classList.toggle('d-none', !isDoctor);
+            if (viewFields.phoneWrap) viewFields.phoneWrap.classList.toggle('d-none', !(isPatient || isDoctor));
+            if (viewFields.addressWrap) viewFields.addressWrap.classList.toggle('d-none', !isPatient);
+            if (viewFields.departmentWrap) viewFields.departmentWrap.classList.toggle('d-none', !isDoctor);
         }
 
         async function fetchAccountProfile(accountId) {
@@ -107,9 +120,17 @@
             fields.accountId.value = item.accountId || '';
             fields.fullName.value = item.fullName || '';
             fields.email.value = item.email || '';
-            fields.phone.value = item.phone || '';
-            fields.address.value = item.address || '';
-            fields.department.value = item.department || 'General';
+            if (fields.phone) fields.phone.value = item.phone || '';
+            if (fields.address) fields.address.value = item.address || '';
+            
+            let rawDept = item.department || 'Nội tiết';
+            if (rawDept === 'Endocrinology' || rawDept === 'Nội tiết - Tiểu đường') rawDept = 'Nội tiết';
+            else if (rawDept === 'Cardiology') rawDept = 'Tim mạch';
+            else if (rawDept === 'Dermatology') rawDept = 'Da liễu';
+            if (!['Nội tiết', 'Tim mạch', 'Da liễu'].includes(rawDept)) {
+                rawDept = 'Nội tiết';
+            }
+            if (fields.department) fields.department.value = rawDept;
             setRoleDisplay(item.role || '');
 
             modal.show();
@@ -122,6 +143,17 @@
         }
 
         document.addEventListener('click', function (event) {
+            const viewBtn = event.target.closest('.view-account-btn');
+            if (viewBtn) {
+                const accountId = viewBtn.getAttribute('data-account-id');
+                if (accountId) {
+                    openViewModal(accountId).catch(function (err) {
+                        alert('Không thể tải hồ sơ tài khoản. ' + err.message);
+                    });
+                }
+                return;
+            }
+
             const button = event.target.closest('.edit-account-btn');
             if (button) {
                 const accountId = button.getAttribute('data-account-id');
@@ -165,10 +197,44 @@
             });
         });
 
+        function validVietnamesePhone(phone) {
+            if (!phone) return true;
+            const cleaned = phone.trim().replace(/[\s.\-()]/g, "");
+            return /^(0|\+84)(3|5|7|8|9)\d{8}$/.test(cleaned);
+        }
+
+        const editPhoneEl = document.getElementById('editPhone');
+        if (editPhoneEl) {
+            editPhoneEl.addEventListener('input', function () {
+                const val = editPhoneEl.value.trim();
+                if (val && !validVietnamesePhone(val)) {
+                    editPhoneEl.setCustomValidity('Số điện thoại không hợp lệ');
+                } else {
+                    editPhoneEl.setCustomValidity('');
+                }
+            });
+        }
+
         document.addEventListener('submit', function (event) {
             const form = event.target.closest('form');
             if (!form) {
                 return;
+            }
+
+            const phoneInput = form.querySelector('#editPhone');
+            const phoneWrap = form.querySelector('#editPhoneWrap');
+            if (phoneInput && phoneWrap && !phoneWrap.classList.contains('d-none')) {
+                const phoneVal = phoneInput.value.trim();
+                if (phoneVal && !validVietnamesePhone(phoneVal)) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    phoneInput.setCustomValidity('Số điện thoại không hợp lệ');
+                    form.classList.add('was-validated');
+                    phoneInput.focus();
+                    return;
+                } else {
+                    phoneInput.setCustomValidity('');
+                }
             }
 
             if (form.classList.contains('confirm-action-form')) {

@@ -37,7 +37,7 @@ const cleanAiReply = (value) => {
         .replace(/\n{3,}/g, '\n\n')
         .trim();
 
-    return text || rawText || "Xin ch\u00e0o! B\u1ea1n c\u00f3 th\u1ec3 cho t\u00f4i bi\u1ebft tri\u1ec7u ch\u1ee9ng hi\u1ec7n t\u1ea1i \u0111\u1ec3 t\u00f4i t\u01b0 v\u1ea5n nh\u00e9.";
+    return text || rawText || "Xin chào! Bạn có thể cho tôi biết triệu chứng hiện tại để tôi tư vấn nhé.";
 };
 
 const addMessage = (text, type = 'incoming') => {
@@ -58,7 +58,7 @@ const addMessage = (text, type = 'incoming') => {
     
     const time = document.createElement('div');
     time.className = 'message-time';
-    time.textContent = 'V\u1eeba xong';
+    time.textContent = 'Vừa xong';
     
     content.appendChild(bubble);
     content.appendChild(time);
@@ -138,7 +138,7 @@ chatForm.addEventListener('submit', async (event) => {
             let symptoms = data.symptoms;
 
             if (!finalReply || typeof finalReply !== 'string' || !finalReply.trim()) {
-                finalReply = "Xin h\u00e3y ti\u1ebfp t\u1ee5c chia s\u1ebb tri\u1ec7u ch\u1ee9ng c\u1ee7a b\u1ea1n \u0111\u1ec3 t\u00f4i c\u00f3 th\u1ec3 h\u1ed7 tr\u1ee3 nh\u00e9.";
+                finalReply = "Xin hãy tiếp tục chia sẻ triệu chứng của bạn để tôi có thể hỗ trợ nhé.";
             }
 
             addMessage(finalReply, 'incoming');
@@ -146,19 +146,19 @@ chatForm.addEventListener('submit', async (event) => {
 
             if (data.reachedLimit) {
                 chatInput.disabled = true;
-                chatInput.placeholder = "\u0110\u00e3 \u0111\u1ea1t gi\u1edbi h\u1ea1n tin nh\u1eafn.";
+                chatInput.placeholder = "Đã đạt giới hạn tin nhắn.";
                 const btnSend = chatForm.querySelector('.btn-send');
                 if (btnSend) btnSend.disabled = true;
             }
         } else {
-            addMessage("H\u1ec7 th\u1ed1ng \u0111ang b\u1ecb qu\u00e1 t\u1ea3i. Vui l\u00f2ng th\u1eed l\u1ea1i sau.", 'incoming');
+            addMessage("Hệ thống đang bị quá tải. Vui lòng thử lại sau.", 'incoming');
         }
     } catch (error) {
         console.error("Chat error:", error);
         if (document.getElementById('typingIndicator')) {
             document.getElementById('typingIndicator').remove();
         }
-        addMessage("Kh\u00f4ng th\u1ec3 k\u1ebft n\u1ed1i v\u1edbi m\u00e1y ch\u1ee7. Vui l\u00f2ng ki\u1ec3m tra m\u1ea1ng.", 'incoming');
+        addMessage("Không thể kết nối với máy chủ. Vui lòng kiểm tra mạng.", 'incoming');
     }
 });
 
@@ -170,18 +170,18 @@ function submitHealthRecordFromChat() {
     document.querySelectorAll('.message').forEach(msg => {
         const content = msg.querySelector('.message-bubble');
         if (content) {
-            const sender = msg.classList.contains('outgoing') ? 'B\u1ec7nh nh\u00e2n' : 'AI';
+            const sender = msg.classList.contains('outgoing') ? 'Bệnh nhân' : 'AI';
             chatMessages.push(`${sender}: ${(content.textContent || content.innerText).trim()}`);
         }
     });
     const chatHistory = chatMessages.join('\n');
 
     if (!chatHistory) {
-        alert('Ch\u01b0a c\u00f3 n\u1ed9i dung cu\u1ed9c tr\u00f2 chuy\u1ec7n \u0111\u1ec3 l\u01b0u.');
+        alert('Chưa có nội dung cuộc trò chuyện để lưu.');
         return;
     }
 
-    if (!confirm('B\u1ea1n c\u00f3 ch\u1eafc mu\u1ed1n l\u01b0u t\u00f3m t\u1eaft tri\u1ec7u ch\u1ee9ng n\u00e0y? AI s\u1ebd t\u1ed5ng h\u1ee3p cu\u1ed9c tr\u00f2 chuy\u1ec7n v\u00e0 l\u01b0u v\u00e0o h\u1ed3 s\u01a1.')) {
+    if (!confirm('Bạn có chắc muốn lưu tóm tắt triệu chứng này? AI sẽ tổng hợp cuộc trò chuyện và lưu vào hồ sơ.')) {
         return;
     }
 
@@ -199,14 +199,14 @@ function submitHealthRecordFromChat() {
     .then(r => r.json())
     .then(data => {
         if (data.success) {
-            alert('T\u00f3m t\u1eaft tri\u1ec7u ch\u1ee9ng \u0111\u00e3 \u0111\u01b0\u1ee3c l\u01b0u th\u00e0nh c\u00f4ng!');
+            alert('Tóm tắt triệu chứng đã được lưu thành công!');
             location.reload();
         } else {
-            alert('L\u1ed7i: ' + (data.error || 'Kh\u00f4ng th\u1ec3 l\u01b0u'));
+            alert('Lỗi: ' + (data.error || 'Không thể lưu'));
         }
     })
     .catch(err => {
         console.error('Submit error:', err);
-        alert('L\u1ed7i k\u1ebft n\u1ed1i. Vui l\u00f2ng th\u1eed l\u1ea1i.');
+        alert('Lỗi kết nối. Vui lòng thử lại.');
     });
 }

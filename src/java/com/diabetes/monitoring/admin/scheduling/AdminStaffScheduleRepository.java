@@ -39,8 +39,21 @@ public class AdminStaffScheduleRepository {
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, accountId);
             try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() ? rs.getInt("reception_id") : 0;
+                if (rs.next()) {
+                    return rs.getInt("reception_id");
+                }
             }
+        }
+        // Auto create missing Reception record for account
+        String insertSql = "INSERT INTO Reception (account_id) VALUES (?)";
+        try (PreparedStatement psInsert = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
+            psInsert.setInt(1, accountId);
+            psInsert.executeUpdate();
+            try (ResultSet keys = psInsert.getGeneratedKeys()) {
+                return keys.next() ? keys.getInt(1) : 0;
+            }
+        } catch (SQLException ex) {
+            return 0;
         }
     }
 
@@ -49,14 +62,17 @@ public class AdminStaffScheduleRepository {
         if (role == null) {
             return rows;
         }
+        String normalizedRole = role.toLowerCase();
         String sql = "SELECT account_id, full_name, email, role "
                 + "FROM Account "
                 + "WHERE LOWER(LTRIM(RTRIM(status))) = 'active' "
-                + "AND LOWER(REPLACE(REPLACE(LTRIM(RTRIM(role)), '-', '_'), ' ', '_')) = ? "
+                + "AND (LOWER(REPLACE(REPLACE(LTRIM(RTRIM(role)), '-', '_'), ' ', '_')) = ? "
+                + "OR (LOWER(REPLACE(REPLACE(LTRIM(RTRIM(role)), '-', '_'), ' ', '_')) IN ('receptionist', 'reception') AND ? IN ('receptionist', 'reception'))) "
                 + "ORDER BY full_name";
         try (Connection connection = DatabaseConnection.getConnection();
                 PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, role.toLowerCase());
+            statement.setString(1, normalizedRole);
+            statement.setString(2, normalizedRole);
             try (ResultSet rs = statement.executeQuery()) {
                 while (rs.next()) {
                     Map<String, Object> row = new HashMap<>();
@@ -76,7 +92,7 @@ public class AdminStaffScheduleRepository {
     private String getSubqueryForStaffType(String staffType) {
         if ("doctor_lab".equalsIgnoreCase(staffType)) {
             return "(SELECT 'doctor_lab' AS staff_type, ls.lab_sched_id AS staff_schedule_id, dl.account_id, "
-                 + "ls.work_date, ls.time_slot, N'Xét nghiệm' AS department, NULL AS work_area, 50 AS max_workload, "
+                 + "ls.work_date, ls.time_slot, N'Xét nghiệm' AS department, NULL AS work_area, ISNULL(ls.max_patients, 20) AS max_workload, "
                  + "ls.status, 'AI' AS schedule_source, ls.room_id, CAST(NULL AS datetime) AS created_at "
                  + "FROM Lab_Schedule ls JOIN Doctor_Lab dl ON dl.lab_id = ls.lab_id) ss";
         } else if ("receptionist".equalsIgnoreCase(staffType)) {
@@ -86,7 +102,7 @@ public class AdminStaffScheduleRepository {
                  + "FROM Reception_Schedule rs JOIN Reception rec ON rec.reception_id = rs.reception_id) ss";
         } else {
             return "(SELECT 'doctor_lab' AS staff_type, ls.lab_sched_id AS staff_schedule_id, dl.account_id, "
-                 + "ls.work_date, ls.time_slot, N'Xét nghiệm' AS department, NULL AS work_area, 50 AS max_workload, "
+                 + "ls.work_date, ls.time_slot, N'Xét nghiệm' AS department, NULL AS work_area, ISNULL(ls.max_patients, 20) AS max_workload, "
                  + "ls.status, 'AI' AS schedule_source, ls.room_id, CAST(NULL AS datetime) AS created_at "
                  + "FROM Lab_Schedule ls JOIN Doctor_Lab dl ON dl.lab_id = ls.lab_id "
                  + "UNION ALL "
@@ -239,7 +255,7 @@ public class AdminStaffScheduleRepository {
         } else {
             sql = "SELECT ls.lab_sched_id AS staff_schedule_id, dl.account_id, a.full_name, a.email, "
                 + "'doctor_lab' AS staff_type, ls.work_date, ls.time_slot, N'Xét nghiệm' AS department, NULL AS work_area, "
-                + "50 AS max_workload, ls.status, 'AI' AS schedule_source, CAST(NULL AS datetime) AS created_at, "
+                + "ISNULL(ls.max_patients, 20) AS max_workload, ls.status, 'AI' AS schedule_source, CAST(NULL AS datetime) AS created_at, "
                 + "ls.room_id, r.room_id AS room_number, r.room_name "
                 + "FROM Lab_Schedule ls "
                 + "JOIN Doctor_Lab dl ON dl.lab_id = ls.lab_id "
@@ -291,7 +307,7 @@ public class AdminStaffScheduleRepository {
             if (labId <= 0) {
                 throw new SQLException("Không tìm thấy thông tin Bác sĩ xét nghiệm cho account_id = " + accountId);
             }
-            String sql = "INSERT INTO Lab_Schedule (lab_id, work_date, time_slot, room_id, status) VALUES (?, ?, ?, ?, ?)";
+            String sql = "INSERT INTO Lab_Schedule (lab_id, work_date, time_slot, room_id, status, max_patients) VALUES (?, ?, ?, ?, ?, ?)";
             try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
                 statement.setInt(1, labId);
                 statement.setDate(2, workDate);
@@ -301,7 +317,8 @@ public class AdminStaffScheduleRepository {
                 } else {
                     statement.setString(4, roomId.trim());
                 }
-                statement.setString(5, status != null ? status : "Scheduled");
+                statement.setString(5, status != null ? status : "Available");
+                statement.setInt(6, (maxWorkload != null && maxWorkload > 0) ? maxWorkload : 20);
                 statement.executeUpdate();
                 try (ResultSet keys = statement.getGeneratedKeys()) {
                     return keys.next() ? keys.getInt(1) : 0;
@@ -317,7 +334,7 @@ public class AdminStaffScheduleRepository {
                 statement.setInt(1, receptionId);
                 statement.setDate(2, workDate);
                 statement.setString(3, timeSlot);
-                statement.setString(4, status != null ? status : "Scheduled");
+                statement.setString(4, normalizeReceptionStatus(status));
                 statement.executeUpdate();
                 try (ResultSet keys = statement.getGeneratedKeys()) {
                     return keys.next() ? (keys.getInt(1) + 1000000) : 0;
@@ -326,6 +343,23 @@ public class AdminStaffScheduleRepository {
         } else {
             throw new SQLException("Vai trò nhân sự không được hỗ trợ lập lịch: " + staffType);
         }
+    }
+
+    private String normalizeReceptionStatus(String status) {
+        if (status == null || status.isBlank() || status.equalsIgnoreCase("Scheduled")) {
+            return "Available";
+        }
+        String s = status.trim();
+        if (s.equalsIgnoreCase("Cancelled") || s.equalsIgnoreCase("Canceled")) {
+            return "Cancelled";
+        }
+        if (s.equalsIgnoreCase("Completed") || s.equalsIgnoreCase("Expired")) {
+            return "Completed";
+        }
+        if (s.equalsIgnoreCase("Active")) {
+            return "Active";
+        }
+        return "Available";
     }
 
     public boolean update(int staffScheduleId,
@@ -351,7 +385,7 @@ public class AdminStaffScheduleRepository {
                     statement.setInt(1, receptionId);
                     statement.setDate(2, workDate);
                     statement.setString(3, timeSlot);
-                    statement.setString(4, status);
+                    statement.setString(4, normalizeReceptionStatus(status));
                     statement.setInt(5, staffScheduleId - 1000000);
                     return statement.executeUpdate() > 0;
                 }
@@ -360,7 +394,7 @@ public class AdminStaffScheduleRepository {
                 if (labId <= 0) {
                     throw new SQLException("Không tìm thấy thông tin Bác sĩ xét nghiệm cho account_id = " + accountId);
                 }
-                String sql = "UPDATE Lab_Schedule SET lab_id = ?, work_date = ?, time_slot = ?, room_id = ?, status = ? "
+                String sql = "UPDATE Lab_Schedule SET lab_id = ?, work_date = ?, time_slot = ?, room_id = ?, status = ?, max_patients = ? "
                            + "WHERE lab_sched_id = ?";
                 try (PreparedStatement statement = connection.prepareStatement(sql)) {
                     statement.setInt(1, labId);
@@ -372,7 +406,8 @@ public class AdminStaffScheduleRepository {
                         statement.setString(4, roomId.trim());
                     }
                     statement.setString(5, status);
-                    statement.setInt(6, staffScheduleId);
+                    statement.setInt(6, (maxWorkload != null && maxWorkload > 0) ? maxWorkload : 20);
+                    statement.setInt(7, staffScheduleId);
                     return statement.executeUpdate() > 0;
                 }
             }
@@ -383,10 +418,10 @@ public class AdminStaffScheduleRepository {
         String sql;
         if (staffScheduleId > 1000000) {
             sql = "UPDATE Reception_Schedule SET status = 'Cancelled' "
-                + "WHERE reception_sched_id = ? AND LOWER(status) NOT IN ('cancelled', 'expired', 'completed')";
+                + "WHERE reception_sched_id = ? AND LOWER(status) <> 'cancelled'";
         } else {
             sql = "UPDATE Lab_Schedule SET status = 'Cancelled' "
-                + "WHERE lab_sched_id = ? AND LOWER(status) NOT IN ('cancelled', 'expired', 'completed')";
+                + "WHERE lab_sched_id = ? AND LOWER(status) <> 'cancelled'";
         }
         try (Connection connection = DatabaseConnection.getConnection();
                 PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -410,24 +445,31 @@ public class AdminStaffScheduleRepository {
     }
 
     public int refreshStaffScheduleStatus() {
-        String sqlLab = "UPDATE Lab_Schedule SET status = CASE "
-                + "WHEN LOWER(status) = 'cancelled' THEN 'Cancelled' "
-                + "WHEN LOWER(status) = 'completed' THEN 'Completed' "
-                + "WHEN work_date < CAST(GETDATE() AS DATE) THEN 'Expired' "
-                + "WHEN work_date = CAST(GETDATE() AS DATE) "
-                + "AND TRY_CONVERT(time, LEFT(LTRIM(RTRIM(SUBSTRING(time_slot, CHARINDEX('-', time_slot) + 1, 20))), 5)) <= CAST(GETDATE() AS time) "
-                + "THEN 'Expired' "
-                + "ELSE 'Scheduled' END "
-                + "WHERE LOWER(status) NOT IN ('cancelled', 'completed')";
+        String sqlLab = "UPDATE ls SET ls.status = CASE "
+                + "WHEN LOWER(ls.status) = 'cancelled' THEN 'Cancelled' "
+                + "WHEN ls.work_date < CAST(GETDATE() AS DATE) THEN 'Completed' "
+                + "WHEN ls.work_date = CAST(GETDATE() AS DATE) "
+                + "AND TRY_CONVERT(time, LEFT(LTRIM(RTRIM(SUBSTRING(ls.time_slot, CHARINDEX('-', ls.time_slot) + 1, 20))), 5)) <= CAST(GETDATE() AS time) "
+                + "THEN 'Completed' "
+                + "WHEN counts.booked_count >= ISNULL(ls.max_patients, 20) THEN 'Full' "
+                + "ELSE 'Available' END "
+                + "FROM Lab_Schedule ls "
+                + "OUTER APPLY ("
+                + "   SELECT COUNT(*) AS booked_count "
+                + "   FROM Lab_Order lo "
+                + "   WHERE lo.room_id = ls.room_id "
+                + "   AND CAST(lo.created_at AS DATE) = ls.work_date "
+                + "   AND LOWER(COALESCE(lo.status, '')) NOT IN ('cancelled', 'canceled') "
+                + ") counts "
+                + "WHERE LOWER(ls.status) NOT IN ('cancelled')";
         String sqlRec = "UPDATE Reception_Schedule SET status = CASE "
                 + "WHEN LOWER(status) = 'cancelled' THEN 'Cancelled' "
-                + "WHEN LOWER(status) = 'completed' THEN 'Completed' "
-                + "WHEN work_date < CAST(GETDATE() AS DATE) THEN 'Expired' "
+                + "WHEN work_date < CAST(GETDATE() AS DATE) THEN 'Completed' "
                 + "WHEN work_date = CAST(GETDATE() AS DATE) "
                 + "AND TRY_CONVERT(time, LEFT(LTRIM(RTRIM(SUBSTRING(time_slot, CHARINDEX('-', time_slot) + 1, 20))), 5)) <= CAST(GETDATE() AS time) "
-                + "THEN 'Expired' "
-                + "ELSE 'Scheduled' END "
-                + "WHERE LOWER(status) NOT IN ('cancelled', 'completed')";
+                + "THEN 'Completed' "
+                + "ELSE 'Available' END "
+                + "WHERE LOWER(status) NOT IN ('cancelled')";
         int count = 0;
         try (Connection connection = DatabaseConnection.getConnection()) {
             try (PreparedStatement psLab = connection.prepareStatement(sqlLab)) {
@@ -554,24 +596,27 @@ public class AdminStaffScheduleRepository {
      * Lấy danh sách ca làm việc dạng Weekly Calendar (Tất cả vai trò: Doctor, Lab, Reception)
      */
     public List<Map<String, Object>> getWeeklyCalendarSchedules(Date startDate, Date endDate, String roleFilter, String roomFilter) {
+        return getWeeklyCalendarSchedules(startDate, endDate, roleFilter, roomFilter, null);
+    }
+
+    /**
+     * Lấy danh sách ca làm việc dạng Weekly Calendar (Tất cả vai trò: Doctor, Lab, Reception) có tìm kiếm nhân sự
+     */
+    public List<Map<String, Object>> getWeeklyCalendarSchedules(Date startDate, Date endDate, String roleFilter, String roomFilter, String searchFilter) {
         List<Map<String, Object>> list = new ArrayList<>();
         // Helper time-slot classification expression (SQL Server compatible, no CAST that could fail on Vietnamese strings)
         // Detects "morning" shift by checking many patterns: sáng, morning, 07:, 08:, 07h, 08h, 07:00-12:00, 08:00-12:00
         // Anything not detected as morning defaults to afternoon (13:00-17:00)
         final String morningExpr = "("
-                + "LOWER(ts_col) LIKE '%s%ng%' "                   // sáng / sang
+                + "LOWER(ts_col) LIKE '%s%ng%' "
                 + "OR LOWER(ts_col) LIKE '%morning%' "
                 + "OR LOWER(ts_col) LIKE '%am%' "
-                + "OR ts_col LIKE '07%' "
-                + "OR ts_col LIKE '08%' "
-                + "OR ts_col LIKE '7:%' "
-                + "OR ts_col LIKE '8:%' "
-                + "OR ts_col LIKE '07h%' "
-                + "OR ts_col LIKE '08h%' "
-                + "OR ts_col = '08:00-12:00' "
-                + "OR ts_col = '07:00-12:00' "
-                + "OR ts_col = '07:00-11:30' "
-                + "OR ts_col = '08:00-11:30'"
+                + "OR LOWER(ts_col) LIKE '%00:%' OR LOWER(ts_col) LIKE '%01:%' OR LOWER(ts_col) LIKE '%02:%' OR LOWER(ts_col) LIKE '%03:%' "
+                + "OR LOWER(ts_col) LIKE '%04:%' OR LOWER(ts_col) LIKE '%05:%' OR LOWER(ts_col) LIKE '%06:%' OR LOWER(ts_col) LIKE '%07:%' "
+                + "OR LOWER(ts_col) LIKE '%08:%' OR LOWER(ts_col) LIKE '%09:%' OR LOWER(ts_col) LIKE '%10:%' OR LOWER(ts_col) LIKE '%11:%' "
+                + "OR LOWER(ts_col) LIKE '% 0:%' OR LOWER(ts_col) LIKE '% 1:%' OR LOWER(ts_col) LIKE '% 2:%' OR LOWER(ts_col) LIKE '% 3:%' "
+                + "OR LOWER(ts_col) LIKE '% 4:%' OR LOWER(ts_col) LIKE '% 5:%' OR LOWER(ts_col) LIKE '% 6:%' OR LOWER(ts_col) LIKE '% 7:%' "
+                + "OR LOWER(ts_col) LIKE '% 8:%' OR LOWER(ts_col) LIKE '% 9:%' "
                 + ")";
 
         String dsMorning  = morningExpr.replace("ts_col", "ds.time_slot");
@@ -601,7 +646,7 @@ public class AdminStaffScheduleRepository {
                 + "LEFT JOIN Room r ON r.room_id = ls.room_id "
                 + "WHERE ls.work_date >= ? AND ls.work_date <= ? "
                 + "UNION ALL "
-                + "SELECT 'Reception' AS staff_type, rs.reception_sched_id AS id, acc.account_id, acc.full_name AS staff, 'Reception' AS role, "
+                + "SELECT 'Receptionist' AS staff_type, rs.reception_sched_id AS id, acc.account_id, acc.full_name AS staff, 'Receptionist' AS role, "
                 + "N'Quầy lễ tân' AS room, NULL AS room_id, rs.work_date AS date, "
                 + "CASE WHEN " + rsMorning + " THEN '08:00' ELSE '13:00' END AS start_time, "
                 + "CASE WHEN " + rsMorning + " THEN '12:00' ELSE '17:00' END AS end_time, "
@@ -622,18 +667,23 @@ public class AdminStaffScheduleRepository {
 
         if (roleFilter != null && !roleFilter.trim().isEmpty() && !"all".equalsIgnoreCase(roleFilter)) {
             String targetRole = roleFilter.trim().toLowerCase();
-            if ("receptionist".equals(targetRole)) {
-                targetRole = "reception";
-            } else if ("doctor_lab".equals(targetRole)) {
-                targetRole = "lab";
+            if ("receptionist".equals(targetRole) || "reception".equals(targetRole)) {
+                sql += " AND (LOWER(cal.role) = 'receptionist' OR LOWER(cal.role) = 'reception')";
+            } else if ("doctor_lab".equals(targetRole) || "lab".equals(targetRole)) {
+                sql += " AND (LOWER(cal.role) = 'lab' OR LOWER(cal.role) = 'doctor_lab')";
+            } else {
+                sql += " AND LOWER(cal.role) = ?";
+                params.add(targetRole);
             }
-            sql += " AND LOWER(cal.role) = ?";
-            params.add(targetRole);
         }
         if (roomFilter != null && !roomFilter.trim().isEmpty() && !"all".equalsIgnoreCase(roomFilter)) {
             sql += " AND (CAST(cal.room_id AS VARCHAR) = ? OR cal.room LIKE ?)";
             params.add(roomFilter.trim());
             params.add("%" + roomFilter.trim() + "%");
+        }
+        if (searchFilter != null && !searchFilter.trim().isEmpty()) {
+            sql += " AND LOWER(cal.staff) LIKE ?";
+            params.add("%" + searchFilter.trim().toLowerCase() + "%");
         }
 
         sql += " ORDER BY cal.date ASC, cal.start_time ASC, cal.role ASC";

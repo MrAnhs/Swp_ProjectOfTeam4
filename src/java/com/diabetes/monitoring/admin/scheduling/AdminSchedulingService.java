@@ -453,7 +453,7 @@ class AdminStaffScheduleService {
             }
 
             return staffRepository.insert(accountId, normalizedStaffType, workDate,
-                    normalizedTimeSlot, department, workArea, maxWorkload, "Scheduled", "Manual", roomId);
+                    normalizedTimeSlot, department, workArea, maxWorkload, "Available", "Manual", roomId);
         } catch (java.sql.SQLException e) {
             setValidationMessage("Lỗi tạo lịch nhân sự: " + e.getMessage());
             return false;
@@ -880,6 +880,7 @@ class AdminAiSchedulingService {
         public int maxSchedules;
         public int doctorsPerShift;
         public String department;
+        public List<String> selectedDepartments;
         public List<Map<String, String>> shiftsPerDay;
         public List<Integer> selectedWeekdays;
         public boolean preview;

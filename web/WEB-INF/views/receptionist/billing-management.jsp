@@ -10,7 +10,7 @@
     <title>Quản lý hóa đơn</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="${pageContext.request.contextPath}/assets/css/pages/receptionist/receptionist.css?v=20260720-details" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/css/pages/receptionist/receptionist.css?v=20260725-balanced" rel="stylesheet">
 </head>
 <body class="receptionist-page">
 <div class="receptionist-shell">
@@ -35,21 +35,14 @@
 
         <section class="panel-card">
             <div class="row g-3 align-items-end">
-                <div class="col-md-5">
-                    <label class="form-label fw-semibold">Tìm bệnh nhân</label>
-                    <input id="billingPatientKeyword" class="form-control" placeholder="Tên hoặc số điện thoại">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">Phương thức thanh toán</label>
-                    <select id="paymentMethod" class="form-select">
-                        <option value="Cash">Tiền mặt</option>
-                        <option value="Momo">Momo</option>
-                        <option value="VNPay">VNPay</option>
-                        <option value="Bank_Transfer">Chuyển khoản</option>
-                    </select>
+                <div class="col-md-9">
+                    <label class="form-label fw-semibold">Tìm kiếm hóa đơn</label>
+                    <input id="billingPatientKeyword" class="form-control" placeholder="Nhập số điện thoại hoặc tên bệnh nhân...">
                 </div>
                 <div class="col-md-3 d-grid">
-                    <button id="payInvoiceBtn" class="btn btn-primary" type="button">Xác nhận thanh toán</button>
+                    <button id="searchInvoiceBtn" class="btn btn-primary" type="button">
+                        <i class="bi bi-search me-1"></i>Tìm kiếm
+                    </button>
                 </div>
             </div>
             <div id="billingMessage" class="mt-3"></div>
@@ -76,6 +69,6 @@
     };
 </script>
 <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/receptionist/receptionist-utils.js?v=20260709-fontfix2"></script>
-<script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/receptionist/billing-management.js?v=20260720-details"></script>
+<script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/receptionist/billing-management.js?v=20260723-v4"></script>
 </body>
 </html>
