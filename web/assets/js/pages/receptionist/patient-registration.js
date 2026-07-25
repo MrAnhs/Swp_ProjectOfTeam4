@@ -28,11 +28,11 @@
         const phone = document.getElementById('patientRegisterPhone').value.trim();
         const dob = document.getElementById('patientRegisterDob').value;
         if (!validVietnamesePhone(phone)) {
-            showResult('S\u1ed1 \u0111i\u1ec7n tho\u1ea1i Vi\u1ec7t Nam kh\u00f4ng h\u1ee3p l\u1ec7.', 'danger');
+            showResult('Số điện thoại Việt Nam không hợp lệ.', 'danger');
             return;
         }
         if (dob && new Date(dob + 'T00:00:00') > new Date()) {
-            showResult('Ng\u00e0y sinh kh\u00f4ng \u0111\u01b0\u1ee3c l\u1edbn h\u01a1n ng\u00e0y hi\u1ec7n t\u1ea1i.', 'danger');
+            showResult('Ngày sinh không được lớn hơn ngày hiện tại.', 'danger');
             return;
         }
         submitButton.disabled = true;
@@ -44,21 +44,21 @@
             });
             const patient = data.patient || {};
             const credentialNotice = patient.temporaryPassword
-                ? '<p class="mb-3">M\u1eadt kh\u1ea9u t\u1ea1m th\u1eddi: <strong>' + utils.escapeHtml(patient.temporaryPassword) + '</strong></p>'
-                : '<p class="mb-3">B\u1ec7nh nh\u00e2n n\u00e0y \u0111\u00e3 c\u00f3 h\u1ed3 s\u01a1 tr\u00ean h\u1ec7 th\u1ed1ng.</p>';
-            showResult('<h3 class="h5">T\u1ea1o h\u1ed3 s\u01a1 b\u1ec7nh nh\u00e2n th\u00e0nh c\u00f4ng</h3>'
-                + '<p class="mb-3">M\u00e3 b\u1ec7nh nh\u00e2n: <strong>' + utils.escapeHtml(patient.patientId) + '</strong></p>'
+                ? '<p class="mb-3">Mật khẩu tạm thời: <strong>' + utils.escapeHtml(patient.temporaryPassword) + '</strong></p>'
+                : '<p class="mb-3">Bệnh nhân này đã có hồ sơ trên hệ thống.</p>';
+            showResult('<h3 class="h5">Tạo hồ sơ bệnh nhân thành công</h3>'
+                + '<p class="mb-3">Mã bệnh nhân: <strong>' + utils.escapeHtml(patient.patientId) + '</strong></p>'
                 + credentialNotice
                 + '<div class="d-flex gap-2">'
-                + '<a class="btn btn-success" href="' + appointmentUrl(patient) + '"><i class="bi bi-calendar-plus me-1"></i>Ti\u1ebfn h\u00e0nh \u0111\u0103ng k\u00fd kh\u00e1m ngay</a>'
-                + (patient.temporaryPassword ? '<button class="btn btn-primary" id="sendEmailBtn" type="button"><i class="bi bi-envelope me-1"></i>G\u1eedi email t\u00e0i kho\u1ea3n</button>' : '')
+                + '<a class="btn btn-success" href="' + appointmentUrl(patient) + '"><i class="bi bi-calendar-plus me-1"></i>Tiến hành đăng ký khám ngay</a>'
+                + (patient.temporaryPassword ? '<button class="btn btn-primary" id="sendEmailBtn" type="button"><i class="bi bi-envelope me-1"></i>Gửi email tài khoản</button>' : '')
                 + '</div>', 'success');
 
             const sendBtn = document.getElementById('sendEmailBtn');
             if (sendBtn) {
                 sendBtn.addEventListener('click', async function () {
                     sendBtn.disabled = true;
-                    sendBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>\u0110ang g\u1eedi...';
+                    sendBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Đang gửi...';
                     try {
                         await utils.requestJson(utils.apiBase() + '/patients/send-email', {
                             method: 'POST',
@@ -70,12 +70,12 @@
                             }).toString()
                         });
                         sendBtn.className = 'btn btn-success';
-                        sendBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i>\u0110\u00e3 g\u1eedi th\u00e0nh c\u00f4ng!';
+                        sendBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Đã gửi thành công!';
                     } catch (error) {
                         alert(error.message);
                         sendBtn.disabled = false;
                         sendBtn.className = 'btn btn-danger';
-                        sendBtn.innerHTML = '<i class="bi bi-exclamation-triangle me-1"></i>G\u1eedi l\u1ea1i email';
+                        sendBtn.innerHTML = '<i class="bi bi-exclamation-triangle me-1"></i>Gửi lại email';
                     }
                 });
             }

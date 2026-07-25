@@ -225,12 +225,8 @@ public class HealthRecordDAO {
                 + "LEFT JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
                 + "WHERE r.doctor_id = ? AND " + workflowCondition + " "
                 + "AND ( "
-                + "    (ds.work_date = CAST(GETDATE() AS DATE) AND ( "
-                + "        (ds.time_slot LIKE '%07:30%' AND CAST(GETDATE() AS TIME) < '12:30:00') "
-                + "        OR "
-                + "        (ds.time_slot LIKE '%13:30%' AND CAST(GETDATE() AS TIME) >= '12:30:00') "
-                + "    )) "
-                + "    OR (mr.appointment_id IS NULL AND CAST(r.created_at AS DATE) = CAST(GETDATE() AS DATE)) "
+                + "    (ds.work_date IS NOT NULL AND CAST(ds.work_date AS DATE) = CAST(GETDATE() AS DATE)) "
+                + "    OR (CAST(r.created_at AS DATE) = CAST(GETDATE() AS DATE)) "
                 + ") "
                 + "ORDER BY r.created_at ASC, r.health_record_id ASC";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -287,14 +283,16 @@ public class HealthRecordDAO {
     }
 
     public boolean canModifyDiagnosis(int recordId, int doctorId) {
+        if (!isRecordAssignedToDoctor(recordId, doctorId)) {
+            return false;
+        }
         String sql = "SELECT COUNT(*) FROM Healthy_Record "
-                + "WHERE health_record_id = ? AND doctor_id = ? "
-                + "AND status IN ('Accepted', 'AI_Processed', 'Editing', 'Completed')";
+                + "WHERE health_record_id = ? "
+                + "AND (status IS NULL OR LOWER(status) NOT IN ('cancelled'))";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, recordId);
-            ps.setInt(2, doctorId);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() && rs.getInt(1) > 0;
             }
@@ -305,14 +303,16 @@ public class HealthRecordDAO {
     }
 
     public boolean canRunAI(int recordId, int doctorId) {
+        if (!isRecordAssignedToDoctor(recordId, doctorId)) {
+            return false;
+        }
         String sql = "SELECT COUNT(*) FROM Healthy_Record "
-                + "WHERE health_record_id = ? AND doctor_id = ? "
-                + "AND status IN ('Accepted', 'AI_Processed', 'Editing', 'Completed')";
+                + "WHERE health_record_id = ? "
+                + "AND (status IS NULL OR LOWER(status) NOT IN ('cancelled'))";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, recordId);
-            ps.setInt(2, doctorId);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() && rs.getInt(1) > 0;
             }
@@ -323,15 +323,17 @@ public class HealthRecordDAO {
     }
 
     public boolean hasRequiredAIData(int recordId, int doctorId) {
+        if (!isRecordAssignedToDoctor(recordId, doctorId)) {
+            return false;
+        }
         String sql = "SELECT COUNT(*) FROM Healthy_Record "
-                + "WHERE health_record_id = ? AND doctor_id = ? "
+                + "WHERE health_record_id = ? "
                 + "AND hba1c IS NOT NULL AND bmi IS NOT NULL AND urea IS NOT NULL";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, recordId);
-            ps.setInt(2, doctorId);
             try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() && rs.getInt(1) == 1;
+                return rs.next() && rs.getInt(1) >= 1;
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -585,18 +587,16 @@ public class HealthRecordDAO {
     }
 
     public boolean updateRecordStatusForDoctor(int healthRecordId, int doctorId, String status) {
-        if (!"AI_Processed".equals(status)) {
-            return false;
-        }
-        String sql = "UPDATE Healthy_Record SET status = 'AI_Processed' "
-                + "WHERE health_record_id = ? AND doctor_id = ? "
-                + "AND status IN ('Accepted', 'AI_Processed', 'Editing')";
+        String targetStatus = (status == null || status.isBlank()) ? "AI_Processed" : status;
+        String sql = "UPDATE Healthy_Record SET status = ?, doctor_id = COALESCE(doctor_id, ?) "
+                + "WHERE health_record_id = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, healthRecordId);
+            ps.setString(1, targetStatus);
             ps.setInt(2, doctorId);
-            return ps.executeUpdate() == 1;
+            ps.setInt(3, healthRecordId);
+            return ps.executeUpdate() >= 1;
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -1237,19 +1237,10 @@ public class HealthRecordDAO {
             Connection conn = DatabaseConnection.getConnection();
             PreparedStatement ps = conn.prepareStatement(sql)
     ) {
-
-        System.out.println("Đang tìm patient_id = " + patientId);
-
         ps.setInt(1, patientId);
-
         ResultSet rs = ps.executeQuery();
-
         if (rs.next()) {
-
-            System.out.println("Đã tìm thấy bệnh nhân trong DB");
-
             Patient p = new Patient();
-
             p.setPatientId(rs.getInt("patient_id"));
             p.setFullName(rs.getString("full_name"));
             p.setGender(rs.getString("gender"));
@@ -1260,15 +1251,9 @@ public class HealthRecordDAO {
             p.setEmergencyContact(rs.getString("emergency_contact"));
             p.setBloodType(rs.getString("blood_type"));
             p.setAge(rs.getInt("age"));
-
             return p;
-
-        } else {
-            System.out.println("Không có dòng nào với patient_id = " + patientId);
         }
-
     } catch (Exception e) {
-        System.out.println("DAO bị lỗi:");
         e.printStackTrace();
     }
 
@@ -1582,32 +1567,108 @@ public class HealthRecordDAO {
     }
 
     public List<Map<String, Object>> getScheduledLabDoctors() {
-        List<Map<String, Object>> list = new ArrayList<>();
-        String sql = "SELECT DISTINCT dl.lab_id, dl.full_name, r.room_id, r.room_name "
-                + "FROM Lab_Schedule ls "
-                + "JOIN Doctor_Lab dl ON dl.lab_id = ls.lab_id "
-                + "JOIN Room r ON ls.room_id = r.room_id "
-                + "WHERE ls.work_date = CAST(GETDATE() AS date) "
-                + "AND LOWER(ls.status) = 'scheduled' "
+        // Stage 1: Lab doctors with an ACTIVE SHIFT AT CURRENT TIME TODAY
+        String sqlActiveNow = "SELECT dl.lab_id, dl.full_name, "
+                + "COALESCE(r.room_name + ' - ' + r.room_id, r.room_name, dl.lab_name, N'Phòng xét nghiệm') AS room_detail, "
+                + "MAX(ls.max_patients) AS max_patients, "
+                + "(SELECT COUNT(*) FROM Invoice_Detail id "
+                + " JOIN Invoice i ON i.invoice_id = id.invoice_id "
+                + " WHERE id.lab_id = dl.lab_id AND id.lab_status IN ('Requested', 'Processing', 'Waiting_Payment', 'Waiting') "
+                + " AND CAST(COALESCE(id.requested_at, i.created_at) AS date) = CAST(GETDATE() AS date)) AS waiting_count "
+                + "FROM Doctor_Lab dl "
+                + "INNER JOIN Lab_Schedule ls ON ls.lab_id = dl.lab_id "
+                + "  AND CAST(ls.work_date AS date) = CAST(GETDATE() AS date) "
+                + "  AND (ls.status IS NULL OR LOWER(ls.status) NOT IN ('cancelled', 'inactive')) "
+                + "  AND TRY_CONVERT(time, LEFT(LTRIM(RTRIM(ls.time_slot)), 5)) IS NOT NULL "
+                + "  AND TRY_CONVERT(time, LEFT(LTRIM(RTRIM(SUBSTRING(ls.time_slot, CHARINDEX('-', ls.time_slot) + 1, 20))), 5)) IS NOT NULL "
+                + "  AND CAST(GETDATE() AS time) >= TRY_CONVERT(time, LEFT(LTRIM(RTRIM(ls.time_slot)), 5)) "
+                + "  AND CAST(GETDATE() AS time) <= TRY_CONVERT(time, LEFT(LTRIM(RTRIM(SUBSTRING(ls.time_slot, CHARINDEX('-', ls.time_slot) + 1, 20))), 5)) "
+                + "LEFT JOIN Room r ON r.room_id = ls.room_id "
+                + "GROUP BY dl.lab_id, dl.full_name, r.room_name, r.room_id, dl.lab_name "
                 + "ORDER BY dl.full_name";
+
+        List<Map<String, Object>> list = fetchLabDoctorListBySql(sqlActiveNow);
+        if (!list.isEmpty()) {
+            return list;
+        }
+
+        // Stage 2: Lab doctors scheduled TODAY whose shift end time has not passed yet
+        String sqlTodayRemaining = "SELECT dl.lab_id, dl.full_name, "
+                + "COALESCE(r.room_name + ' - ' + r.room_id, r.room_name, dl.lab_name, N'Phòng xét nghiệm') AS room_detail, "
+                + "MAX(ls.max_patients) AS max_patients, "
+                + "(SELECT COUNT(*) FROM Invoice_Detail id "
+                + " JOIN Invoice i ON i.invoice_id = id.invoice_id "
+                + " WHERE id.lab_id = dl.lab_id AND id.lab_status IN ('Requested', 'Processing', 'Waiting_Payment', 'Waiting') "
+                + " AND CAST(COALESCE(id.requested_at, i.created_at) AS date) = CAST(GETDATE() AS date)) AS waiting_count "
+                + "FROM Doctor_Lab dl "
+                + "INNER JOIN Lab_Schedule ls ON ls.lab_id = dl.lab_id "
+                + "  AND CAST(ls.work_date AS date) = CAST(GETDATE() AS date) "
+                + "  AND (ls.status IS NULL OR LOWER(ls.status) NOT IN ('cancelled', 'inactive')) "
+                + "  AND (TRY_CONVERT(time, LEFT(LTRIM(RTRIM(SUBSTRING(ls.time_slot, CHARINDEX('-', ls.time_slot) + 1, 20))), 5)) IS NULL "
+                + "       OR CAST(GETDATE() AS time) <= TRY_CONVERT(time, LEFT(LTRIM(RTRIM(SUBSTRING(ls.time_slot, CHARINDEX('-', ls.time_slot) + 1, 20))), 5))) "
+                + "LEFT JOIN Room r ON r.room_id = ls.room_id "
+                + "GROUP BY dl.lab_id, dl.full_name, r.room_name, r.room_id, dl.lab_name "
+                + "ORDER BY dl.full_name";
+
+        list = fetchLabDoctorListBySql(sqlTodayRemaining);
+        if (!list.isEmpty()) {
+            return list;
+        }
+
+        // Stage 3: Fallback query if no active or remaining shift found today
+        String sqlFallback = "SELECT dl.lab_id, dl.full_name, "
+                + "COALESCE(r.room_name + ' - ' + r.room_id, r.room_name, dl.lab_name, N'Phòng xét nghiệm') AS room_detail, "
+                + "MAX(ls.max_patients) AS max_patients, "
+                + "(SELECT COUNT(*) FROM Invoice_Detail id "
+                + " JOIN Invoice i ON i.invoice_id = id.invoice_id "
+                + " WHERE id.lab_id = dl.lab_id AND id.lab_status IN ('Requested', 'Processing', 'Waiting_Payment', 'Waiting') "
+                + " AND CAST(COALESCE(id.requested_at, i.created_at) AS date) = CAST(GETDATE() AS date)) AS waiting_count "
+                + "FROM Doctor_Lab dl "
+                + "LEFT JOIN Lab_Schedule ls ON ls.lab_id = dl.lab_id AND CAST(ls.work_date AS date) = CAST(GETDATE() AS date) AND (ls.status IS NULL OR LOWER(ls.status) <> 'cancelled') "
+                + "LEFT JOIN Room r ON r.room_id = ls.room_id "
+                + "WHERE ls.lab_id IS NOT NULL OR NOT EXISTS (SELECT 1 FROM Lab_Schedule WHERE CAST(work_date AS date) = CAST(GETDATE() AS date) AND (status IS NULL OR LOWER(status) <> 'cancelled')) "
+                + "GROUP BY dl.lab_id, dl.full_name, r.room_name, r.room_id, dl.lab_name "
+                + "ORDER BY dl.full_name";
+
+        return fetchLabDoctorListBySql(sqlFallback);
+    }
+
+    private List<Map<String, Object>> fetchLabDoctorListBySql(String sql) {
+        List<Map<String, Object>> list = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 Map<String, Object> map = new LinkedHashMap<>();
-                map.put("labId", rs.getInt("lab_id"));
-                map.put("fullName", rs.getString("full_name"));
-                String roomDetail = rs.getString("room_name") + " - " + rs.getString("room_id");
+                int labId = rs.getInt("lab_id");
+                String fullName = rs.getString("full_name");
+                String roomDetail = rs.getString("room_detail");
+                int totalOrders = rs.getInt("waiting_count");
+                int dbMaxSlot = rs.getInt("max_patients");
+                int maxSlot = (rs.wasNull() || dbMaxSlot <= 0) ? 15 : dbMaxSlot;
+                int occupiedSlot = Math.min(totalOrders, maxSlot);
+                int waitingPatients = Math.max(0, totalOrders - maxSlot);
+
+                String cleanRoomName = roomDetail != null ? roomDetail.replace("Phòng Xét nghiệm ", "").replace("Phòng xét nghiệm ", "") : "LAB";
+                String displayLabel;
+                if (waitingPatients > 0) {
+                    displayLabel = fullName + " (" + cleanRoomName + ") - " + occupiedSlot + "/" + maxSlot + " - Chờ: " + waitingPatients + " BN";
+                } else {
+                    displayLabel = fullName + " (" + cleanRoomName + ") - " + occupiedSlot + "/" + maxSlot + " BN";
+                }
+
+                map.put("labId", labId);
+                map.put("fullName", fullName);
                 map.put("labName", roomDetail);
+                map.put("maxSlot", maxSlot);
+                map.put("totalOrders", totalOrders);
+                map.put("occupiedSlot", occupiedSlot);
+                map.put("waitingPatients", waitingPatients);
+                map.put("displayLabel", displayLabel);
                 list.add(map);
             }
         } catch (SQLException e) {
             e.printStackTrace();
-        }
-
-        // Fallback: if no schedules today, return all active lab doctors
-        if (list.isEmpty()) {
-            return getActiveLabDoctors();
         }
         return list;
     }
@@ -1644,9 +1705,8 @@ public class HealthRecordDAO {
                 + "WHERE health_record_id = ? AND service_id = ? "
                 + "AND lab_status IN ('Waiting_Payment', 'Requested', 'Processing')";
         String invoiceSql = "INSERT INTO Invoice "
-                + "(patient_id, receptionist_id, total_amount, insurance_deduction, "
-                + "final_amount, payment_method, status, created_at) "
-                + "VALUES (?, NULL, ?, 0, ?, NULL, 'Pending', GETDATE())";
+                + "(patient_id, receptionist_id, final_amount, payment_method, status, created_at) "
+                + "VALUES (?, NULL, ?, NULL, 'Pending', GETDATE())";
         String detailSql = "INSERT INTO Invoice_Detail "
                 + "(invoice_id, service_id, appointment_id, quantity, price, "
                 + "health_record_id, doctor_id, request_note, lab_status, requested_at, lab_id) "
@@ -1722,7 +1782,6 @@ public class HealthRecordDAO {
                         invoiceSql, Statement.RETURN_GENERATED_KEYS)) {
                     ps.setInt(1, patientId);
                     ps.setBigDecimal(2, totalPrice);
-                    ps.setBigDecimal(3, totalPrice);
                     if (ps.executeUpdate() != 1) {
                         throw new SQLException("Kh\u00f4ng th\u1ec3 t\u1ea1o h\u00f3a \u0111\u01a1n x\u00e9t nghi\u1ec7m");
                     }

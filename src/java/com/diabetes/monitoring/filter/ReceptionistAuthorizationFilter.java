@@ -35,6 +35,16 @@ public class ReceptionistAuthorizationFilter implements Filter {
             return;
         }
 
+        try {
+            com.diabetes.monitoring.receptionist.ReceptionistService service = new com.diabetes.monitoring.receptionist.ReceptionistService();
+            java.util.Map<String, Object> shiftStatus = service.getCurrentShiftStatus(currentUser.getId());
+            httpRequest.setAttribute("shiftStatus", shiftStatus);
+            if (session != null) {
+                session.setAttribute("shiftStatus", shiftStatus);
+            }
+        } catch (Exception ignored) {
+        }
+
         chain.doFilter(request, response);
     }
 

@@ -158,6 +158,15 @@ class AdminAccountHandler {
             return;
         }
 
+        if (phone != null && !phone.isBlank()) {
+            String cleanedPhone = phone.trim().replaceAll("[\\s.\\-()]", "");
+            if (!cleanedPhone.matches("^(0|\\+84)(3|5|7|8|9)\\d{8}$")) {
+                request.getSession().setAttribute("errorMessage", "Số điện thoại không hợp lệ. Vui lòng nhập số di động Việt Nam hợp lệ (ví dụ: 0912345678 hoặc +84912345678)");
+                response.sendRedirect(request.getContextPath() + "/admin?action=listUsers");
+                return;
+            }
+        }
+
         try {
             User currentUser = (User) request.getSession().getAttribute("currentUser");
             boolean ok = accountId > 0 && accountService.updateAccountProfileByRole(accountId, fullName, email, phone, address, department, currentUser);

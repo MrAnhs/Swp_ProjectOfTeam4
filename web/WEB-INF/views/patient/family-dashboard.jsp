@@ -6,26 +6,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hồ sơ người thân - DiabetesCare</title>
+    <title>H&#7891; s&#417; ng&#432;&#7901;i th&#226;n - DiabetesCare</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/base/variables.css?v=20260721-ui2">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/layouts/patient-shell.css?v=20260721-ui2">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/pages/patient/patient-pages.css?v=20260721-ui2">
     <style>
         .fd-container { max-width: 1100px; margin: 0 auto; padding-bottom: 2rem; }
-        .fd-header-card { background: linear-gradient(135deg, #2AB5A3 0%, #208A7C 100%); color: #fff; border-radius: 16px; padding: 1.75rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(42,181,163,0.3); }
+        .fd-header-card { background: linear-gradient(135deg, #00C8A5 0%, #009688 100%); color: #fff; border-radius: 16px; padding: 1.75rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,200,165,0.3); }
         .fd-header-info h2 { font-weight: 700; margin: 0 0 0.4rem 0; font-size: 1.5rem; }
         .fd-header-info p { margin: 0; opacity: 0.9; font-size: 0.95rem; }
-        .fd-back-btn { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: #fff; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; transition: all 0.2s; }
-        .fd-back-btn:hover { background: #fff; color: #2AB5A3; }
+        .fd-back-btn { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: #fff; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; transition: all 0.2s; }
+        .fd-back-btn:hover { background: #fff; color: #007f61; }
         
-        .fd-card { background: rgba(30, 41, 59, 0.45) !important; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); padding: 1.5rem; border: 1px solid rgba(255, 255, 255, 0.08) !important; color: #ffffff !important; backdrop-filter: blur(12px) !important; }
+        .fd-card { background: var(--bg-card, #ffffff) !important; border-radius: var(--radius-card, 16px); box-shadow: var(--card-shadow, 0 2px 16px rgba(0,0,0,0.06)); padding: 1.5rem; border: 1px solid var(--border-color, #e8ecf0) !important; color: var(--text-primary, #1a202c) !important; }
         
-        .fd-tabs-nav { display: flex; gap: 1rem; border-bottom: 2px solid rgba(255, 255, 255, 0.08); margin-bottom: 1.5rem; flex-wrap: wrap; }
-        .fd-tab-item { background: none; border: none; padding: 0.9rem 1.5rem; font-weight: 600; color: #94a3b8; font-size: 1.05rem; cursor: pointer; position: relative; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.5rem; }
-        .fd-tab-item:hover:not(.disabled) { color: #2AB5A3; }
-        .fd-tab-item.active { color: #2AB5A3; }
-        .fd-tab-item.active::after { content: ''; position: absolute; bottom: -2px; left: 0; right: 0; height: 3px; background-color: #2AB5A3; border-radius: 3px 3px 0 0; }
+        .fd-tabs-nav { display: flex; gap: 1rem; border-bottom: 2px solid var(--border-color, #e8ecf0); margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .fd-tab-item { background: none; border: none; padding: 0.9rem 1.5rem; font-weight: 600; color: var(--text-secondary, #64748b); font-size: 1.05rem; cursor: pointer; position: relative; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.5rem; }
+        .fd-tab-item:hover:not(.disabled) { color: var(--primary, #00C8A5); }
+        .fd-tab-item.active { color: var(--primary, #00C8A5); }
+        .fd-tab-item.active::after { content: ''; position: absolute; bottom: -2px; left: 0; right: 0; height: 3px; background-color: var(--primary, #00C8A5); border-radius: 3px 3px 0 0; }
         
         .fd-tab-item.disabled { opacity: 0.45; cursor: not-allowed; position: relative; }
         .fd-tab-item.disabled small { display: block; font-size: 0.72rem; color: #dc3545; font-weight: 500; margin-top: 0.1rem; }
@@ -365,5 +366,6 @@
             return new Intl.NumberFormat('vi-VN').format(amount);
         }
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

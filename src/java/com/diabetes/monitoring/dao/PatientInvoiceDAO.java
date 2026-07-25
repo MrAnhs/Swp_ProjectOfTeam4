@@ -4,6 +4,7 @@ import com.diabetes.monitoring.model.InvoiceInfo;
 import com.diabetes.monitoring.model.InvoiceItem;
 import com.diabetes.monitoring.notification.NotificationService;
 import com.diabetes.monitoring.util.DatabaseConnection;
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -24,20 +25,25 @@ public class PatientInvoiceDAO {
 
     public List<InvoiceInfo> findByPatientAccountId(int accountId, LocalDate searchDate)
             throws SQLException {
-        String sql = "SELECT i.invoice_id, i.total_amount, i.insurance_deduction, i.final_amount, "
+        String matchClause = "(p.account_id = ? "
+                + "OR (p.email IS NOT NULL AND p.email <> '' AND p.email = (SELECT email FROM Account WHERE account_id = ?)) "
+                + "OR (p.phone IS NOT NULL AND p.phone <> '' AND p.phone = (SELECT TOP 1 phone FROM Patient WHERE account_id = ?)))";
+        String sql = "SELECT i.invoice_id, i.final_amount, "
                 + "i.payment_method, i.status, i.created_at, i.exported_at, "
                 + "p.patient_id, p.full_name AS patient_name, p.phone AS patient_phone, "
                 + "p.email AS patient_email, p.address AS patient_address "
                 + "FROM Invoice i INNER JOIN Patient p ON p.patient_id = i.patient_id "
-                + "WHERE p.account_id = ? "
+                + "WHERE " + matchClause + " "
                 + (searchDate == null ? "" : "AND CAST(i.created_at AS date) = ? ")
                 + "ORDER BY i.created_at DESC, i.invoice_id DESC";
         List<InvoiceInfo> invoices = new ArrayList<>();
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, accountId);
+            statement.setInt(2, accountId);
+            statement.setInt(3, accountId);
             if (searchDate != null) {
-                statement.setDate(2, java.sql.Date.valueOf(searchDate));
+                statement.setDate(4, java.sql.Date.valueOf(searchDate));
             }
             try (ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) invoices.add(mapInvoice(resultSet));
@@ -47,16 +53,21 @@ public class PatientInvoiceDAO {
     }
 
     public InvoiceInfo findById(int invoiceId, int accountId) throws SQLException {
-        String sql = "SELECT i.invoice_id, i.total_amount, i.insurance_deduction, i.final_amount, "
+        String matchClause = "(p.account_id = ? "
+                + "OR (p.email IS NOT NULL AND p.email <> '' AND p.email = (SELECT email FROM Account WHERE account_id = ?)) "
+                + "OR (p.phone IS NOT NULL AND p.phone <> '' AND p.phone = (SELECT TOP 1 phone FROM Patient WHERE account_id = ?)))";
+        String sql = "SELECT i.invoice_id, i.final_amount, "
                 + "i.payment_method, i.status, i.created_at, i.exported_at, "
                 + "p.patient_id, p.full_name AS patient_name, p.phone AS patient_phone, "
                 + "p.email AS patient_email, p.address AS patient_address "
                 + "FROM Invoice i INNER JOIN Patient p ON p.patient_id = i.patient_id "
-                + "WHERE i.invoice_id = ? AND p.account_id = ?";
+                + "WHERE i.invoice_id = ? AND " + matchClause;
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, invoiceId);
             statement.setInt(2, accountId);
+            statement.setInt(3, accountId);
+            statement.setInt(4, accountId);
             try (ResultSet resultSet = statement.executeQuery()) {
                 return resultSet.next() ? mapInvoice(resultSet) : null;
             }
@@ -64,7 +75,7 @@ public class PatientInvoiceDAO {
     }
 
     public InvoiceInfo findById(int invoiceId) throws SQLException {
-        String sql = "SELECT i.invoice_id, i.total_amount, i.insurance_deduction, i.final_amount, "
+        String sql = "SELECT i.invoice_id, i.final_amount, "
                 + "i.payment_method, i.status, i.created_at, i.exported_at, "
                 + "p.patient_id, p.full_name AS patient_name, p.phone AS patient_phone, "
                 + "p.email AS patient_email, p.address AS patient_address "
@@ -80,18 +91,23 @@ public class PatientInvoiceDAO {
     }
 
     public List<InvoiceItem> findItems(int invoiceId, int accountId) throws SQLException {
+        String matchClause = "(p.account_id = ? "
+                + "OR (p.email IS NOT NULL AND p.email <> '' AND p.email = (SELECT email FROM Account WHERE account_id = ?)) "
+                + "OR (p.phone IS NOT NULL AND p.phone <> '' AND p.phone = (SELECT TOP 1 phone FROM Patient WHERE account_id = ?)))";
         String sql = "SELECT id.invoice_detail_id, id.appointment_id, id.service_id, "
                 + "ms.service_name, ms.service_type, id.quantity, id.price "
                 + "FROM Invoice_Detail id "
                 + "INNER JOIN Invoice i ON i.invoice_id = id.invoice_id "
                 + "INNER JOIN Patient p ON p.patient_id = i.patient_id "
                 + "INNER JOIN Medical_Service ms ON ms.service_id = id.service_id "
-                + "WHERE id.invoice_id = ? AND p.account_id = ? ORDER BY id.invoice_detail_id";
+                + "WHERE id.invoice_id = ? AND " + matchClause + " ORDER BY id.invoice_detail_id";
         List<InvoiceItem> items = new ArrayList<>();
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, invoiceId);
             statement.setInt(2, accountId);
+            statement.setInt(3, accountId);
+            statement.setInt(4, accountId);
             try (ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
                     InvoiceItem item = new InvoiceItem();
@@ -114,14 +130,19 @@ public class PatientInvoiceDAO {
         if (!PAYMENT_METHODS.contains(paymentMethod)) {
             throw new IllegalArgumentException("Phương thức thanh toán không hợp lệ.");
         }
+        String matchClause = "(p.account_id = ? "
+                + "OR (p.email IS NOT NULL AND p.email <> '' AND p.email = (SELECT email FROM Account WHERE account_id = ?)) "
+                + "OR (p.phone IS NOT NULL AND p.phone <> '' AND p.phone = (SELECT TOP 1 phone FROM Patient WHERE account_id = ?)))";
         String sql = "UPDATE i SET payment_method = ? "
                 + "FROM Invoice i INNER JOIN Patient p ON p.patient_id = i.patient_id "
-                + "WHERE i.invoice_id = ? AND p.account_id = ? AND i.status = 'Pending'";
+                + "WHERE i.invoice_id = ? AND " + matchClause + " AND i.status = 'Pending'";
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, paymentMethod);
             statement.setInt(2, invoiceId);
             statement.setInt(3, accountId);
+            statement.setInt(4, accountId);
+            statement.setInt(5, accountId);
             return statement.executeUpdate() > 0;
         }
     }
@@ -157,8 +178,8 @@ public class PatientInvoiceDAO {
     private InvoiceInfo mapInvoice(ResultSet resultSet) throws SQLException {
         InvoiceInfo invoice = new InvoiceInfo();
         invoice.setInvoiceId(resultSet.getInt("invoice_id"));
-        invoice.setTotalAmount(resultSet.getBigDecimal("total_amount"));
-        invoice.setInsuranceDeduction(resultSet.getBigDecimal("insurance_deduction"));
+        invoice.setTotalAmount(resultSet.getBigDecimal("final_amount"));
+        invoice.setInsuranceDeduction(BigDecimal.ZERO);
         invoice.setFinalAmount(resultSet.getBigDecimal("final_amount"));
         invoice.setPaymentMethod(resultSet.getString("payment_method"));
         invoice.setStatus(resultSet.getString("status"));

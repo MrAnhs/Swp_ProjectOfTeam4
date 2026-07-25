@@ -178,6 +178,11 @@
             <span class="menu-text">T&#7893;ng quan</span>
             <i class="fa-solid fa-angle-right menu-arrow"></i>
         </a>
+        <a class="menu-item ${currentAction == 'reports' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin?action=reports">
+            <i class="fa-solid fa-chart-line menu-icon"></i>
+            <span class="menu-text">B&#225;o c&#225;o &amp; Doanh thu</span>
+            <i class="fa-solid fa-angle-right menu-arrow"></i>
+        </a>
 
         <div class="menu-group-title">Qu&#7843;n tr&#7883;</div>
         <a class="menu-item ${currentAction == 'listUsers' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin?action=listUsers">

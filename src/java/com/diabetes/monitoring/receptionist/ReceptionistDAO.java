@@ -47,6 +47,7 @@ public class ReceptionistDAO {
             result.put("patient", patient);
             result.put("historyCount", countAppointments(connection, patientId));
             result.put("nextAppointment", findLatestAppointment(connection, patientId));
+            result.put("upcomingAppointments", findPatientAppointments(connection, patientId));
             return result;
         }
     }
@@ -90,6 +91,7 @@ public class ReceptionistDAO {
             result.put("patient", patient);
             result.put("historyCount", countAppointments(connection, patientId));
             result.put("nextAppointment", findLatestAppointment(connection, patientId));
+            result.put("revisitDates", findPatientRevisitDates(connection, patientId));
             return result;
         }
     }
@@ -152,6 +154,8 @@ public class ReceptionistDAO {
                 + "FROM Doctor_Schedule ds "
                 + "LEFT JOIN Appointment a ON a.schedule_id = ds.schedule_id AND a.status <> 'Cancelled' "
                 + "WHERE ds.doctor_id = ? AND ds.work_date >= CAST(GETDATE() AS date) "
+                + "AND (ds.work_date > CAST(GETDATE() AS date) "
+                + "     OR CAST(GETDATE() AS time) < TRY_CONVERT(time, RIGHT(REPLACE(ds.time_slot, ' ', ''), 5))) "
                 + "AND ds.status = 'Available' "
                 + "GROUP BY ds.schedule_id, ds.work_date, ds.time_slot, ds.max_patients "
                 + "HAVING COUNT(a.appointment_id) < ds.max_patients "
@@ -223,7 +227,22 @@ public class ReceptionistDAO {
             connection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
             connection.setAutoCommit(false);
 
+            Map<String, Object> schedule = lockSchedule(connection, request.doctorId, request.scheduleId);
+            if (schedule == null) {
+                throw new ReceptionistException("Ca khám không hợp lệ hoặc đã hết chỗ.");
+            }
+
+            LocalDate workDate = ((Date) schedule.get("workDate")).toLocalDate();
+            String formattedDate = workDate.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+
             Integer patientId = findPatientIdByPhone(connection, request.phone);
+
+            if ("Revisit".equalsIgnoreCase(request.visitType)) {
+                if (patientId == null || !hasRevisitScheduleOnDate(connection, patientId, workDate, request.revisitAppointmentId)) {
+                    throw new ReceptionistException("Bệnh nhân không có lịch tái khám vào ngày " + formattedDate + ". Vui lòng chọn đăng ký Khám mới.");
+                }
+            }
+
             if (patientId == null) {
                 patientId = insertPatient(connection, request);
             } else {
@@ -232,17 +251,11 @@ public class ReceptionistDAO {
                     throw new ReceptionistException("Số điện thoại này đã được đăng ký cho bệnh nhân khác.");
                 }
                 if (hasActiveAppointmentOnSameDay(connection, patientId, request.scheduleId)) {
-                    throw new ReceptionistException("Bệnh nhân này đã có lịch hẹn đăng ký trong ngày hôm nay.");
+                    throw new ReceptionistException("Bệnh nhân này đã có lịch hẹn đăng ký vào ngày " + formattedDate + " rồi.");
                 }
                 updatePatient(connection, patientId, request);
             }
 
-            Map<String, Object> schedule = lockSchedule(connection, request.doctorId, request.scheduleId);
-            if (schedule == null) {
-                throw new ReceptionistException("Ca khám không hợp lệ hoặc đã hết chỗ.");
-            }
-
-            LocalDate workDate = ((Date) schedule.get("workDate")).toLocalDate();
             String timeSlot = (String) schedule.get("timeSlot");
             LocalDateTime appointmentTime = LocalDateTime.of(workDate, parseStartTime(timeSlot));
             LocalDateTime endAppointmentTime = LocalDateTime.of(workDate, parseEndTime(timeSlot));
@@ -292,6 +305,47 @@ public class ReceptionistDAO {
         }
     }
 
+    private boolean hasRevisitScheduleOnDate(Connection connection, int patientId, LocalDate targetDate, int revisitApptId) throws SQLException {
+        String mrSql = "SELECT 1 FROM Medical_record "
+                + "WHERE patient_id = ? AND revisit_date IS NOT NULL "
+                + "AND CAST(revisit_date AS DATE) = ?";
+        try (PreparedStatement statement = connection.prepareStatement(mrSql)) {
+            statement.setInt(1, patientId);
+            statement.setDate(2, Date.valueOf(targetDate));
+            try (ResultSet rs = statement.executeQuery()) {
+                if (rs.next()) return true;
+            }
+        }
+
+        if (revisitApptId > 0) {
+            String apptSql = "SELECT 1 FROM Appointment WHERE appointment_id = ? AND patient_id = ?";
+            try (PreparedStatement statement = connection.prepareStatement(apptSql)) {
+                statement.setInt(1, revisitApptId);
+                statement.setInt(2, patientId);
+                try (ResultSet rs = statement.executeQuery()) {
+                    if (rs.next()) return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private List<String> findPatientRevisitDates(Connection connection, int patientId) throws SQLException {
+        List<String> dates = new ArrayList<>();
+        String sql = "SELECT DISTINCT CAST(revisit_date AS DATE) AS rev_date FROM Medical_record "
+                + "WHERE patient_id = ? AND revisit_date IS NOT NULL ORDER BY rev_date DESC";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, patientId);
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    Date d = rs.getDate("rev_date");
+                    if (d != null) dates.add(d.toString());
+                }
+            }
+        }
+        return dates;
+    }
+
     private String getPatientNameById(Connection connection, int patientId) throws SQLException {
         String sql = "SELECT full_name FROM Patient WHERE patient_id = ?";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -321,8 +375,12 @@ public class ReceptionistDAO {
     }
 
     public List<Map<String, Object>> findInvoicesByStatus(String status, String invoiceType) throws SQLException {
+        return findInvoicesByStatus(status, invoiceType, null);
+    }
+
+    public List<Map<String, Object>> findInvoicesByStatus(String status, String invoiceType, String keyword) throws SQLException {
         StringBuilder sql = new StringBuilder(
-                "SELECT TOP 20 i.invoice_id, i.patient_id, p.full_name, p.phone, "
+                "SELECT TOP 50 i.invoice_id, i.patient_id, p.full_name, p.phone, "
                 + "i.final_amount, i.status, i.created_at, "
                 + "CASE WHEN EXISTS (SELECT 1 FROM Invoice_Detail id2 "
                 + "INNER JOIN Medical_Service ms2 ON ms2.service_id = id2.service_id "
@@ -330,6 +388,10 @@ public class ReceptionistDAO {
                 + "THEN 'Examination' ELSE 'Service' END AS invoice_type "
                 + "FROM Invoice i LEFT JOIN Patient p ON i.patient_id = p.patient_id "
                 + "WHERE i.status = ? ");
+        boolean hasKeyword = keyword != null && !keyword.trim().isEmpty();
+        if (hasKeyword) {
+            sql.append("AND (p.phone LIKE ? OR REPLACE(REPLACE(REPLACE(p.phone, ' ', ''), '-', ''), '+84', '0') LIKE ? OR p.full_name LIKE ? OR CAST(i.invoice_id AS VARCHAR) LIKE ?) ");
+        }
         if ("Examination".equalsIgnoreCase(invoiceType)) {
             sql.append("AND EXISTS (SELECT 1 FROM Invoice_Detail id2 INNER JOIN Medical_Service ms2 ON ms2.service_id = id2.service_id WHERE id2.invoice_id = i.invoice_id AND ms2.service_type = 'Examination') ");
         } else if ("Service".equalsIgnoreCase(invoiceType)) {
@@ -338,7 +400,17 @@ public class ReceptionistDAO {
         sql.append("ORDER BY i.created_at DESC, i.invoice_id DESC");
         try (Connection connection = openConnection();
              PreparedStatement statement = connection.prepareStatement(sql.toString())) {
-            statement.setString(1, status);
+            int paramIdx = 1;
+            statement.setString(paramIdx++, status);
+            if (hasKeyword) {
+                String rawKw = keyword.trim();
+                String kw = "%" + rawKw + "%";
+                String cleanKw = "%" + rawKw.replaceAll("[\\s\\-\\+]", "").replaceFirst("^84", "0") + "%";
+                statement.setString(paramIdx++, kw);
+                statement.setString(paramIdx++, cleanKw);
+                statement.setString(paramIdx++, kw);
+                statement.setString(paramIdx++, kw);
+            }
             try (ResultSet resultSet = statement.executeQuery()) {
                 List<Map<String, Object>> invoices = new ArrayList<>();
                 while (resultSet.next()) {
@@ -565,7 +637,7 @@ public class ReceptionistDAO {
                 + "LEFT JOIN Doctor d ON d.doctor_id = ds.doctor_id "
                 + "LEFT JOIN Medical_record mr ON mr.appointment_id = a.appointment_id "
                 + "WHERE CAST(a.appointment_time AS date) = CAST(GETDATE() AS date) "
-                + (status == null || status.isBlank() ? "" : "AND a.status = ? ")
+                + (status == null || status.isBlank() ? "AND a.status IN ('Waiting', 'Checked_In', 'In_Progress') " : "AND a.status = ? ")
                 + "ORDER BY a.appointment_time, a.queue_number";
         try (Connection connection = openConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -650,18 +722,84 @@ public class ReceptionistDAO {
             return statement.executeUpdate() > 0;
         }
     }
-    public List<Map<String, Object>> findMySchedule(int accountId, LocalDate fromDate, LocalDate toDate) throws SQLException {
-        String sql = "SELECT rs.reception_sched_id, rs.work_date, rs.time_slot, rs.status, a.full_name "
+
+    public Map<String, Object> findActiveShiftForNow(int accountId, LocalDate currentDate, LocalTime currentTime) {
+        String sql = "SELECT rs.reception_sched_id, rs.work_date, rs.time_slot, rs.status "
                 + "FROM Reception_Schedule rs "
                 + "INNER JOIN Reception r ON r.reception_id = rs.reception_id "
-                + "INNER JOIN Account a ON a.account_id = r.account_id "
-                + "WHERE r.account_id = ? AND rs.work_date BETWEEN ? AND ? "
+                + "WHERE r.account_id = ? AND CAST(rs.work_date AS DATE) = ? "
+                + "AND LOWER(LTRIM(RTRIM(COALESCE(rs.status, 'Active')))) NOT IN ('cancelled', 'expired', 'inactive')";
+        try (Connection connection = openConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, accountId);
+            statement.setDate(2, Date.valueOf(currentDate));
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    String timeSlot = rs.getString("time_slot");
+                    if (isTimeInShiftSlot(currentTime, timeSlot)) {
+                        Map<String, Object> shift = new HashMap<>();
+                        shift.put("scheduleId", rs.getInt("reception_sched_id"));
+                        shift.put("workDate", rs.getDate("work_date").toString());
+                        shift.put("timeSlot", timeSlot);
+                        shift.put("status", rs.getString("status"));
+                        return shift;
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            java.util.logging.Logger.getLogger(ReceptionistDAO.class.getName())
+                    .log(java.util.logging.Level.SEVERE, "Failed to check receptionist shift access", ex);
+        }
+        return null;
+    }
+
+    public boolean isTimeInShiftSlot(LocalTime time, String timeSlot) {
+        if (timeSlot == null || timeSlot.trim().isEmpty()) {
+            return false;
+        }
+        String slot = timeSlot.trim().toLowerCase();
+        if (slot.contains("sáng") || slot.contains("sang") || slot.contains("morning")) {
+            return time.isAfter(LocalTime.of(6, 45)) && time.isBefore(LocalTime.of(12, 15));
+        }
+        if (slot.contains("chiều") || slot.contains("chieu") || slot.contains("afternoon")) {
+            return time.isAfter(LocalTime.of(12, 45)) && time.isBefore(LocalTime.of(18, 15));
+        }
+        String[] parts = slot.split("-", 2);
+        if (parts.length == 2) {
+            try {
+                String startStr = parts[0].trim();
+                String endStr = parts[1].trim();
+                if (startStr.length() == 4 && startStr.contains(":")) startStr = "0" + startStr;
+                if (endStr.length() == 4 && endStr.contains(":")) endStr = "0" + endStr;
+                LocalTime start = LocalTime.parse(startStr.substring(0, 5));
+                LocalTime end = LocalTime.parse(endStr.substring(0, 5));
+                LocalTime bufferedStart = start.minusMinutes(15);
+                LocalTime bufferedEnd = end.plusMinutes(15);
+                if (start.isBefore(end)) {
+                    return !time.isBefore(bufferedStart) && !time.isAfter(bufferedEnd);
+                } else {
+                    return !time.isBefore(bufferedStart) || !time.isAfter(bufferedEnd);
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        return false;
+    }
+
+    public List<Map<String, Object>> findMySchedule(int accountId, LocalDate fromDate, LocalDate toDate) throws SQLException {
+        String sql = "SELECT rs.reception_sched_id, rs.work_date, rs.time_slot, rs.status, COALESCE(a.full_name, N'Nhân viên Lễ tân') AS full_name "
+                + "FROM Reception_Schedule rs "
+                + "LEFT JOIN Reception r ON r.reception_id = rs.reception_id "
+                + "LEFT JOIN Account a ON a.account_id = r.account_id "
+                + "WHERE (r.account_id = ? OR rs.reception_id = (SELECT TOP 1 reception_id FROM Reception WHERE account_id = ?)) "
+                + "  AND CAST(rs.work_date AS DATE) BETWEEN ? AND ? "
                 + "ORDER BY rs.work_date, rs.time_slot";
         try (Connection connection = openConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, accountId);
-            statement.setDate(2, Date.valueOf(fromDate));
-            statement.setDate(3, Date.valueOf(toDate));
+            statement.setInt(2, accountId);
+            statement.setDate(3, Date.valueOf(fromDate));
+            statement.setDate(4, Date.valueOf(toDate));
             try (ResultSet resultSet = statement.executeQuery()) {
                 List<Map<String, Object>> schedule = new ArrayList<>();
                 while (resultSet.next()) {
@@ -723,6 +861,119 @@ public class ReceptionistDAO {
                 appointment.put("queueNumber", resultSet.getInt("queue_number"));
                 appointment.put("doctorName", resultSet.getString("doctor_name"));
                 return appointment;
+            }
+        }
+    }
+
+    public List<Map<String, Object>> findPatientAppointments(Connection connection, int patientId)
+            throws SQLException {
+        List<Map<String, Object>> list = new ArrayList<>();
+        String sql = "SELECT a.appointment_id, a.appointment_time, a.booking_type, a.status, "
+                + "a.queue_number, d.full_name AS doctor_name "
+                + "FROM Appointment a LEFT JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
+                + "LEFT JOIN Doctor d ON d.doctor_id = ds.doctor_id "
+                + "WHERE a.patient_id = ? ORDER BY a.appointment_time DESC";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, patientId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    Map<String, Object> appointment = new HashMap<>();
+                    appointment.put("appointmentId", resultSet.getInt("appointment_id"));
+                    appointment.put("appointmentTime", toDisplayDateTime(resultSet.getTimestamp("appointment_time")));
+                    appointment.put("bookingType", resultSet.getString("booking_type"));
+                    String status = resultSet.getString("status");
+                    appointment.put("status", status);
+                    appointment.put("queueNumber", resultSet.getInt("queue_number"));
+                    appointment.put("doctorName", resultSet.getString("doctor_name"));
+                    appointment.put("canCancel", "Waiting".equalsIgnoreCase(status));
+                    list.add(appointment);
+                }
+            }
+        }
+        return list;
+    }
+
+    public boolean cancelAppointmentByReceptionist(int appointmentId, String reason, int receptionistAccountId) throws SQLException, ReceptionistException {
+        try (Connection connection = openConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                String querySql = "SELECT a.appointment_id, a.patient_id, a.appointment_time, a.status, "
+                        + "p.account_id AS patient_account_id, p.full_name AS patient_name, "
+                        + "d.full_name AS doctor_name "
+                        + "FROM Appointment a "
+                        + "INNER JOIN Patient p ON p.patient_id = a.patient_id "
+                        + "LEFT JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
+                        + "LEFT JOIN Doctor d ON d.doctor_id = ds.doctor_id "
+                        + "WHERE a.appointment_id = ?";
+                int patientAccountId = 0;
+                String currentStatus = null;
+                String doctorName = "";
+                Timestamp appointmentTime = null;
+                String patientName = "";
+
+                try (PreparedStatement statement = connection.prepareStatement(querySql)) {
+                    statement.setInt(1, appointmentId);
+                    try (ResultSet resultSet = statement.executeQuery()) {
+                        if (resultSet.next()) {
+                            currentStatus = resultSet.getString("status");
+                            patientAccountId = resultSet.getInt("patient_account_id");
+                            doctorName = resultSet.getString("doctor_name");
+                            appointmentTime = resultSet.getTimestamp("appointment_time");
+                            patientName = resultSet.getString("patient_name");
+                        }
+                    }
+                }
+
+                if (currentStatus == null) {
+                    throw new ReceptionistException("Không tìm thấy lịch hẹn.");
+                }
+
+                if ("Cancelled".equalsIgnoreCase(currentStatus)) {
+                    throw new ReceptionistException("Lịch hẹn này đã được hủy trước đó.");
+                }
+
+                if (!"Waiting".equalsIgnoreCase(currentStatus)) {
+                    throw new ReceptionistException("Chỉ có thể hủy lịch hẹn ở trạng thái Chờ khám (Waiting). Lịch hẹn đã check-in hoặc đang khám không thể hủy.");
+                }
+
+                String updateSql = "UPDATE Appointment SET status = 'Cancelled' WHERE appointment_id = ? AND status = 'Waiting'";
+                try (PreparedStatement statement = connection.prepareStatement(updateSql)) {
+                    statement.setInt(1, appointmentId);
+                    int updated = statement.executeUpdate();
+                    if (updated <= 0) {
+                        throw new ReceptionistException("Không thể hủy lịch hẹn (trạng thái đã thay đổi).");
+                    }
+                }
+
+                if (patientAccountId > 0) {
+                    String timeStr = toDisplayDateTime(appointmentTime);
+                    String notifTitle = "Lịch khám đã bị hủy";
+                    String notifContent = "Lịch khám ngày " + timeStr + " với " + (doctorName != null ? doctorName : "Bác sĩ") 
+                            + " đã được hủy bởi Lễ tân." + (reason != null && !reason.isBlank() ? " Lý do: " + reason.trim() : "");
+                    
+                    try {
+                        com.diabetes.monitoring.notification.NotificationDAO notifDAO = new com.diabetes.monitoring.notification.NotificationDAO();
+                        notifDAO.create(connection, patientAccountId, notifTitle, notifContent, "Appointment_Cancelled", "/patient/appointments", "CANCEL_" + appointmentId);
+                    } catch (Exception ex) {
+                        String notifSql = "INSERT INTO Notification (AccountID, Title, Content, Type, IsRead, CreatedAt) VALUES (?, ?, ?, 'Appointment_Cancelled', 0, GETDATE())";
+                        try (PreparedStatement notifStmt = connection.prepareStatement(notifSql)) {
+                            notifStmt.setInt(1, patientAccountId);
+                            notifStmt.setString(2, notifTitle);
+                            notifStmt.setString(3, notifContent);
+                            notifStmt.executeUpdate();
+                        } catch (Exception ignored) {
+                        }
+                    }
+                }
+
+                connection.commit();
+                return true;
+            } catch (Exception e) {
+                connection.rollback();
+                if (e instanceof ReceptionistException) {
+                    throw (ReceptionistException) e;
+                }
+                throw new SQLException("Lỗi khi hủy lịch hẹn: " + e.getMessage(), e);
             }
         }
     }
@@ -1110,6 +1361,7 @@ public class ReceptionistDAO {
         public LocalDate dateOfBirth;
         public String gender;
         public String address;
+        public String visitType;
         public int doctorId;
         public int scheduleId;
         public int revisitAppointmentId;

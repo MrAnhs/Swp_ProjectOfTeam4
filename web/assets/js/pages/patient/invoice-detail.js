@@ -15,40 +15,40 @@
         minute: "2-digit"
     });
 
-    function text(value, fallback = "Ch\u01B0a c\u1EADp nh\u1EADt") {
+    function text(value, fallback = "Chưa cập nhật") {
         return value ? String(value) : fallback;
     }
 
     function formatDateTime(value) {
         if (!value) {
-            return "Ch\u01B0a c\u00F3";
+            return "Chưa có";
         }
         const parsed = new Date(value);
-        return Number.isNaN(parsed.getTime()) ? "Kh\u00F4ng x\u00E1c \u0111\u1ECBnh" : dateTime.format(parsed);
+        return Number.isNaN(parsed.getTime()) ? "Không xác định" : dateTime.format(parsed);
     }
 
     function statusText(status) {
-        return status === "Paid" ? "\u0110\u00E3 thanh to\u00E1n" : "Ch\u01B0a thanh to\u00E1n";
+        return status === "Paid" ? "Đã thanh toán" : "Chưa thanh toán";
     }
 
     function paymentMethodText(method) {
         const labels = {
-            Cash: "Ti\u1EC1n m\u1EB7t",
-            Momo: "V\u00ED MoMo",
+            Cash: "Tiền mặt",
+            Momo: "Ví MoMo",
             VNPay: "VNPay",
-            Bank_Transfer: "Chuy\u1EC3n kho\u1EA3n ng\u00E2n h\u00E0ng"
+            Bank_Transfer: "Chuyển khoản ngân hàng"
         };
-        return labels[method] || "Ch\u01B0a ch\u1ECDn";
+        return labels[method] || "Chưa chọn";
     }
 
     function serviceTypeText(type) {
         if (type === "Lab_Test") {
-            return "X\u00E9t nghi\u1EC7m";
+            return "Xét nghiệm";
         }
         if (type === "Examination") {
-            return "Kh\u00E1m b\u1EC7nh";
+            return "Khám bệnh";
         }
-        return text(type, "D\u1ECBch v\u1EE5 y t\u1EBF");
+        return text(type, "Dịch vụ y tế");
     }
 
     function createInfoItem(label, value) {
@@ -74,16 +74,16 @@
         const systemName = document.createElement("strong");
         systemName.textContent = "DiabetesCare";
         const systemDescription = document.createElement("span");
-        systemDescription.textContent = "H\u1EC7 th\u1ED1ng theo d\u00F5i v\u00E0 ch\u0103m s\u00F3c s\u1EE9c kh\u1ECFe";
+        systemDescription.textContent = "Hệ thống theo dõi và chăm sóc sức khỏe";
         brandText.append(systemName, systemDescription);
         brand.append(brandIcon, brandText);
 
         const heading = document.createElement("div");
         heading.className = "invoice-heading";
         const invoiceLabel = document.createElement("span");
-        invoiceLabel.textContent = "H\u00D3A \u0110\u01A0N D\u1ECACH V\u1EE4 Y T\u1EBE";
+        invoiceLabel.textContent = "HÓA ĐƠN DỊCH VỤ Y TẾ";
         const invoiceNumber = document.createElement("h2");
-        invoiceNumber.textContent = `S\u1ED1: HD-${String(invoice.invoiceId).padStart(6, "0")}`;
+        invoiceNumber.textContent = `Số: HD-${String(invoice.invoiceId).padStart(6, "0")}`;
         const badge = document.createElement("span");
         badge.className = `status-pill ${
             invoice.status === "Paid" ? "completed" : "waiting"
@@ -102,14 +102,14 @@
         const invoiceBlock = document.createElement("div");
         invoiceBlock.className = "invoice-info-block";
         const invoiceTitle = document.createElement("h3");
-        invoiceTitle.textContent = "Th\u00F4ng tin h\u00F3a \u0111\u01A1n";
+        invoiceTitle.textContent = "Thông tin hóa đơn";
         const invoiceGrid = document.createElement("div");
         invoiceGrid.className = "invoice-info-grid";
         invoiceGrid.append(
-            createInfoItem("M\u00E3 h\u00F3a \u0111\u01A1n", `HD-${String(invoice.invoiceId).padStart(6, "0")}`),
-            createInfoItem("Ng\u00E0y t\u1EA1o", formatDateTime(invoice.createdAt)),
-            createInfoItem("Ng\u00E0y xu\u1EA5t", formatDateTime(invoice.exportedAt)),
-            createInfoItem("Ph\u01B0\u01A1ng th\u1EE9c thanh to\u00E1n",
+            createInfoItem("Mã hóa đơn", `HD-${String(invoice.invoiceId).padStart(6, "0")}`),
+            createInfoItem("Ngày tạo", formatDateTime(invoice.createdAt)),
+            createInfoItem("Ngày xuất", formatDateTime(invoice.exportedAt)),
+            createInfoItem("Phương thức thanh toán",
                 paymentMethodText(invoice.paymentMethod))
         );
         invoiceBlock.append(invoiceTitle, invoiceGrid);
@@ -117,17 +117,17 @@
         const patientBlock = document.createElement("div");
         patientBlock.className = "invoice-info-block";
         const patientTitle = document.createElement("h3");
-        patientTitle.textContent = "Th\u00F4ng tin b\u1EC7nh nh\u00E2n";
+        patientTitle.textContent = "Thông tin bệnh nhân";
         const patientGrid = document.createElement("div");
         patientGrid.className = "invoice-info-grid";
         patientGrid.append(
-            createInfoItem("M\u00E3 b\u1EC7nh nh\u00E2n", `BN-${String(invoice.patientId).padStart(6, "0")}`),
-            createInfoItem("H\u1ECD v\u00E0 t\u00EAn", text(invoice.patientName)),
-            createInfoItem("S\u1ED1 \u0111i\u1EC7n tho\u1EA1i", text(invoice.patientPhone)),
+            createInfoItem("Mã bệnh nhân", `BN-${String(invoice.patientId).padStart(6, "0")}`),
+            createInfoItem("Họ và tên", text(invoice.patientName)),
+            createInfoItem("Số điện thoại", text(invoice.patientPhone)),
             createInfoItem("Email", text(invoice.patientEmail))
         );
         if (invoice.patientAddress) {
-            const address = createInfoItem("\u0110\u1ECBa ch\u1EC9", invoice.patientAddress);
+            const address = createInfoItem("Địa chỉ", invoice.patientAddress);
             address.classList.add("invoice-info-item--wide");
             patientGrid.append(address);
         }
@@ -141,13 +141,13 @@
         const section = document.createElement("section");
         section.className = "invoice-service-section";
         const heading = document.createElement("h3");
-        heading.textContent = "Chi ti\u1EBFt d\u1ECBch v\u1EE5";
+        heading.textContent = "Chi tiết dịch vụ";
         section.append(heading);
 
         if (!items.length) {
             const empty = document.createElement("p");
             empty.className = "loading-state";
-            empty.textContent = "H\u00F3a \u0111\u01A1n ch\u01B0a c\u00F3 d\u1ECBch v\u1EE5.";
+            empty.textContent = "Hóa đơn chưa có dịch vụ.";
             section.append(empty);
             return section;
         }
@@ -159,7 +159,7 @@
 
         const head = document.createElement("thead");
         const headRow = document.createElement("tr");
-        ["STT", "D\u1ECBch v\u1EE5", "M\u00E3 l\u1ECBch h\u1EB9n", "\u0110\u01A1n gi\u00E1", "S\u1ED1 l\u01B0\u1EE3ng", "Th\u00E0nh ti\u1EC1n"]
+        ["STT", "Dịch vụ", "Mã lịch hẹn", "Đơn giá", "Số lượng", "Thành tiền"]
             .forEach((label) => {
                 const cell = document.createElement("th");
                 cell.textContent = label;
@@ -208,23 +208,14 @@
         const totals = document.createElement("section");
         totals.className = "invoice-totals";
 
-        const total = document.createElement("p");
-        total.append(createSpan("T\u1EA1m t\u00EDnh"), createStrong(money.format(invoice.totalAmount)));
-
-        const deduction = document.createElement("p");
-        deduction.append(
-            createSpan("Gi\u1EA3m tr\u1EEB b\u1EA3o hi\u1EC3m"),
-            createStrong(`-${money.format(invoice.insuranceDeduction)}`)
-        );
-
         const finalAmount = document.createElement("p");
         finalAmount.className = "invoice-final";
         finalAmount.append(
-            createSpan(invoice.status === "Paid" ? "\u0110\u00E3 thanh to\u00E1n" : "C\u1EA7n thanh to\u00E1n"),
+            createSpan(invoice.status === "Paid" ? "Đã thanh toán" : "Cần thanh toán"),
             createStrong(money.format(invoice.finalAmount))
         );
 
-        totals.append(total, deduction, finalAmount);
+        totals.append(finalAmount);
         return totals;
     }
 
@@ -244,14 +235,14 @@
         const form = document.createElement("form");
         form.className = "payment-request-form";
         form.innerHTML = `
-            <label>Ph\u01B0\u01A1ng th\u1EE9c thanh to\u00E1n
+            <label>Phương thức thanh toán
                 <select name="paymentMethod" required>
-                    <option value="">Ch\u1ECDn ph\u01B0\u01A1ng th\u1EE9c</option>
-                    <option value="Cash">Ti\u1EC1n m\u1EB7t (Thanh to\u00E1n t\u1EA1i qu\u1EA7y l\u1EC5 t\u00E2n)</option>
-                    <option value="VNPay">Chuy\u1EC3n kho\u1EA3n tr\u1EF1c tuy\u1EBFn (VNPay)</option>
+                    <option value="">Chọn phương thức</option>
+                    <option value="Cash">Tiền mặt (Thanh toán tại quầy lễ tân)</option>
+                    <option value="VNPay">Chuyển khoản trực tuyến (VNPay)</option>
                 </select>
             </label>
-            <button class="btn-page-primary" type="submit">G\u1EEDi y\u00EAu c\u1EA7u thanh to\u00E1n</button>
+            <button class="btn-page-primary" type="submit">Gửi yêu cầu thanh toán</button>
             <div class="form-message" hidden></div>
         `;
         form.paymentMethod.value = invoice.paymentMethod || "";
@@ -296,8 +287,8 @@
 
     function render(data) {
         const invoice = data.invoice;
-        title.textContent = `H\u00F3a \u0111\u01A1n #${invoice.invoiceId}`;
-        meta.textContent = `Ng\u00E0y t\u1EA1o: ${formatDateTime(invoice.createdAt)} \u2022 ${
+        title.textContent = `Hóa đơn #${invoice.invoiceId}`;
+        meta.textContent = `Ngày tạo: ${formatDateTime(invoice.createdAt)} • ${
             statusText(invoice.status)
         }`;
         detail.replaceChildren();
@@ -316,7 +307,7 @@
     }
 
     if (!Number.isInteger(invoiceId) || invoiceId <= 0) {
-        detail.textContent = "M\u00E3 h\u00F3a \u0111\u01A1n kh\u00F4ng h\u1EE3p l\u1EC7.";
+        detail.textContent = "Mã hóa đơn không hợp lệ.";
         return;
     }
 

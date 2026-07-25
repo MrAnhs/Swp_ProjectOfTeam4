@@ -93,7 +93,15 @@ public class User {
         return dob;
     }
 
+    public String getDateOfBirth() {
+        return dob;
+    }
+
     public void setDob(String dob) {
+        this.dob = dob;
+    }
+
+    public void setDateOfBirth(String dob) {
         this.dob = dob;
     }
 

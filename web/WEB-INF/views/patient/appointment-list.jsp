@@ -30,27 +30,32 @@
             </a>
         </header>
 
-        <section class="page-card">
-            <div class="filter-row patient-search-bar">
-                <label>Tr&#7841;ng th&#225;i
-                    <select id="appointmentStatusFilter">
-                        <option value="">T&#7845;t c&#7843;</option>
-                        <option value="Waiting">Ch&#7901; kh&#225;m</option>
-                        <option value="In_Progress">&#272;ang kh&#225;m</option>
-                        <option value="Completed">&#272;&#227; ho&#224;n th&#224;nh</option>
-                        <option value="Cancelled">&#272;&#227; h&#7911;y</option>
-                        <option value="Absent">V&#7855;ng m&#7863;t</option>
-                    </select>
-                </label>
-                <label>T&#236;m ki&#7871;m
-                    <input id="appointmentSearch" type="search" placeholder="M&#227; l&#7883;ch h&#7865;n, b&#225;c s&#297;, chuy&#234;n khoa ho&#7863;c ph&#242;ng kh&#225;m">
-                </label>
-                <label>Ng&#224;y kh&#225;m
-                    <input id="appointmentDateFilter" type="date">
-                </label>
+        <section class="card-lab-style page-card p-0">
+            <div class="card-lab-header px-4 py-3">
+                <h2><i class="bi bi-calendar-check"></i> Danh s&#225;ch l&#7883;ch h&#7865;n</h2>
             </div>
-            <div id="appointmentList" class="record-list loading-state">
-                &#272;ang t&#7843;i danh s&#225;ch l&#7883;ch h&#7865;n...
+            <div class="p-4">
+                <div class="filter-row patient-search-bar mb-3">
+                    <label>Tr&#7841;ng th&#225;i
+                        <select id="appointmentStatusFilter">
+                            <option value="">T&#7845;t c&#7843;</option>
+                            <option value="Waiting">Ch&#7901; kh&#225;m</option>
+                            <option value="In_Progress">&#272;ang kh&#225;m</option>
+                            <option value="Completed">&#272;&#227; ho&#224;n th&#224;nh</option>
+                            <option value="Cancelled">&#272;&#227; h&#7911;y</option>
+                            <option value="Absent">V&#7855;ng m&#7863;t</option>
+                        </select>
+                    </label>
+                    <label>T&#236;m ki&#7871;m
+                        <input id="appointmentSearch" type="search" placeholder="M&#227; l&#7883;ch h&#7865;n, b&#225;c s&#297;, chuy&#234;n khoa ho&#7863;c ph&#242;ng kh&#225;m">
+                    </label>
+                    <label>Ng&#224;y kh&#225;m
+                        <input id="appointmentDateFilter" type="date">
+                    </label>
+                </div>
+                <div id="appointmentList" class="record-list loading-state">
+                    &#272;ang t&#7843;i danh s&#225;ch l&#7883;ch h&#7865;n...
+                </div>
             </div>
         </section>
     </main>

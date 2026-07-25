@@ -9,7 +9,7 @@
     let diagnosisLoaded = false;
     let chatLoaded = false;
 
-    function value(input, fallback = "Ch\u01b0a c\u00f3") {
+    function value(input, fallback = "Chưa có") {
         return input && input !== "null" ? String(input) : fallback;
     }
 
@@ -31,42 +31,42 @@
         [
             ["Urea", record.urea], ["Creatinine", record.cr], ["HbA1c", record.hba1c],
             ["Cholesterol", record.chol], ["Triglycerides", record.tg], ["HDL", record.hdl],
-            ["LDL", record.ldl], ["VLDL", record.vldl], ["C\u00e2n n\u1eb7ng", record.weight],
-            ["Chi\u1ec1u cao", record.height], ["BMI", record.bmi]
+            ["LDL", record.ldl], ["VLDL", record.vldl], ["Cân nặng", record.weight],
+            ["Chiều cao", record.height], ["BMI", record.bmi]
         ].forEach(([label, metricValue]) => grid.append(createMetric(label, metricValue)));
 
         const symptoms = document.createElement("p");
-        symptoms.textContent = `Tri\u1ec7u ch\u1ee9ng: ${value(record.symptoms)}`;
+        symptoms.textContent = `Triệu chứng: ${value(record.symptoms)}`;
         symptoms.style.marginTop = "1rem";
         overview.append(grid, symptoms);
-        title.textContent = `H\u1ed3 s\u01a1 #${record.healthRecordId}`;
-        meta.textContent = `Ng\u00e0y g\u1eedi: ${value(record.createdAt)} | Tr\u1ea1ng th\u00e1i: ${record.status === "approved" ? "\u0110\u00e3 duy\u1ec7t" : "Ch\u1edd x\u1eed l\u00fd"}`;
+        title.textContent = `Hồ sơ #${record.healthRecordId}`;
+        meta.textContent = `Ngày gửi: ${value(record.createdAt)} | Trạng thái: ${record.status === "approved" ? "Đã duyệt" : "Chờ xử lý"}`;
     }
 
     async function loadDiagnosis() {
         if (diagnosisLoaded) return;
         diagnosisLoaded = true;
-        diagnosis.textContent = "\u0110ang t\u1ea3i ch\u1ea9n \u0111o\u00e1n...";
+        diagnosis.textContent = "Đang tải chẩn đoán...";
         try {
             const data = await ApiClient.get(`/get-diagnosis?healthRecordId=${recordId}`);
             diagnosis.replaceChildren();
             if (!data.diagnosis) {
-                diagnosis.textContent = "H\u1ed3 s\u01a1 \u0111ang ch\u1edd b\u00e1c s\u0129 x\u1eed l\u00fd.";
+                diagnosis.textContent = "Hồ sơ đang chờ bác sĩ xử lý.";
                 return;
             }
             const content = document.createElement("div");
             const doctor = document.createElement("p");
-            doctor.textContent = `B\u00e1c s\u0129: ${value(data.doctorName)}`;
+            doctor.textContent = `Bác sĩ: ${value(data.doctorName)}`;
             const conclusion = document.createElement("p");
-            conclusion.textContent = `Ch\u1ea9n \u0111o\u00e1n: ${value(data.diagnosis.final_diagnosis)}`;
+            conclusion.textContent = `Chẩn đoán: ${value(data.diagnosis.final_diagnosis)}`;
             const note = document.createElement("p");
-            note.textContent = `Ghi ch\u00fa: ${value(data.diagnosis.doctor_note)}`;
+            note.textContent = `Ghi chú: ${value(data.diagnosis.doctor_note)}`;
             const time = document.createElement("p");
-            time.textContent = `Th\u1eddi gian x\u1eed l\u00fd: ${value(data.diagnosis.processed_at)}`;
+            time.textContent = `Thời gian xử lý: ${value(data.diagnosis.processed_at)}`;
             content.append(doctor, conclusion, note, time);
             diagnosis.append(content);
         } catch (error) {
-            diagnosis.textContent = `Kh\u00f4ng th\u1ec3 t\u1ea3i ch\u1ea9n \u0111o\u00e1n: ${error.message}`;
+            diagnosis.textContent = `Không thể tải chẩn đoán: ${error.message}`;
         }
     }
 
@@ -93,12 +93,12 @@
     async function loadChat() {
         if (chatLoaded) return;
         chatLoaded = true;
-        chat.textContent = "\u0110ang t\u1ea3i t\u00f3m t\u1eaft & l\u1ecbch s\u1eed AI...";
+        chat.textContent = "Đang tải tóm tắt & lịch sử AI...";
         try {
             const data = await ApiClient.get(`/get-ai-summary?healthRecordId=${recordId}`);
             chat.replaceChildren();
             if (!data.summaries || !data.summaries.length) {
-                chat.textContent = "H\u1ed3 s\u01a1 n\u00e0y kh\u00f4ng c\u00f3 t\u00f3m t\u1eaft & l\u1ecbch s\u1eed AI.";
+                chat.textContent = "Hồ sơ này không có tóm tắt & lịch sử AI.";
                 return;
             }
             data.summaries.forEach((summary) => {
@@ -108,7 +108,7 @@
                     summaryBox.innerHTML = `
                         <div class="ai-summary-header">
                             <i class="bi bi-robot text-success"></i>
-                            <strong>T\u00f3m t\u1eaft quan tr\u1ecdng t\u1eeb AI</strong>
+                            <strong>Tóm tắt quan trọng từ AI</strong>
                         </div>
                         <div class="ai-summary-content">${formatSummary(summary.aiSummary)}</div>
                     `;
@@ -117,7 +117,7 @@
                 appendConversation(summary.chatHistory);
             });
         } catch (error) {
-            chat.textContent = `Kh\u00f4ng th\u1ec3 t\u1ea3i t\u00f3m t\u1eaft & l\u1ecbch s\u1eed AI: ${error.message}`;
+            chat.textContent = `Không thể tải tóm tắt & lịch sử AI: ${error.message}`;
         }
     }
 
@@ -133,7 +133,7 @@
     });
 
     if (!Number.isInteger(recordId) || recordId <= 0) {
-        overview.textContent = "M\u00e3 h\u1ed3 s\u01a1 kh\u00f4ng h\u1ee3p l\u1ec7.";
+        overview.textContent = "Mã hồ sơ không hợp lệ.";
         meta.textContent = "";
         return;
     }
@@ -141,7 +141,7 @@
     ApiClient.get("/medical-history")
         .then((data) => {
             const record = (data.records || []).find((item) => Number(item.healthRecordId) === recordId);
-            if (!record) throw new Error("Kh\u00f4ng t\u00ecm th\u1ea5y h\u1ed3 s\u01a1 ho\u1eb7c b\u1ea1n kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp.");
+            if (!record) throw new Error("Không tìm thấy hồ sơ hoặc bạn không có quyền truy cập.");
             renderOverview(record);
         })
         .catch((error) => {

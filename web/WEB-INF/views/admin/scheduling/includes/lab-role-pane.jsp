@@ -2,7 +2,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
-            <div id="labRolePane" class="schedule-role-pane staff-role-pane" role="tabpanel" aria-labelledby="lab-role-tab" tabindex="0" hidden>
+            <div id="labRolePane" class="schedule-role-pane staff-role-pane" role="tabpanel" aria-labelledby="lab-role-tab" tabindex="0" ${currentRoleFilter != 'doctor_lab' && currentRoleFilter != 'all' ? 'hidden style="display:none;"' : ''}>
             <div class="card">
                 <div class="card-header fw-semibold d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <span>Lịch trực bác sĩ xét nghiệm</span>
@@ -40,15 +40,15 @@
                                     <td><fmt:formatDate value="${ss.workDate}" pattern="dd/MM/yyyy" /></td>
                                     <td>${ss.timeSlot}</td>
                                     <td>
-                                        <c:choose>
-                                            <c:when test="${ss.effectiveStatus eq 'Expired'}"><span class="badge" style="background:#6c757d;"><i class="bi bi-clock-history me-1"></i>Đã qua</span></c:when>
-                                            <c:when test="${ss.effectiveStatus eq 'Cancelled'}"><span class="badge" style="background:#dc3545;"><i class="bi bi-x-circle me-1"></i>Đã hủy</span></c:when>
-                                            <c:when test="${ss.effectiveStatus eq 'Completed'}"><span class="badge" style="background:#0f766e;"><i class="bi bi-check2-circle me-1"></i>Hoàn tất</span></c:when>
-                                            <c:when test="${ss.effectiveStatus eq 'Ongoing'}"><span class="badge" style="background:#0d6efd;"><i class="bi bi-play-circle me-1"></i>Đang diễn ra</span></c:when>
-                                            <c:when test="${ss.effectiveStatus eq 'Upcoming'}"><span class="badge" style="background:#0dcaf0;color:#000;"><i class="bi bi-calendar-event me-1"></i>Sắp diễn ra</span></c:when>
-                                            <c:otherwise><span class="badge" style="background:#198754;"><i class="bi bi-check-circle me-1"></i>Đã xếp lịch</span></c:otherwise>
-                                        </c:choose>
-                                    </td>
+                                         <c:choose>
+                                             <c:when test="${ss.effectiveStatus eq 'Completed' || ss.effectiveStatus eq 'Expired'}"><span class="badge" style="background:#6c757d;"><i class="bi bi-check2-circle me-1"></i>Đã hoàn thành</span></c:when>
+                                             <c:when test="${ss.effectiveStatus eq 'Cancelled'}"><span class="badge" style="background:#dc3545;"><i class="bi bi-x-circle me-1"></i>Đã hủy</span></c:when>
+                                             <c:when test="${ss.effectiveStatus eq 'Full'}"><span class="badge" style="background:#fd7e14;"><i class="bi bi-exclamation-circle me-1"></i>Đã đầy</span></c:when>
+                                             <c:when test="${ss.effectiveStatus eq 'Ongoing'}"><span class="badge" style="background:#0d6efd;"><i class="bi bi-play-circle me-1"></i>Đang diễn ra</span></c:when>
+                                             <c:when test="${ss.effectiveStatus eq 'Upcoming'}"><span class="badge" style="background:#0dcaf0;color:#000;"><i class="bi bi-calendar-event me-1"></i>Sắp diễn ra</span></c:when>
+                                             <c:otherwise><span class="badge" style="background:#198754;"><i class="bi bi-check-circle me-1"></i>Sẵn sàng</span></c:otherwise>
+                                         </c:choose>
+                                     </td>
                                     <td>
                                         <div class="dropdown table-actions">
                                             <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Thao tác lịch trực bác sĩ xét nghiệm">

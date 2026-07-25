@@ -82,10 +82,10 @@ public class PatientPageServlet extends HttpServlet {
         if ("/patient/invoices/detail".equals(servletPath)) {
             return "invoice-detail.jsp";
         }
-        if ("/patient/history".equals(servletPath)) {
+        if ("/patient/history".equals(servletPath) || "/patient/records".equals(servletPath)) {
             return "visit-history.jsp";
         }
-        if ("/patient/history/detail".equals(servletPath)) {
+        if ("/patient/history/detail".equals(servletPath) || "/patient/records/detail".equals(servletPath)) {
             return "visit-detail.jsp";
         }
         if ("/patient/health-records/new".equals(servletPath)) {

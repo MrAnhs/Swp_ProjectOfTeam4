@@ -34,20 +34,15 @@ public class ReceptionistApiServlet extends HttpServlet {
             }
             if ("/patients/revisit".equals(path)) {
                 String dateStr = request.getParameter("date");
-                System.out.println("DEBUG Revisit API - dateStr received: '" + dateStr + "'");
                 java.time.LocalDate date = java.time.LocalDate.now();
                 if (dateStr != null && !dateStr.isBlank()) {
                     try {
                         date = java.time.LocalDate.parse(dateStr.trim());
-                        System.out.println("DEBUG Revisit API - parsed date: " + date);
                     } catch (java.time.format.DateTimeParseException e) {
-                        System.out.println("DEBUG Revisit API - failed to parse: " + e.getMessage());
+                        // Keep fallback date
                     }
-                } else {
-                    System.out.println("DEBUG Revisit API - dateStr is null or blank, using today: " + date);
                 }
                 List<Map<String, Object>> patients = service.getUpcomingRevisits(date);
-                System.out.println("DEBUG Revisit API - number of patients found: " + (patients == null ? 0 : patients.size()));
                 write(response, "{\"success\":true,\"patients\":" + toJson(patients) + "}");
                 return;
             }
@@ -65,7 +60,7 @@ public class ReceptionistApiServlet extends HttpServlet {
                 return;
             }
             if ("/invoices".equals(path)) {
-                List<Map<String, Object>> invoices = service.getInvoices(request.getParameter("status"), request.getParameter("invoiceType"));
+                List<Map<String, Object>> invoices = service.getInvoices(request.getParameter("status"), request.getParameter("invoiceType"), request.getParameter("keyword"));
                 write(response, "{\"success\":true,\"invoices\":" + toJson(invoices) + "}");
                 return;
             }
@@ -98,6 +93,12 @@ public class ReceptionistApiServlet extends HttpServlet {
                 write(response, "{\"success\":true,\"items\":" + toJson(service.getMySchedule(currentUser.getId(), request.getParameter("fromDate"), request.getParameter("toDate"))) + "}");
                 return;
             }
+            if ("/shift-status".equals(path)) {
+                User currentUser = currentUser(request);
+                Map<String, Object> status = service.getCurrentShiftStatus(currentUser.getId());
+                write(response, "{\"success\":true,\"shift\":" + toJson(status) + "}");
+                return;
+            }
             writeError(response, HttpServletResponse.SC_NOT_FOUND, "API không tồn tại.");
         } catch (NumberFormatException | ReceptionistException e) {
             writeError(response, HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
@@ -113,6 +114,17 @@ public class ReceptionistApiServlet extends HttpServlet {
         prepareJson(response);
         try {
             String path = apiPath(request);
+            if (!"/my-schedule/register".equals(path)) {
+                User currentUser = currentUser(request);
+                Map<String, Object> shiftStatus = service.getCurrentShiftStatus(currentUser.getId());
+                Boolean inShift = (Boolean) shiftStatus.get("inShift");
+                if (inShift != null && !inShift) {
+                    String msg = (String) shiftStatus.get("message");
+                    writeError(response, HttpServletResponse.SC_FORBIDDEN, msg != null ? msg : "Bạn hiện không ở trong ca trực active. Không thể thực hiện thao tác!");
+                    return;
+                }
+            }
+
             if ("/patients".equals(path)) {
                 write(response, "{\"success\":true,\"patient\":" + toJson(service.createPatient(params(request))) + "}");
                 return;
@@ -136,6 +148,14 @@ public class ReceptionistApiServlet extends HttpServlet {
             }
             if ("/appointments".equals(path)) {
                 write(response, successObject(service.registerAppointment(params(request))));
+                return;
+            }
+            if ("/appointments/cancel".equals(path)) {
+                User currentUser = currentUser(request);
+                int appointmentId = parseInt(request.getParameter("appointmentId"));
+                String reason = request.getParameter("reason");
+                service.cancelAppointment(appointmentId, reason, currentUser.getId());
+                write(response, "{\"success\":true,\"message\":\"Đã hủy lịch khám thành công và gửi thông báo tới bệnh nhân.\"}");
                 return;
             }
             if ("/invoices/pay".equals(path)) {

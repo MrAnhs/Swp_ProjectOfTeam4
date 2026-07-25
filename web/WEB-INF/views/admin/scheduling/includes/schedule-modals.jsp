@@ -1,51 +1,5 @@
 <%@ page pageEncoding="UTF-8" %>
-    <c:if test="${not empty selectedSchedule}">
-        <div class="card mt-4 border-primary-subtle">
-            <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
-                <span>Chuyển giao ca trực</span>
-                <a class="btn btn-sm btn-outline-secondary"
-                    href="${pageContext.request.contextPath}/admin?action=schedule">Đóng</a>
-            </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <div class="small text-muted mb-1">Ca đang chọn</div>
-                    <div class="fw-semibold">
-                        ${selectedSchedule.doctorName} -
-                        <c:choose>
-                            <c:when test="${selectedSchedule.department == 'Endocrinology'}">Nội tiết - Tiểu đường
-                            </c:when>
-                            <c:when test="${selectedSchedule.department == 'Cardiology'}">Tim mạch</c:when>
-                            <c:when test="${selectedSchedule.department == 'Nephrology'}">Thận học</c:when>
-                            <c:when test="${selectedSchedule.department == 'General'}">Tổng quát</c:when>
-                            <c:otherwise>${selectedSchedule.department}</c:otherwise>
-                        </c:choose>
-                        -
-                        <fmt:formatDate value="${selectedSchedule.workDate}" pattern="dd/MM/yyyy" />
-                        - ${selectedSchedule.timeSlot}
-                    </div>
-                </div>
-                <form method="post" action="${pageContext.request.contextPath}/admin" class="row g-3">
-                    <input type="hidden" name="action" value="transferSchedule">
-                    <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
-                    <input type="hidden" name="scheduleId" value="${selectedSchedule.scheduleId}">
-                    <div class="col-md-8">
-                        <label class="form-label">Chọn bác sĩ nhận ca</label>
-                        <select class="form-select" name="targetDoctorId" required>
-                            <option value="">-- Chọn bác sĩ thay thế --</option>
-                            <c:forEach var="d" items="${transferCandidates}">
-                                <option value="${d.doctorId}">${d.fullName} - ${d.department}</option>
-                            </c:forEach>
-                        </select>
-                        <small class="text-muted">Hệ thống sẽ kiểm tra trùng ca và chỉ cho phép chuyển sang bác sĩ còn
-                            khả dụng.</small>
-                    </div>
-                    <div class="col-md-4 d-flex align-items-end">
-                        <button type="submit" class="btn btn-primary w-100">Xác nhận chuyển giao</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </c:if>
+
 
     <div class="modal fade" id="createScheduleModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
@@ -60,7 +14,7 @@
                     <div class="modal-body">
                         <div class="mb-3">
                             <label class="form-label">Bác sĩ</label>
-                            <select class="form-select" name="doctorId" id="createScheduleDoctorId" required>
+                            <select class="form-select" name="doctorId" id="createScheduleDoctorId" onchange="filterRoomsByDoctor()" required>
                                 <option value="">-- Chọn bác sĩ --</option>
                                 <c:forEach var="d" items="${doctors}">
                                     <option value="${d.doctorId}" data-department="${d.department}">${d.fullName}
@@ -73,7 +27,7 @@
                             <select class="form-select" name="roomId" id="createScheduleRoomId" required>
                                 <option value="">-- Chọn phòng --</option>
                                 <c:forEach var="room" items="${rooms}">
-                                    <option value="${room.roomId}">${room.roomNumber} - ${room.roomName}</option>
+                                    <option value="${room.roomId}" data-room-name="${room.roomName}">${room.roomNumber} - ${room.roomName}</option>
                                 </c:forEach>
                             </select>
                         </div>
@@ -91,15 +45,17 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Khung giờ</label>
-                            <input class="form-control" name="timeSlot" placeholder="07:00-09:00" required>
+                            <input type="text" class="form-control" name="timeSlot" placeholder="VD: 07:00 - 11:30"
+                                required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Số bệnh nhân tối đa</label>
-                            <input type="number" class="form-control" name="maxPatients" min="1" required>
+                            <input type="number" class="form-control" name="maxPatients" min="1" max="50"
+                                placeholder="VD: 20">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Suất online</label>
-                            <input type="number" class="form-control" name="onlineQuota" min="0"
+                            <input type="number" class="form-control" name="onlineQuota" min="0" max="50"
                                 placeholder="Tự động nếu bỏ trống">
                             <div class="form-text">Nếu để trống, hệ thống sẽ tự dùng cấu hình an toàn mặc định.</div>
                         </div>
@@ -109,6 +65,111 @@
                         <button type="submit" class="btn btn-primary">Lưu lịch trực</button>
                     </div>
                 </form>
+    <script>
+    function filterRoomsByDoctor() {
+        const doctorSelect = document.getElementById('createScheduleDoctorId');
+        const roomSelect = document.getElementById('createScheduleRoomId');
+        if (!doctorSelect || !roomSelect) return;
+
+        if (!roomSelect._masterDoctorRooms) {
+            roomSelect._masterDoctorRooms = Array.from(roomSelect.options)
+                .filter(opt => opt.value !== '')
+                .map(opt => ({
+                    value: opt.value,
+                    text: opt.textContent || '',
+                    dept: opt.getAttribute('data-department') || ''
+                }));
+        }
+
+        const masterRooms = roomSelect._masterDoctorRooms;
+        const selectedIndex = doctorSelect.selectedIndex;
+        const doctorOpt = selectedIndex >= 0 ? doctorSelect.options[selectedIndex] : null;
+
+        roomSelect.innerHTML = '';
+
+        if (!doctorSelect.value || !doctorOpt || selectedIndex <= 0) {
+            const defaultOpt = document.createElement('option');
+            defaultOpt.value = '';
+            defaultOpt.textContent = '-- Vui lòng chọn bác sĩ trước --';
+            roomSelect.appendChild(defaultOpt);
+            roomSelect.value = '';
+            return;
+        }
+
+        let doctorDept = (doctorOpt.getAttribute('data-department') || '').trim();
+        if (!doctorDept) {
+            const match = doctorOpt.textContent.match(/\(([^)]+)\)/);
+            if (match && match[1]) {
+                doctorDept = match[1].trim();
+            }
+        }
+
+        function norm(s) {
+            return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase().trim();
+        }
+
+        const docDeptNorm = norm(doctorDept);
+
+        let matched = masterRooms.filter(r => {
+            const roomTextNorm = norm(r.text);
+            const roomDeptNorm = norm(r.dept);
+
+            if (!docDeptNorm) return true;
+
+            if (roomTextNorm.includes(docDeptNorm) || docDeptNorm.includes(roomTextNorm)) return true;
+            if (roomDeptNorm && (roomDeptNorm.includes(docDeptNorm) || docDeptNorm.includes(roomDeptNorm))) return true;
+
+            if (docDeptNorm.includes('da lieu') && roomTextNorm.includes('da lieu')) return true;
+            if (docDeptNorm.includes('noi tiet') && roomTextNorm.includes('noi tiet')) return true;
+            if (docDeptNorm.includes('tim mach') && roomTextNorm.includes('tim mach')) return true;
+            if (docDeptNorm.includes('than') && roomTextNorm.includes('than')) return true;
+
+            return false;
+        });
+
+        if (matched.length === 0) {
+            matched = masterRooms.filter(r => {
+                const roomTextNorm = norm(r.text);
+                return roomTextNorm.includes('tong quat') || roomTextNorm.includes('general');
+            });
+        }
+
+        if (matched.length === 0) {
+            matched = masterRooms;
+        }
+
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = '-- Chọn phòng --';
+        roomSelect.appendChild(placeholder);
+
+        matched.forEach(r => {
+            const opt = document.createElement('option');
+            opt.value = r.value;
+            opt.textContent = r.text;
+            roomSelect.appendChild(opt);
+        });
+
+        if (matched.length === 1) {
+            roomSelect.value = matched[0].value;
+        } else {
+            roomSelect.value = '';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const doctorSelect = document.getElementById('createScheduleDoctorId');
+        if (doctorSelect) {
+            doctorSelect.addEventListener('change', filterRoomsByDoctor);
+        }
+        const modal = document.getElementById('createScheduleModal');
+        if (modal) {
+            modal.addEventListener('show.bs.modal', filterRoomsByDoctor);
+            modal.addEventListener('shown.bs.modal', filterRoomsByDoctor);
+        }
+        filterRoomsByDoctor();
+    });
+    </script>
             </div>
         </div>
     </div>
@@ -195,7 +256,7 @@
                                 <input type="time" class="form-control" name="endTime" required>
                                 <div class="invalid-feedback">Giờ kết thúc phải sau giờ bắt đầu.</div>
                             </div>
-                            <div class="col-md-12">
+                            <div class="col-md-6">
                                 <label class="form-label">Phòng xét nghiệm</label>
                                 <select class="form-select" name="roomId" required>
                                     <option value="">-- Chọn phòng xét nghiệm --</option>
@@ -205,8 +266,12 @@
                                 </select>
                                 <div class="invalid-feedback">Vui lòng chọn phòng xét nghiệm.</div>
                             </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Bệnh nhân tối đa</label>
+                                <input type="number" class="form-control" name="maxPatients" value="20" min="1" max="100" placeholder="Số bệnh nhân tối đa (vd: 20)" required>
+                                <div class="invalid-feedback">Vui lòng nhập số bệnh nhân tối đa.</div>
+                            </div>
                             <input type="hidden" name="department" value="Xét nghiệm">
-                            <input type="hidden" name="maxWorkload" value="50">
                         </div>
                     </div>
                     <div class="modal-footer">
