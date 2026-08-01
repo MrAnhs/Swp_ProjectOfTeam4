@@ -18,15 +18,20 @@
     <%@ include file="/WEB-INF/views/components/patient/sidebar.jspf" %>
     <main class="main-content-dash">
         <header class="page-header"><div><p class="page-eyebrow">Thanh to&#225;n</p><h1>H&#243;a &#273;&#417;n c&#7911;a t&#244;i</h1><p>Theo d&#245;i chi ph&#237; kh&#225;m, x&#233;t nghi&#7879;m v&#224; tr&#7841;ng th&#225;i x&#225;c nh&#7853;n thanh to&#225;n.</p></div></header>
-        <section class="page-card">
-            <div class="filter-row patient-search-bar">
-                <label>Tr&#7841;ng th&#225;i<select id="invoiceStatusFilter"><option value="">T&#7845;t c&#7843;</option><option value="Pending">Ch&#432;a thanh to&#225;n</option><option value="Paid">&#272;&#227; thanh to&#225;n</option></select></label>
-                <label>T&#236;m ki&#7871;m<input id="invoiceSearch" type="search" placeholder="M&#227; h&#243;a &#273;&#417;n"></label>
-                <label>Ng&#224;y t&#7841;o
-                    <input id="invoiceDateFilter" type="date">
-                </label>
+        <section class="card-lab-style page-card p-0">
+            <div class="card-lab-header px-4 py-3">
+                <h2><i class="bi bi-receipt"></i> Danh s&#225;ch h&#243;a &#273;&#417;n</h2>
             </div>
-            <div id="invoiceList" class="record-list loading-state">&#272;ang t&#7843;i h&#243;a &#273;&#417;n...</div>
+            <div class="p-4">
+                <div class="filter-row patient-search-bar mb-3">
+                    <label>Tr&#7841;ng th&#225;i<select id="invoiceStatusFilter"><option value="">T&#7845;t c&#7843;</option><option value="Pending">Ch&#432;a thanh to&#225;n</option><option value="Paid">&#272;&#227; thanh to&#225;n</option></select></label>
+                    <label>T&#236;m ki&#7871;m<input id="invoiceSearch" type="search" placeholder="M&#227; h&#243;a &#273;&#417;n"></label>
+                    <label>Ng&#224;y t&#7841;o
+                        <input id="invoiceDateFilter" type="date">
+                    </label>
+                </div>
+                <div id="invoiceList" class="record-list loading-state">&#272;ang t&#7843;i h&#243;a &#273;&#417;n...</div>
+            </div>
         </section>
     </main>
     <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/core/app-config.js?v=20260710-patient-fontfix-all2"></script>

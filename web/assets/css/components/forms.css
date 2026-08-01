@@ -50,9 +50,7 @@ textarea::placeholder {
 [data-bs-theme="dark"] .form-control,
 [data-bs-theme="dark"] .form-select,
 .dark-mode .form-control,
-.dark-mode .form-select,
-.doctor-card .form-control,
-.doctor-card .form-select {
+.dark-mode .form-select {
     background-color: rgba(15, 23, 42, 0.6) !important;
     border-color: rgba(255, 255, 255, 0.12) !important;
     color: #f8fafc !important;
@@ -61,9 +59,7 @@ textarea::placeholder {
 [data-bs-theme="dark"] .form-control:focus,
 [data-bs-theme="dark"] .form-select:focus,
 .dark-mode .form-control:focus,
-.dark-mode .form-select:focus,
-.doctor-card .form-control:focus,
-.doctor-card .form-select:focus {
+.dark-mode .form-select:focus {
     border-color: #2AB5A3 !important;
     box-shadow: 0 0 0 4px rgba(42, 181, 163, 0.25) !important;
 }
@@ -80,8 +76,7 @@ label.form-label,
 }
 
 [data-bs-theme="dark"] .form-label,
-.dark-mode .form-label,
-.doctor-card .form-label {
+.dark-mode .form-label {
     color: #cbd5e1 !important;
 }
 
