@@ -1,0 +1,52 @@
+<%-- 
+  Shared Unified Duty Schedule Component (Lịch Trực Dùng Chung)
+  Used by: Doctor, Receptionist, Lab Tech, Admin Schedule Views
+--%>
+
+<div class="duty-schedule-container master-panel-card p-4">
+    <!-- Schedule Filter Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4 pb-3 border-bottom border-secondary border-opacity-10">
+        <div>
+            <div class="page-kicker mb-1">HỆ THỐNG PHÂN CÔNG TỰ ĐỘNG</div>
+            <h3 class="h4 text-white fw-bold mb-1"><i class="bi bi-calendar3-week text-teal me-2" style="color: #2AB5A3;"></i>Lịch Trực Chi Tiết Theo Tuần</h3>
+            <p class="text-white-50 small mb-0">Theo dõi ca trực lâm sàng, tiếp nhận bệnh nhân và hỗ trợ xét nghiệm.</p>
+        </div>
+
+        <div class="d-flex align-items-center gap-3">
+            <div class="d-flex align-items-center gap-2">
+                <label class="master-form-label mb-0" for="dutyYearSelect">NĂM</label>
+                <div class="input-group master-input-group" style="width: 110px;">
+                    <select id="dutyYearSelect" class="form-select form-select-sm" onchange="if(typeof generateWeekOptions === 'function') generateWeekOptions(); else DutyScheduleEngine.updateWeekOptions('dutyYearSelect', 'dutyWeekSelect'); if(typeof renderScheduleGrid === 'function') renderScheduleGrid();">
+                    </select>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <label class="master-form-label mb-0" for="dutyWeekSelect">TUẦN TRỰC</label>
+                <div class="input-group master-input-group" style="min-width: 250px;">
+                    <select id="dutyWeekSelect" class="form-select form-select-sm" onchange="if(typeof renderScheduleGrid === 'function') renderScheduleGrid();">
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schedule Weekly Grid Table -->
+    <div class="table-responsive master-table-responsive rounded-4 overflow-hidden border border-secondary border-opacity-10">
+        <table class="table master-table align-middle m-0 text-center">
+            <thead>
+                <tr id="dutyGridHeaderRow" style="background: rgba(30, 41, 59, 0.8);">
+                    <th style="width: 140px; color: #2AB5A3;" class="text-start ps-3">Khung Giờ</th>
+                    <th>Thứ 2<br><small class="text-white-50 fw-normal" id="dateT2"></small></th>
+                    <th>Thứ 3<br><small class="text-white-50 fw-normal" id="dateT3"></small></th>
+                    <th>Thứ 4<br><small class="text-white-50 fw-normal" id="dateT4"></small></th>
+                    <th>Thứ 5<br><small class="text-white-50 fw-normal" id="dateT5"></small></th>
+                    <th>Thứ 6<br><small class="text-white-50 fw-normal" id="dateT6"></small></th>
+                    <th>Thứ 7<br><small class="text-white-50 fw-normal" id="dateT7"></small></th>
+                    <th>Chủ Nhật<br><small class="text-white-50 fw-normal" id="dateCN"></small></th>
+                </tr>
+            </thead>
+            <tbody id="dutyGridBody">
+            </tbody>
+        </table>
+    </div>
+</div>

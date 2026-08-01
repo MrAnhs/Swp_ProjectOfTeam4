@@ -99,8 +99,16 @@ class AdminAccountHandler {
         try {
             User currentUser = (User) request.getSession().getAttribute("currentUser");
             boolean created = accountService.createAccount(fullName, normalizedEmail, PasswordUtil.hashPassword(password), role, "active", specialization, currentUser);
-            request.getSession().setAttribute(created ? "successMessage" : "errorMessage",
-                    created ? "Đã tạo tài khoản thành công" : "Không thể tạo tài khoản (Email đã tồn tại hoặc thông tin không hợp lệ)");
+            if (created) {
+                try {
+                    com.diabetes.monitoring.util.EmailUtil.sendAccountDetails(normalizedEmail, fullName, password);
+                    request.getSession().setAttribute("successMessage", "Đã tạo tài khoản và gửi email thông tin đăng nhập thành công cho nhân viên!");
+                } catch (jakarta.mail.MessagingException mailEx) {
+                    request.getSession().setAttribute("successMessage", "Đã tạo tài khoản thành công! (Lưu ý: Không thể gửi email thông tin đăng nhập: " + mailEx.getMessage() + ")");
+                }
+            } else {
+                request.getSession().setAttribute("errorMessage", "Không thể tạo tài khoản (Email đã tồn tại hoặc thông tin không hợp lệ)");
+            }
         } catch (IllegalArgumentException | SecurityException ex) {
             request.getSession().setAttribute("errorMessage", ex.getMessage());
         }

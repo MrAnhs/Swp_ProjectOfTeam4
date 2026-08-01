@@ -223,33 +223,8 @@
 <div class="receptionist-shell">
     <%@ include file="/WEB-INF/views/components/receptionist/sidebar.jspf" %>
     <main class="receptionist-main">
-        <div class="page-kicker-green">LỄ TÂN</div>
-        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-3">
-            <div>
-                <h1 class="page-title-dark">Lịch trực của tôi</h1>
-                <p class="page-subtitle-muted">Xem lịch làm việc theo tuần.</p>
-            </div>
-            
-            <!-- Filters matching Image 2 Top Right -->
-            <div class="filter-controls-box">
-                <div class="d-flex align-items-center gap-2">
-                    <span class="filter-label-year">YEAR</span>
-                    <select id="selectYear" class="filter-select">
-                    </select>
-                </div>
-                <div class="d-flex align-items-center gap-2">
-                    <span class="filter-label-week">WEEK</span>
-                    <select id="selectWeek" class="filter-select">
-                    </select>
-                </div>
-            </div>
-        </div>
-
-        <div class="schedule-card-panel">
-            <div class="schedule-table-grid" id="scheduleGrid">
-                <!-- Data will be populated by JS -->
-            </div>
-        </div>
+        <!-- Shared Master Duty Schedule Grid Component -->
+        <%@ include file="/WEB-INF/views/components/shared/duty-schedule-grid.jspf" %>
     </main>
 </div>
 <script>
@@ -259,6 +234,7 @@
     };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="${pageContext.request.contextPath}/assets/js/core/duty-schedule-shared.js"></script>
 <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/receptionist/receptionist-utils.js?v=20260709-fontfix2"></script>
 <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/receptionist/schedule.js?v=20260725-v5"></script>
 </body>

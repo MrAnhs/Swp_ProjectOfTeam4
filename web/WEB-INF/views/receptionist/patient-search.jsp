@@ -5,14 +5,11 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tìm bệnh nhân</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="${pageContext.request.contextPath}/assets/css/pages/receptionist/receptionist.css?v=20260725-uidesign2" rel="stylesheet">
+    <title>Tìm bệnh nhân - DiabetesCare</title>
+    <%@ include file="/WEB-INF/views/components/shared/master-head.jspf" %>
+    <link href="${pageContext.request.contextPath}/assets/css/pages/receptionist/receptionist.css?v=20260801" rel="stylesheet">
 </head>
-<body class="receptionist-page">
+<body class="receptionist-page master-ui-body master-ui-dark">
 <div class="receptionist-shell">
     <%@ include file="/WEB-INF/views/components/receptionist/sidebar.jspf" %>
     <main class="receptionist-main">

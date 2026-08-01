@@ -341,6 +341,15 @@
     </servlet-mapping>
 
     <servlet>
+        <servlet-name>DoctorGeneralRecordDetailServlet</servlet-name>
+        <servlet-class>com.diabetes.monitoring.doctor.servlet.GeneralDetailServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>DoctorGeneralRecordDetailServlet</servlet-name>
+        <url-pattern>/doctor/records/general-detail</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
         <servlet-name>DoctorLaboratoryListServlet</servlet-name>
         <servlet-class>com.diabetes.monitoring.doctor.servlet.LaboratoryListServlet</servlet-class>
     </servlet>

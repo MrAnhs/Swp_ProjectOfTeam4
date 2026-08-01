@@ -8,7 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-public class DetailServlet extends DoctorServlet {
+public class GeneralDetailServlet extends DoctorServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -56,14 +56,13 @@ public class DetailServlet extends DoctorServlet {
                     hasCompletedLab);
             request.setAttribute("hasRequiredAIData",
                     dao.hasRequiredAIData(recordId, doctorId));
-            request.getRequestDispatcher("/WEB-INF/views/doctor/examinationDetail.jsp")
+            request.getRequestDispatcher("/WEB-INF/views/doctor/generalExaminationDetail.jsp")
                     .forward(request, response);
         } catch (NumberFormatException e) {
             response.sendRedirect(
                     request.getContextPath() + "/doctor/dashboard");
         } catch (Exception e) {
-            throw new ServletException("Không thể tải hồ sơ khám", e);
+            throw new ServletException("Không thể tải hồ sơ khám tổng quát", e);
         }
     }
-
 }

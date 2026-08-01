@@ -3,13 +3,8 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Đăng nhập - DiabetesCare</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/base/variables.css" />
+    <%@ include file="/WEB-INF/views/components/shared/master-head.jspf" %>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/pages/public/common.css" />
     <style>
         body {
@@ -88,6 +83,11 @@
                 
                 <div class="card login-card border-0 p-3">
                     <div class="card-body p-4 p-md-5">
+                        <div class="mb-3">
+                            <a href="${pageContext.request.contextPath}/index.jsp" class="text-decoration-none text-white-50 small hover-arrow d-inline-flex align-items-center gap-1" style="font-size: 0.85rem;">
+                                <i class="bi bi-arrow-left"></i> Về trang chủ
+                            </a>
+                        </div>
                         <div class="text-center mb-4">
                             <div class="mb-3 d-inline-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: linear-gradient(135deg, #2AB5A3, #208A7C); border-radius: 12px;">
                                 <i class="bi bi-heart-pulse-fill text-white fs-4"></i>
@@ -109,7 +109,7 @@
                                     <span class="input-group-text border-end-0">
                                         <i class="bi bi-envelope"></i>
                                     </span>
-                                    <input type="email" class="form-control border-start-0 ps-0 shadow-none" id="email" name="email" placeholder="trunhiu0305@gmail.com" required>
+                                    <input type="email" class="form-control border-start-0 ps-0 shadow-none" id="email" name="email" value="<c:out value='${not empty typedEmail ? typedEmail : param.email}'/>" placeholder="example@gmail.com" required>
                                     <div class="invalid-feedback ms-3">Vui lòng nhập email.</div>
                                 </div>
                             </div>

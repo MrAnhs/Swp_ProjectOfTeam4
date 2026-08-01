@@ -5,11 +5,8 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đăng ký bệnh nhân</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <%@ include file="/WEB-INF/views/components/shared/master-head.jspf" %>
     <link href="${pageContext.request.contextPath}/assets/css/pages/receptionist/receptionist.css?v=20260725-balanced" rel="stylesheet">
 </head>
 <body class="receptionist-page">
@@ -21,40 +18,15 @@
         <p class="page-subtitle">Tạo hồ sơ bệnh nhân mới, sau đó chuyển thẳng sang đăng ký khám.</p>
 
         <section class="panel-card mt-4">
-            <form id="patientRegistrationForm" class="row g-3">
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Họ tên</label>
-                    <input id="patientRegisterName" name="patientName" class="form-control" required>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Số điện thoại</label>
-                    <input id="patientRegisterPhone" name="patientPhone" class="form-control" required>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Email</label>
-                    <input id="patientRegisterEmail" name="patientEmail" type="email" class="form-control" required>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label fw-semibold">Ngày sinh</label>
-                    <input id="patientRegisterDob" name="patientDob" type="date" class="form-control" required>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label fw-semibold">Giới tính</label>
-                    <select id="patientRegisterGender" name="patientGender" class="form-select">
-                        <option value="Male">Nam</option>
-                        <option value="Female">Nữ</option>
-                        <option value="Other">Khác</option>
-                    </select>
-                </div>
-                <div class="col-12">
-                    <label class="form-label fw-semibold">Địa chỉ</label>
-                    <input id="patientRegisterAddress" name="patientAddress" class="form-control">
-                </div>
-                <div class="col-12 d-flex gap-2">
-                    <button class="btn btn-primary btn-lg" type="submit">
+            <form id="patientRegistrationForm" class="needs-validation" novalidate>
+                <c:set var="isSelfRegistration" value="false" scope="request" />
+                <%@ include file="/WEB-INF/views/components/shared/patient-registration-form.jspf" %>
+
+                <div class="mt-4 d-flex gap-2">
+                    <button class="btn btn-primary btn-lg px-4 fw-semibold" type="submit">
                         <i class="bi bi-person-plus me-1"></i>Tạo hồ sơ bệnh nhân
                     </button>
-                    <button class="btn btn-outline-secondary btn-lg" id="resetPatientRegistrationBtn" type="button">Làm mới</button>
+                    <button class="btn btn-outline-secondary btn-lg px-4" id="resetPatientRegistrationBtn" type="button">Làm mới</button>
                 </div>
             </form>
         </section>

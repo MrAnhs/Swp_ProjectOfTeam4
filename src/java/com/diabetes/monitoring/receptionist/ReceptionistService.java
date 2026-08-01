@@ -50,21 +50,23 @@ public class ReceptionistService {
     public Map<String, Object> createPatient(Map<String, String> params)
             throws SQLException, ReceptionistException {
         ReceptionistRegistrationRequest request = new ReceptionistRegistrationRequest();
-        request.patientName = require(params, "patientName", "Vui lòng nhập họ tên bệnh nhân.");
-        request.phone = normalizePhone(require(params, "patientPhone", "Vui lòng nhập số điện thoại."));
+        request.patientName = requireWithFallback(params, "patientName", "fullName", "Vui lòng nhập họ tên bệnh nhân.");
+        request.phone = normalizePhone(requireWithFallback(params, "patientPhone", "phone", "Vui lòng nhập số điện thoại."));
         if (!isVietnamesePhone(request.phone)) {
             throw new ReceptionistException("Số điện thoại Việt Nam không hợp lệ.");
         }
-        request.email = require(params, "patientEmail", "Email is required to create a patient account.");
+        request.email = requireWithFallback(params, "patientEmail", "email", "Email là bắt buộc để tạo tài khoản bệnh nhân.");
         if (!request.email.isEmpty() && !request.email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
             throw new ReceptionistException("Email không hợp lệ.");
         }
-        request.dateOfBirth = parseDate(require(params, "patientDob", "Vui lòng nhập ngày sinh."));
+        request.dateOfBirth = parseDate(requireWithFallback(params, "patientDob", "dob", "Vui lòng nhập ngày sinh."));
         if (request.dateOfBirth.isAfter(LocalDate.now()) || request.dateOfBirth.getYear() < 1900) {
             throw new ReceptionistException("Ngày sinh phải nằm trong khoảng từ năm 1900 đến hiện tại.");
         }
-        request.gender = normalizeGender(params.get("patientGender"));
-        request.address = trim(params.get("patientAddress"));
+        String genderParam = params.get("patientGender") != null ? params.get("patientGender") : params.get("gender");
+        request.gender = normalizeGender(genderParam);
+        String addressParam = params.get("patientAddress") != null ? params.get("patientAddress") : params.get("address");
+        request.address = trim(addressParam);
         Map<String, Object> patient = dao.createPatient(request);
         return patient;
     }
@@ -72,21 +74,24 @@ public class ReceptionistService {
     public Map<String, Object> registerAppointment(Map<String, String> params)
             throws SQLException, ReceptionistException {
         ReceptionistRegistrationRequest request = new ReceptionistRegistrationRequest();
-        request.patientName = require(params, "patientName", "Vui lòng nhập họ tên bệnh nhân.");
-        request.phone = normalizePhone(require(params, "patientPhone", "Vui lòng nhập số điện thoại."));
+        request.patientName = requireWithFallback(params, "patientName", "fullName", "Vui lòng nhập họ tên bệnh nhân.");
+        request.phone = normalizePhone(requireWithFallback(params, "patientPhone", "phone", "Vui lòng nhập số điện thoại."));
         if (!isVietnamesePhone(request.phone)) {
             throw new ReceptionistException("Số điện thoại Việt Nam không hợp lệ.");
         }
-        request.email = trim(params.get("patientEmail"));
+        String emailParam = params.get("patientEmail") != null ? params.get("patientEmail") : params.get("email");
+        request.email = trim(emailParam);
         if (!request.email.isEmpty() && !request.email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
             throw new ReceptionistException("Email không hợp lệ.");
         }
-        request.dateOfBirth = parseDate(require(params, "patientDob", "Vui lòng nhập ngày sinh."));
+        request.dateOfBirth = parseDate(requireWithFallback(params, "patientDob", "dob", "Vui lòng nhập ngày sinh."));
         if (request.dateOfBirth.isAfter(LocalDate.now()) || request.dateOfBirth.getYear() < 1900) {
             throw new ReceptionistException("Ngày sinh phải nằm trong khoảng từ năm 1900 đến hiện tại.");
         }
-        request.gender = normalizeGender(params.get("patientGender"));
-        request.address = trim(params.get("patientAddress"));
+        String genderParam = params.get("patientGender") != null ? params.get("patientGender") : params.get("gender");
+        request.gender = normalizeGender(genderParam);
+        String addressParam = params.get("patientAddress") != null ? params.get("patientAddress") : params.get("address");
+        request.address = trim(addressParam);
         request.visitType = trim(params.get("visitType"));
         request.doctorId = parsePositiveInt(params.get("doctorId"), "Bác sĩ không hợp lệ.");
         request.scheduleId = parsePositiveInt(params.get("scheduleId"), "Ca khám không hợp lệ.");
@@ -219,6 +224,18 @@ public class ReceptionistService {
     private String require(Map<String, String> params, String key, String message)
             throws ReceptionistException {
         String value = trim(params.get(key));
+        if (value.isEmpty()) {
+            throw new ReceptionistException(message);
+        }
+        return value;
+    }
+
+    private String requireWithFallback(Map<String, String> params, String key, String fallbackKey, String message)
+            throws ReceptionistException {
+        String value = trim(params.get(key));
+        if (value.isEmpty()) {
+            value = trim(params.get(fallbackKey));
+        }
         if (value.isEmpty()) {
             throw new ReceptionistException(message);
         }

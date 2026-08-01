@@ -7,9 +7,10 @@
     .shared-admin-sidebar {
         width: 296px;
         max-width: 100%;
-        background: #f1f5fa;
-        border-right: 1px solid #e4ebf3;
-        color: #334155;
+        background: rgba(15, 23, 42, 0.95) !important;
+        border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+        color: #F8FAFC !important;
+        backdrop-filter: blur(20px) !important;
     }
 
     .shared-admin-sidebar .offcanvas-header {
@@ -28,45 +29,47 @@
         display: flex;
         align-items: center;
         gap: 0.7rem;
-        background: #fff;
-        border: 1px solid #d7e1ec;
+        background: rgba(30, 41, 59, 0.5) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
         border-radius: 14px;
         padding: 0.85rem 0.8rem;
         margin-bottom: 1rem;
+        color: #FFFFFF !important;
     }
 
     .shared-admin-sidebar .admin-sidebar-avatar {
         width: 50px;
         height: 50px;
         border-radius: 999px;
-        background: #d9efe8;
-        color: #158367;
+        background: linear-gradient(135deg, #2AB5A3, #208A7C) !important;
+        color: #FFFFFF !important;
         font-weight: 800;
         font-size: 1.25rem;
         display: inline-flex;
         align-items: center;
         justify-content: center;
+        box-shadow: 0 4px 12px rgba(42, 181, 163, 0.35);
     }
 
     .shared-admin-sidebar .admin-sidebar-name {
         margin: 0;
         font-size: 1.05rem;
         font-weight: 800;
-        color: #17243a;
+        color: #FFFFFF !important;
     }
 
     .shared-admin-sidebar .admin-sidebar-role {
         margin: 0;
-        color: #7b8aa2;
+        color: #94A3B8 !important;
         font-size: 0.8rem;
     }
 
     .shared-admin-sidebar .menu-group-title {
-        font-size: 0.96rem;
+        font-size: 0.8rem;
         font-weight: 700;
         letter-spacing: 0.06em;
         text-transform: uppercase;
-        color: #7386a3;
+        color: #94A3B8 !important;
         margin: 1rem 0 0.55rem;
         padding: 0 0.35rem;
     }
@@ -82,27 +85,27 @@
         border-radius: 12px;
         border: 1px solid transparent;
         background: transparent;
-        color: #2f425b;
+        color: #94A3B8 !important;
         text-decoration: none;
         transition: all 0.18s ease;
     }
 
     .shared-admin-sidebar .menu-item:hover {
-        background: #e9f4f0;
-        border-color: #cfe7df;
-        color: #186b53;
+        background: rgba(42, 181, 163, 0.15) !important;
+        border-color: rgba(42, 181, 163, 0.3) !important;
+        color: #2AB5A3 !important;
     }
 
     .shared-admin-sidebar .menu-item.active {
-        background: #ddece8;
-        border-color: #aad8ca;
-        color: #0f7c5f;
+        background: rgba(42, 181, 163, 0.2) !important;
+        border-color: #2AB5A3 !important;
+        color: #2AB5A3 !important;
     }
 
     .shared-admin-sidebar .menu-item .menu-icon {
         width: 20px;
         text-align: center;
-        color: #18906f;
+        color: #2AB5A3 !important;
         font-size: 1rem;
     }
 
@@ -114,13 +117,13 @@
 
     .shared-admin-sidebar .menu-item .menu-arrow {
         font-size: 0.72rem;
-        color: #8ca0b8;
+        color: #94A3B8 !important;
     }
 
     .shared-admin-sidebar .admin-sidebar-logout-wrap {
         margin-top: 1rem;
         padding-top: 0.85rem;
-        border-top: 1px dashed #d4dee8;
+        border-top: 1px dashed rgba(255, 255, 255, 0.1);
     }
 
     .shared-admin-sidebar .admin-sidebar-logout {
@@ -131,16 +134,16 @@
         width: 100%;
         padding: 0.74rem 0.7rem;
         border-radius: 12px;
-        border: 1px solid #f2c9c9;
-        background: #fff5f5;
-        color: #c53030;
+        border: 1px solid rgba(239, 68, 68, 0.3) !important;
+        background: rgba(239, 68, 68, 0.15) !important;
+        color: #ef4444 !important;
         text-decoration: none;
         font-weight: 700;
     }
 
     .shared-admin-sidebar .admin-sidebar-logout:hover {
-        background: #ffe9e9;
-        color: #a82222;
+        background: rgba(239, 68, 68, 0.25) !important;
+        color: #f87171 !important;
     }
 </style>
 
@@ -203,13 +206,6 @@
         <a class="menu-item ${currentAction == 'manageRooms' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin?action=manageRooms">
             <i class="fa-solid fa-hospital menu-icon"></i>
             <span class="menu-text">Qu&#7843;n l&#253; ph&#242;ng kh&#225;m</span>
-            <i class="fa-solid fa-angle-right menu-arrow"></i>
-        </a>
-
-        <div class="menu-group-title">Trí tuệ nhân tạo AI</div>
-        <a class="menu-item ${currentAction == 'ai-management' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin?action=ai-management">
-            <i class="fa-solid fa-brain menu-icon"></i>
-            <span class="menu-text">AI Model Management</span>
             <i class="fa-solid fa-angle-right menu-arrow"></i>
         </a>
 

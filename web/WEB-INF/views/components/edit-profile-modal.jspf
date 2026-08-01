@@ -4,17 +4,17 @@
 <!-- Modal Chỉnh Sửa Thông Tin Cá Nhân & Tài Khoản (Emerald Dark Theme 2-State Interface) -->
 <div class="modal fade" id="globalEditProfileModal" tabindex="-1" aria-labelledby="globalEditProfileModalLabel" aria-hidden="true" style="z-index: 1060;">
     <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content border-0 shadow-lg" style="background: var(--bg-card, #ffffff); color: var(--text-primary, #1a202c); border-radius: 20px; overflow: hidden; border: 1px solid var(--border-color, #e8ecf0);">
-            <div class="modal-header border-0 px-4 pt-4 pb-2 d-flex align-items-center justify-content-between w-100" style="background: var(--bg-card, #ffffff); border-bottom: 1px solid var(--border-color, #e8ecf0) !important;">
+        <div class="modal-content border-0 shadow-lg text-white" style="background: #003627; border-radius: 20px; overflow: hidden; border: 1px solid rgba(16, 185, 129, 0.3);">
+            <div class="modal-header border-0 px-4 pt-4 pb-2 d-flex align-items-center justify-content-between w-100" style="background: #003627;">
                 <div class="d-flex align-items-center gap-3">
-                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 42px; height: 42px; background: rgba(0, 200, 165, 0.15); color: #007f61;">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 42px; height: 42px; background: rgba(16, 185, 129, 0.2); color: #10b981;">
                         <i class="bi bi-person-gear fs-4"></i>
                     </div>
                     <div>
-                        <h5 class="modal-title fw-bold mb-0" style="color: var(--text-primary, #1a202c);" id="globalEditProfileModalLabel">
+                        <h5 class="modal-title fw-bold text-white mb-0" id="globalEditProfileModalLabel">
                             Chỉnh sửa thông tin <c:out value="${sessionScope.currentUser.role}" default="người dùng" />
                         </h5>
-                        <small style="font-size: 0.82rem; color: var(--primary, #007f61);">
+                        <small class="text-emerald" style="font-size: 0.82rem;">
                             <c:out value="${sessionScope.currentUser.fullName}" /> &bull; <c:out value="${sessionScope.currentUser.email}" />
                         </small>
                     </div>
@@ -25,10 +25,10 @@
             </div>
             
             <form id="globalEditProfileForm" novalidate>
-                <div class="modal-body p-4" style="background: var(--bg-page, #f8fafc);">
+                <div class="modal-body p-4" style="background: #002d20;">
                     
                     <!-- Tab Navigation Bar (2 Nút chuyển đổi: Thông tin cá nhân & Thông tin tài khoản) -->
-                    <ul class="nav nav-pills profile-modal-pills p-1 mb-4 rounded-3 border border-secondary border-opacity-25" style="background: var(--bg-card, #ffffff);" role="tablist">
+                    <ul class="nav nav-pills profile-modal-pills p-1 mb-4 rounded-3 border border-secondary border-opacity-25" style="background: rgba(0, 24, 17, 0.6);" role="tablist">
                         <li class="nav-item flex-fill" role="presentation">
                             <button class="nav-link active w-100 py-2 fw-bold text-center border-0 rounded-3" id="pills-personal-tab" type="button" role="tab" onclick="switchProfileModalTab('personal')">
                                 <i class="bi bi-person-vcard me-2"></i>Thông tin cá nhân
@@ -126,7 +126,7 @@
                             </div>
 
                             <!-- KHU VỰC 1: ĐỔI EMAIL BẰNG XÁC THỰC OTP -->
-                            <div id="subPanelEmail" class="p-3 rounded-3 border border-secondary border-opacity-25" style="background: var(--bg-page, #f8fafc); color: var(--text-primary, #1a202c);">
+                            <div id="subPanelEmail" class="p-3 rounded-3 border border-secondary border-opacity-25" style="background: rgba(0, 24, 17, 0.5);">
                                 <div id="emailStep1">
                                     <div class="row g-3">
                                         <div class="col-md-6">
@@ -139,7 +139,7 @@
                                         </div>
                                     </div>
                                     <div class="mt-3 text-end">
-                                        <button type="button" id="btnSendEmailOtp" class="btn btn-success px-4 rounded-pill fw-bold" style="background: #00C8A5; border: none;" onclick="handleSendEmailOtp()">
+                                        <button type="button" id="btnSendEmailOtp" class="btn btn-success px-4 rounded-pill fw-bold" style="background: #10b981; border: none;" onclick="handleSendEmailOtp()">
                                             <i class="bi bi-send me-1"></i>Gửi mã OTP xác thực
                                         </button>
                                     </div>
@@ -156,7 +156,7 @@
                                             <input type="text" id="inputEmailOtp" class="form-control form-control-dark text-center fw-bold" maxlength="6" placeholder="000000">
                                         </div>
                                         <div class="col-md-6 d-flex align-items-end">
-                                            <button type="button" id="btnConfirmEmailOtp" class="btn btn-success w-100 rounded-pill fw-bold" style="background: #00C8A5; border: none;" onclick="handleConfirmEmailOtp()">
+                                            <button type="button" id="btnConfirmEmailOtp" class="btn btn-success w-100 rounded-pill fw-bold" style="background: #10b981; border: none;" onclick="handleConfirmEmailOtp()">
                                                 <i class="bi bi-check-lg me-1"></i>Xác nhận thay đổi Email
                                             </button>
                                         </div>
@@ -165,7 +165,7 @@
                             </div>
 
                             <!-- KHU VỰC 2: ĐỔI MẬT KHẨU (1 MẬT KHẨU CŨ & 2 LẦN MẬT KHẨU MỚI) -->
-                            <div id="subPanelPassword" class="p-3 rounded-3 border border-secondary border-opacity-25" style="display: none; background: var(--bg-page, #f8fafc); color: var(--text-primary, #1a202c);">
+                            <div id="subPanelPassword" class="p-3 rounded-3 border border-secondary border-opacity-25" style="display: none; background: rgba(0, 24, 17, 0.5);">
                                 <div class="row g-3">
                                     <div class="col-md-12">
                                         <label class="form-label text-secondary small fw-semibold">Mật khẩu hiện tại *</label>
@@ -212,9 +212,9 @@
 
 <style>
 .btn-close-custom {
-    background: rgba(0, 0, 0, 0.06);
-    border: 1px solid var(--border-color, #cbd5e1);
-    color: var(--text-primary, #1a202c) !important;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #ffffff;
     width: 36px;
     height: 36px;
     border-radius: 50%;
@@ -228,9 +228,9 @@
     flex-shrink: 0 !important;
 }
 .btn-close-custom:hover {
-    background: #ef4444 !important;
-    color: #ffffff !important;
-    border-color: #ef4444 !important;
+    background: rgba(239, 68, 68, 0.9);
+    color: #ffffff;
+    border-color: #ef4444;
     transform: scale(1.1);
     box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
 }
@@ -251,55 +251,55 @@
 }
 .profile-modal-pills .nav-link {
     transition: all 0.25s ease;
-    color: var(--text-secondary, #64748b) !important;
+    color: #94a3b8 !important;
     background: transparent !important;
 }
 .profile-modal-pills .nav-link.active {
-    background-color: var(--primary, #00C8A5) !important;
+    background-color: #10b981 !important;
     color: #ffffff !important;
-    box-shadow: 0 4px 12px rgba(0, 200, 165, 0.35);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
 }
 .profile-modal-pills .nav-link:hover:not(.active) {
     color: #34d399 !important;
     background: rgba(16, 185, 129, 0.1) !important;
 }
 .form-control-dark {
-    background-color: var(--bg-card, #ffffff) !important;
-    border: 1px solid var(--border-color, #cbd5e1) !important;
-    color: var(--text-primary, #1a202c) !important;
+    background-color: #001f16 !important;
+    border: 1px solid #005941 !important;
+    color: #ffffff !important;
     border-radius: 10px !important;
 }
 .form-control-dark:focus {
-    border-color: var(--primary, #00C8A5) !important;
-    box-shadow: 0 0 0 0.2rem rgba(0, 200, 165, 0.15) !important;
+    border-color: #10b981 !important;
+    box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.25) !important;
 }
 .form-control-dark:disabled, .form-control-dark[readonly] {
-    background-color: var(--bg-page, #f1f5f9) !important;
-    border-color: var(--border-color, #e2e8f0) !important;
-    color: var(--text-primary, #1a202c) !important;
-    opacity: 0.95;
+    background-color: #001811 !important;
+    border-color: #003829 !important;
+    color: #cbd5e1 !important;
+    opacity: 0.85;
 }
 .form-control-dark-readonly {
-    background-color: var(--bg-page, #f1f5f9) !important;
-    border: 1px solid var(--border-color, #e2e8f0) !important;
-    color: var(--text-primary, #1a202c) !important;
+    background-color: #001811 !important;
+    border: 1px solid #003829 !important;
+    color: #94a3b8 !important;
     border-radius: 10px !important;
     cursor: not-allowed !important;
 }
 .form-select-dark {
-    background-color: var(--bg-card, #ffffff) !important;
-    border: 1px solid var(--border-color, #cbd5e1) !important;
-    color: var(--text-primary, #1a202c) !important;
+    background-color: #001f16 !important;
+    border: 1px solid #005941 !important;
+    color: #ffffff !important;
     border-radius: 10px !important;
 }
 .form-select-dark:disabled {
-    background-color: var(--bg-page, #f1f5f9) !important;
-    border-color: var(--border-color, #e2e8f0) !important;
-    color: var(--text-primary, #1a202c) !important;
-    opacity: 0.95;
+    background-color: #001811 !important;
+    border-color: #003829 !important;
+    color: #cbd5e1 !important;
+    opacity: 0.85;
 }
 .text-emerald {
-    color: var(--primary, #007f61) !important;
+    color: #34d399 !important;
 }
 </style>
 
@@ -420,28 +420,28 @@ function switchAccountSubTab(type) {
     if (successEl) successEl.classList.add('d-none');
 
     if (type === 'email') {
-        btnEmail.style.background = '#00C8A5';
+        btnEmail.style.background = '#10b981';
         btnEmail.style.color = '#ffffff';
-        btnEmail.style.boxShadow = '0 4px 12px rgba(0, 200, 165, 0.35)';
+        btnEmail.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.35)';
         btnEmail.className = 'btn flex-fill py-2.5 fw-bold rounded-3 border-0 transition-all text-white';
 
-        btnPassword.style.background = '#f1f5f9';
-        btnPassword.style.color = '#475569';
+        btnPassword.style.background = 'rgba(0, 31, 22, 0.6)';
+        btnPassword.style.color = '#94a3b8';
         btnPassword.style.boxShadow = 'none';
-        btnPassword.className = 'btn flex-fill py-2.5 fw-bold rounded-3 border border-secondary border-opacity-25 transition-all';
+        btnPassword.className = 'btn flex-fill py-2.5 fw-bold rounded-3 border border-secondary border-opacity-50 transition-all text-secondary';
 
         panelEmail.style.display = 'block';
         panelPassword.style.display = 'none';
     } else {
-        btnPassword.style.background = '#00C8A5';
+        btnPassword.style.background = '#10b981';
         btnPassword.style.color = '#ffffff';
-        btnPassword.style.boxShadow = '0 4px 12px rgba(0, 200, 165, 0.35)';
+        btnPassword.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.35)';
         btnPassword.className = 'btn flex-fill py-2.5 fw-bold rounded-3 border-0 transition-all text-white';
 
-        btnEmail.style.background = '#f1f5f9';
-        btnEmail.style.color = '#475569';
+        btnEmail.style.background = 'rgba(0, 31, 22, 0.6)';
+        btnEmail.style.color = '#94a3b8';
         btnEmail.style.boxShadow = 'none';
-        btnEmail.className = 'btn flex-fill py-2.5 fw-bold rounded-3 border border-secondary border-opacity-25 transition-all';
+        btnEmail.className = 'btn flex-fill py-2.5 fw-bold rounded-3 border border-secondary border-opacity-50 transition-all text-secondary';
 
         panelPassword.style.display = 'block';
         panelEmail.style.display = 'none';

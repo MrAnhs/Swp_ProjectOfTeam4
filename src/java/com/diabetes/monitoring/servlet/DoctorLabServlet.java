@@ -65,7 +65,7 @@ public class DoctorLabServlet extends HttpServlet {
                     + "JOIN Medical_Service ms ON ms.service_id = id.service_id "
                     + "JOIN Doctor_Lab dl ON dl.account_id = ? "
                     + "WHERE (id.lab_id = dl.lab_id OR id.lab_id IS NULL) "
-                    + "  AND id.lab_status IS NOT NULL "
+                    + "  AND id.lab_status IN ('Requested', 'Processing', 'Completed') "
                     + "UNION ALL "
                     + "SELECT p.patient_id, p.full_name, p.email, p.phone, p.date_of_birth, p.gender, p.address, "
                     + "       lo.order_id AS waiting_id, "
@@ -78,11 +78,12 @@ public class DoctorLabServlet extends HttpServlet {
                     + "JOIN Medical_Service ms ON ms.service_id = lo.service_id "
                     + "JOIN Doctor_Lab dl ON dl.account_id = ? "
                     + "WHERE (lo.lab_id = dl.lab_id OR lo.lab_id IS NULL) "
+                    + "  AND lo.status IN ('Requested', 'Processing', 'Completed') "
                     + "  AND NOT EXISTS ( "
                     + "      SELECT 1 FROM Invoice_Detail id2 "
                     + "      JOIN Invoice i2 ON i2.invoice_id = id2.invoice_id "
                     + "      WHERE i2.patient_id = lo.patient_id AND id2.service_id = lo.service_id "
-                    + "        AND CAST(id2.invoice_detail_id AS VARCHAR(50)) = lo.order_id "
+                    + "        AND CONCAT('LAB-', id2.invoice_detail_id) = lo.order_id "
                     + "  ) "
                     + "ORDER BY requested_at DESC";
             try (PreparedStatement stmt = conn.prepareStatement(sqlPatients)) {
@@ -701,46 +702,37 @@ public class DoctorLabServlet extends HttpServlet {
             try (Connection conn = DatabaseConnection.getConnection()) {
                 int patientId = Integer.parseInt(patientIdStr.trim());
                 
-                // Map newRoom name to a standard service_id
-                int serviceId = 1; // Default to Blood sugar test
+                // Map newRoom name to actual Medical_Service from database
+                int serviceId = 10;
                 BigDecimal price = new BigDecimal("150000.00");
                 String roomLower = newRoom.toLowerCase();
-                if (roomLower.contains("nước tiểu") || roomLower.contains("tổng phân tích")) {
-                    serviceId = 2;
-                    price = new BigDecimal("80000.00");
-                } else if (roomLower.contains("mỡ máu") || roomLower.contains("sinh hóa")) {
-                    serviceId = 3;
-                    price = new BigDecimal("300000.00");
-                } else if (roomLower.contains("gan")) {
-                    serviceId = 4;
-                    price = new BigDecimal("150000.00");
-                } else if (roomLower.contains("thận")) {
-                    serviceId = 5;
-                    price = new BigDecimal("150000.00");
-                } else if (roomLower.contains("đường huyết") || roomLower.contains("đái tháo đường") || roomLower.contains("huyết học")) {
-                    serviceId = 1;
-                    price = new BigDecimal("150000.00");
-                }
                 
-                // Fetch latest paid or unpaid invoice
-                int invoiceId = -1;
-                String sqlInvoice = "SELECT TOP 1 invoice_id FROM Invoice WHERE patient_id = ? ORDER BY created_at DESC";
-                try (PreparedStatement stmtInv = conn.prepareStatement(sqlInvoice)) {
-                    stmtInv.setInt(1, patientId);
-                    try (ResultSet rsInv = stmtInv.executeQuery()) {
-                        if (rsInv.next()) {
-                            invoiceId = rsInv.getInt("invoice_id");
+                String sqlFindService = "SELECT TOP 1 service_id, price FROM Medical_Service WHERE status = 'Active' AND service_type = 'Lab_Test' AND " +
+                                        "(LOWER(service_name) LIKE ? OR ? LIKE '%' + LOWER(service_name) + '%') ORDER BY service_id ASC";
+                try (PreparedStatement stmtSvc = conn.prepareStatement(sqlFindService)) {
+                    String keyword = "%";
+                    if (roomLower.contains("nước tiểu") || roomLower.contains("tổng phân tích")) {
+                        keyword = "%nước tiểu%";
+                    } else if (roomLower.contains("mỡ máu") || roomLower.contains("sinh hóa")) {
+                        keyword = "%mỡ máu%";
+                    } else if (roomLower.contains("gan")) {
+                        keyword = "%gan%";
+                    } else if (roomLower.contains("thận")) {
+                        keyword = "%thận%";
+                    } else if (roomLower.contains("đường") || roomLower.contains("huyết")) {
+                        keyword = "%đường%";
+                    }
+                    stmtSvc.setString(1, keyword);
+                    stmtSvc.setString(2, roomLower);
+                    try (ResultSet rsSvc = stmtSvc.executeQuery()) {
+                        if (rsSvc.next()) {
+                            serviceId = rsSvc.getInt("service_id");
+                            price = rsSvc.getBigDecimal("price");
                         }
                     }
                 }
                 
-                if (invoiceId == -1) {
-                    session.setAttribute("errorMsg", "Không tìm thấy hóa đơn nào của bệnh nhân để liên kết chỉ định.");
-                    response.sendRedirect(request.getContextPath() + "/doctor-lab/dashboard");
-                    return;
-                }
-                
-                // Fetch latest appointment
+                                // Fetch latest appointment
                 int appointmentId = 1;
                 String sqlApp = "SELECT TOP 1 appointment_id FROM Appointment WHERE patient_id = ? ORDER BY appointment_time DESC";
                 try (PreparedStatement stmtApp = conn.prepareStatement(sqlApp)) {
@@ -752,10 +744,10 @@ public class DoctorLabServlet extends HttpServlet {
                     }
                 }
 
-                // Check if they already have an active entry of this service
-                String sqlCheckRoom = "SELECT COUNT(*) FROM Invoice_Detail WHERE invoice_id = ? AND service_id = ? AND lab_status IN ('Requested', 'Processing')";
+                // Check if they already have an active entry of this service in waiting/processing/unpaid
+                String sqlCheckRoom = "SELECT COUNT(*) FROM Invoice_Detail id JOIN Invoice i ON i.invoice_id = id.invoice_id WHERE i.patient_id = ? AND id.service_id = ? AND id.lab_status IN ('Requested', 'Processing', 'Waiting_Payment')";
                 try (PreparedStatement stmtCheck = conn.prepareStatement(sqlCheckRoom)) {
-                    stmtCheck.setInt(1, invoiceId);
+                    stmtCheck.setInt(1, patientId);
                     stmtCheck.setInt(2, serviceId);
                     try (ResultSet rsCheck = stmtCheck.executeQuery()) {
                         if (rsCheck.next() && rsCheck.getInt(1) > 0) {
@@ -767,37 +759,56 @@ public class DoctorLabServlet extends HttpServlet {
                 }
                 
                 // Determine room_id
-                String roomId = "R301";
+                String roomId = "LAB01";
                 if (serviceId == 2) {
-                    roomId = "R302";
+                    roomId = "LAB02";
                 }
 
-                // Generate new unique order_id (LOXXX)
-                String orderId = "LO010";
-                String sqlMaxOrder = "SELECT TOP 1 order_id FROM Lab_Order ORDER BY order_id DESC";
-                try (PreparedStatement stmtMax = conn.prepareStatement(sqlMaxOrder);
-                     ResultSet rsMax = stmtMax.executeQuery()) {
-                    if (rsMax.next()) {
-                        String maxId = rsMax.getString("order_id");
-                        if (maxId != null && maxId.startsWith("LO")) {
-                            try {
-                                int num = Integer.parseInt(maxId.substring(2)) + 1;
-                                orderId = String.format("LO%03d", num);
-                            } catch (Exception e) {}
+                // Create a NEW Invoice for this re-test
+                int invoiceId = -1;
+                String sqlInsertInvoice = "INSERT INTO Invoice (patient_id, receptionist_id, final_amount, payment_method, status, created_at) " +
+                                          "VALUES (?, NULL, ?, NULL, 'Pending', GETDATE())";
+                try (PreparedStatement stmtInv = conn.prepareStatement(sqlInsertInvoice, PreparedStatement.RETURN_GENERATED_KEYS)) {
+                    stmtInv.setInt(1, patientId);
+                    stmtInv.setBigDecimal(2, price);
+                    stmtInv.executeUpdate();
+                    try (ResultSet generatedKeys = stmtInv.getGeneratedKeys()) {
+                        if (generatedKeys.next()) {
+                            invoiceId = generatedKeys.getInt(1);
                         }
                     }
                 }
 
+                if (invoiceId == -1) {
+                    session.setAttribute("errorMsg", "Không thể tạo hóa đơn mới cho chỉ định.");
+                    response.sendRedirect(request.getContextPath() + "/doctor-lab/dashboard");
+                    return;
+                }
+
                 // Insert into Invoice_Detail
+                int invoiceDetailId = -1;
                 String sqlInsertWaiting = "INSERT INTO Invoice_Detail (invoice_id, service_id, appointment_id, quantity, price, doctor_id, lab_status, requested_at) " +
                                           "VALUES (?, ?, ?, 1, ?, 5, 'Requested', GETDATE())";
-                try (PreparedStatement stmtWait = conn.prepareStatement(sqlInsertWaiting)) {
+                try (PreparedStatement stmtWait = conn.prepareStatement(sqlInsertWaiting, PreparedStatement.RETURN_GENERATED_KEYS)) {
                     stmtWait.setInt(1, invoiceId);
                     stmtWait.setInt(2, serviceId);
                     stmtWait.setInt(3, appointmentId);
                     stmtWait.setBigDecimal(4, price);
                     stmtWait.executeUpdate();
+                    try (ResultSet generatedKeys = stmtWait.getGeneratedKeys()) {
+                        if (generatedKeys.next()) {
+                            invoiceDetailId = generatedKeys.getInt(1);
+                        }
+                    }
                 }
+
+                if (invoiceDetailId == -1) {
+                    session.setAttribute("errorMsg", "Không thể tạo chi tiết hóa đơn.");
+                    response.sendRedirect(request.getContextPath() + "/doctor-lab/dashboard");
+                    return;
+                }
+
+                String orderId = "LAB-" + invoiceDetailId;
 
                 // Insert into Lab_Order
                 int currentLabId = 1;
@@ -811,7 +822,7 @@ public class DoctorLabServlet extends HttpServlet {
                     }
                 }
                 String sqlInsertLab = "INSERT INTO Lab_Order (order_id, appointment_id, patient_id, room_id, service_id, lab_id, status, created_at) " +
-                                      "VALUES (?, ?, ?, ?, ?, ?, 'Waiting', GETDATE())";
+                                      "VALUES (?, ?, ?, ?, ?, ?, 'Requested', GETDATE())";
                 try (PreparedStatement stmtLab = conn.prepareStatement(sqlInsertLab)) {
                     stmtLab.setString(1, orderId);
                     stmtLab.setInt(2, appointmentId);
@@ -1389,18 +1400,18 @@ public class DoctorLabServlet extends HttpServlet {
 
     private BigDecimal parseDecimal(String val) {
         if (val == null || val.trim().isEmpty()) {
-            return BigDecimal.ZERO;
+            return null;
         }
         try {
             return new BigDecimal(val.trim());
         } catch (NumberFormatException e) {
-            return BigDecimal.ZERO;
+            return null;
         }
     }
 
     private BigDecimal calculateBMI(BigDecimal weight, BigDecimal height) {
         if (weight == null || height == null || weight.compareTo(BigDecimal.ZERO) <= 0 || height.compareTo(BigDecimal.ZERO) <= 0) {
-            return BigDecimal.ZERO;
+            return null;
         }
         BigDecimal heightInMeters = height.divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP);
         BigDecimal heightSquared = heightInMeters.multiply(heightInMeters);

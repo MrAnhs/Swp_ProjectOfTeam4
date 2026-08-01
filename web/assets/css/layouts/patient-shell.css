@@ -1,5 +1,6 @@
 /* ============================================================
-   patient-shell.css — LIGHT THEME (DiabetesCare)
+   patient-shell.css — DARK THEME (DiabetesCare)
+   Matches 100% of the Public Landing Page & Master UI System
    ============================================================ */
 
 * {
@@ -7,14 +8,16 @@
 }
 
 html {
-    color-scheme: light !important;
+    background-color: #0B0F19 !important;
 }
 
 body {
     margin: 0;
-    background-color: #f5f7fa !important;
-    color: #1a202c !important;
+    background-color: #0B0F19 !important;
+    background: radial-gradient(circle at center, rgba(42, 181, 163, 0.12) 0%, #0B0F19 80%) !important;
+    color: #F8FAFC !important;
     font-family: 'Inter', 'Segoe UI', sans-serif;
+    min-height: 100vh;
 }
 
 /* ===== SIDEBAR ===== */
@@ -25,25 +28,31 @@ body {
     display: flex;
     width: var(--sidebar-width, 264px);
     flex-direction: column;
-    background: #ffffff !important;
-    border-right: 1px solid #e8ecf0 !important;
-    color: #1a202c !important;
+    background: rgba(15, 23, 42, 0.95) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #F8FAFC !important;
+    backdrop-filter: blur(20px) !important;
 }
 
 /* ===== SIDEBAR HEADER / BRAND ===== */
 .sidebar-header {
     padding: 1.1rem 1.2rem 0.8rem;
-    border-bottom: 1px solid #f0f4f8 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    background: transparent !important;
 }
 
 .brand-dashboard {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    color: #1a202c !important;
+    color: #FFFFFF !important;
     font-size: 1.1rem;
     font-weight: 700;
     text-decoration: none;
+}
+
+.brand-text {
+    color: #2AB5A3 !important;
 }
 
 .brand-icon-dash {
@@ -52,11 +61,11 @@ body {
     height: 36px;
     flex-shrink: 0;
     place-items: center;
-    background: linear-gradient(135deg, #00a67e, #007f61) !important;
+    background: linear-gradient(135deg, #2AB5A3, #208A7C) !important;
     border-radius: 10px;
     color: #fff !important;
     font-size: 1rem;
-    box-shadow: 0 3px 10px rgba(0, 127, 97, 0.25);
+    box-shadow: 0 4px 12px rgba(42, 181, 163, 0.35);
 }
 
 /* ===== USER PROFILE CARD ===== */
@@ -66,16 +75,18 @@ body {
     gap: 0.75rem;
     margin: 0.75rem 0.9rem;
     padding: 0.75rem 0.9rem;
-    background: #f8fafb !important;
-    border: 1px solid #e8ecf0 !important;
-    border-radius: 12px;
+    background: rgba(30, 41, 59, 0.5) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 14px;
     cursor: pointer;
     transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    color: #FFFFFF !important;
 }
 
 .user-profile:hover {
-    border-color: #b2dfdb !important;
-    box-shadow: 0 4px 12px rgba(0, 127, 97, 0.1) !important;
+    border-color: #2AB5A3 !important;
+    background: rgba(42, 181, 163, 0.1) !important;
+    box-shadow: 0 4px 12px rgba(42, 181, 163, 0.2) !important;
 }
 
 .user-avatar {
@@ -84,12 +95,12 @@ body {
     height: 38px;
     flex: 0 0 auto;
     place-items: center;
-    background: linear-gradient(135deg, #00a67e, #007f61) !important;
+    background: linear-gradient(135deg, #2AB5A3, #208A7C) !important;
     border-radius: 10px !important;
     color: #ffffff !important;
     font-weight: 800;
     font-size: 1.1rem;
-    box-shadow: 0 2px 8px rgba(0, 127, 97, 0.3);
+    box-shadow: 0 4px 12px rgba(42, 181, 163, 0.35);
 }
 
 .user-info {
@@ -97,10 +108,9 @@ body {
     flex: 1;
 }
 
-/* ===== CRITICAL FIX: Doctor name must be dark and visible ===== */
 .user-info h6,
 .user-info .user-doctor-name {
-    color: #1a202c !important;
+    color: #FFFFFF !important;
     font-weight: 700 !important;
     display: block !important;
     font-size: 0.88rem !important;
@@ -116,7 +126,7 @@ body {
     display: block;
     overflow: hidden;
     margin: 0;
-    color: #64748b !important;
+    color: #94A3B8 !important;
     font-size: 0.73rem;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -138,7 +148,7 @@ body {
     gap: 0.65rem;
     padding: 0.65rem 0.9rem;
     border-radius: 10px;
-    color: #4a5568 !important;
+    color: #94A3B8 !important;
     font-size: 0.875rem;
     font-weight: 500;
     text-decoration: none;
@@ -154,29 +164,29 @@ body {
 .nav-item-dash i {
     font-size: 1rem;
     flex-shrink: 0;
-    color: #64748b;
+    color: #94A3B8;
     transition: color 0.18s ease;
 }
 
 .nav-item-dash:hover {
-    background: #f0faf7 !important;
-    color: #007f61 !important;
+    background: rgba(42, 181, 163, 0.15) !important;
+    color: #2AB5A3 !important;
 }
 
 .nav-item-dash:hover i {
-    color: #007f61 !important;
+    color: #2AB5A3 !important;
 }
 
 .nav-item-dash.active {
-    background: #e6f7f2 !important;
-    color: #007f61 !important;
+    background: rgba(42, 181, 163, 0.2) !important;
+    color: #2AB5A3 !important;
     font-weight: 700 !important;
-    border-left: 3px solid #007f61 !important;
+    border-left: 3px solid #2AB5A3 !important;
     padding-left: calc(0.9rem - 3px);
 }
 
 .nav-item-dash.active i {
-    color: #007f61 !important;
+    color: #2AB5A3 !important;
 }
 
 /* ===== NAV POSITION ===== */
@@ -198,107 +208,24 @@ body {
     flex-shrink: 0;
 }
 
-.sidebar-notification-badge.is-hidden { display: none; }
-
-/* ===== SIDEBAR SECTION LABEL ===== */
-.sidebar-section-label {
-    font-size: 0.65rem;
-    font-weight: 700;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: #9eb5b0 !important;
-    padding: 0.5rem 1rem 0.25rem;
-    margin-top: 0.25rem;
-}
-
-/* ===== SIDEBAR FOOTER / LOGOUT ===== */
 .sidebar-footer {
-    margin-top: auto;
-    padding: 0.75rem;
-    border-top: 1px solid #f0f4f8 !important;
+    padding: 0.75rem 0.9rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
 .btn-logout {
-    color: #dc2626 !important;
-    font-weight: 600;
+    color: #ef4444 !important;
 }
 
 .btn-logout:hover {
-    background: #fff5f5 !important;
-    color: #b91c1c !important;
+    background: rgba(239, 68, 68, 0.15) !important;
+    color: #f87171 !important;
 }
 
-/* ===== MAIN CONTENT ===== */
+/* ===== MAIN CONTENT WRAPPER ===== */
 .main-content-dash {
-    min-height: 100vh;
     margin-left: var(--sidebar-width, 264px);
-    padding: 1.75rem 2rem;
-    background-color: #f5f7fa !important;
-    color: #1a202c !important;
-}
-
-/* ===== PAGE HEADER ===== */
-.page-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1.5rem;
-    margin-bottom: 1.5rem;
-}
-
-.page-header h1 {
-    margin: 0 0 0.35rem;
-    font-size: 2rem;
-    font-weight: 700;
-    color: #1a202c !important;
-}
-
-.page-header p {
-    margin: 0;
-    color: #64748b !important;
-}
-
-.page-eyebrow {
-    margin-bottom: 0.35rem !important;
-    color: #007f61 !important;
-    font-size: 0.78rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-
-/* ===== RESPONSIVE ===== */
-@media (max-width: 900px) {
-    .sidebar-modern {
-        width: 72px;
-    }
-
-    .sidebar-modern .brand-text,
-    .sidebar-modern .user-info,
-    .sidebar-modern .nav-text,
-    .sidebar-modern .sidebar-section-label {
-        display: none;
-    }
-
-    .user-profile,
-    .nav-item-dash,
-    .btn-logout {
-        justify-content: center;
-        padding: 0.65rem;
-    }
-
-    .sidebar-notification-badge {
-        position: absolute;
-        top: 4px;
-        right: 4px;
-        min-width: 16px;
-        height: 16px;
-        font-size: 0.6rem;
-        line-height: 16px;
-    }
-
-    .main-content-dash {
-        margin-left: 72px;
-        padding: 1rem;
-    }
+    padding: 1.5rem 2rem;
+    background: transparent !important;
+    min-height: 100vh;
 }

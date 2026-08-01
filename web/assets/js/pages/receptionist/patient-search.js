@@ -65,7 +65,7 @@
         html += '    <div class="d-flex align-items-center gap-3">';
         html += '      <div class="patient-avatar-circle">' + firstLetter + '</div>';
         html += '      <div>';
-        html += '        <h2 class="h4 fw-bold text-dark mb-1">' + utils.escapeHtml(patient.fullName || 'Chưa rõ họ tên') + '</h2>';
+        html += '        <h2 class="h4 fw-bold text-white mb-1">' + utils.escapeHtml(patient.fullName || 'Chưa rõ họ tên') + '</h2>';
         html += '        <div class="text-secondary small"><i class="bi bi-telephone me-1"></i>' + utils.escapeHtml(patient.phone || '') + '</div>';
         html += '      </div>';
         html += '    </div>';
@@ -86,7 +86,7 @@
 
         // 3. Appointments Section
         html += '<div class="d-flex align-items-center justify-content-between mb-3 mt-4">';
-        html += '  <h3 class="h5 text-dark fw-bold mb-0"><i class="bi bi-calendar2-week-fill me-2 text-success"></i>Danh sách lịch hẹn (' + appointments.length + ')</h3>';
+        html += '  <h3 class="h5 text-white fw-bold mb-0"><i class="bi bi-calendar2-week-fill me-2 text-info"></i>Danh sách lịch hẹn (' + appointments.length + ')</h3>';
         html += '</div>';
         
         if (appointments && appointments.length > 0) {
@@ -134,7 +134,7 @@
                 const time = this.getAttribute('data-time');
                 const patientName = this.getAttribute('data-patient');
 
-                cancelModalMessage.innerHTML = 'Bạn có chắc chắn muốn hủy lịch khám của bệnh nhân <strong class="text-dark">' 
+                cancelModalMessage.innerHTML = 'Bạn có chắc chắn muốn hủy lịch khám của bệnh nhân <strong class="text-white">' 
                     + utils.escapeHtml(patientName) + '</strong> vào lúc <strong class="text-warning">' 
                     + utils.escapeHtml(time) + '</strong> với <strong class="text-info">' 
                     + utils.escapeHtml(doctor) + '</strong> không?';

@@ -110,6 +110,9 @@ public class UserDAO {
      * For patients/doctors: also fetch role-specific profile details.
      */
     public User validateLogin(String email, String password) {
+        if (email == null || email.trim().isEmpty() || password == null) {
+            return null;
+        }
         String sqlAccount = "SELECT account_id, full_name, email, role, password_hash, status "
                 + "FROM Account WHERE LOWER(email) = LOWER(?)";
         

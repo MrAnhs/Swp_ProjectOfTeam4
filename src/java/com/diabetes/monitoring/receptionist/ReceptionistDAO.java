@@ -2,6 +2,7 @@ package com.diabetes.monitoring.receptionist;
 
 import com.diabetes.monitoring.util.DatabaseConnection;
 import com.diabetes.monitoring.util.PasswordUtil;
+import com.diabetes.monitoring.notification.NotificationService;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -442,121 +443,34 @@ public class ReceptionistDAO {
                 throw new ReceptionistException("Không tìm thấy hóa đơn chờ thanh toán phù hợp.");
             }
 
+            Integer receptionId = findReceptionIdByAccountId(connection, receptionistAccountId);
+
             String sql = "UPDATE Invoice SET status = 'Paid', payment_method = ?, "
                     + "receptionist_id = ?, exported_at = GETDATE() WHERE invoice_id = ? AND status = 'Pending'";
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
                 statement.setString(1, paymentMethod);
-                statement.setInt(2, receptionistAccountId);
+                if (receptionId == null) {
+                    statement.setNull(2, java.sql.Types.INTEGER);
+                } else {
+                    statement.setInt(2, receptionId);
+                }
                 statement.setInt(3, invoiceId);
                 if (statement.executeUpdate() == 0) {
                     throw new ReceptionistException("Hóa đơn đã được xử lý trước đó.");
                 }
             }
 
-            String detailSql = "UPDATE Invoice_Detail SET lab_status = 'Requested' "
-                    + "WHERE invoice_id = ? AND lab_status = 'Waiting_Payment'";
-            try (PreparedStatement statement = connection.prepareStatement(detailSql)) {
-                statement.setInt(1, invoiceId);
-                statement.executeUpdate();
-            }
-
-            // Retrieve patient and lab details to insert into Lab_Order
-            String selectLabRequestSql = "SELECT id.lab_id, i.patient_id, id.appointment_id, id.service_id "
-                    + "FROM Invoice_Detail id "
-                    + "JOIN Invoice i ON id.invoice_id = i.invoice_id "
-                    + "WHERE id.invoice_id = ? AND id.lab_status = 'Requested'";
-            
-            try (PreparedStatement selectStmt = connection.prepareStatement(selectLabRequestSql)) {
-                selectStmt.setInt(1, invoiceId);
-                try (ResultSet rs = selectStmt.executeQuery()) {
-                    while (rs.next()) {
-                        int patientId = rs.getInt("patient_id");
-                        int serviceId = rs.getInt("service_id");
-                        int labId = rs.getInt("lab_id");
-                        boolean hasLabId = !rs.wasNull();
-                        
-                        int appointmentId = rs.getInt("appointment_id");
-                        boolean hasApptId = !rs.wasNull();
-                        if (!hasApptId) {
-                            String selectApptSql = "SELECT TOP 1 appointment_id FROM Appointment WHERE patient_id = ? ORDER BY appointment_id DESC";
-                            try (PreparedStatement apptStmt = connection.prepareStatement(selectApptSql)) {
-                                apptStmt.setInt(1, patientId);
-                                try (ResultSet apptRs = apptStmt.executeQuery()) {
-                                    if (apptRs.next()) {
-                                        appointmentId = apptRs.getInt("appointment_id");
-                                        hasApptId = true;
-                                    }
-                                }
-                            }
-                        }
-                        if (!hasApptId) {
-                            continue;
-                        }
-                        
-                        String roomId = null;
-                        if (hasLabId) {
-                            String selectRoomSql = "SELECT TOP 1 room_id FROM Lab_Schedule WHERE lab_id = ? AND work_date = CAST(GETDATE() AS date) AND LOWER(status) = 'scheduled' ORDER BY ls.lab_sched_id DESC";
-                            // Wait, the column references in subquery: "ls" alias wasn't defined properly if we just do Lab_Schedule, let's make it clean:
-                            selectRoomSql = "SELECT TOP 1 room_id FROM Lab_Schedule WHERE lab_id = ? AND work_date = CAST(GETDATE() AS date) AND LOWER(status) = 'scheduled' ORDER BY lab_sched_id DESC";
-                            try (PreparedStatement roomStmt = connection.prepareStatement(selectRoomSql)) {
-                                roomStmt.setInt(1, labId);
-                                try (ResultSet roomRs = roomStmt.executeQuery()) {
-                                    if (roomRs.next()) {
-                                        roomId = roomRs.getString("room_id");
-                                    }
-                                }
-                            }
-                        }
-                        if (roomId == null || roomId.trim().isEmpty()) {
-                            String selectFallbackRoomSql = "SELECT TOP 1 room_id FROM Room ORDER BY room_id";
-                            try (PreparedStatement roomStmt = connection.prepareStatement(selectFallbackRoomSql);
-                                 ResultSet roomRs = roomStmt.executeQuery()) {
-                                if (roomRs.next()) {
-                                    roomId = roomRs.getString("room_id");
-                                }
-                            }
-                        }
-                        if (roomId == null || roomId.trim().isEmpty()) {
-                            roomId = "R101";
-                        }
-                        
-                        String checkWaitingSql = "SELECT COUNT(*) FROM Lab_Order "
-                                + "WHERE patient_id = ? AND service_id = ? AND status = 'waiting'";
-                        boolean isAlreadyWaiting = false;
-                        try (PreparedStatement checkStmt = connection.prepareStatement(checkWaitingSql)) {
-                            checkStmt.setInt(1, patientId);
-                            checkStmt.setInt(2, serviceId);
-                            try (ResultSet checkRs = checkStmt.executeQuery()) {
-                                if (checkRs.next() && checkRs.getInt(1) > 0) {
-                                    isAlreadyWaiting = true;
-                                }
-                            }
-                        }
-                        
-                        if (!isAlreadyWaiting) {
-                            String orderId = java.util.UUID.randomUUID().toString();
-                            String insertOrderSql = "INSERT INTO Lab_Order "
-                                    + "(order_id, appointment_id, patient_id, room_id, service_id, lab_id, status, created_at) "
-                                    + "VALUES (?, ?, ?, ?, ?, ?, 'waiting', GETDATE())";
-                            try (PreparedStatement insertStmt = connection.prepareStatement(insertOrderSql)) {
-                                insertStmt.setString(1, orderId);
-                                insertStmt.setInt(2, appointmentId);
-                                insertStmt.setInt(3, patientId);
-                                insertStmt.setString(4, roomId);
-                                insertStmt.setInt(5, serviceId);
-                                if (hasLabId) {
-                                    insertStmt.setInt(6, labId);
-                                } else {
-                                    insertStmt.setNull(6, java.sql.Types.INTEGER);
-                                }
-                                insertStmt.executeUpdate();
-                            }
-                        }
-                    }
-                }
-            }
-
+            NotificationService notificationService = new NotificationService();
+            notificationService.prepareLaboratoryOrders(connection, invoiceId);
             connection.commit();
+
+            try {
+                notificationService.notifyInvoicePaid(connection, invoiceId);
+                notificationService.notifyLaboratoryRequested(connection, invoiceId);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+
             return invoiceId;
         } catch (SQLException | ReceptionistException e) {
             rollback(connection);
@@ -573,24 +487,34 @@ public class ReceptionistDAO {
             connection = openConnection();
             connection.setAutoCommit(false);
 
+            Integer receptionId = findReceptionIdByAccountId(connection, receptionistAccountId);
+
             String sql = "UPDATE Invoice SET status = 'Paid', payment_method = ?, "
                     + "receptionist_id = ?, exported_at = GETDATE() WHERE invoice_id = ? AND status = 'Pending'";
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
                 statement.setString(1, paymentMethod);
-                statement.setInt(2, receptionistAccountId);
+                if (receptionId == null) {
+                    statement.setNull(2, java.sql.Types.INTEGER);
+                } else {
+                    statement.setInt(2, receptionId);
+                }
                 statement.setInt(3, invoiceId);
                 if (statement.executeUpdate() == 0) {
                     throw new ReceptionistException("Hóa đơn không tồn tại hoặc đã được xử lý trước đó.");
                 }
             }
 
-            String detailSql = "UPDATE Invoice_Detail SET lab_status = 'Requested' "
-                    + "WHERE invoice_id = ? AND lab_status = 'Waiting_Payment'";
-            try (PreparedStatement statement = connection.prepareStatement(detailSql)) {
-                statement.setInt(1, invoiceId);
-                statement.executeUpdate();
-            }
+            NotificationService notificationService = new NotificationService();
+            notificationService.prepareLaboratoryOrders(connection, invoiceId);
             connection.commit();
+
+            try {
+                notificationService.notifyInvoicePaid(connection, invoiceId);
+                notificationService.notifyLaboratoryRequested(connection, invoiceId);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+
             return invoiceId;
         } catch (SQLException | ReceptionistException e) {
             rollback(connection);
@@ -1300,8 +1224,15 @@ public class ReceptionistDAO {
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, accountId);
             try (ResultSet rs = statement.executeQuery()) {
-                return rs.next() ? rs.getInt("reception_id") : null;
+                if (rs.next()) {
+                    return rs.getInt("reception_id");
+                }
             }
+        }
+        String fallbackSql = "SELECT TOP 1 reception_id FROM Reception ORDER BY reception_id ASC";
+        try (PreparedStatement statement = connection.prepareStatement(fallbackSql);
+             ResultSet rs = statement.executeQuery()) {
+            return rs.next() ? rs.getInt("reception_id") : null;
         }
     }
 

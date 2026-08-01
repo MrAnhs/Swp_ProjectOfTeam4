@@ -9,6 +9,9 @@ public class PasswordUtil {
     private static final String HASH_ALGORITHM = "SHA-256";
 
     public static String hashPassword(String password) {
+        if (password == null) {
+            return "";
+        }
         try {
             MessageDigest digest = MessageDigest.getInstance(HASH_ALGORITHM);
             byte[] hashBytes = digest.digest(password.getBytes(StandardCharsets.UTF_8));
@@ -19,11 +22,11 @@ public class PasswordUtil {
     }
 
     public static boolean matches(String rawPassword, String storedPassword) {
-        if (storedPassword == null) {
+        if (rawPassword == null || storedPassword == null) {
             return false;
         }
         if (isHashed(storedPassword)) {
-            return hashPassword(rawPassword).equals(storedPassword);
+            return hashPassword(rawPassword).equalsIgnoreCase(storedPassword);
         }
         return rawPassword.equals(storedPassword);
     }

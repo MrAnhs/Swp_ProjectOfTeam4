@@ -48,10 +48,6 @@ public class AppointmentRepository {
         }
     }
 
-            public boolean checkInAppointment(int appointmentId) {
-        return updateAppointmentStatus(appointmentId, "Checked_In", "Waiting");
-    }
-
     public boolean startAppointment(int appointmentId) {
         return updateAppointmentStatus(appointmentId, "In_Progress", "Checked_In");
     }

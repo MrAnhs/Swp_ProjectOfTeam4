@@ -1,19 +1,20 @@
 @import '../../components/forms.css';
 
 :root {
-    --receptionist-primary: #00875a;
-    --receptionist-primary-dark: #0f5132;
-    --receptionist-bg: #f8faf9;
-    --receptionist-text: #1e293b;
-    --receptionist-muted: #64748b;
-    --receptionist-border: #e2e8f0;
+    --receptionist-primary: #2AB5A3;
+    --receptionist-primary-dark: #208A7C;
+    --receptionist-bg: #0B0F19;
+    --receptionist-text: #F8FAFC;
+    --receptionist-muted: #94A3B8;
+    --receptionist-border: rgba(255, 255, 255, 0.08);
 }
 
 body.receptionist-page {
     margin: 0;
     min-height: 100vh;
-    background: var(--receptionist-bg);
-    color: var(--receptionist-text);
+    background: #0B0F19 !important;
+    background: radial-gradient(circle at center, rgba(42, 181, 163, 0.12) 0%, #0B0F19 80%) !important;
+    color: #F8FAFC !important;
     font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
@@ -26,8 +27,8 @@ body.receptionist-page {
     position: fixed;
     inset: 0 auto 0 0;
     width: 275px;
-    background: #fff;
-    border-right: 1px solid var(--receptionist-border);
+    background: rgba(15, 23, 42, 0.95) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
     display: flex;
     flex-direction: column;
     padding: 18px 16px;
@@ -68,27 +69,30 @@ body.receptionist-page {
 .profile-role,
 .page-subtitle,
 .muted-text {
-    color: var(--receptionist-muted);
-    font-size: 12.5px;
+    color: #94A3B8 !important;
+    font-size: 13px;
 }
 
 .receptionist-profile {
     margin: 14px 0;
     padding: 10px 14px;
     border-radius: 14px;
-    background: #f1f7f4;
+    background: rgba(30, 41, 59, 0.5) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #FFFFFF !important;
 }
 
 .profile-avatar {
     border-radius: 50%;
-    background: #e6f4ea;
-    color: var(--receptionist-primary-dark);
+    background: linear-gradient(135deg, #2AB5A3, #208A7C) !important;
+    color: #FFFFFF !important;
 }
 
 .profile-name {
     font-weight: 700;
     font-size: 14.5px;
     line-height: 1.2;
+    color: #FFFFFF !important;
 }
 
 .receptionist-nav {
@@ -108,7 +112,7 @@ body.receptionist-page {
     gap: 12px;
     padding: 9px 12px;
     border-radius: 10px;
-    color: #51637a;
+    color: #94A3B8 !important;
     text-decoration: none;
     font-size: 15px;
     font-weight: 600;
@@ -116,15 +120,15 @@ body.receptionist-page {
 }
 
 .receptionist-nav .nav-link:hover {
-    background: #e6f4ea;
-    color: var(--receptionist-primary-dark);
+    background: rgba(42, 181, 163, 0.15) !important;
+    color: #2AB5A3 !important;
     transform: translateX(3px);
 }
 
 .receptionist-nav .nav-link.active {
-    background: #e6f4ea;
-    color: var(--receptionist-primary-dark);
-    box-shadow: 0 2px 8px rgba(0, 135, 90, 0.12);
+    background: rgba(42, 181, 163, 0.2) !important;
+    color: #2AB5A3 !important;
+    box-shadow: 0 2px 8px rgba(42, 181, 163, 0.2);
 }
 
 .receptionist-logout {
@@ -141,7 +145,7 @@ body.receptionist-page {
 }
 
 .page-kicker {
-    color: var(--receptionist-primary-dark);
+    color: #2AB5A3 !important;
     font-weight: 800;
     letter-spacing: .12em;
     text-transform: uppercase;
@@ -151,15 +155,18 @@ body.receptionist-page {
     margin: 8px 0;
     font-size: 38px;
     font-weight: 850;
+    color: #FFFFFF !important;
 }
 
 .panel-card,
 .stat-card,
 .action-card {
-    background: #fff;
-    border: 1px solid var(--receptionist-border);
+    background: rgba(15, 23, 42, 0.75) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
     border-radius: 22px;
-    box-shadow: 0 8px 24px rgba(16, 35, 63, .04);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(20px);
+    color: #FFFFFF !important;
     transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
@@ -184,8 +191,8 @@ body.receptionist-page {
     width: 46px;
     height: 46px;
     border-radius: 14px;
-    background: #e6f4ea;
-    color: var(--receptionist-primary-dark);
+    background: rgba(42, 181, 163, 0.15) !important;
+    color: #2AB5A3 !important;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -196,6 +203,7 @@ body.receptionist-page {
 .stat-value {
     font-size: 32px;
     font-weight: 800;
+    color: #FFFFFF !important;
 }
 
 .action-card {
@@ -206,8 +214,8 @@ body.receptionist-page {
 .stat-card:hover,
 .action-card:hover {
     transform: translateY(-6px);
-    box-shadow: 0 20px 30px rgba(16, 35, 63, .08);
-    border-color: var(--receptionist-primary);
+    box-shadow: 0 20px 30px rgba(42, 181, 163, 0.2);
+    border-color: #2AB5A3 !important;
 }
 
 .result-card {
@@ -283,28 +291,34 @@ body.receptionist-page {
 }
 
 .invoice-card {
-    border: 1px solid var(--receptionist-border);
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
     border-radius: 16px;
-    background: #fff;
+    background: rgba(30, 41, 59, 0.5) !important;
+    backdrop-filter: blur(12px) !important;
+    color: #FFFFFF !important;
     margin-bottom: 12px;
     overflow: hidden;
     transition: all 0.2s ease;
 }
 
 .invoice-card:hover {
-    box-shadow: 0 4px 12px rgba(16, 35, 63, 0.05);
+    border-color: rgba(42, 181, 163, 0.4) !important;
+    box-shadow: 0 8px 24px rgba(42, 181, 163, 0.15) !important;
 }
 
 .invoice-card .invoice-row {
     border: none;
     border-radius: 0;
     margin-bottom: 0;
+    background: transparent !important;
+    color: #FFFFFF !important;
 }
 
 .invoice-details {
     padding: 16px;
-    background: #fafafa;
-    border-top: 1px solid var(--receptionist-border);
+    background: rgba(15, 23, 42, 0.9) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #FFFFFF !important;
 }
 
 .invoice-details-title {
@@ -578,21 +592,20 @@ select.form-select.invoice-pay-method option {
     padding: 8px !important;
 }
 
-/* Receptionist Doctor Card Custom Light Theme */
+/* Receptionist Doctor Card Custom Dark Theme */
 .receptionist-page .doctor-booking-card {
-    background-color: #ffffff;
-    border: 1px solid #e2e8f0;
+    background-color: #1e293b;
+    border: 1px solid #334155;
     border-radius: 14px;
     padding: 1.25rem;
-    color: #1e293b;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    color: #f8fafc;
 }
 
 .receptionist-page .doctor-booking-card__header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid #334155;
     padding-bottom: 1rem;
     margin-bottom: 1rem;
 }
@@ -607,34 +620,32 @@ select.form-select.invoice-pay-method option {
     width: 48px;
     height: 48px;
     border-radius: 50%;
-    background-color: #e6f4ea;
-    border: 1px solid #00C8A5;
-    color: #007f61;
+    background-color: #0f172a;
+    border: 1px solid #059669;
+    color: #059669;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.3rem;
-    font-weight: 700;
 }
 
 .receptionist-page .doctor-booking-card__identity h3 {
     margin: 0;
     font-size: 1.15rem;
     font-weight: 700;
-    color: #1e293b;
+    color: #ffffff;
 }
 
 .receptionist-page .doctor-booking-card__identity p {
     margin: 0;
     font-size: 0.875rem;
-    color: #007f61;
-    font-weight: 600;
+    color: #94a3b8;
 }
 
 .receptionist-page .doctor-date-badge {
-    background-color: rgba(0, 200, 165, 0.12);
-    border: 1px solid rgba(0, 200, 165, 0.3);
-    color: #007f61;
+    background-color: #0f172a;
+    border: 1px solid #059669;
+    color: #10b981;
     padding: 0.4rem 0.85rem;
     border-radius: 8px;
     font-size: 0.85rem;
@@ -649,7 +660,7 @@ select.form-select.invoice-pay-method option {
 }
 
 .receptionist-page .doctor-schedule-heading strong {
-    color: #1e293b;
+    color: #e2e8f0;
     font-size: 0.95rem;
 }
 
@@ -660,11 +671,10 @@ select.form-select.invoice-pay-method option {
 
 .receptionist-page .doctor-session-group h4 {
     font-size: 0.875rem;
-    color: #007f61;
+    color: #38bdf8;
     margin-bottom: 0.5rem;
     display: flex;
     align-items: center;
-    font-weight: 700;
 }
 
 .receptionist-page .doctor-time-slots {
@@ -675,16 +685,16 @@ select.form-select.invoice-pay-method option {
 }
 
 .receptionist-page .doctor-time-slot {
-    background-color: #f8fafc;
-    border: 1px solid #cbd5e1;
-    border-radius: 10px;
+    background-color: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 8px;
     padding: 0.6rem 0.85rem;
     cursor: pointer;
     transition: all 0.2s ease;
     display: flex;
     flex-direction: column;
     min-width: 145px;
-    color: #1e293b;
+    color: #cbd5e1;
 }
 
 .receptionist-page .doctor-time-slot input[type="radio"] {
@@ -692,28 +702,26 @@ select.form-select.invoice-pay-method option {
 }
 
 .receptionist-page .doctor-time-slot:hover {
-    border-color: #00C8A5;
-    background-color: #ffffff;
-    transform: translateY(-1px);
+    border-color: #059669;
+    background-color: #1e293b;
 }
 
 .receptionist-page .doctor-time-slot.active {
-    border-color: #00C8A5;
-    background-color: rgba(0, 200, 165, 0.12);
-    box-shadow: 0 0 0 2px rgba(0, 200, 165, 0.35);
-    color: #007f61;
+    border-color: #10b981;
+    background-color: rgba(16, 185, 129, 0.18);
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.35);
+    color: #ffffff;
 }
 
 .receptionist-page .doctor-time-range {
     font-weight: 700;
     font-size: 0.95rem;
-    color: #1e293b;
+    color: #ffffff;
 }
 
 .receptionist-page .doctor-time-availability {
     font-size: 0.75rem;
-    color: #007f61;
-    font-weight: 600;
+    color: #10b981;
 }
 
 .receptionist-page .doctor-time-room {
@@ -723,11 +731,11 @@ select.form-select.invoice-pay-method option {
 
 /* Patient Search UI Improvements */
 .patient-profile-banner {
-    background: #ffffff !important;
-    border: 1px solid var(--receptionist-border, #e2e8f0) !important;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95));
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 20px;
     padding: 24px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
     margin-bottom: 24px;
 }
 
@@ -735,38 +743,37 @@ select.form-select.invoice-pay-method option {
     width: 60px;
     height: 60px;
     border-radius: 16px;
-    background: linear-gradient(135deg, #00C8A5, #009688);
+    background: linear-gradient(135deg, #10b981, #059669);
     color: #ffffff;
     font-size: 26px;
     font-weight: 800;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 6px 16px rgba(0, 200, 165, 0.3);
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
     flex-shrink: 0;
 }
 
 .patient-info-tile {
-    background: #f8fafc !important;
-    border: 1px solid #e2e8f0 !important;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 14px;
     padding: 14px 16px;
     transition: all 0.2s ease;
 }
 
 .patient-info-tile:hover {
-    background: #ffffff !important;
-    border-color: rgba(0, 200, 165, 0.4) !important;
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(16, 185, 129, 0.3);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .patient-tile-icon {
     width: 32px;
     height: 32px;
     border-radius: 10px;
-    background: rgba(0, 200, 165, 0.15);
-    color: #007f61;
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -777,7 +784,7 @@ select.form-select.invoice-pay-method option {
 .patient-tile-label {
     font-size: 12px;
     font-weight: 600;
-    color: #64748b;
+    color: #94a3b8;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     margin-bottom: 4px;
@@ -786,24 +793,24 @@ select.form-select.invoice-pay-method option {
 .patient-tile-value {
     font-size: 15px;
     font-weight: 700;
-    color: #1e293b !important;
+    color: #f8fafc;
     word-break: break-word;
 }
 
 /* Appointment Card Styling */
 .appointment-card-custom {
-    background: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+    border: 1px solid rgba(255, 255, 255, 0.09);
     border-radius: 18px;
     padding: 20px;
     margin-bottom: 18px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
     transition: all 0.2s ease;
 }
 
 .appointment-card-custom:hover {
-    border-color: rgba(0, 200, 165, 0.4) !important;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    border-color: rgba(16, 185, 129, 0.4);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
 }
 
 .appointment-header {
@@ -812,7 +819,7 @@ select.form-select.invoice-pay-method option {
     justify-content: space-between;
     padding-bottom: 14px;
     margin-bottom: 16px;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     flex-wrap: wrap;
     gap: 12px;
 }
@@ -820,7 +827,7 @@ select.form-select.invoice-pay-method option {
 .appointment-title {
     font-size: 16px;
     font-weight: 800;
-    color: #007f61 !important;
+    color: #38bdf8;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -884,6 +891,106 @@ select.form-select.invoice-pay-method option {
     color: #ffffff;
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(239, 68, 68, 0.45);
+}
+
+/* Doctor Booking Cards in Dark Theme */
+.doctor-booking-card {
+    background: rgba(15, 23, 42, 0.75) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 20px !important;
+    backdrop-filter: blur(20px) !important;
+    padding: 20px;
+    margin-bottom: 20px;
+    color: #FFFFFF !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+
+.doctor-booking-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 14px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.doctor-booking-card__identity {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.doctor-booking-card__identity h3 {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #FFFFFF !important;
+    margin: 0;
+}
+
+.doctor-booking-card__identity p {
+    font-size: 0.85rem;
+    color: #94A3B8 !important;
+    margin: 2px 0 0;
+}
+
+.doctor-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: rgba(42, 181, 163, 0.15) !important;
+    color: #2AB5A3 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+}
+
+.doctor-date-badge {
+    background: rgba(42, 181, 163, 0.2) !important;
+    color: #2AB5A3 !important;
+    border: 1px solid rgba(42, 181, 163, 0.3) !important;
+    padding: 6px 12px;
+    border-radius: 50px;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.doctor-schedule-heading strong {
+    color: #2AB5A3 !important;
+    font-size: 0.95rem;
+}
+
+.doctor-schedule-heading span {
+    color: #94A3B8 !important;
+    font-size: 0.8rem;
+    margin-left: 8px;
+}
+
+.doctor-slot-button,
+.slot-btn {
+    background: rgba(30, 41, 59, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: #FFFFFF !important;
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.88rem;
+    transition: all 0.2s ease;
+}
+
+.doctor-slot-button:hover,
+.slot-btn:hover {
+    background: rgba(42, 181, 163, 0.2) !important;
+    border-color: #2AB5A3 !important;
+    color: #2AB5A3 !important;
+}
+
+.doctor-slot-button.active,
+.slot-btn.active {
+    background: linear-gradient(135deg, #2AB5A3, #208A7C) !important;
+    border-color: transparent !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 4px 12px rgba(42, 181, 163, 0.35);
 }
 
 

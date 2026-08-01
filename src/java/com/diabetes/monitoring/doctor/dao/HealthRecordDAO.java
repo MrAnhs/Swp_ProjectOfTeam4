@@ -188,26 +188,23 @@ public class HealthRecordDAO {
 
     public List<HealthRecord> getGeneralExaminationRecords(int doctorId) {
         return getDoctorWorkflowRecords(doctorId,
-                "(r.status IS NULL OR r.status != 'Completed') AND NOT EXISTS ("
+                "(r.status IS NULL OR r.status NOT IN ('Completed', 'AI_Processed')) AND NOT EXISTS ("
                 + "SELECT 1 FROM Invoice_Detail id "
-                + "JOIN Invoice i ON i.invoice_id = id.invoice_id "
                 + "LEFT JOIN Medical_record mr2 ON mr2.health_record_id = r.health_record_id "
                 + "WHERE (id.health_record_id = r.health_record_id "
-                + "OR (mr2.appointment_id IS NOT NULL AND id.appointment_id = mr2.appointment_id) "
-                + "OR (i.patient_id = r.patient_id)) "
-                + "AND (i.status = 'Paid' OR id.lab_status IN ('Requested', 'Processing', 'Completed')))");
+                + "OR (mr2.appointment_id IS NOT NULL AND id.appointment_id = mr2.appointment_id)) "
+                + "AND id.lab_status = 'Completed')");
     }
 
     public List<HealthRecord> getDetailedExaminationRecords(int doctorId) {
         return getDoctorWorkflowRecords(doctorId,
-                "(r.status IS NULL OR r.status != 'Completed') AND EXISTS ("
+                "(r.status IS NULL OR r.status != 'Completed') AND ("
+                + "r.status = 'AI_Processed' OR EXISTS ("
                 + "SELECT 1 FROM Invoice_Detail id "
-                + "JOIN Invoice i ON i.invoice_id = id.invoice_id "
                 + "LEFT JOIN Medical_record mr2 ON mr2.health_record_id = r.health_record_id "
                 + "WHERE (id.health_record_id = r.health_record_id "
-                + "OR (mr2.appointment_id IS NOT NULL AND id.appointment_id = mr2.appointment_id) "
-                + "OR (i.patient_id = r.patient_id)) "
-                + "AND (i.status = 'Paid' OR id.lab_status IN ('Requested', 'Processing', 'Completed')))");
+                + "OR (mr2.appointment_id IS NOT NULL AND id.appointment_id = mr2.appointment_id)) "
+                + "AND id.lab_status = 'Completed'))");
     }
 
     private List<HealthRecord> getDoctorWorkflowRecords(
@@ -1817,8 +1814,27 @@ public class HealthRecordDAO {
                     }
                     int[] insertedRows = ps.executeBatch();
                     if (insertedRows.length != prices.size()) {
-                        throw new SQLException("Kh\u00f4ng th\u1ec3 t\u1ea1o chi ti\u1ebft ch\u1ec9 \u0111\u1ecbnh x\u00e9t nghi\u1ec7m");
+                        throw new SQLException("Không thể tạo chi tiết chỉ định xét nghiệm");
                     }
+                }
+
+                String insertLabOrdersSql = "INSERT INTO Lab_Order "
+                        + "(order_id, appointment_id, patient_id, room_id, service_id, lab_id, status, created_at) "
+                        + "SELECT CONCAT('LAB-', id.invoice_detail_id), "
+                        + "COALESCE(id.appointment_id, (SELECT TOP 1 appt.appointment_id FROM Appointment appt WHERE appt.patient_id = i.patient_id ORDER BY appt.appointment_id DESC), 0), "
+                        + "i.patient_id, "
+                        + "COALESCE("
+                        + "  (SELECT TOP 1 ls.room_id FROM Lab_Schedule ls WHERE ls.lab_id = id.lab_id AND CAST(ls.work_date AS date) = CAST(GETDATE() AS date) AND (ls.status IS NULL OR LOWER(ls.status) <> 'cancelled')), "
+                        + "  (SELECT TOP 1 r.room_id FROM Room r WHERE r.status = 'Active' AND (r.room_id LIKE 'LAB%' OR r.room_name LIKE N'%xét nghiệm%') ORDER BY (SELECT COUNT(*) FROM Lab_Order existing WHERE existing.room_id = r.room_id AND existing.status IN ('Requested','Processing')), r.room_id), "
+                        + "  (SELECT TOP 1 r.room_id FROM Room r ORDER BY r.room_id), "
+                        + "  'R101'"
+                        + "), id.service_id, id.lab_id, 'Waiting_Payment', GETDATE() "
+                        + "FROM Invoice_Detail id JOIN Invoice i ON i.invoice_id = id.invoice_id "
+                        + "WHERE id.invoice_id = ? "
+                        + "AND NOT EXISTS (SELECT 1 FROM Lab_Order lo WHERE lo.order_id = CONCAT('LAB-', id.invoice_detail_id))";
+                try (PreparedStatement ps = conn.prepareStatement(insertLabOrdersSql)) {
+                    ps.setInt(1, invoiceId);
+                    ps.executeUpdate();
                 }
 
                 try (PreparedStatement ps = conn.prepareStatement(ensureMedicalSql)) {

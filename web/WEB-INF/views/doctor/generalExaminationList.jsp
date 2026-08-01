@@ -45,7 +45,7 @@
                                 <td><fmt:formatDate value="${r.createdAt}" pattern="dd/MM/yyyy HH:mm"/></td>
                                 <td><span class="doctor-badge badge-accepted">${r.statusDisplayText}</span></td>
                                 <td class="text-end">
-                                    <a class="btn btn-sm btn-doctor" href="${pageContext.request.contextPath}/doctor/records/detail?record_id=${r.healthRecordId}">
+                                    <a class="btn btn-sm btn-doctor" href="${pageContext.request.contextPath}/doctor/records/general-detail?record_id=${r.healthRecordId}">
                                         <i class="bi bi-person-vcard"></i> Mở khám tổng quát
                                     </a>
                                 </td>

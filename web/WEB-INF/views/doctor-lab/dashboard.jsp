@@ -2,39 +2,34 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <!DOCTYPE html>
-<html lang="vi" style="color-scheme: light;">
+<html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="color-scheme" content="light">
     <title>Phòng Xét nghiệm - DiabetesCare</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/base/variables.css">
+    <%@ include file="/WEB-INF/views/components/shared/master-head.jspf" %>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/layouts/patient-shell.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/pages/doctor-lab/doctor-lab.css">
     <style>
         :root {
-            color-scheme: light;
-            --primary:     #00a67e;
-            --primary-dark:#007f61;
+            --primary:     #2AB5A3;
+            --primary-dark:#208A7C;
             --primary-deep:#005f48;
-            --primary-pale:#e8f5f1;
-            --primary-soft:#f5faf9;
-            --bg-app:      #f5f7fa;
+            --primary-pale:rgba(42, 181, 163, 0.15);
+            --primary-soft:rgba(30, 41, 59, 0.45);
+            --bg-app:      #0B0F19;
             --sidebar-w:   264px;
             --radius-card: 16px;
-            --shadow-card: 0 2px 16px rgba(0,0,0,.06);
-            --shadow-hover: 0 10px 32px rgba(0,0,0,.12);
+            --shadow-card: 0 20px 60px rgba(0,0,0,.5);
+            --shadow-hover: 0 10px 32px rgba(42,181,163,.3);
         }
 
-        /* ===== GLOBAL ===== */
-        html { color-scheme: light !important; background: #f5f7fa !important; }
+        /* ===== GLOBAL DARK THEME ===== */
+        html { background: #0B0F19 !important; }
         *, *::before, *::after { box-sizing: border-box; }
         body {
             font-family: 'Inter', sans-serif;
-            background: #f5f7fa !important;
-            color: #1a202c !important;
+            background: #0B0F19 !important;
+            background: radial-gradient(circle at center, rgba(42, 181, 163, 0.12) 0%, #0B0F19 80%) !important;
+            color: #F8FAFC !important;
             font-size: 0.93rem;
         }
 
@@ -63,43 +58,43 @@
         }
         .brand-text { font-size: 1.05rem; font-weight: 800; letter-spacing: -.3px; }
 
-        /* Nav items - optimized for light theme */
+        /* Nav items - Dark Theme */
         .sidebar-modern .nav-item-dash {
             width: auto; text-align: left; border: none; background: transparent;
             font-family: inherit; font-size: 0.875rem; font-weight: 500; cursor: pointer;
             outline: none; display: flex; align-items: center; gap: 0.65rem;
             padding: 0.65rem 0.9rem;
-            color: #4a5568 !important; text-decoration: none;
+            color: #94A3B8 !important; text-decoration: none;
             transition: all 0.18s ease;
             border-radius: 10px;
             margin: 1px 0.5rem;
         }
-        .sidebar-modern .nav-item-dash i { font-size: 1rem; transition: transform 0.18s ease; color: #64748b; }
-        .sidebar-modern .nav-item-dash:hover i { transform: scale(1.1) translateX(1px); color: #007f61; }
+        .sidebar-modern .nav-item-dash i { font-size: 1rem; transition: transform 0.18s ease; color: #94A3B8; }
+        .sidebar-modern .nav-item-dash:hover i { transform: scale(1.1) translateX(1px); color: #2AB5A3; }
         .sidebar-modern .nav-item-dash:hover {
-            background: #f0faf7;
-            color: #007f61 !important;
+            background: rgba(42, 181, 163, 0.15);
+            color: #2AB5A3 !important;
         }
         .sidebar-modern .nav-item-dash.active {
-            background: #e6f7f2 !important;
-            color: #007f61 !important;
+            background: rgba(42, 181, 163, 0.2) !important;
+            color: #2AB5A3 !important;
             font-weight: 700;
-            border-left: 3px solid #007f61;
+            border-left: 3px solid #2AB5A3;
             padding-left: calc(0.9rem - 3px);
         }
-        .sidebar-modern .nav-item-dash.active i { color: #007f61 !important; }
+        .sidebar-modern .nav-item-dash.active i { color: #2AB5A3 !important; }
 
         /* Sub-menus */
         .sidebar-modern .sub-menu {
             display: none; flex-direction: column;
-            background: #fafdfc;
-            border-left: 2px solid #b2dfdb;
+            background: rgba(15, 23, 42, 0.8);
+            border-left: 2px solid #2AB5A3;
             margin-left: 2.1rem; margin-bottom: 0.4rem;
             border-radius: 0 8px 8px 0; padding-left: 0.2rem;
         }
         .sidebar-modern .sub-menu-level2 {
             display: none; flex-direction: column;
-            border-left: 1.5px dashed #b2dfdb;
+            border-left: 1.5px dashed rgba(42, 181, 163, 0.4);
             margin-left: 1.2rem; margin-bottom: 0.3rem;
             border-radius: 0 8px 8px 0; padding-left: 0.15rem;
         }
@@ -113,30 +108,30 @@
             animation: slideDown 0.22s ease forwards;
         }
         .sidebar-modern .nav-item-sub {
-            padding: 0.48rem 0.9rem; color: #5e7370; font-size: 0.82rem; font-weight: 500;
+            padding: 0.48rem 0.9rem; color: #94A3B8; font-size: 0.82rem; font-weight: 500;
             text-decoration: none; transition: all 0.2s ease;
             display: flex; align-items: center; gap: 0.5rem;
             border-left: 3px solid transparent; border-radius: 0 6px 6px 0;
             margin-right: 0.4rem;
         }
         .sidebar-modern .nav-item-sub:hover {
-            color: var(--primary-dark); background: var(--primary-soft);
-            border-left-color: #80cbc4; padding-left: 1.1rem;
+            color: #2AB5A3; background: rgba(42, 181, 163, 0.12);
+            border-left-color: #2AB5A3; padding-left: 1.1rem;
         }
         .sidebar-modern .nav-item-sub.active {
-            color: var(--primary-dark); font-weight: 600;
-            background: var(--primary-pale); border-left-color: var(--primary-dark);
+            color: #2AB5A3; font-weight: 600;
+            background: rgba(42, 181, 163, 0.2); border-left-color: #2AB5A3;
         }
         .sidebar-modern .sub-menu-level2 .nav-item-sub { font-size: 0.79rem; padding: 0.4rem 0.7rem; }
 
         /* Logout button */
         .sidebar-modern .btn-logout {
-            color: #dc2626 !important; border: none;
+            color: #ff5252 !important; border: none;
             border-radius: 10px; margin: 0 0.5rem;
             font-weight: 600;
         }
         .sidebar-modern .btn-logout:hover {
-            background: #fef2f2 !important; color: #b91c1c !important;
+            background: rgba(255, 82, 82, 0.15) !important; color: #ff1744 !important;
         }
 
         /* Badge pulse */
@@ -154,7 +149,7 @@
         .main-content-dash {
             margin-left: var(--sidebar-w);
             padding: 1.5rem 2rem;
-            background: #f5f7fa !important;
+            background: transparent !important;
             min-height: 100vh;
         }
         @media (max-width: 900px) {
@@ -166,34 +161,38 @@
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             border: none; color: #fff; font-weight: 600;
             transition: all 0.25s ease; letter-spacing: .01em;
+            border-radius: 50px;
         }
         .btn-vinmec:hover {
             background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-deep) 100%);
             color: #fff; transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(0,127,97,.3);
+            box-shadow: 0 6px 16px rgba(42,181,163,.3);
         }
         .btn-outline-vinmec {
-            background: transparent; border: 1.5px solid var(--primary-dark);
-            color: var(--primary-dark); font-weight: 600; transition: all 0.25s ease;
+            background: transparent; border: 1.5px solid var(--primary);
+            color: var(--primary); font-weight: 600; transition: all 0.25s ease;
+            border-radius: 50px;
         }
         .btn-outline-vinmec:hover {
-            background: var(--primary-pale); color: var(--primary-deep);
+            background: var(--primary-pale); color: #ffffff;
             transform: translateY(-1px);
         }
 
         /* ===== CARDS (generic) ===== */
         .card-custom {
-            border: 1px solid #e8ecf0;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
             border-radius: var(--radius-card);
-            box-shadow: 0 2px 12px rgba(0,0,0,.05);
-            background: #ffffff;
+            box-shadow: 0 20px 60px rgba(0,0,0,.5);
+            background: rgba(15, 23, 42, 0.75) !important;
+            backdrop-filter: blur(20px) !important;
             margin-bottom: 1.5rem;
             overflow: hidden;
+            color: #ffffff !important;
         }
         .card-header-custom {
-            background: #f8fafb;
-            border-bottom: 1px solid #e8ecf0;
-            color: var(--primary-dark);
+            background: rgba(30, 41, 59, 0.8) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+            color: #2AB5A3 !important;
             font-weight: 700;
             font-size: 0.88rem;
             letter-spacing: .02em;
@@ -250,32 +249,31 @@
         @keyframes pulse {
             0%,100% { transform:scale(1);    opacity:1;   }
             50%      { transform:scale(1.18); opacity:0.75; }
-        }
-
-        /* ===== DASHBOARD HEADER BANNER ===== */
+        }        /* ===== DASHBOARD HEADER BANNER ===== */
         .dashboard-header-banner .banner-overlay {
-            background: linear-gradient(135deg, #e8f5f0 0%, #d4eee7 60%, #c2e5dc 100%) !important;
-            border: 1px solid #b8dfd4 !important;
+            background: linear-gradient(135deg, rgba(42, 181, 163, 0.25) 0%, rgba(15, 23, 42, 0.9) 100%) !important;
+            border: 1px solid rgba(42, 181, 163, 0.3) !important;
             border-radius: var(--radius-card);
             position: relative; overflow: hidden;
+            color: #FFFFFF !important;
         }
         .dashboard-header-banner .banner-overlay::before {
             content: '';
             position: absolute; top: -40%; right: -5%;
             width: 320px; height: 320px;
-            background: radial-gradient(circle, rgba(0,166,126,.06) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(42,181,163,.15) 0%, transparent 70%);
             border-radius: 50%;
         }
         .dashboard-header-banner .banner-overlay::after {
             content: '';
             position: absolute; bottom: -30%; left: -3%;
             width: 220px; height: 220px;
-            background: radial-gradient(circle, rgba(0,127,97,.08) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(32,138,124,.18) 0%, transparent 70%);
             border-radius: 50%;
         }
 
         /* ===== PROGRESS BARS ===== */
-        .progress { border-radius: 50px; background: #edf4f2; }
+        .progress { border-radius: 50px; background: rgba(255, 255, 255, 0.08); }
         .progress-bar { border-radius: 50px; transition: width .9s ease; }
 
         /* ===== DONUT CHART ===== */
@@ -284,24 +282,26 @@
         .donut-text { width: 100%; line-height: 1.1; }
 
         /* ===== TABLES ===== */
-        .badge-status-approved { background: #e0f5ee; color: #007f61; }
-        .badge-status-pending  { background: #fff8e1; color: #d97706; }
+        .badge-status-approved { background: rgba(42, 181, 163, 0.2); color: #2AB5A3; }
+        .badge-status-pending  { background: rgba(245, 158, 11, 0.2); color: #F59E0B; }
         .table-custom th {
-            font-weight: 700; color: #5a6a78;
-            background: #f8fafb;
-            border-bottom: 2px solid #e2e8f0;
+            font-weight: 700; color: #94A3B8;
+            background: rgba(30, 41, 59, 0.8);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
             font-size: 0.8rem; text-transform: uppercase; letter-spacing: .04em;
         }
-        .table-custom td { vertical-align: middle; font-size: 0.875rem; }
+        .table-custom td { vertical-align: middle; font-size: 0.875rem; color: #F8FAFC; }
 
-        /* ===== MODAL SCROLLABLE FIX - footer always visible ===== */
-        /* NOTE: form wraps modal-body + modal-footer, need form to also be flex */
+        /* ===== MODAL SCROLLABLE FIX ===== */
         #editProfileModal .modal-dialog { max-height: 92vh; }
         #editProfileModal .modal-content {
             max-height: 90vh;
             display: flex !important;
             flex-direction: column !important;
             overflow: hidden !important;
+            background: #0F172A !important;
+            color: #FFFFFF !important;
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
         }
         #editProfileModal .modal-content form {
             flex: 1 1 auto;
@@ -314,127 +314,70 @@
             overflow-y: auto !important;
             flex: 1 1 auto !important;
             min-height: 0 !important;
+            background: #0F172A !important;
         }
         #editProfileModal .modal-footer {
             flex-shrink: 0 !important;
             position: sticky;
             bottom: 0;
             z-index: 10;
+            background: #0F172A !important;
+            border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
         }
 
         /* ===== NAV TABS ===== */
         .nav-tabs-custom .nav-link {
-            color: #6b8b86; font-weight: 500; border: none;
+            color: #94A3B8; font-weight: 500; border: none;
             border-bottom: 3px solid transparent; padding: 10px 18px;
             transition: all 0.2s ease; border-radius: 0;
         }
-        .nav-tabs-custom .nav-link:hover { color: var(--primary-dark); }
+        .nav-tabs-custom .nav-link:hover { color: #2AB5A3; }
         .nav-tabs-custom .nav-link.active {
-            color: var(--primary-dark); background: transparent;
-            border-bottom-color: var(--primary-dark); font-weight: 700;
+            color: #2AB5A3; background: transparent;
+            border-bottom-color: #2AB5A3; font-weight: 700;
         }
 
         /* ===== LOADING OVERLAY ===== */
         .loading-overlay {
             display: none; position: fixed; inset: 0;
-            background: rgba(255,255,255,.82);
+            background: rgba(11, 15, 25, 0.85);
             z-index: 99999; align-items: center; justify-content: center;
-            flex-direction: column; gap: 1rem; backdrop-filter: blur(3px);
+            flex-direction: column; gap: 1rem; backdrop-filter: blur(5px);
         }
         .loading-overlay.show { display: flex; }
         .spinner-vinmec {
             width: 3rem; height: 3rem;
-            border: 4px solid #d9f0eb;
-            border-top-color: var(--primary-dark);
+            border: 4px solid rgba(42, 181, 163, 0.2);
+            border-top-color: #2AB5A3;
             border-radius: 50%; animation: spin 0.85s linear infinite;
         }
         @keyframes spin { to { transform:rotate(360deg); } }
 
-        /* ===== TIMELINE ACTIVITY CARDS ===== */
-        .timeline-card-hover {
-            border-radius: 12px !important;
-            border: 1px solid #e8ecf0 !important;
-            background: #ffffff !important;
-            transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+        /* ===== DARK THEME OVERRIDES ===== */
+        .sidebar-modern {
+            background: rgba(15, 23, 42, 0.95) !important;
+            border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+            color: #F8FAFC !important;
         }
-        .timeline-card-hover:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0,0,0,.08) !important;
-            border-color: #c5d9d4 !important;
-        }
-
-        /* ===== FAP SCHEDULE ===== */
-        .fap-card-slot {
-            padding: 7px 10px; border-radius: 10px; background: #fff;
-            border: 1px solid #e4eceb;
-            box-shadow: 0 2px 6px rgba(0,0,0,.03);
-            line-height: 1.35; text-align: center;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .fap-card-slot:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,.08); }
-        .slot-blood_sugar { border-left: 4px solid #dc3545 !important; background: #fef2f2 !important; color: #991b1b !important; }
-        .slot-urine_test  { border-left: 4px solid #0d6efd !important; background: #eff6ff !important; color: #1e40af !important; }
-        .slot-liver_test  { border-left: 4px solid #198754 !important; }
-        .slot-kidney_test { border-left: 4px solid #fd7e14 !important; }
-        .slot-lipids_test { border-left: 4px solid #0dcaf0 !important; }
-        .slot-lab_test    { border-left: 4px solid #6c757d !important; }
-        .fap-badge-mat    { background: #fff3cd !important; color: #856404 !important; border: 1px solid #ffeeba; font-size:.65rem; }
-        .fap-badge-edunext{ background: #cce5ff !important; color: #004085 !important; border: 1px solid #b8daff; font-size:.65rem; }
-        .fap-badge-meet   { background: #e2e3e5 !important; color: #383d41 !important; border: 1px solid #d6d8db; font-size:.65rem; }
-        .fap-status-dot   { font-size: 0.72rem; margin-right: 3px; }
-
-        /* ===== FADE-IN ANIMATION FOR CARDS ===== */
-        @keyframes fadeInUp {
-            from { opacity:0; transform:translateY(14px); }
-            to   { opacity:1; transform:translateY(0);     }
-        }
-        .card-summary { animation: fadeInUp 0.45s ease both; }
-        .col-6.col-md-3:nth-child(1) .card-summary { animation-delay: 0.05s; }
-        .col-6.col-md-3:nth-child(2) .card-summary { animation-delay: 0.12s; }
-        .col-6.col-md-3:nth-child(3) .card-summary { animation-delay: 0.19s; }
-        .col-6.col-md-3:nth-child(4) .card-summary { animation-delay: 0.26s; }
-
-        /* ===== SIDEBAR SECTION DIVIDER ===== */
-        .sidebar-section-label {
-            font-size: 0.65rem; font-weight: 700; letter-spacing: .08em;
-            text-transform: uppercase; color: #9eb5b0;
-            padding: 0.5rem 1.2rem 0.25rem;
-            margin-top: 0.25rem;
-        }
-
-        /* ===== ALERTS (improved) ===== */
-        .alert { border-radius: 12px; }
-        .alert-success { background: #f0faf6; color: #065f46; border: 1px solid #a7f3d0; }
-        .alert-warning { background: #fffbeb; color: #78350f; border: 1px solid #fde68a; }
-        .alert-danger  { background: #fef2f2; color: #991b1b; border: 1px solid #fca5a5; }
-
-        /* ===== FORCE LIGHT THEME ===== */
-        .sidebar-modern, .main-content-dash, .card, .card-custom,
-        .card-summary, .modal-content, .modal-body, .table,
-        .nav-tabs-custom, .form-control, .form-select {
-            color-scheme: light !important;
-        }
-        /* Ensure all sidebar text is dark (prevent dark mode color inheritance) */
-        .sidebar-modern { color: #1a202c !important; }
         .sidebar-modern .user-profile-card h6,
         .sidebar-modern .user-profile-card .user-doctor-name {
-            color: #1a202c !important;
+            color: #FFFFFF !important;
             display: block !important;
             font-weight: 700 !important;
         }
-        .sidebar-modern .sidebar-section-label { color: #9eb5b0 !important; }
+        .sidebar-modern .sidebar-section-label { color: #94A3B8 !important; }
     </style>
 </head>
-<body style="color-scheme: light; background: #f5f7fa;">
+<body class="master-ui-body master-ui-dark" style="background: #0B0F19; color: #F8FAFC;">
 
     <!-- Sidebar Modern Layout -->
     <aside class="sidebar-modern">
-        <div class="sidebar-header">
+        <div class="sidebar-header" style="background: transparent !important;">
             <span class="brand-dashboard">
-                <div class="brand-icon-dash bg-success">
+                <div class="brand-icon-dash" style="background: linear-gradient(135deg, #2AB5A3, #208A7C) !important; box-shadow: 0 4px 12px rgba(42, 181, 163, 0.35);">
                     <i class="bi bi-activity"></i>
                 </div>
-                <span class="brand-text text-success">DiabetesCare</span>
+                <span class="brand-text" style="color: #2AB5A3 !important;">DiabetesCare</span>
             </span>
         </div>
 
@@ -442,21 +385,21 @@
         <div class="user-profile-card position-relative rounded-3 border shadow-sm"
              onclick="openGlobalEditProfileModal()"
              role="button" tabindex="0" title="Nhấn để chỉnh sửa thông tin cá nhân"
-             style="background: #ffffff; margin: 0.5rem 0.75rem 1rem 0.75rem; border-color: #e2e8f0 !important; cursor: pointer; padding: 0.75rem 0.85rem; transition: box-shadow 0.2s ease, border-color 0.2s ease;">
+             style="background: rgba(30, 41, 59, 0.5) !important; margin: 0.5rem 0.75rem 1rem 0.75rem; border-color: rgba(255, 255, 255, 0.08) !important; cursor: pointer; padding: 0.75rem 0.85rem; transition: box-shadow 0.2s ease, border-color 0.2s ease;">
 
             <!-- Edit icon overlay (top-right corner) -->
-            <span class="position-absolute top-0 end-0 me-2 mt-2 text-success" style="font-size: 0.8rem; opacity: 0.5;">
+            <span class="position-absolute top-0 end-0 me-2 mt-2" style="font-size: 0.8rem; color: #2AB5A3; opacity: 0.7;">
                 <i class="bi bi-pencil-fill"></i>
             </span>
 
             <div class="d-flex align-items-center gap-2">
-                <div class="flex-shrink-0" style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#007f61,#00b887);font-weight:800;font-size:1.15rem;display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 3px 10px rgba(0,127,97,.3);">${sessionScope.currentUser.fullName.charAt(0)}</div>
+                <div class="flex-shrink-0" style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#2AB5A3,#208A7C);font-weight:800;font-size:1.15rem;display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 3px 10px rgba(42,181,163,.35);">${sessionScope.currentUser.fullName.charAt(0)}</div>
                 <div style="flex:1;min-width:0;overflow:hidden;">
-                    <div class="user-doctor-name" style="font-size:0.88rem;font-weight:700;color:#1a202c !important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3;margin-bottom:3px;" title="${sessionScope.currentUser.fullName}">${sessionScope.currentUser.fullName}</div>
-                    <span style="display:inline-block;background:rgba(0,127,97,0.1);color:#007f61;border:1px solid rgba(0,127,97,0.25);font-size:0.62rem;font-weight:700;padding:1px 7px;border-radius:6px;font-family:monospace;letter-spacing:.04em;">LAB SYSTEM</span>
+                    <div class="user-doctor-name" style="font-size:0.88rem;font-weight:700;color:#ffffff !important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3;margin-bottom:3px;" title="${sessionScope.currentUser.fullName}">${sessionScope.currentUser.fullName}</div>
+                    <span style="display:inline-block;background:rgba(42,181,163,0.15);color:#2AB5A3;border:1px solid rgba(42,181,163,0.35);font-size:0.62rem;font-weight:700;padding:1px 7px;border-radius:6px;font-family:monospace;letter-spacing:.04em;">LAB SYSTEM</span>
                 </div>
             </div>
-            <div class="mt-2 pt-2 border-top d-flex justify-content-between align-items-center">
+            <div class="mt-2 pt-2 border-top border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
                 <c:choose>
                     <c:when test="${isProfileComplete}">
                         <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 0.68rem; padding: 3px 8px;">
@@ -469,46 +412,46 @@
                         </span>
                     </c:otherwise>
                 </c:choose>
-                <span class="text-success fw-semibold" style="font-size: 0.72rem;">
+                <span class="fw-semibold" style="font-size: 0.72rem; color: #2AB5A3;">
                     <i class="bi bi-pencil-square me-1"></i>Chỉnh sửa
                 </span>
             </div>
         </div>
         <style>
             .user-profile-card:hover {
-                box-shadow: 0 6px 20px rgba(0, 127, 97, 0.12) !important;
-                border-color: #a7d9d0 !important;
-                background: #f8fdfb !important;
+                box-shadow: 0 6px 20px rgba(42, 181, 163, 0.25) !important;
+                border-color: #2AB5A3 !important;
+                background: rgba(42, 181, 163, 0.1) !important;
             }
             .user-profile-card:hover .bi-pencil-fill {
                 opacity: 1 !important;
-                color: #007f61 !important;
+                color: #2AB5A3 !important;
             }
             .user-profile-card:focus {
-                outline: 2px solid #00b887;
+                outline: 2px solid #2AB5A3;
                 outline-offset: 2px;
             }
             /* Brand section */
-            .sidebar-header { background: #ffffff; }
+            .sidebar-header { background: transparent !important; }
             .brand-icon-dash.bg-success {
-                background: linear-gradient(135deg, #00a67e, #007f61) !important;
-                box-shadow: 0 3px 10px rgba(0,127,97,.2);
+                background: linear-gradient(135deg, #2AB5A3, #208A7C) !important;
+                box-shadow: 0 3px 10px rgba(42,181,163,.35);
             }
         </style>
 
         <!-- Sidebar Navigation (Bootstrap Pills/Tabs) -->
         <nav class="sidebar-nav nav flex-column" id="v-pills-tab" role="tablist" aria-orientation="vertical">
             <a href="#pill-overview" class="nav-link nav-item-dash active" id="pill-overview-tab" data-bs-toggle="pill" role="tab" aria-controls="pill-overview" aria-selected="true">
-                <i class="bi bi-grid-1x2-fill text-success"></i>
+                <i class="bi bi-grid-1x2-fill" style="color: #2AB5A3 !important;"></i>
                 <span class="nav-text">Tổng quan dashboard</span>
             </a>
             <a href="#pill-patients" class="nav-link nav-item-dash" id="pill-patients-tab" data-bs-toggle="pill" role="tab" aria-controls="pill-patients" aria-selected="false">
-                <i class="bi bi-people-fill text-success"></i>
+                <i class="bi bi-people-fill" style="color: #2AB5A3 !important;"></i>
                 <span class="nav-text">Danh sách bệnh nhân</span>
             </a>
             <div class="nav-item-group-rooms">
                 <a href="#pill-rooms" class="nav-link nav-item-dash" id="pill-rooms-tab" data-bs-toggle="pill" role="tab" aria-controls="pill-rooms" aria-selected="false" onclick="onParentRoomClick()">
-                    <i class="bi bi-door-closed text-success"></i>
+                    <i class="bi bi-door-closed" style="color: #2AB5A3 !important;"></i>
                     <span class="nav-text">Phòng xét nghiệm</span>
                     <c:if test="${not empty waitingPatients}">
                         <span class="badge bg-danger ms-auto rounded-pill">${waitingPatients.size()}</span>
@@ -524,7 +467,7 @@
                         <span>Đường huyết</span>
                     </a>
                     <a href="javascript:void(0)" class="nav-item-sub py-1.5 my-1" id="sub-room-gan" onclick="selectSidebarRoom('phòng xét nghiệm máu - chức năng gan')">
-                        <i class="bi bi-heart-pulse-fill text-success me-1"></i>
+                        <i class="bi bi-heart-pulse-fill" style="color: #2AB5A3 !important;" class="me-1"></i>
                         <span>Chức năng gan</span>
                     </a>
                     <a href="javascript:void(0)" class="nav-item-sub py-1.5 my-1" id="sub-room-than" onclick="selectSidebarRoom('phòng xét nghiệm máu - chức năng thận')">
@@ -544,11 +487,11 @@
             
 
             <a href="#pill-history" class="nav-link nav-item-dash" id="pill-history-tab" data-bs-toggle="pill" role="tab" aria-controls="pill-history" aria-selected="false">
-                <i class="bi bi-clock-history text-success"></i>
+                <i class="bi bi-clock-history" style="color: #2AB5A3 !important;"></i>
                 <span class="nav-text">Lịch sử xét nghiệm</span>
             </a>
             <a href="#pill-schedule" class="nav-link nav-item-dash" id="pill-schedule-tab" data-bs-toggle="pill" role="tab" aria-controls="pill-schedule" aria-selected="false">
-                <i class="bi bi-calendar3 text-success"></i>
+                <i class="bi bi-calendar3" style="color: #2AB5A3 !important;"></i>
                 <span class="nav-text">Lịch làm việc</span>
             </a>
 
@@ -1638,17 +1581,28 @@
                             <h6 class="fw-bold text-dark mb-1"><c:out value="${r.patientName}" /></h6>
                             <span class="text-secondary small"><i class="bi bi-clock me-1"></i>Thời gian: <c:out value="${r.createdAt}" /></span>
                         </div>
+                        
+                        <c:set var="hasHbA1c" value="${not empty r.hba1c and r.hba1c ne '0' and r.hba1c ne '0.0'}" />
+                        <c:set var="isUreaMerged" value="${hasHbA1c and not empty r.urea and r.urea ne '0' and r.urea ne '0.0'}" />
+                        <c:set var="isCrMerged" value="${hasHbA1c and not empty r.cr and r.cr ne '0' and r.cr ne '0.0'}" />
+                        <c:set var="isCholMerged" value="${hasHbA1c and not empty r.chol and r.chol ne '0' and r.chol ne '0.0'}" />
+                        <c:set var="isTgMerged" value="${hasHbA1c and not empty r.tg and r.tg ne '0' and r.tg ne '0.0'}" />
+                        <c:set var="isHdlMerged" value="${hasHbA1c and not empty r.hdl and r.hdl ne '0' and r.hdl ne '0.0'}" />
+                        <c:set var="isLdlMerged" value="${hasHbA1c and not empty r.ldl and r.ldl ne '0' and r.ldl ne '0.0'}" />
+                        <c:set var="isVldlMerged" value="${hasHbA1c and not empty r.vldl and r.vldl ne '0' and r.vldl ne '0.0'}" />
+                        <c:set var="isBmiMerged" value="${hasHbA1c and not empty r.bmi and r.bmi ne '0' and r.bmi ne '0.0'}" />
+
                         <div class="row g-3 mb-2">
                             <!-- UREA -->
                             <div class="col-4">
-                                <div class="p-3 bg-light rounded-3 text-center border shadow-sm">
+                                <div class="p-3 bg-light rounded-3 text-center border shadow-sm" style="${isUreaMerged ? 'border: 2px solid #004d3a !important; box-shadow: 0 0 0 1px #004d3a;' : ''}">
                                     <small class="text-secondary text-uppercase fw-bold d-block mb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">UREA</small>
                                     <span class="fs-5 fw-bold text-dark"><c:out value="${not empty r.urea and r.urea ne '0' and r.urea ne '0.0' ? r.urea : '-'}" /></span>
                                 </div>
                             </div>
                             <!-- CREATININE -->
                             <div class="col-4">
-                                <div class="p-3 bg-light rounded-3 text-center border shadow-sm">
+                                <div class="p-3 bg-light rounded-3 text-center border shadow-sm" style="${isCrMerged ? 'border: 2px solid #004d3a !important; box-shadow: 0 0 0 1px #004d3a;' : ''}">
                                     <small class="text-secondary text-uppercase fw-bold d-block mb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">CREATININE</small>
                                     <span class="fs-5 fw-bold text-dark"><c:out value="${not empty r.cr and r.cr ne '0' and r.cr ne '0.0' ? r.cr : '-'}" /></span>
                                 </div>
@@ -1662,42 +1616,42 @@
                             </div>
                             <!-- CHOLESTEROL -->
                             <div class="col-4">
-                                <div class="p-3 bg-light rounded-3 text-center border shadow-sm">
+                                <div class="p-3 bg-light rounded-3 text-center border shadow-sm" style="${isCholMerged ? 'border: 2px solid #004d3a !important; box-shadow: 0 0 0 1px #004d3a;' : ''}">
                                     <small class="text-secondary text-uppercase fw-bold d-block mb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">CHOLESTEROL</small>
                                     <span class="fs-5 fw-bold text-dark"><c:out value="${not empty r.chol and r.chol ne '0' and r.chol ne '0.0' ? r.chol : '-'}" /></span>
                                 </div>
                             </div>
                             <!-- TG -->
                             <div class="col-4">
-                                <div class="p-3 bg-light rounded-3 text-center border shadow-sm">
+                                <div class="p-3 bg-light rounded-3 text-center border shadow-sm" style="${isTgMerged ? 'border: 2px solid #004d3a !important; box-shadow: 0 0 0 1px #004d3a;' : ''}">
                                     <small class="text-secondary text-uppercase fw-bold d-block mb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">TG</small>
                                     <span class="fs-5 fw-bold text-dark"><c:out value="${not empty r.tg and r.tg ne '0' and r.tg ne '0.0' ? r.tg : '-'}" /></span>
                                 </div>
                             </div>
                             <!-- HDL -->
                             <div class="col-4">
-                                <div class="p-3 bg-light rounded-3 text-center border shadow-sm">
+                                <div class="p-3 bg-light rounded-3 text-center border shadow-sm" style="${isHdlMerged ? 'border: 2px solid #004d3a !important; box-shadow: 0 0 0 1px #004d3a;' : ''}">
                                     <small class="text-secondary text-uppercase fw-bold d-block mb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">HDL</small>
                                     <span class="fs-5 fw-bold text-dark"><c:out value="${not empty r.hdl and r.hdl ne '0' and r.hdl ne '0.0' ? r.hdl : '-'}" /></span>
                                 </div>
                             </div>
                             <!-- LDL -->
                             <div class="col-4">
-                                <div class="p-3 bg-light rounded-3 text-center border shadow-sm">
+                                <div class="p-3 bg-light rounded-3 text-center border shadow-sm" style="${isLdlMerged ? 'border: 2px solid #004d3a !important; box-shadow: 0 0 0 1px #004d3a;' : ''}">
                                     <small class="text-secondary text-uppercase fw-bold d-block mb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">LDL</small>
                                     <span class="fs-5 fw-bold text-dark"><c:out value="${not empty r.ldl and r.ldl ne '0' and r.ldl ne '0.0' ? r.ldl : '-'}" /></span>
                                 </div>
                             </div>
                             <!-- VLDL -->
                             <div class="col-4">
-                                <div class="p-3 bg-light rounded-3 text-center border shadow-sm">
+                                <div class="p-3 bg-light rounded-3 text-center border shadow-sm" style="${isVldlMerged ? 'border: 2px solid #004d3a !important; box-shadow: 0 0 0 1px #004d3a;' : ''}">
                                     <small class="text-secondary text-uppercase fw-bold d-block mb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">VLDL</small>
                                     <span class="fs-5 fw-bold text-dark"><c:out value="${not empty r.vldl and r.vldl ne '0' and r.vldl ne '0.0' ? r.vldl : '-'}" /></span>
                                 </div>
                             </div>
                             <!-- BMI -->
                             <div class="col-4">
-                                <div class="p-3 rounded-3 text-center border shadow-sm" style="background-color: #f0fdf4 !important; border-color: #bbf7d0 !important;">
+                                <div class="p-3 rounded-3 text-center border shadow-sm" style="background-color: #f0fdf4 !important; border-color: ${isBmiMerged ? '#004d3a' : '#bbf7d0'} !important; ${isBmiMerged ? 'border-width: 2px !important; box-shadow: 0 0 0 1px #004d3a;' : ''}">
                                     <small class="text-success text-uppercase fw-bold d-block mb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">BMI</small>
                                     <span class="fs-5 fw-bold text-success"><c:out value="${not empty r.bmi and r.bmi ne '0' and r.bmi ne '0.0' ? r.bmi : '-'}" /></span>
                                 </div>

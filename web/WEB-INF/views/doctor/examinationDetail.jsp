@@ -108,14 +108,14 @@
     <section class="doctor-card exam-hero mb-4">
         <div class="position-relative d-flex flex-column flex-lg-row justify-content-between gap-3 align-items-lg-center">
             <div>
-                <div class="small opacity-75">HỒ SƠ KHÁM #${record.healthRecordId}</div>
+                <div class="small opacity-75">BƯỚC 4: KHÁM CHI TIẾT · HỒ SƠ #${record.healthRecordId}</div>
                 <h1 class="h3 fw-bold mb-1">${record.patientName}</h1>
                 <div class="doctor-muted">Bệnh nhân #${record.patientId} · ${patient.age} tuổi · ${patient.gender}</div>
             </div>
             <div class="d-flex flex-wrap gap-2">
                 <a class="btn btn-light"
-                   href="${pageContext.request.contextPath}/doctor/general-examinations">
-                    <i class="bi bi-arrow-left"></i> Quay lại danh sách
+                   href="${pageContext.request.contextPath}/doctor/examinations">
+                    <i class="bi bi-arrow-left"></i> Quay lại danh sách Khám chi tiết
                 </a>
                 <c:if test="${canRunAI && hasCompletedLaboratoryRequest && hasRequiredAIData}">
                     <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#aiModal">
@@ -134,10 +134,9 @@
 
     <nav class="exam-section-nav" aria-label="Các phần của hồ sơ khám">
         <a href="#patientContext"><i class="bi bi-person-vcard"></i> Bệnh nhân và hội thoại</a>
-        <a href="#vitalsSection"><i class="bi bi-heart-pulse"></i> Chỉ số thể chất</a>
-        <a href="#laboratoryOrder"><i class="bi bi-clipboard2-plus"></i> Chỉ định xét nghiệm</a>
+        <a href="#historySection"><i class="bi bi-clock-history"></i> Lịch sử bệnh án</a>
         <c:if test="${hasCompletedLaboratoryRequest}">
-            <a href="#examinationResult"><i class="bi bi-activity"></i> Kết quả khám</a>
+            <a href="#examinationResult"><i class="bi bi-activity"></i> Kết quả khám & Chẩn đoán</a>
         </c:if>
     </nav>
 
@@ -185,47 +184,7 @@
         </div>
     </section>
 
-    <section id="vitalsSection" class="doctor-card mb-4">
-        <div class="d-flex align-items-center gap-3 mb-3">
-            <span class="section-icon"><i class="bi bi-heart-pulse"></i></span>
-            <div>
-                <h2 class="doctor-section-title h5 mb-0">Chỉ số thể chất</h2>
-                <div class="doctor-muted small">Cập nhật chiều cao, cân nặng và tự động tính chỉ số BMI của bệnh nhân.</div>
-            </div>
-        </div>
-        
-        <div class="row g-3 align-items-end">
-            <div class="col-md-3">
-                <label class="form-label fw-semibold">Chiều cao (cm)</label>
-                <input id="vitalsHeight" type="number" step="0.1" min="30" max="300" class="form-control" 
-                       value="${record.height > 0 ? record.height : ''}" 
-                       placeholder="Nhập chiều cao (cm)" 
-                       ${!canEditDiagnosis ? 'disabled' : ''}>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label fw-semibold">Cân nặng (kg)</label>
-                <input id="vitalsWeight" type="number" step="0.1" min="2" max="500" class="form-control" 
-                       value="${record.weight > 0 ? record.weight : ''}" 
-                       placeholder="Nhập cân nặng (kg)" 
-                       ${!canEditDiagnosis ? 'disabled' : ''}>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label fw-semibold">Chỉ số BMI</label>
-                <input id="vitalsBmi" type="text" class="form-control bg-light fw-bold" 
-                       value="${record.bmi > 0 ? record.bmi : 'Chưa tính'}" 
-                       readonly disabled>
-            </div>
-            <c:if test="${canEditDiagnosis}">
-                <div class="col-md-3">
-                    <button class="btn btn-doctor w-100" type="button" onclick="saveVitals('${record.healthRecordId}')">
-                        <i class="bi bi-save"></i> Lưu chỉ số
-                    </button>
-                </div>
-            </c:if>
-        </div>
-    </section>
-
-    <section class="doctor-card mb-4">
+    <section id="historySection" class="doctor-card mb-4">
         <div class="d-flex align-items-center gap-3 mb-3">
             <span class="section-icon"><i class="bi bi-clock-history"></i></span>
             <div>
@@ -261,146 +220,6 @@
                                  </td>
                              </tr>
                          </c:forEach>
-                        </tbody>
-                    </table>
-                </div>
-            </c:otherwise>
-        </c:choose>
-    </section>
-
-    <section id="laboratoryOrder" class="doctor-card mb-4">
-        <div class="d-flex align-items-center gap-3 mb-3">
-            <span class="section-icon"><i class="bi bi-clipboard2-plus"></i></span>
-            <div>
-                <h2 class="doctor-section-title h5 mb-0">Tạo yêu cầu xét nghiệm</h2>
-                <div class="doctor-muted small">Chọn loại xét nghiệm và xem giá trước khi gửi yêu cầu.</div>
-            </div>
-        </div>
-
-        <c:set var="hasPendingPayment" value="false" />
-        <c:forEach var="lab" items="${laboratoryRequests}">
-            <c:if test="${lab.status == 'Waiting_Payment'}">
-                <c:set var="hasPendingPayment" value="true" />
-            </c:if>
-        </c:forEach>
-        <c:if test="${hasPendingPayment}">
-            <div class="alert alert-warning d-flex align-items-center gap-2 mb-3 py-2 px-3 small border-0" style="background: rgba(255, 193, 7, 0.15); color: #ffc107; border-radius: 10px;">
-                <i class="bi bi-exclamation-triangle-fill"></i>
-                <div>
-                    <strong>Lưu ý:</strong> Bệnh nhân có chỉ định xét nghiệm bổ sung đang chờ thanh toán. Yêu cầu sẽ được gửi đến phòng xét nghiệm sau khi bệnh nhân hoàn tất thanh toán hóa đơn.
-                </div>
-            </div>
-        </c:if>
-
-        <c:if test="${record.status == 'Accepted' || record.status == 'AI_Processed' || record.status == 'Editing'}">
-            <form class="row g-3 mb-4 lab-request-form lab-multi-form" method="post"
-                  action="${pageContext.request.contextPath}/doctor/laboratory-requests/create">
-                <input type="hidden" name="record_id" value="${record.healthRecordId}">
-                <div class="col-12">
-                    <label class="form-label fw-semibold mb-3">Chọn loại xét nghiệm chỉ định</label>
-                    <div class="row row-cols-1 row-cols-md-3 row-cols-xl-6 g-3">
-                        <c:forEach var="service" items="${laboratoryServices}">
-                            <div class="col">
-                                <c:set var="iconClass" value="bi-clipboard-pulse" />
-                                <c:set var="iconColor" value="text-secondary" />
-                                <c:choose>
-                                    <c:when test="${service.serviceName == 'Xét nghiệm máu'}">
-                                        <c:set var="iconClass" value="bi-droplet-fill" />
-                                        <c:set var="iconColor" value="text-danger" />
-                                    </c:when>
-                                    <c:when test="${service.serviceName == 'Chức năng gan'}">
-                                        <c:set var="iconClass" value="bi-hospital" />
-                                        <c:set var="iconColor" value="text-success" />
-                                    </c:when>
-                                    <c:when test="${service.serviceName == 'Chức năng thận'}">
-                                        <c:set var="iconClass" value="bi-shield-shaded" />
-                                        <c:set var="iconColor" value="text-info" />
-                                    </c:when>
-                                    <c:when test="${service.serviceName == 'Xét nghiệm đường huyết'}">
-                                        <c:set var="iconClass" value="bi-activity" />
-                                        <c:set var="iconColor" value="text-warning" />
-                                    </c:when>
-                                    <c:when test="${service.serviceName == 'Xét nghiệm nước tiểu'}">
-                                        <c:set var="iconClass" value="bi-droplet" />
-                                        <c:set var="iconColor" value="text-primary" />
-                                    </c:when>
-                                    <c:when test="${service.serviceName == 'Xét nghiệm mỡ máu'}">
-                                        <c:set var="iconClass" value="bi-speedometer2" />
-                                        <c:set var="iconColor" value="text-danger" />
-                                    </c:when>
-                                </c:choose>
-                                <label class="lab-service-option mb-2 w-100 h-100">
-                                    <input class="form-check-input" type="checkbox" name="service_id" value="${service.serviceId}">
-                                    <i class="bi ${iconClass} ${iconColor} fs-4"></i>
-                                    <span>
-                                        <strong class="d-block text-dark" style="font-size: 0.9rem;">${service.serviceName}</strong>
-                                        <small class="text-secondary"><fmt:formatNumber value="${service.price}" type="number" groupingUsed="true"/> VNĐ</small>
-                                    </span>
-                                </label>
-                            </div>
-                        </c:forEach>
-                    </div>
-                </div>
-                <div class="col-lg-4">
-                    <label class="form-label fw-semibold">Ghi chú cho phòng xét nghiệm</label>
-                    <input class="form-control" name="request_note" maxlength="1000"
-                           placeholder="Nội dung cần lưu ý">
-                </div>
-                <div class="col-lg-5">
-                    <label class="form-label fw-semibold">Bác sĩ phòng xét nghiệm</label>
-                    <select class="form-select" name="lab_id" required>
-                        <c:choose>
-                            <c:when test="${empty labDoctors}">
-                                <option value="" disabled selected>-- Chưa có bác sĩ xét nghiệm trực hôm nay --</option>
-                            </c:when>
-                            <c:otherwise>
-                                <option value="" disabled selected>-- Chọn bác sĩ --</option>
-                                <c:forEach var="doc" items="${labDoctors}">
-                                    <option value="${doc.labId}"><c:out value="${empty doc.displayLabel ? doc.fullName : doc.displayLabel}" /></option>
-                                </c:forEach>
-                            </c:otherwise>
-                        </c:choose>
-                    </select>
-                </div>
-                <div class="col-lg-3 d-flex align-items-end">
-                    <button class="btn btn-doctor w-100" type="submit">
-                        <i class="bi bi-send"></i> Gửi yêu cầu
-                    </button>
-                </div>
-            </form>
-        </c:if>
-        <c:choose>
-            <c:when test="${empty laboratoryRequests}">
-                <div class="doctor-empty py-3">Chưa có yêu cầu xét nghiệm cho hồ sơ này.</div>
-            </c:when>
-            <c:otherwise>
-                <div class="table-responsive">
-                    <table class="table doctor-table align-middle mb-0">
-                        <thead>
-                        <tr><th>Loại xét nghiệm</th><th>Giá</th><th>Bác sĩ thực hiện</th><th>Thanh toán</th><th>Ngày yêu cầu</th><th>Trạng thái</th></tr>
-                        </thead>
-                        <tbody>
-                        <c:forEach var="lab" items="${laboratoryRequests}">
-                            <tr>
-                                <td><strong>${lab.testTypeDisplay}</strong><br><small class="doctor-muted">${lab.requestNote}</small></td>
-                                <td class="fw-semibold">
-                                    <fmt:formatNumber value="${lab.testPrice}" type="number" groupingUsed="true"/> VNĐ
-                                </td>
-                                <td>
-                                    <c:choose>
-                                        <c:when test="${not empty lab.labDoctorName}">
-                                            ${lab.labDoctorName} <br><small class="doctor-muted">(${lab.labName})</small>
-                                        </c:when>
-                                        <c:otherwise>
-                                            <span class="text-muted">Chưa phân công</span>
-                                        </c:otherwise>
-                                    </c:choose>
-                                </td>
-                                <td>${lab.paymentStatusDisplay}</td>
-                                <td><fmt:formatDate value="${lab.requestedAt}" pattern="dd/MM/yyyy HH:mm"/></td>
-                                <td><span class="doctor-badge ${lab.status == 'Completed' ? 'badge-completed' : (lab.status == 'Processing' ? 'badge-processing' : 'badge-requested')}">${lab.statusDisplay}</span></td>
-                            </tr>
-                        </c:forEach>
                         </tbody>
                     </table>
                 </div>

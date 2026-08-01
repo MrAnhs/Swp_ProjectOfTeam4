@@ -35,7 +35,8 @@ let revenueChart = null;
                     label: chartLabel,
                     data: values,
                     borderColor: activeColor,
-                    backgroundColor: buildChartColors(labels, selectedChartPeriod, activeColor, inactiveColor)
+                    backgroundColor: buildChartColors(labels, selectedChartPeriod, activeColor, inactiveColor),
+                    borderRadius: 8
                 }]
             },
             options: {
@@ -47,6 +48,24 @@ let revenueChart = null;
                         if (clickedLabel) {
                             onPick(clickedLabel);
                         }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#F8FAFC',
+                            font: { family: 'Inter', size: 13, weight: '600' }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: '#94A3B8', font: { family: 'Inter', size: 12 } },
+                        grid: { color: 'rgba(255, 255, 255, 0.06)' }
+                    },
+                    y: {
+                        ticks: { color: '#94A3B8', font: { family: 'Inter', size: 12 } },
+                        grid: { color: 'rgba(255, 255, 255, 0.06)' }
                     }
                 }
             }
@@ -60,8 +79,8 @@ let revenueChart = null;
                 revenueLabels,
                 revenueValues,
                 'Doanh thu (VNĐ)',
-                'rgba(25,135,84,.95)',
-                'rgba(25,135,84,.25)',
+                'rgba(42, 181, 163, 0.9)',
+                'rgba(42, 181, 163, 0.3)',
                 fetchReportDetail
             )
         );
@@ -74,8 +93,8 @@ let revenueChart = null;
                 visitLabels,
                 visitValues,
                 'Lượt khám đã hoàn tất',
-                'rgba(13,110,253,.95)',
-                'rgba(13,110,253,.25)',
+                'rgba(56, 189, 248, 0.9)',
+                'rgba(56, 189, 248, 0.3)',
                 fetchReportDetail
             )
         );
@@ -195,8 +214,8 @@ let revenueChart = null;
             revenueChart.data.datasets[0].backgroundColor = buildChartColors(
                 revenueChart.data.labels,
                 selectedChartPeriod,
-                'rgba(25,135,84,.95)',
-                'rgba(25,135,84,.25)'
+                'rgba(42, 181, 163, 0.9)',
+                'rgba(42, 181, 163, 0.3)'
             );
             revenueChart.update();
         }
@@ -205,8 +224,8 @@ let revenueChart = null;
             visitChart.data.datasets[0].backgroundColor = buildChartColors(
                 visitChart.data.labels,
                 selectedChartPeriod,
-                'rgba(13,110,253,.95)',
-                'rgba(13,110,253,.25)'
+                'rgba(56, 189, 248, 0.9)',
+                'rgba(56, 189, 248, 0.3)'
             );
             visitChart.update();
         }

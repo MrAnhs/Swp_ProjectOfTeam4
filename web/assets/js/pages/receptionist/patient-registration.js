@@ -25,10 +25,12 @@
 
     async function submitForm(event) {
         event.preventDefault();
-        const phone = document.getElementById('patientRegisterPhone').value.trim();
-        const dob = document.getElementById('patientRegisterDob').value;
+        const phoneEl = document.getElementById('regPhone') || document.getElementById('patientRegisterPhone');
+        const dobEl = document.getElementById('regDob') || document.getElementById('patientRegisterDob');
+        const phone = phoneEl ? phoneEl.value.trim() : '';
+        const dob = dobEl ? dobEl.value : '';
         if (!validVietnamesePhone(phone)) {
-            showResult('Số điện thoại Việt Nam không hợp lệ.', 'danger');
+            showResult('Số điện thoại Việt Nam không hợp lệ (ví dụ 0912345678).', 'danger');
             return;
         }
         if (dob && new Date(dob + 'T00:00:00') > new Date()) {

@@ -127,8 +127,8 @@ function getActiveRoomsForSpecialty(specialty) {
         const name = normalizeSearchText(room.roomName || '');
         const status = (room.status || '').toLowerCase().trim();
         const isActive = status === 'active' || status === '';
-        const isLab = name.includes('xet nghiem') || name.includes('lab') || name.includes('xn');
-        const isReception = name.includes('quay') || name.includes('reception') || id === 'r101';
+        const isLab = name.includes('xet nghiem') || name.includes('lab') || name.includes('xn') || id.startsWith('lab');
+        const isReception = name.includes('quay') || name.includes('reception') || name.includes('le tan') || id === 'r105';
         return isActive && !isLab && !isReception;
     });
 
@@ -164,8 +164,8 @@ function getDoctorActiveRooms() {
         const name = normalizeSearchText(room.roomName || '');
         const status = (room.status || '').toLowerCase().trim();
         const isActive = status === 'active' || status === '';
-        const isLab = name.includes('xet nghiem') || name.includes('lab') || name.includes('xn');
-        const isReception = name.includes('quay') || name.includes('reception') || id === 'r101';
+        const isLab = name.includes('xet nghiem') || name.includes('lab') || name.includes('xn') || id.startsWith('lab');
+        const isReception = name.includes('quay') || name.includes('reception') || name.includes('le tan') || id === 'r105';
         return isActive && !isLab && !isReception;
     });
 
@@ -557,14 +557,14 @@ function populateLabRoomCheckboxes() {
             const name = normalizeSearchText(room.roomName || '');
             const status = (room.status || '').toLowerCase().trim();
             const isActive = status === 'active' || status === '';
-            return isActive && (name.includes('xet nghiem') || name.includes('lab') || name.includes('xn') || id === 'r104' || id === 'r105');
+            return isActive && (name.includes('xet nghiem') || name.includes('lab') || name.includes('xn') || id.startsWith('lab'));
         });
     }
 
     if (!labRooms || labRooms.length === 0) {
         labRooms = [
-            { roomId: 'R104', roomName: 'Phòng Xét Nghiệm Máu & Sinh Hóa' },
-            { roomId: 'R105', roomName: 'Phòng Xét Nghiệm Huyết Học' }
+            { roomId: 'LAB01', roomName: 'Phòng Xét Nghiệm 1' },
+            { roomId: 'LAB02', roomName: 'Phòng Xét Nghiệm 2' }
         ];
     }
 

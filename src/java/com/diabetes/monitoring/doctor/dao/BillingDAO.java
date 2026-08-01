@@ -188,6 +188,8 @@ public class BillingDAO {
                 }
                 detail.setInt(1, invoiceId);
                 detail.executeUpdate();
+                com.diabetes.monitoring.notification.NotificationService notificationService = new com.diabetes.monitoring.notification.NotificationService();
+                notificationService.prepareLaboratoryOrders(conn, invoiceId);
                 conn.commit();
                 return true;
             } catch (SQLException e) {

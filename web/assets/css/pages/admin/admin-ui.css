@@ -3,21 +3,21 @@
 /* Shared Admin UI layer for S-COMS
    Keeps typography, spacing and dashboard surfaces consistent across admin JSPs. */
 :root {
-    --admin-bg: #f4f7fb;
-    --admin-surface: #ffffff;
-    --admin-surface-soft: #f8fafc;
-    --admin-text: #172033;
-    --admin-muted: #667085;
-    --admin-border: #e4eaf2;
-    --admin-primary: #0f766e;
-    --admin-primary-strong: #0b5f59;
-    --admin-primary-soft: #e6fffb;
-    --admin-info: #2563eb;
-    --admin-warning: #f59e0b;
-    --admin-danger: #dc3545;
+    --admin-bg: #0B0F19;
+    --admin-surface: rgba(15, 23, 42, 0.75);
+    --admin-surface-soft: rgba(30, 41, 59, 0.5);
+    --admin-text: #F8FAFC;
+    --admin-muted: #94A3B8;
+    --admin-border: rgba(255, 255, 255, 0.08);
+    --admin-primary: #2AB5A3;
+    --admin-primary-strong: #208A7C;
+    --admin-primary-soft: rgba(42, 181, 163, 0.15);
+    --admin-info: #38BDF8;
+    --admin-warning: #F59E0B;
+    --admin-danger: #EF4444;
     --admin-radius: 18px;
-    --admin-shadow: 0 14px 35px rgba(15, 23, 42, 0.08);
-    --admin-shadow-soft: 0 8px 22px rgba(15, 23, 42, 0.055);
+    --admin-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    --admin-shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 html {
@@ -29,9 +29,10 @@ html {
 
 body.bg-light,
 body {
-    background: var(--admin-bg) !important;
-    color: var(--admin-text);
-    font-family: Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+    background: #0B0F19 !important;
+    background: radial-gradient(circle at center, rgba(42, 181, 163, 0.12) 0%, #0B0F19 80%) !important;
+    color: #F8FAFC !important;
+    font-family: Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
     font-size: 15px;
     line-height: 1.55;
 }
@@ -71,12 +72,13 @@ h3 {
 .admin-page-header,
 .container>.d-flex.justify-content-between.align-items-center.mb-3,
 .container>.d-flex.justify-content-between.align-items-center.mb-4 {
-    background: rgba(255, 255, 255, 0.82);
-    border: 1px solid var(--admin-border);
+    background: rgba(15, 23, 42, 0.75) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
     border-radius: var(--admin-radius);
     box-shadow: var(--admin-shadow-soft);
     padding: 1rem 1.15rem;
     backdrop-filter: blur(14px);
+    color: #FFFFFF !important;
 }
 
 .card,
@@ -92,11 +94,12 @@ h3 {
 }
 
 .card-header {
-    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    background: rgba(30, 41, 59, 0.8) !important;
     border-bottom: 1px solid var(--admin-border);
     border-top-left-radius: var(--admin-radius) !important;
     border-top-right-radius: var(--admin-radius) !important;
     padding: 0.95rem 1.1rem;
+    color: #2AB5A3 !important;
 }
 
 .card-body {
@@ -141,9 +144,9 @@ h3 {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, var(--admin-primary), #14b8a6);
+    background: linear-gradient(135deg, var(--admin-primary), #208A7C);
     border-color: transparent;
-    box-shadow: 0 8px 16px rgba(20, 184, 166, 0.22);
+    box-shadow: 0 8px 16px rgba(42, 181, 163, 0.25);
 }
 
 .btn-primary:hover,
@@ -157,7 +160,9 @@ h3 {
 .btn-outline-warning,
 .btn-outline-danger,
 .btn-outline-success {
-    background: #ffffff;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+    color: #F8FAFC !important;
 }
 
 .btn-sm {
@@ -166,16 +171,17 @@ h3 {
 
 .form-control,
 .form-select {
-    border-color: #d8e0ea;
+    background: rgba(255, 255, 255, 0.04) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
     border-radius: 14px;
     min-height: 42px;
-    color: var(--admin-text);
+    color: #FFFFFF !important;
 }
 
 .form-control:focus,
 .form-select:focus {
-    border-color: #14b8a6;
-    box-shadow: 0 0 0 0.2rem rgba(20, 184, 166, 0.16);
+    border-color: #2AB5A3 !important;
+    box-shadow: 0 0 0 0.2rem rgba(42, 181, 163, 0.2) !important;
 }
 
 .table-responsive {
@@ -194,17 +200,19 @@ h3 {
 
 .table thead th,
 .table-light th {
-    background: #f1f5f9 !important;
-    color: #344054;
+    background: rgba(30, 41, 59, 0.8) !important;
+    color: #94A3B8 !important;
     font-size: 0.84rem;
     font-weight: 750;
     text-transform: uppercase;
     letter-spacing: 0.025em;
     white-space: nowrap;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
 .table-hover>tbody>tr:hover>* {
-    background-color: #f8fbff;
+    background-color: rgba(42, 181, 163, 0.1) !important;
+    color: #FFFFFF !important;
 }
 
 .badge {
@@ -220,10 +228,13 @@ h3 {
 
 .modal-content {
     overflow: hidden;
+    background: #0F172A !important;
+    color: #FFFFFF !important;
 }
 
 .modal-header {
-    background: linear-gradient(135deg, #ffffff, #f8fafc);
+    background: rgba(30, 41, 59, 0.9) !important;
+    color: #FFFFFF !important;
 }
 
 .alert {
