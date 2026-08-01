@@ -41,6 +41,7 @@ public class AuthServlet extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/index.jsp");
             }
         } else {
+            request.setAttribute("typedEmail", email != null ? email.trim() : "");
             request.setAttribute("loginError", "Email hoặc mật khẩu không đúng, hoặc tài khoản đã bị khóa.");
             request.getRequestDispatcher("login.jsp").forward(request, response);
         }

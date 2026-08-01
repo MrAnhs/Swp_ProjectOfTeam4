@@ -18,7 +18,7 @@
                 <fileset dir="${j2ee.server.home}/lib" includes="*.jar" erroronmissingdir="false"/>
             </classpath>
         </javac>
-        <copy todir="${build.dir}/classes">
+        <copy todir="${build.dir}/classes" failonerror="false">
             <fileset dir="${build.web.dir}/WEB-INF/classes"/>
         </copy>
     </target>
@@ -37,7 +37,7 @@
                 <fileset dir="${j2ee.server.home}/lib" includes="*.jar" erroronmissingdir="false"/>
             </classpath>
         </javac>
-        <copy todir="${build.web.dir}/WEB-INF/classes">
+        <copy todir="${build.web.dir}/WEB-INF/classes" failonerror="false">
             <fileset dir="${build.dir}/classes" erroronmissingdir="false"/>
         </copy>
     </target>

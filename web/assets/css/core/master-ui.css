@@ -1,0 +1,266 @@
+/* ==========================================================================
+   MASTER UNIFIED DARK DESIGN SYSTEM - DIABETESCARE (2026)
+   Matches 100% of the Public Landing Page Dark Theme Palette & Aesthetics
+   Applies across ALL role dashboards: Admin, Doctor, Doctor-Lab, Receptionist, Patient
+   ========================================================================== */
+
+:root {
+    --master-primary: #2AB5A3;
+    --master-primary-dark: #208A7C;
+    --master-primary-light: rgba(42, 181, 163, 0.15);
+    --master-accent: #00D2D3;
+    
+    --master-bg-dark: #0F172A;
+    --master-bg-darker: #0B0F19;
+    --master-card-dark: rgba(15, 23, 42, 0.75);
+    --master-border-glass: rgba(255, 255, 255, 0.08);
+    
+    --master-text-white: #FFFFFF;
+    --master-text-light: #F8FAFC;
+    --master-text-muted: #94A3B8;
+    
+    --master-radius-sm: 8px;
+    --master-radius-md: 12px;
+    --master-radius-lg: 20px;
+    --master-radius-pill: 50px;
+
+    --master-shadow-glow: 0 10px 30px rgba(42, 181, 163, 0.35);
+    --master-shadow-card: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+/* Master Body Styling (Dark Theme as Default) */
+body, 
+body.master-ui-body,
+.receptionist-page,
+.admin-page,
+.doctor-page,
+.patient-page {
+    background-color: var(--master-bg-darker) !important;
+    background: radial-gradient(circle at center, rgba(42, 181, 163, 0.12) 0%, #0B0F19 80%) !important;
+    color: var(--master-text-light) !important;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Layout Shells & Main Containers */
+.receptionist-shell,
+.admin-shell,
+.doctor-shell,
+.patient-shell,
+.receptionist-main,
+.admin-main,
+.doctor-main,
+.patient-main {
+    background-color: transparent !important;
+    color: var(--master-text-light) !important;
+}
+
+/* Page Headers & Titles */
+.page-title, h1, h2, h3, h4, h5, h6 {
+    color: var(--master-text-white) !important;
+    font-weight: 700 !important;
+}
+
+.page-subtitle, .text-muted, p {
+    color: var(--master-text-muted) !important;
+}
+
+.page-kicker {
+    color: var(--master-primary) !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    font-size: 0.8rem !important;
+}
+
+/* ==========================================================================
+   1. MASTER FORM & INPUT COMPONENTS
+   ========================================================================== */
+
+.form-label,
+.master-form-label {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    color: var(--master-text-muted) !important;
+    margin-bottom: 6px !important;
+    display: block !important;
+}
+
+.input-group,
+.custom-input-group,
+.master-input-group {
+    display: flex !important;
+    align-items: center !important;
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid var(--master-border-glass) !important;
+    border-radius: var(--master-radius-md) !important;
+    overflow: hidden !important;
+    transition: all 0.25s ease !important;
+}
+
+.input-group:focus-within,
+.custom-input-group:focus-within,
+.master-input-group:focus-within {
+    border-color: var(--master-primary) !important;
+    box-shadow: 0 0 0 3px rgba(42, 181, 163, 0.2) !important;
+}
+
+.input-group-text {
+    background: transparent !important;
+    border: none !important;
+    color: var(--master-primary) !important;
+    font-size: 1.1rem !important;
+    padding: 0 0.85rem !important;
+}
+
+.form-control,
+.form-select {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: var(--master-text-white) !important;
+    font-size: 0.95rem !important;
+    padding: 0.75rem 1rem 0.75rem 0.5rem !important;
+}
+
+.form-control::placeholder {
+    color: rgba(255, 255, 255, 0.35) !important;
+}
+
+select.form-select option {
+    background-color: var(--master-bg-dark) !important;
+    color: var(--master-text-white) !important;
+}
+
+/* Master Buttons */
+.btn-primary,
+.btn-vinmec,
+.master-btn-primary {
+    background: linear-gradient(135deg, var(--master-primary), var(--master-primary-dark)) !important;
+    color: #FFFFFF !important;
+    border: none !important;
+    border-radius: var(--master-radius-pill) !important;
+    padding: 0.75rem 1.75rem !important;
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+    box-shadow: var(--master-shadow-glow) !important;
+    transition: all 0.3s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    text-decoration: none !important;
+}
+
+.btn-primary:hover,
+.btn-vinmec:hover,
+.master-btn-primary:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 12px 35px rgba(42, 181, 163, 0.5) !important;
+    color: #FFFFFF !important;
+}
+
+.btn-outline-secondary,
+.btn-outline-light,
+.master-btn-outline {
+    background: transparent !important;
+    color: var(--master-text-muted) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: var(--master-radius-pill) !important;
+    padding: 0.75rem 1.5rem !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+}
+
+.btn-outline-secondary:hover,
+.btn-outline-light:hover,
+.master-btn-outline:hover {
+    border-color: var(--master-primary) !important;
+    color: var(--master-primary) !important;
+    background: rgba(42, 181, 163, 0.1) !important;
+}
+
+/* ==========================================================================
+   2. MASTER PANELS & CARDS (GLASSMORPHISM)
+   ========================================================================== */
+
+.card,
+.panel-card,
+.master-panel-card {
+    background: var(--master-card-dark) !important;
+    border: 1px solid var(--master-border-glass) !important;
+    border-radius: var(--master-radius-lg) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    box-shadow: var(--master-shadow-card) !important;
+    color: var(--master-text-white) !important;
+}
+
+.stat-card-modern,
+.master-stat-card {
+    background: rgba(15, 23, 42, 0.8) !important;
+    border: 1px solid var(--master-border-glass) !important;
+    border-radius: var(--master-radius-md) !important;
+    padding: 1.25rem 1.5rem !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 1.25rem !important;
+}
+
+.stat-card-number,
+.master-stat-number {
+    font-size: 1.75rem !important;
+    font-weight: 800 !important;
+    color: var(--master-text-white) !important;
+}
+
+.stat-card-label,
+.master-stat-label {
+    font-size: 0.85rem !important;
+    color: var(--master-text-muted) !important;
+}
+
+/* ==========================================================================
+   3. MASTER TABLE SYSTEM
+   ========================================================================== */
+
+.table,
+.master-table {
+    color: var(--master-text-white) !important;
+    width: 100% !important;
+    margin-bottom: 0 !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+}
+
+.table th,
+.master-table th {
+    background: rgba(30, 41, 59, 0.8) !important;
+    color: var(--master-text-muted) !important;
+    font-size: 0.8rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
+    padding: 0.85rem 1rem !important;
+    border-bottom: 1px solid var(--master-border-glass) !important;
+}
+
+.table td,
+.master-table td {
+    padding: 0.9rem 1rem !important;
+    font-size: 0.9rem !important;
+    color: var(--master-text-light) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    vertical-align: middle !important;
+    background: transparent !important;
+}
+
+.table tbody tr:hover,
+.master-table tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.03) !important;
+}

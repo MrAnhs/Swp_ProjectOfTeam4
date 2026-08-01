@@ -16,7 +16,8 @@ public final class AdminStatusMapper {
     public static final String SCHEDULE_AVAILABLE = "Available";
     public static final String SCHEDULE_FULL = "Full";
     public static final String SCHEDULE_CANCELLED = "Cancelled";
-    public static final String SCHEDULE_EXPIRED = "Expired";
+    public static final String SCHEDULE_COMPLETED = "Completed";
+    public static final String SCHEDULE_EXPIRED = "Completed";
 
     public static final String BOOKING_ONLINE = "Online";
     public static final String BOOKING_RECEPTIONIST = "Receptionist";
@@ -87,7 +88,7 @@ public final class AdminStatusMapper {
             return SCHEDULE_AVAILABLE;
         }
         String normalized = raw.trim();
-        if (normalized.equalsIgnoreCase("available")) {
+        if (normalized.equalsIgnoreCase("available") || normalized.equalsIgnoreCase("scheduled")) {
             return SCHEDULE_AVAILABLE;
         }
         if (normalized.equalsIgnoreCase("full")) {
@@ -96,8 +97,8 @@ public final class AdminStatusMapper {
         if (normalized.equalsIgnoreCase("cancelled") || normalized.equalsIgnoreCase("canceled")) {
             return SCHEDULE_CANCELLED;
         }
-        if (normalized.equalsIgnoreCase("expired")) {
-            return SCHEDULE_EXPIRED;
+        if (normalized.equalsIgnoreCase("expired") || normalized.equalsIgnoreCase("completed")) {
+            return SCHEDULE_COMPLETED;
         }
         return normalized;
     }
@@ -139,14 +140,15 @@ public final class AdminStatusMapper {
         String normalized = status.trim().toLowerCase(Locale.ROOT);
         switch (normalized) {
             case "available":
-                return "Khả dụng";
+                return "Sẵn sàng";
             case "full":
                 return "Đã đầy";
             case "cancelled":
             case "canceled":
                 return "Đã hủy";
+            case "completed":
             case "expired":
-                return "Đã qua";
+                return "Đã hoàn thành";
             default:
                 return status;
         }

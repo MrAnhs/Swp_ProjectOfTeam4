@@ -3,18 +3,13 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="app-context-path" content="${pageContext.request.contextPath}">
-    <title>T&#7893;ng quan - DiabetesCare</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/base/variables.css?v=20260721-ui2">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/layouts/patient-shell.css?v=20260721-ui2">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/pages/patient/patient-pages.css?v=20260721-ui2">
+    <title>Tổng quan Bệnh nhân - DiabetesCare</title>
+    <%@ include file="/WEB-INF/views/components/shared/master-head.jspf" %>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/layouts/patient-shell.css?v=20260801">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/pages/patient/patient-pages.css?v=20260801">
 </head>
-<body>
+<body class="master-ui-body master-ui-dark">
     <c:set var="activePatientPage" value="dashboard" />
     <%@ include file="/WEB-INF/views/components/patient/sidebar.jspf" %>
 
@@ -53,7 +48,7 @@
                 <strong>Chat v&#7899;i AI</strong>
                 <span>Trao &#273;&#7893;i th&#244;ng tin s&#7913;c kh&#7887;e &#273;&#7875; h&#7895; tr&#7907; qu&#225; tr&#236;nh kh&#225;m.</span>
             </a>
-            <a class="shortcut-card" href="${pageContext.request.contextPath}/settings">
+            <a class="shortcut-card" href="javascript:void(0)" onclick="openGlobalEditProfileModal()">
                 <i class="bi bi-person-gear"></i>
                 <strong>Th&#244;ng tin c&#225; nh&#226;n</strong>
                 <span>Ki&#7875;m tra v&#224; c&#7853;p nh&#7853;t h&#7891; s&#417; c&#225; nh&#226;n.</span>

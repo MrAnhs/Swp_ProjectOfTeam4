@@ -707,146 +707,67 @@
                 <a href="#" class="nav-link text-white-50 text-decoration-none small">Trang chủ</a>
                 <a href="#features" class="nav-link text-white-50 text-decoration-none small">Tính năng</a>
                 <a href="#about" class="nav-link text-white-50 text-decoration-none small">Về chúng tôi</a>
-                <a href="login.jsp" class="nav-link text-white-50 text-decoration-none small">Đăng nhập</a>
-                <a href="register.jsp" class="nav-link text-white-50 text-decoration-none small">Đăng ký</a>
-                <a href="login.jsp" class="btn-primary-nav text-white text-decoration-none small fw-bold px-4 py-2" style="background: linear-gradient(135deg, #2AB5A3, #208A7C); border-radius: 50px; box-shadow: 0 4px 15px rgba(42, 181, 163, 0.4);">BẮT ĐẦU CHAT AI</a>
+                <a href="${pageContext.request.contextPath}/login.jsp" class="nav-link text-white-50 text-decoration-none small">Đăng nhập</a>
+                <a href="${pageContext.request.contextPath}/register.jsp" class="nav-link text-white-50 text-decoration-none small">Đăng ký</a>
+                <a href="${pageContext.request.contextPath}/login.jsp" class="btn-primary-nav text-white text-decoration-none small fw-bold px-4 py-2" style="background: linear-gradient(135deg, #2AB5A3, #208A7C); border-radius: 50px; box-shadow: 0 4px 15px rgba(42, 181, 163, 0.4);">BẮT ĐẦU CHAT AI</a>
             </div>
         </div>
     </nav>
 
-    <section class="hero-modern">
-        <div class="hero-content">
-            <div class="hero-text">
-                <h1 class="hero-title text-white text-uppercase" style="font-size: 3.8rem; line-height: 1.1; letter-spacing: -0.02em; font-weight: 800;">
-                    GIÁM SÁT TIỂU<br>ĐƯỜNG VÀ CẢNH<br>BÁO SỚM
-                </h1>
-                <p class="hero-description text-white-50 mt-4 mb-4" style="font-size: 1.05rem; line-height: 1.6; max-width: 480px;">
-                    Hệ thống y tế AI thông minh giúp theo dõi hồ sơ sức khỏe toàn diện, hỗ trợ phát hiện sớm nguy cơ tiểu đường, và kết nối bệnh nhân trực tiếp với bác sĩ để có kết luận chính xác nhất.
-                </p>
-                <div class="hero-buttons">
-                    <a href="register.jsp" class="btn-hero-primary text-white text-decoration-none fw-bold px-4 py-3 d-inline-flex align-items-center gap-2" style="background: linear-gradient(135deg, #2AB5A3, #00d2d3); border-radius: 50px; box-shadow: 0 8px 30px rgba(42, 181, 163, 0.5); font-size: 0.95rem;">
-                        BẮT ĐẦU NGAY <i class="bi bi-arrow-right"></i>
-                    </a>
+    <section class="hero-modern text-white py-5">
+        <div class="container position-relative z-2 py-4" style="max-width: 1280px;">
+            <div class="row align-items-center g-5">
+                <!-- Left Column: Content -->
+                <div class="col-lg-6 text-center text-lg-start">
+                    
+                    <!-- Pill Badge -->
+                    <div class="badge-glow px-4 py-2 mb-3 rounded-pill d-inline-flex align-items-center gap-2" style="background: rgba(42, 181, 163, 0.12); border: 1px solid rgba(42, 181, 163, 0.3); color: #2AB5A3; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.05em; backdrop-filter: blur(10px);">
+                        <i class="bi bi-shield-fill-check fs-6"></i> NỀN TẢNG CHĂM SÓC SỨC KHỎE THÔNG MINH 4.0
+                    </div>
+
+                    <!-- Title -->
+                    <h1 class="hero-title text-white text-uppercase fw-extrabold mb-3" style="font-size: clamp(2.2rem, 3.8vw, 3.4rem); line-height: 1.18; letter-spacing: -0.02em; font-weight: 800;">
+                        GIÁM SÁT TIỂU ĐƯỜNG <br>
+                        <span style="background: linear-gradient(135deg, #2AB5A3 0%, #00D2D3 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">VÀ CẢNH BÁO SỚM</span>
+                    </h1>
+
+                    <!-- Description -->
+                    <p class="hero-description text-white-50 mb-4" style="font-size: 1.08rem; line-height: 1.7; max-width: 540px; opacity: 0.88;">
+                        Hệ thống y tế AI thông minh giúp theo dõi hồ sơ sức khỏe toàn diện, hỗ trợ phát hiện sớm nguy cơ tiểu đường, và kết nối bệnh nhân trực tiếp với bác sĩ chuyên khoa để có kết luận chính xác nhất.
+                    </p>
+
+                    <!-- Primary Action Button -->
+                    <div class="hero-buttons mb-4">
+                        <a href="${pageContext.request.contextPath}/login.jsp" class="btn btn-hero-start text-white text-decoration-none fw-bold px-5 py-3 rounded-pill d-inline-flex align-items-center gap-3" style="background: linear-gradient(135deg, #2AB5A3, #208A7C); font-size: 1rem; letter-spacing: 0.03em; transition: all 0.3s ease; box-shadow: 0 10px 30px rgba(42, 181, 163, 0.45);">
+                            BẮT ĐẦU NGAY <i class="bi bi-arrow-right fs-5"></i>
+                        </a>
+                    </div>
+
+                    <!-- Trust Feature Highlights -->
+                    <div class="d-flex flex-wrap justify-content-center justify-content-lg-start gap-4 text-white-50 small" style="opacity: 0.85; font-size: 0.88rem;">
+                        <span class="d-inline-flex align-items-center gap-2"><i class="bi bi-cpu-fill" style="color: #2AB5A3;"></i> AI Phân Tích Chỉ Số</span>
+                        <span class="d-inline-flex align-items-center gap-2"><i class="bi bi-shield-lock-fill" style="color: #2AB5A3;"></i> Bảo Mật Y Tế</span>
+                        <span class="d-inline-flex align-items-center gap-2"><i class="bi bi-person-heart" style="color: #2AB5A3;"></i> Bác Sĩ Tư Vấn</span>
+                    </div>
+
                 </div>
-            </div>
-             <div class="hero-visual">
-                <!-- Background heart pulse animation decoration -->
-                <svg class="position-absolute" style="right: -40px; top: 10%; width: 120px; opacity: 0.15; z-index: 1;" viewBox="0 0 100 50">
-                    <path d="M0 25 L30 25 L35 10 L40 40 L45 20 L50 30 L55 25 L100 25" fill="none" stroke="#2AB5A3" stroke-width="2" />
-                </svg>
-                
-                <!-- Background molecular node decoration -->
-                <div class="position-absolute" style="left: -30px; bottom: -20px; width: 100px; height: 100px; opacity: 0.2; z-index: 1;">
-                    <svg viewBox="0 0 100 100" class="w-100 h-100">
-                        <line x1="20" y1="80" x2="50" y2="50" stroke="#2AB5A3" stroke-width="1.5" />
-                        <line x1="50" y1="50" x2="80" y2="80" stroke="#2AB5A3" stroke-width="1.5" />
-                        <line x1="50" y1="50" x2="50" y2="20" stroke="#2AB5A3" stroke-width="1.5" />
-                        <circle cx="20" cy="80" r="6" fill="#2AB5A3" />
-                        <circle cx="50" cy="50" r="8" fill="#2AB5A3" />
-                        <circle cx="80" cy="80" r="6" fill="#2AB5A3" />
-                        <circle cx="50" cy="20" r="6" fill="#2AB5A3" />
-                    </svg>
-                </div>
 
-                <div class="hero-dashboard-mockup">
-                    <!-- Left Sidebar -->
-                    <div class="dashboard-sidebar">
-                        <div class="sidebar-icon active" title="Tiếp nhận hồ sơ"><i class="bi bi-calendar2-check"></i></div>
-                        <div class="sidebar-icon" title="Khám tổng quát"><i class="bi bi-person-vcard"></i></div>
-                        <div class="sidebar-icon" title="Xét nghiệm"><i class="bi bi-eyedropper"></i></div>
-                        <div class="sidebar-icon" title="Khám chi tiết"><i class="bi bi-clipboard2-pulse-fill"></i></div>
-                        <div class="sidebar-icon" title="Đã hoàn thành"><i class="bi bi-archive"></i></div>
-                        <div class="sidebar-icon mt-auto" title="Đăng xuất"><i class="bi bi-box-arrow-left"></i></div>
-                    </div>
-
-                    <!-- Floating Top Pills -->
-                    <div class="dashboard-pills-container">
-                        <div class="dashboard-floating-pill-left small text-white d-flex align-items-center gap-2">
-                            <div class="bg-primary rounded-circle p-1 animate-pulse" style="width: 8px; height: 8px; background-color: #2AB5A3 !important;"></div>
-                            <span>Bác sĩ phụ trách: #5</span>
+                <!-- Right Column: Medical Team Image -->
+                <div class="col-lg-6">
+                    <div class="position-relative">
+                        <div class="hero-image-wrapper p-2 rounded-4" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.12); backdrop-filter: blur(12px); box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);">
+                            <img src="${pageContext.request.contextPath}/assets/images/hero-medical-team.png" alt="Đội ngũ y bác sĩ DiabetesCare" class="img-fluid rounded-3 w-100" style="object-fit: cover; max-height: 440px;" />
                         </div>
-
-                        <div class="dashboard-floating-pill-right small text-white d-flex align-items-center gap-2">
-                            <i class="bi bi-shield-check text-primary"></i>
-                            <span>Cổng Bác Sĩ</span>
-                        </div>
-                    </div>
-
-                    <!-- Dashboard Main Body -->
-                    <div class="d-flex align-items-center gap-2 text-primary small fw-bold mb-1" style="color: #2AB5A3 !important;">
-                        <i class="bi bi-activity animate-pulse"></i> TIẾP NHẬN BỆNH NHÂN
-                    </div>
-                    <div class="text-white-50 small mb-4">Danh sách lấy trực tiếp từ lịch hẹn đã liên kết với bác sĩ hiện tại.</div>
-
-                    <!-- Statistics Row -->
-                    <div class="dashboard-stat-row">
-                        <div class="dashboard-stat-item">
-                            <i class="bi bi-calendar2-check-fill text-primary"></i>
+                        
+                        <!-- Floating Experience Badge -->
+                        <div class="position-absolute bottom-0 start-0 translate-middle-y ms-3 p-3 rounded-3 text-start shadow-lg d-none d-sm-flex align-items-center gap-3" style="background: rgba(15, 23, 42, 0.92); border: 1px solid rgba(42, 181, 163, 0.35); backdrop-filter: blur(16px); z-index: 3;">
+                            <div class="d-flex align-items-center justify-content-center rounded-circle" style="width: 44px; height: 44px; background: rgba(42, 181, 163, 0.2); color: #2AB5A3;">
+                                <i class="bi bi-patch-check-fill fs-4"></i>
+                            </div>
                             <div>
-                                <div class="dashboard-stat-value">3 ca</div>
-                                <div class="dashboard-stat-label">Chờ tiếp nhận</div>
+                                <div class="fw-bold text-white small">Đội Ngũ Y Bác Sĩ Chuyên Khoa</div>
+                                <div class="text-white-50" style="font-size: 0.78rem;">Sẵn sàng hỗ trợ & chẩn đoán 24/7</div>
                             </div>
-                        </div>
-                        <div class="dashboard-stat-item">
-                            <i class="bi bi-check2-circle text-primary"></i>
-                            <div>
-                                <div class="dashboard-stat-value">15 ca</div>
-                                <div class="dashboard-stat-label">Đã hoàn thành</div>
-                            </div>
-                        </div>
-                        <div class="dashboard-stat-item">
-                            <i class="bi bi-people-fill text-primary"></i>
-                            <div>
-                                <div class="dashboard-stat-value">95%</div>
-                                <div class="dashboard-stat-label">Hài lòng</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Teal Progress Bar -->
-                    <div class="progress mb-2" style="height: 6px; background-color: rgba(255, 255, 255, 0.12) !important;">
-                        <div class="progress-bar" role="progressbar" style="width: 75%; background: linear-gradient(90deg, #2AB5A3, #208A7C);"></div>
-                    </div>
-
-                    <!-- Bottom widgets grid -->
-                    <div class="dashboard-grid">
-                        <!-- High-Authority Health Metrics Card -->
-                        <div class="dashboard-chart-card" style="padding: 1rem !important;">
-                            <div class="small text-white fw-bold mb-2"><i class="bi bi-graph-up-arrow text-primary me-1" style="color: #2AB5A3 !important;"></i> TẦM SOÁT Y TẾ CHUẨN XÁC</div>
-                            <div class="d-flex flex-column gap-2">
-                                <div class="d-flex justify-content-between align-items-center p-2 rounded" style="background: rgba(255, 255, 255, 0.05); font-size: 0.75rem;">
-                                    <div>
-                                        <div class="fw-bold text-white">Chỉ số HbA1c trung bình: 5.6%</div>
-                                        <div class="text-white-50" style="font-size: 0.7rem;">Độ chính xác AI: 99.4% • 1.250+ mẫu phân tích</div>
-                                    </div>
-                                    <span class="badge" style="font-size: 0.65rem; padding: 4px 8px; background-color: rgba(42, 181, 163, 0.2); color: #2AB5A3; border: 1px solid rgba(42, 181, 163, 0.3);">An toàn</span>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center p-2 rounded" style="background: rgba(255, 255, 255, 0.05); font-size: 0.75rem;">
-                                    <div>
-                                        <div class="fw-bold text-white">Đường huyết trung bình: 5.8 mmol/L</div>
-                                        <div class="text-white-50" style="font-size: 0.7rem;">Tự động cập nhật 24/7 • Cảnh báo sớm</div>
-                                    </div>
-                                    <span class="badge" style="font-size: 0.65rem; padding: 4px 8px; background-color: rgba(39, 201, 63, 0.2); color: #27c93f; border: 1px solid rgba(39, 201, 63, 0.3);">Ổn định</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- AI Clinical Analysis Card -->
-                        <div class="dashboard-alert-card" style="padding: 1rem !important; border: 1px solid rgba(42, 181, 163, 0.25) !important; background: rgba(42, 181, 163, 0.08) !important;">
-                            <div class="d-flex align-items-center gap-2 small fw-bold mb-1" style="color: #2AB5A3 !important;">
-                                <i class="bi bi-stars animate-pulse"></i> PHÂN TÍCH Y KHOA TỪ AI:
-                            </div>
-                            <div class="small text-white-50" style="font-size: 0.72rem; line-height: 1.4;">
-                                Đã phân tích trên <strong>15.000+</strong> hồ sơ lâm sàng. Tỷ lệ phát hiện sớm nguy cơ biến chứng chính xác <strong>99.2%</strong>. Hỗ trợ bác sĩ đưa ra phác đồ tối ưu.
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Bottom Status bar -->
-                    <div class="d-flex justify-content-end mt-3">
-                        <div class="d-flex align-items-center gap-2 small px-3 py-1 bg-success-subtle border border-success-subtle rounded-pill" style="background-color: rgba(39, 201, 63, 0.1) !important; border-color: rgba(39, 201, 63, 0.2) !important;">
-                            <i class="bi bi-check-circle-fill text-success" style="font-size: 0.8rem;"></i>
-                            <span class="text-success fw-bold" style="font-size: 0.75rem;">TRẠNG THÁI: ỔN ĐỊNH</span>
                         </div>
                     </div>
                 </div>
@@ -1120,15 +1041,6 @@
             </div>
         </div>
     </footer>
-    <!-- Floating Hotline -->
-    <a href="tel:19006868" class="btn-floating-hotline-capsule d-none d-md-flex align-items-center justify-content-between" style="position: fixed; bottom: 30px; right: 30px; width: 140px; height: 52px; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(10px); border: 2px solid rgba(42, 181, 163, 0.3); border-radius: 100px; text-decoration: none; z-index: 9999; padding: 4px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); transition: all 0.3s ease;">
-        <div class="d-flex align-items-center justify-content-center text-white" style="width: 40px; height: 40px; background: rgba(255, 255, 255, 0.05); border-radius: 50%;">
-            <i class="bi bi-telephone-fill text-primary fs-5" style="color: #2AB5A3 !important;"></i>
-        </div>
-        <div class="d-flex align-items-center justify-content-center text-white animate-pulse" style="width: 40px; height: 40px; background: linear-gradient(135deg, #2AB5A3, #208A7C); border-radius: 50%; box-shadow: 0 4px 15px rgba(42, 181, 163, 0.5);">
-            <i class="bi bi-arrow-right-short fs-4"></i>
-        </div>
-    </a>
 
     <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/public/home.js?v=20260709-fontfix2"></script>
 </body>

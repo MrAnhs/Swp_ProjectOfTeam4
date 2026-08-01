@@ -1,0 +1,178 @@
+<%-- 
+  Shared Unified Patient Registration Form Component 
+  Used by both:
+  1. register.jsp (Self-registration by Patient: isSelfRegistration = true)
+  2. WEB-INF/views/receptionist/patient-registration.jsp (Registration by Receptionist: isSelfRegistration = false)
+--%>
+
+<style>
+    .patient-reg-component .custom-input-group {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    .patient-reg-component .custom-input-group:focus-within {
+        border-color: #2AB5A3 !important;
+        box-shadow: 0 0 0 3px rgba(42, 181, 163, 0.2) !important;
+    }
+    .patient-reg-component .custom-input-group .input-group-text {
+        background: transparent;
+        border: none;
+        color: #2AB5A3;
+        font-size: 1.1rem;
+        padding-left: 1rem;
+    }
+    .patient-reg-component .custom-input-group .form-control,
+    .patient-reg-component .custom-input-group .form-select {
+        background: transparent;
+        border: none;
+        box-shadow: none !important;
+        padding: 0.75rem 1rem 0.75rem 0.5rem;
+    }
+    /* Unified Dark Theme Glassmorphism Inputs */
+    .patient-reg-component .custom-input-group {
+        background: rgba(255, 255, 255, 0.04) !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    .patient-reg-component .custom-input-group:focus-within {
+        border-color: #2AB5A3 !important;
+        box-shadow: 0 0 0 3px rgba(42, 181, 163, 0.2) !important;
+    }
+    .patient-reg-component .custom-input-group .input-group-text {
+        background: transparent !important;
+        border: none !important;
+        color: #2AB5A3 !important;
+        font-size: 1.1rem;
+        padding-left: 1rem;
+    }
+    .patient-reg-component .custom-input-group .form-control,
+    .patient-reg-component .custom-input-group .form-select {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        color: #FFFFFF !important;
+        padding: 0.75rem 1rem 0.75rem 0.5rem;
+    }
+    .patient-reg-component .form-label {
+        color: rgba(255, 255, 255, 0.75) !important;
+    }
+</style>
+
+<div class="patient-reg-component">
+    <div class="row g-3">
+        <!-- Họ và tên -->
+        <div class="col-md-6">
+            <label class="form-label fw-bold text-uppercase tracking-wider" style="font-size: 11px; opacity: 0.75;" for="${isSelfRegistration ? 'fullName' : 'patientRegisterName'}">HỌ VÀ TÊN <span class="text-danger">*</span></label>
+            <div class="input-group custom-input-group">
+                <span class="input-group-text"><i class="bi bi-person"></i></span>
+                <input type="text" class="form-control border-start-0 ps-1 shadow-none" id="${isSelfRegistration ? 'fullName' : 'patientRegisterName'}" name="${isSelfRegistration ? 'fullName' : 'patientName'}" placeholder="Nguyễn Văn A" required>
+                <div class="invalid-feedback ms-3">Vui lòng nhập họ và tên (tối thiểu 2 ký tự).</div>
+            </div>
+        </div>
+
+        <!-- Số điện thoại -->
+        <div class="col-md-6">
+            <label class="form-label fw-bold text-uppercase tracking-wider" style="font-size: 11px; opacity: 0.75;" for="${isSelfRegistration ? 'phone' : 'patientRegisterPhone'}">SỐ ĐIỆN THOẠI <span class="text-danger">*</span></label>
+            <div class="input-group custom-input-group">
+                <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                <input type="tel" class="form-control border-start-0 ps-1 shadow-none" id="${isSelfRegistration ? 'phone' : 'patientRegisterPhone'}" name="${isSelfRegistration ? 'phone' : 'patientPhone'}" placeholder="0912345678" pattern="(0(3[2-9]|5[2689]|7[06-9]|8[1-689]|9[0-46-9])[0-9]{7}|(\+?84)(3[2-9]|5[2689]|7[06-9]|8[1-689]|9[0-46-9])[0-9]{7})" maxlength="16" required>
+                <div class="invalid-feedback ms-3">Vui lòng nhập số điện thoại Việt Nam hợp lệ (ví dụ: 0912345678).</div>
+            </div>
+        </div>
+
+        <!-- Email -->
+        <div class="col-md-6">
+            <label class="form-label fw-bold text-uppercase tracking-wider" style="font-size: 11px; opacity: 0.75;" for="${isSelfRegistration ? 'email' : 'patientRegisterEmail'}">
+                EMAIL 
+                <c:choose>
+                    <c:when test="${isSelfRegistration}"><span class="text-danger">*</span></c:when>
+                    <c:otherwise><span class="text-muted fw-normal">(Không bắt buộc)</span></c:otherwise>
+                </c:choose>
+            </label>
+            <div class="input-group custom-input-group">
+                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                <input type="email" class="form-control border-start-0 ps-1 shadow-none" id="${isSelfRegistration ? 'email' : 'patientRegisterEmail'}" name="${isSelfRegistration ? 'email' : 'patientEmail'}" placeholder="example@gmail.com" <c:if test="${isSelfRegistration}">required</c:if>>
+                <c:if test="${isSelfRegistration}">
+                    <button type="button" class="btn btn-outline-teal btn-sm me-1 rounded-3 px-3 py-1 fw-semibold align-self-center" id="btnSendOtp" style="font-size: 12px; border-color: rgba(42, 181, 163, 0.4); color: #2AB5A3; background: rgba(42, 181, 163, 0.1);">
+                        Gửi mã OTP
+                    </button>
+                </c:if>
+                <div class="invalid-feedback ms-3">Vui lòng nhập email hợp lệ.</div>
+            </div>
+            <c:if test="${isSelfRegistration}">
+                <div id="otpStatusMsg" class="form-text small mt-1 ms-1" style="display: none;"></div>
+            </c:if>
+        </div>
+
+        <c:if test="${isSelfRegistration}">
+            <!-- Mã OTP xác thực (dành riêng cho tự đăng ký) -->
+            <div class="col-md-6">
+                <label class="form-label fw-bold text-uppercase tracking-wider" style="font-size: 11px; opacity: 0.75;" for="otp">MÃ OTP XÁC THỰC (6 CHỮ SỐ) <span class="text-danger">*</span></label>
+                <div class="input-group custom-input-group">
+                    <span class="input-group-text"><i class="bi bi-shield-check"></i></span>
+                    <input type="text" class="form-control border-start-0 ps-1 shadow-none" id="otp" name="otp" placeholder="Nhập mã OTP 6 chữ số" maxlength="6" pattern="\d{6}" required>
+                    <div class="invalid-feedback ms-3">Vui lòng nhập mã OTP 6 chữ số.</div>
+                </div>
+            </div>
+
+            <!-- Mật khẩu -->
+            <div class="col-md-6">
+                <label class="form-label fw-bold text-uppercase tracking-wider" style="font-size: 11px; opacity: 0.75;" for="password">MẬT KHẨU <span class="text-danger">*</span></label>
+                <div class="input-group custom-input-group">
+                    <span class="input-group-text"><i class="bi bi-key"></i></span>
+                    <input type="password" class="form-control border-start-0 ps-1 shadow-none" id="password" name="password" placeholder="Tối thiểu 8 ký tự" required minlength="8">
+                    <div class="invalid-feedback ms-3">Mật khẩu phải có ít nhất 8 ký tự.</div>
+                </div>
+            </div>
+
+            <!-- Xác nhận mật khẩu -->
+            <div class="col-md-6">
+                <label class="form-label fw-bold text-uppercase tracking-wider" style="font-size: 11px; opacity: 0.75;" for="confirmPassword">XÁC NHẬN MẬT KHẨU <span class="text-danger">*</span></label>
+                <div class="input-group custom-input-group">
+                    <span class="input-group-text"><i class="bi bi-shield-lock"></i></span>
+                    <input type="password" class="form-control border-start-0 ps-1 shadow-none" id="confirmPassword" name="confirmPassword" placeholder="Nhập lại mật khẩu" required>
+                    <div class="invalid-feedback ms-3" id="confirmFeedback">Vui lòng xác nhận mật khẩu.</div>
+                </div>
+            </div>
+        </c:if>
+
+        <!-- Giới tính -->
+        <div class="col-md-6">
+            <label class="form-label fw-bold text-uppercase tracking-wider" style="font-size: 11px; opacity: 0.75;" for="${isSelfRegistration ? 'gender' : 'patientRegisterGender'}">GIỚI TÍNH <span class="text-danger">*</span></label>
+            <div class="input-group custom-input-group">
+                <span class="input-group-text"><i class="bi bi-gender-ambiguous"></i></span>
+                <select class="form-select border-start-0 ps-1 shadow-none" id="${isSelfRegistration ? 'gender' : 'patientRegisterGender'}" name="${isSelfRegistration ? 'gender' : 'patientGender'}" required>
+                    <option selected disabled value="">Chọn giới tính...</option>
+                    <option value="Male">Nam</option>
+                    <option value="Female">Nữ</option>
+                    <option value="Other">Khác</option>
+                </select>
+                <div class="invalid-feedback ms-3">Vui lòng chọn giới tính.</div>
+            </div>
+        </div>
+
+        <!-- Ngày sinh -->
+        <div class="col-md-6">
+            <label class="form-label fw-bold text-uppercase tracking-wider" style="font-size: 11px; opacity: 0.75;" for="${isSelfRegistration ? 'dob' : 'patientRegisterDob'}">NGÀY SINH <span class="text-danger">*</span></label>
+            <div class="input-group custom-input-group">
+                <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
+                <input type="date" class="form-control border-start-0 ps-1 shadow-none" id="${isSelfRegistration ? 'dob' : 'patientRegisterDob'}" name="${isSelfRegistration ? 'dob' : 'patientDob'}" min="1900-01-01" required>
+                <div class="invalid-feedback ms-3" id="dobFeedback">Ngày sinh phải hợp lệ và không được vượt quá ngày hiện tại.</div>
+            </div>
+        </div>
+
+        <!-- Địa chỉ -->
+        <div class="col-md-12">
+            <label class="form-label fw-bold text-uppercase tracking-wider" style="font-size: 11px; opacity: 0.75;" for="${isSelfRegistration ? 'address' : 'patientRegisterAddress'}">ĐỊA CHỈ</label>
+            <div class="input-group custom-input-group">
+                <span class="input-group-text"><i class="bi bi-house"></i></span>
+                <input type="text" class="form-control border-start-0 ps-1 shadow-none" id="${isSelfRegistration ? 'address' : 'patientRegisterAddress'}" name="${isSelfRegistration ? 'address' : 'patientAddress'}" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố">
+            </div>
+        </div>
+    </div>
+</div>

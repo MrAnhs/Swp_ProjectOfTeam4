@@ -36,6 +36,8 @@ public class DetailServlet extends DoctorServlet {
 
             request.setAttribute("record", record);
             request.setAttribute("patient", dao.getPatientById(patientId));
+            request.setAttribute("aiConversation",
+                    new com.diabetes.monitoring.doctor.dao.AIConversationDAO().getConversationByRecordOrPatient(recordId, patientId));
             request.setAttribute("medicalHistory",
                     dao.getMedicalHistory(patientId, doctorId));
             request.setAttribute("laboratoryRequests",

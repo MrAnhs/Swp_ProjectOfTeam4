@@ -2,39 +2,34 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <!DOCTYPE html>
-<html lang="vi" style="color-scheme: light;">
+<html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="color-scheme" content="light">
     <title>Phòng Xét nghiệm - DiabetesCare</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/base/variables.css">
+    <%@ include file="/WEB-INF/views/components/shared/master-head.jspf" %>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/layouts/patient-shell.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/pages/doctor-lab/doctor-lab.css">
     <style>
         :root {
-            color-scheme: light;
-            --primary:     #00a67e;
-            --primary-dark:#007f61;
+            --primary:     #2AB5A3;
+            --primary-dark:#208A7C;
             --primary-deep:#005f48;
-            --primary-pale:#e8f5f1;
-            --primary-soft:#f5faf9;
-            --bg-app:      #f5f7fa;
+            --primary-pale:rgba(42, 181, 163, 0.15);
+            --primary-soft:rgba(30, 41, 59, 0.45);
+            --bg-app:      #0B0F19;
             --sidebar-w:   264px;
             --radius-card: 16px;
-            --shadow-card: 0 2px 16px rgba(0,0,0,.06);
-            --shadow-hover: 0 10px 32px rgba(0,0,0,.12);
+            --shadow-card: 0 20px 60px rgba(0,0,0,.5);
+            --shadow-hover: 0 10px 32px rgba(42,181,163,.3);
         }
 
-        /* ===== GLOBAL ===== */
-        html { color-scheme: light !important; background: #f5f7fa !important; }
+        /* ===== GLOBAL DARK THEME ===== */
+        html { background: #0B0F19 !important; }
         *, *::before, *::after { box-sizing: border-box; }
         body {
             font-family: 'Inter', sans-serif;
-            background: #f5f7fa !important;
-            color: #1a202c !important;
+            background: #0B0F19 !important;
+            background: radial-gradient(circle at center, rgba(42, 181, 163, 0.12) 0%, #0B0F19 80%) !important;
+            color: #F8FAFC !important;
             font-size: 0.93rem;
         }
 
@@ -63,43 +58,43 @@
         }
         .brand-text { font-size: 1.05rem; font-weight: 800; letter-spacing: -.3px; }
 
-        /* Nav items - optimized for light theme */
+        /* Nav items - Dark Theme */
         .sidebar-modern .nav-item-dash {
             width: auto; text-align: left; border: none; background: transparent;
             font-family: inherit; font-size: 0.875rem; font-weight: 500; cursor: pointer;
             outline: none; display: flex; align-items: center; gap: 0.65rem;
             padding: 0.65rem 0.9rem;
-            color: #4a5568 !important; text-decoration: none;
+            color: #94A3B8 !important; text-decoration: none;
             transition: all 0.18s ease;
             border-radius: 10px;
             margin: 1px 0.5rem;
         }
-        .sidebar-modern .nav-item-dash i { font-size: 1rem; transition: transform 0.18s ease; color: #64748b; }
-        .sidebar-modern .nav-item-dash:hover i { transform: scale(1.1) translateX(1px); color: #007f61; }
+        .sidebar-modern .nav-item-dash i { font-size: 1rem; transition: transform 0.18s ease; color: #94A3B8; }
+        .sidebar-modern .nav-item-dash:hover i { transform: scale(1.1) translateX(1px); color: #2AB5A3; }
         .sidebar-modern .nav-item-dash:hover {
-            background: #f0faf7;
-            color: #007f61 !important;
+            background: rgba(42, 181, 163, 0.15);
+            color: #2AB5A3 !important;
         }
         .sidebar-modern .nav-item-dash.active {
-            background: #e6f7f2 !important;
-            color: #007f61 !important;
+            background: rgba(42, 181, 163, 0.2) !important;
+            color: #2AB5A3 !important;
             font-weight: 700;
-            border-left: 3px solid #007f61;
+            border-left: 3px solid #2AB5A3;
             padding-left: calc(0.9rem - 3px);
         }
-        .sidebar-modern .nav-item-dash.active i { color: #007f61 !important; }
+        .sidebar-modern .nav-item-dash.active i { color: #2AB5A3 !important; }
 
         /* Sub-menus */
         .sidebar-modern .sub-menu {
             display: none; flex-direction: column;
-            background: #fafdfc;
-            border-left: 2px solid #b2dfdb;
+            background: rgba(15, 23, 42, 0.8);
+            border-left: 2px solid #2AB5A3;
             margin-left: 2.1rem; margin-bottom: 0.4rem;
             border-radius: 0 8px 8px 0; padding-left: 0.2rem;
         }
         .sidebar-modern .sub-menu-level2 {
             display: none; flex-direction: column;
-            border-left: 1.5px dashed #b2dfdb;
+            border-left: 1.5px dashed rgba(42, 181, 163, 0.4);
             margin-left: 1.2rem; margin-bottom: 0.3rem;
             border-radius: 0 8px 8px 0; padding-left: 0.15rem;
         }
@@ -113,30 +108,30 @@
             animation: slideDown 0.22s ease forwards;
         }
         .sidebar-modern .nav-item-sub {
-            padding: 0.48rem 0.9rem; color: #5e7370; font-size: 0.82rem; font-weight: 500;
+            padding: 0.48rem 0.9rem; color: #94A3B8; font-size: 0.82rem; font-weight: 500;
             text-decoration: none; transition: all 0.2s ease;
             display: flex; align-items: center; gap: 0.5rem;
             border-left: 3px solid transparent; border-radius: 0 6px 6px 0;
             margin-right: 0.4rem;
         }
         .sidebar-modern .nav-item-sub:hover {
-            color: var(--primary-dark); background: var(--primary-soft);
-            border-left-color: #80cbc4; padding-left: 1.1rem;
+            color: #2AB5A3; background: rgba(42, 181, 163, 0.12);
+            border-left-color: #2AB5A3; padding-left: 1.1rem;
         }
         .sidebar-modern .nav-item-sub.active {
-            color: var(--primary-dark); font-weight: 600;
-            background: var(--primary-pale); border-left-color: var(--primary-dark);
+            color: #2AB5A3; font-weight: 600;
+            background: rgba(42, 181, 163, 0.2); border-left-color: #2AB5A3;
         }
         .sidebar-modern .sub-menu-level2 .nav-item-sub { font-size: 0.79rem; padding: 0.4rem 0.7rem; }
 
         /* Logout button */
         .sidebar-modern .btn-logout {
-            color: #dc2626 !important; border: none;
+            color: #ff5252 !important; border: none;
             border-radius: 10px; margin: 0 0.5rem;
             font-weight: 600;
         }
         .sidebar-modern .btn-logout:hover {
-            background: #fef2f2 !important; color: #b91c1c !important;
+            background: rgba(255, 82, 82, 0.15) !important; color: #ff1744 !important;
         }
 
         /* Badge pulse */
@@ -154,7 +149,7 @@
         .main-content-dash {
             margin-left: var(--sidebar-w);
             padding: 1.5rem 2rem;
-            background: #f5f7fa !important;
+            background: transparent !important;
             min-height: 100vh;
         }
         @media (max-width: 900px) {
@@ -166,34 +161,38 @@
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             border: none; color: #fff; font-weight: 600;
             transition: all 0.25s ease; letter-spacing: .01em;
+            border-radius: 50px;
         }
         .btn-vinmec:hover {
             background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-deep) 100%);
             color: #fff; transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(0,127,97,.3);
+            box-shadow: 0 6px 16px rgba(42,181,163,.3);
         }
         .btn-outline-vinmec {
-            background: transparent; border: 1.5px solid var(--primary-dark);
-            color: var(--primary-dark); font-weight: 600; transition: all 0.25s ease;
+            background: transparent; border: 1.5px solid var(--primary);
+            color: var(--primary); font-weight: 600; transition: all 0.25s ease;
+            border-radius: 50px;
         }
         .btn-outline-vinmec:hover {
-            background: var(--primary-pale); color: var(--primary-deep);
+            background: var(--primary-pale); color: #ffffff;
             transform: translateY(-1px);
         }
 
         /* ===== CARDS (generic) ===== */
         .card-custom {
-            border: 1px solid #e8ecf0;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
             border-radius: var(--radius-card);
-            box-shadow: 0 2px 12px rgba(0,0,0,.05);
-            background: #ffffff;
+            box-shadow: 0 20px 60px rgba(0,0,0,.5);
+            background: rgba(15, 23, 42, 0.75) !important;
+            backdrop-filter: blur(20px) !important;
             margin-bottom: 1.5rem;
             overflow: hidden;
+            color: #ffffff !important;
         }
         .card-header-custom {
-            background: #f8fafb;
-            border-bottom: 1px solid #e8ecf0;
-            color: var(--primary-dark);
+            background: rgba(30, 41, 59, 0.8) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+            color: #2AB5A3 !important;
             font-weight: 700;
             font-size: 0.88rem;
             letter-spacing: .02em;
@@ -250,32 +249,31 @@
         @keyframes pulse {
             0%,100% { transform:scale(1);    opacity:1;   }
             50%      { transform:scale(1.18); opacity:0.75; }
-        }
-
-        /* ===== DASHBOARD HEADER BANNER ===== */
+        }        /* ===== DASHBOARD HEADER BANNER ===== */
         .dashboard-header-banner .banner-overlay {
-            background: linear-gradient(135deg, #e8f5f0 0%, #d4eee7 60%, #c2e5dc 100%) !important;
-            border: 1px solid #b8dfd4 !important;
+            background: linear-gradient(135deg, rgba(42, 181, 163, 0.25) 0%, rgba(15, 23, 42, 0.9) 100%) !important;
+            border: 1px solid rgba(42, 181, 163, 0.3) !important;
             border-radius: var(--radius-card);
             position: relative; overflow: hidden;
+            color: #FFFFFF !important;
         }
         .dashboard-header-banner .banner-overlay::before {
             content: '';
             position: absolute; top: -40%; right: -5%;
             width: 320px; height: 320px;
-            background: radial-gradient(circle, rgba(0,166,126,.06) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(42,181,163,.15) 0%, transparent 70%);
             border-radius: 50%;
         }
         .dashboard-header-banner .banner-overlay::after {
             content: '';
             position: absolute; bottom: -30%; left: -3%;
             width: 220px; height: 220px;
-            background: radial-gradient(circle, rgba(0,127,97,.08) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(32,138,124,.18) 0%, transparent 70%);
             border-radius: 50%;
         }
 
         /* ===== PROGRESS BARS ===== */
-        .progress { border-radius: 50px; background: #edf4f2; }
+        .progress { border-radius: 50px; background: rgba(255, 255, 255, 0.08); }
         .progress-bar { border-radius: 50px; transition: width .9s ease; }
 
         /* ===== DONUT CHART ===== */
@@ -284,24 +282,26 @@
         .donut-text { width: 100%; line-height: 1.1; }
 
         /* ===== TABLES ===== */
-        .badge-status-approved { background: #e0f5ee; color: #007f61; }
-        .badge-status-pending  { background: #fff8e1; color: #d97706; }
+        .badge-status-approved { background: rgba(42, 181, 163, 0.2); color: #2AB5A3; }
+        .badge-status-pending  { background: rgba(245, 158, 11, 0.2); color: #F59E0B; }
         .table-custom th {
-            font-weight: 700; color: #5a6a78;
-            background: #f8fafb;
-            border-bottom: 2px solid #e2e8f0;
+            font-weight: 700; color: #94A3B8;
+            background: rgba(30, 41, 59, 0.8);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
             font-size: 0.8rem; text-transform: uppercase; letter-spacing: .04em;
         }
-        .table-custom td { vertical-align: middle; font-size: 0.875rem; }
+        .table-custom td { vertical-align: middle; font-size: 0.875rem; color: #F8FAFC; }
 
-        /* ===== MODAL SCROLLABLE FIX - footer always visible ===== */
-        /* NOTE: form wraps modal-body + modal-footer, need form to also be flex */
+        /* ===== MODAL SCROLLABLE FIX ===== */
         #editProfileModal .modal-dialog { max-height: 92vh; }
         #editProfileModal .modal-content {
             max-height: 90vh;
             display: flex !important;
             flex-direction: column !important;
             overflow: hidden !important;
+            background: #0F172A !important;
+            color: #FFFFFF !important;
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
         }
         #editProfileModal .modal-content form {
             flex: 1 1 auto;
@@ -314,149 +314,92 @@
             overflow-y: auto !important;
             flex: 1 1 auto !important;
             min-height: 0 !important;
+            background: #0F172A !important;
         }
         #editProfileModal .modal-footer {
             flex-shrink: 0 !important;
             position: sticky;
             bottom: 0;
             z-index: 10;
+            background: #0F172A !important;
+            border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
         }
 
         /* ===== NAV TABS ===== */
         .nav-tabs-custom .nav-link {
-            color: #6b8b86; font-weight: 500; border: none;
+            color: #94A3B8; font-weight: 500; border: none;
             border-bottom: 3px solid transparent; padding: 10px 18px;
             transition: all 0.2s ease; border-radius: 0;
         }
-        .nav-tabs-custom .nav-link:hover { color: var(--primary-dark); }
+        .nav-tabs-custom .nav-link:hover { color: #2AB5A3; }
         .nav-tabs-custom .nav-link.active {
-            color: var(--primary-dark); background: transparent;
-            border-bottom-color: var(--primary-dark); font-weight: 700;
+            color: #2AB5A3; background: transparent;
+            border-bottom-color: #2AB5A3; font-weight: 700;
         }
 
         /* ===== LOADING OVERLAY ===== */
         .loading-overlay {
             display: none; position: fixed; inset: 0;
-            background: rgba(255,255,255,.82);
+            background: rgba(11, 15, 25, 0.85);
             z-index: 99999; align-items: center; justify-content: center;
-            flex-direction: column; gap: 1rem; backdrop-filter: blur(3px);
+            flex-direction: column; gap: 1rem; backdrop-filter: blur(5px);
         }
         .loading-overlay.show { display: flex; }
         .spinner-vinmec {
             width: 3rem; height: 3rem;
-            border: 4px solid #d9f0eb;
-            border-top-color: var(--primary-dark);
+            border: 4px solid rgba(42, 181, 163, 0.2);
+            border-top-color: #2AB5A3;
             border-radius: 50%; animation: spin 0.85s linear infinite;
         }
         @keyframes spin { to { transform:rotate(360deg); } }
 
-        /* ===== TIMELINE ACTIVITY CARDS ===== */
-        .timeline-card-hover {
-            border-radius: 12px !important;
-            border: 1px solid #e8ecf0 !important;
-            background: #ffffff !important;
-            transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+        /* ===== DARK THEME OVERRIDES ===== */
+        .sidebar-modern {
+            background: rgba(15, 23, 42, 0.95) !important;
+            border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+            color: #F8FAFC !important;
         }
-        .timeline-card-hover:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0,0,0,.08) !important;
-            border-color: #c5d9d4 !important;
-        }
-
-        /* ===== FAP SCHEDULE ===== */
-        .fap-card-slot {
-            padding: 7px 10px; border-radius: 10px; background: #fff;
-            border: 1px solid #e4eceb;
-            box-shadow: 0 2px 6px rgba(0,0,0,.03);
-            line-height: 1.35; text-align: center;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .fap-card-slot:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,.08); }
-        .slot-blood_sugar { border-left: 4px solid #dc3545 !important; background: #fef2f2 !important; color: #991b1b !important; }
-        .slot-urine_test  { border-left: 4px solid #0d6efd !important; background: #eff6ff !important; color: #1e40af !important; }
-        .slot-liver_test  { border-left: 4px solid #198754 !important; }
-        .slot-kidney_test { border-left: 4px solid #fd7e14 !important; }
-        .slot-lipids_test { border-left: 4px solid #0dcaf0 !important; }
-        .slot-lab_test    { border-left: 4px solid #6c757d !important; }
-        .fap-badge-mat    { background: #fff3cd !important; color: #856404 !important; border: 1px solid #ffeeba; font-size:.65rem; }
-        .fap-badge-edunext{ background: #cce5ff !important; color: #004085 !important; border: 1px solid #b8daff; font-size:.65rem; }
-        .fap-badge-meet   { background: #e2e3e5 !important; color: #383d41 !important; border: 1px solid #d6d8db; font-size:.65rem; }
-        .fap-status-dot   { font-size: 0.72rem; margin-right: 3px; }
-
-        /* ===== FADE-IN ANIMATION FOR CARDS ===== */
-        @keyframes fadeInUp {
-            from { opacity:0; transform:translateY(14px); }
-            to   { opacity:1; transform:translateY(0);     }
-        }
-        .card-summary { animation: fadeInUp 0.45s ease both; }
-        .col-6.col-md-3:nth-child(1) .card-summary { animation-delay: 0.05s; }
-        .col-6.col-md-3:nth-child(2) .card-summary { animation-delay: 0.12s; }
-        .col-6.col-md-3:nth-child(3) .card-summary { animation-delay: 0.19s; }
-        .col-6.col-md-3:nth-child(4) .card-summary { animation-delay: 0.26s; }
-
-        /* ===== SIDEBAR SECTION DIVIDER ===== */
-        .sidebar-section-label {
-            font-size: 0.65rem; font-weight: 700; letter-spacing: .08em;
-            text-transform: uppercase; color: #9eb5b0;
-            padding: 0.5rem 1.2rem 0.25rem;
-            margin-top: 0.25rem;
-        }
-
-        /* ===== ALERTS (improved) ===== */
-        .alert { border-radius: 12px; }
-        .alert-success { background: #f0faf6; color: #065f46; border: 1px solid #a7f3d0; }
-        .alert-warning { background: #fffbeb; color: #78350f; border: 1px solid #fde68a; }
-        .alert-danger  { background: #fef2f2; color: #991b1b; border: 1px solid #fca5a5; }
-
-        /* ===== FORCE LIGHT THEME ===== */
-        .sidebar-modern, .main-content-dash, .card, .card-custom,
-        .card-summary, .modal-content, .modal-body, .table,
-        .nav-tabs-custom, .form-control, .form-select {
-            color-scheme: light !important;
-        }
-        /* Ensure all sidebar text is dark (prevent dark mode color inheritance) */
-        .sidebar-modern { color: #1a202c !important; }
         .sidebar-modern .user-profile-card h6,
         .sidebar-modern .user-profile-card .user-doctor-name {
-            color: #1a202c !important;
+            color: #FFFFFF !important;
             display: block !important;
             font-weight: 700 !important;
         }
-        .sidebar-modern .sidebar-section-label { color: #9eb5b0 !important; }
+        .sidebar-modern .sidebar-section-label { color: #94A3B8 !important; }
     </style>
 </head>
-<body style="color-scheme: light; background: #f5f7fa;">
+<body class="master-ui-body master-ui-dark" style="background: #0B0F19; color: #F8FAFC;">
 
     <!-- Sidebar Modern Layout -->
     <aside class="sidebar-modern">
-        <div class="sidebar-header">
+        <div class="sidebar-header" style="background: transparent !important;">
             <span class="brand-dashboard">
-                <div class="brand-icon-dash bg-success">
+                <div class="brand-icon-dash" style="background: linear-gradient(135deg, #2AB5A3, #208A7C) !important; box-shadow: 0 4px 12px rgba(42, 181, 163, 0.35);">
                     <i class="bi bi-activity"></i>
                 </div>
-                <span class="brand-text text-success">DiabetesCare</span>
+                <span class="brand-text" style="color: #2AB5A3 !important;">DiabetesCare</span>
             </span>
         </div>
 
         <!-- Doctor profile card – click anywhere to open edit modal -->
         <div class="user-profile-card position-relative rounded-3 border shadow-sm"
-             data-bs-toggle="modal" data-bs-target="#editProfileModal"
+             onclick="openGlobalEditProfileModal()"
              role="button" tabindex="0" title="Nhấn để chỉnh sửa thông tin cá nhân"
-             style="background: #ffffff; margin: 0.5rem 0.75rem 1rem 0.75rem; border-color: #e2e8f0 !important; cursor: pointer; padding: 0.75rem 0.85rem; transition: box-shadow 0.2s ease, border-color 0.2s ease;">
+             style="background: rgba(30, 41, 59, 0.5) !important; margin: 0.5rem 0.75rem 1rem 0.75rem; border-color: rgba(255, 255, 255, 0.08) !important; cursor: pointer; padding: 0.75rem 0.85rem; transition: box-shadow 0.2s ease, border-color 0.2s ease;">
 
             <!-- Edit icon overlay (top-right corner) -->
-            <span class="position-absolute top-0 end-0 me-2 mt-2 text-success" style="font-size: 0.8rem; opacity: 0.5;">
+            <span class="position-absolute top-0 end-0 me-2 mt-2" style="font-size: 0.8rem; color: #2AB5A3; opacity: 0.7;">
                 <i class="bi bi-pencil-fill"></i>
             </span>
 
             <div class="d-flex align-items-center gap-2">
-                <div class="flex-shrink-0" style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#007f61,#00b887);font-weight:800;font-size:1.15rem;display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 3px 10px rgba(0,127,97,.3);">${sessionScope.currentUser.fullName.charAt(0)}</div>
+                <div class="flex-shrink-0" style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#2AB5A3,#208A7C);font-weight:800;font-size:1.15rem;display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 3px 10px rgba(42,181,163,.35);">${sessionScope.currentUser.fullName.charAt(0)}</div>
                 <div style="flex:1;min-width:0;overflow:hidden;">
-                    <div class="user-doctor-name" style="font-size:0.88rem;font-weight:700;color:#1a202c !important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3;margin-bottom:3px;" title="${sessionScope.currentUser.fullName}">${sessionScope.currentUser.fullName}</div>
-                    <span style="display:inline-block;background:rgba(0,127,97,0.1);color:#007f61;border:1px solid rgba(0,127,97,0.25);font-size:0.62rem;font-weight:700;padding:1px 7px;border-radius:6px;font-family:monospace;letter-spacing:.04em;">LAB SYSTEM</span>
+                    <div class="user-doctor-name" style="font-size:0.88rem;font-weight:700;color:#ffffff !important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3;margin-bottom:3px;" title="${sessionScope.currentUser.fullName}">${sessionScope.currentUser.fullName}</div>
+                    <span style="display:inline-block;background:rgba(42,181,163,0.15);color:#2AB5A3;border:1px solid rgba(42,181,163,0.35);font-size:0.62rem;font-weight:700;padding:1px 7px;border-radius:6px;font-family:monospace;letter-spacing:.04em;">LAB SYSTEM</span>
                 </div>
             </div>
-            <div class="mt-2 pt-2 border-top d-flex justify-content-between align-items-center">
+            <div class="mt-2 pt-2 border-top border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
                 <c:choose>
                     <c:when test="${isProfileComplete}">
                         <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 0.68rem; padding: 3px 8px;">
@@ -469,80 +412,74 @@
                         </span>
                     </c:otherwise>
                 </c:choose>
-                <span class="text-success fw-semibold" style="font-size: 0.72rem;">
+                <span class="fw-semibold" style="font-size: 0.72rem; color: #2AB5A3;">
                     <i class="bi bi-pencil-square me-1"></i>Chỉnh sửa
                 </span>
             </div>
         </div>
         <style>
             .user-profile-card:hover {
-                box-shadow: 0 6px 20px rgba(0, 127, 97, 0.12) !important;
-                border-color: #a7d9d0 !important;
-                background: #f8fdfb !important;
+                box-shadow: 0 6px 20px rgba(42, 181, 163, 0.25) !important;
+                border-color: #2AB5A3 !important;
+                background: rgba(42, 181, 163, 0.1) !important;
             }
             .user-profile-card:hover .bi-pencil-fill {
                 opacity: 1 !important;
-                color: #007f61 !important;
+                color: #2AB5A3 !important;
             }
             .user-profile-card:focus {
-                outline: 2px solid #00b887;
+                outline: 2px solid #2AB5A3;
                 outline-offset: 2px;
             }
             /* Brand section */
-            .sidebar-header { background: #ffffff; }
+            .sidebar-header { background: transparent !important; }
             .brand-icon-dash.bg-success {
-                background: linear-gradient(135deg, #00a67e, #007f61) !important;
-                box-shadow: 0 3px 10px rgba(0,127,97,.2);
+                background: linear-gradient(135deg, #2AB5A3, #208A7C) !important;
+                box-shadow: 0 3px 10px rgba(42,181,163,.35);
             }
         </style>
 
         <!-- Sidebar Navigation (Bootstrap Pills/Tabs) -->
         <nav class="sidebar-nav nav flex-column" id="v-pills-tab" role="tablist" aria-orientation="vertical">
             <a href="#pill-overview" class="nav-link nav-item-dash active" id="pill-overview-tab" data-bs-toggle="pill" role="tab" aria-controls="pill-overview" aria-selected="true">
-                <i class="bi bi-grid-1x2-fill text-success"></i>
+                <i class="bi bi-grid-1x2-fill" style="color: #2AB5A3 !important;"></i>
                 <span class="nav-text">Tổng quan dashboard</span>
             </a>
             <a href="#pill-patients" class="nav-link nav-item-dash" id="pill-patients-tab" data-bs-toggle="pill" role="tab" aria-controls="pill-patients" aria-selected="false">
-                <i class="bi bi-people-fill text-success"></i>
+                <i class="bi bi-people-fill" style="color: #2AB5A3 !important;"></i>
                 <span class="nav-text">Danh sách bệnh nhân</span>
             </a>
             <div class="nav-item-group-rooms">
                 <a href="#pill-rooms" class="nav-link nav-item-dash" id="pill-rooms-tab" data-bs-toggle="pill" role="tab" aria-controls="pill-rooms" aria-selected="false" onclick="onParentRoomClick()">
-                    <i class="bi bi-door-closed text-success"></i>
+                    <i class="bi bi-door-closed" style="color: #2AB5A3 !important;"></i>
                     <span class="nav-text">Phòng xét nghiệm</span>
                     <c:if test="${not empty waitingPatients}">
                         <span class="badge bg-danger ms-auto rounded-pill">${waitingPatients.size()}</span>
                     </c:if>
                 </a>
                 <div class="sub-menu" id="rooms-sub-menu">
-                    <a href="javascript:void(0)" class="nav-item-sub d-flex align-items-center justify-content-between" id="sub-room-mau" onclick="toggleBloodSubMenu()">
-                        <div class="d-flex align-items-center gap-2">
-                            <i class="bi bi-droplet-fill text-danger"></i>
-                            <span>Xét nghiệm máu</span>
-                        </div>
-                        <i class="bi bi-chevron-down small" id="blood-chevron" style="transition: transform 0.2s ease;"></i>
+                    <a href="javascript:void(0)" class="nav-item-sub py-1.5 my-1" id="sub-room-mau" onclick="selectSidebarRoom('phòng xét nghiệm máu')">
+                        <i class="bi bi-droplet-fill text-danger me-1"></i>
+                        <span>Xét nghiệm máu</span>
                     </a>
-                    <div class="sub-menu-level2 ps-3" id="blood-sub-menu" style="display: none; flex-direction: column;">
-                        <a href="javascript:void(0)" class="nav-item-sub py-1 my-1" id="sub-room-duonghuyet" onclick="selectSidebarRoom('phòng xét nghiệm máu - đường huyết')">
-                            <i class="bi bi-activity text-danger"></i>
-                            <span>Đường huyết</span>
-                        </a>
-                        <a href="javascript:void(0)" class="nav-item-sub py-1 my-1" id="sub-room-gan" onclick="selectSidebarRoom('phòng xét nghiệm máu - chức năng gan')">
-                            <i class="bi bi-heart-pulse-fill text-success"></i>
-                            <span>Chức năng gan</span>
-                        </a>
-                        <a href="javascript:void(0)" class="nav-item-sub py-1 my-1" id="sub-room-than" onclick="selectSidebarRoom('phòng xét nghiệm máu - chức năng thận')">
-                            <i class="bi bi-prescription text-warning"></i>
-                            <span>Chức năng thận</span>
-                        </a>
-                        <a href="javascript:void(0)" class="nav-item-sub py-1 my-1" id="sub-room-momau" onclick="selectSidebarRoom('phòng xét nghiệm máu - mỡ máu')">
-                            <i class="bi bi-droplet-half text-info"></i>
-                            <span>Mỡ máu</span>
-                        </a>
-                    </div>
-
-                    <a href="javascript:void(0)" class="nav-item-sub" id="sub-room-nuoctieu" onclick="selectSidebarRoom('phòng xét nghiệm nước tiểu')">
-                        <i class="bi bi-droplet text-info"></i>
+                    <a href="javascript:void(0)" class="nav-item-sub py-1.5 my-1" id="sub-room-duonghuyet" onclick="selectSidebarRoom('phòng xét nghiệm máu - đường huyết')">
+                        <i class="bi bi-activity text-danger me-1"></i>
+                        <span>Đường huyết</span>
+                    </a>
+                    <a href="javascript:void(0)" class="nav-item-sub py-1.5 my-1" id="sub-room-gan" onclick="selectSidebarRoom('phòng xét nghiệm máu - chức năng gan')">
+                        <i class="bi bi-heart-pulse-fill" style="color: #2AB5A3 !important;" class="me-1"></i>
+                        <span>Chức năng gan</span>
+                    </a>
+                    <a href="javascript:void(0)" class="nav-item-sub py-1.5 my-1" id="sub-room-than" onclick="selectSidebarRoom('phòng xét nghiệm máu - chức năng thận')">
+                        <i class="bi bi-prescription text-warning me-1"></i>
+                        <span>Chức năng thận</span>
+                    </a>
+                    <a href="javascript:void(0)" class="nav-item-sub py-1.5 my-1" id="sub-room-momau" onclick="selectSidebarRoom('phòng xét nghiệm máu - mỡ máu')">
+                        <i class="bi bi-droplet-half text-info me-1"></i>
+                        <span>Mỡ máu</span>
+                    </a>
+                    <a href="javascript:void(0)" class="nav-item-sub py-1.5 my-1" id="sub-room-nuoctieu" onclick="selectSidebarRoom('phòng xét nghiệm nước tiểu')">
+                        <i class="bi bi-droplet text-info me-1"></i>
                         <span>Xét nghiệm nước tiểu</span>
                     </a>
                 </div>
@@ -550,11 +487,11 @@
             
 
             <a href="#pill-history" class="nav-link nav-item-dash" id="pill-history-tab" data-bs-toggle="pill" role="tab" aria-controls="pill-history" aria-selected="false">
-                <i class="bi bi-clock-history text-success"></i>
+                <i class="bi bi-clock-history" style="color: #2AB5A3 !important;"></i>
                 <span class="nav-text">Lịch sử xét nghiệm</span>
             </a>
             <a href="#pill-schedule" class="nav-link nav-item-dash" id="pill-schedule-tab" data-bs-toggle="pill" role="tab" aria-controls="pill-schedule" aria-selected="false">
-                <i class="bi bi-calendar3 text-success"></i>
+                <i class="bi bi-calendar3" style="color: #2AB5A3 !important;"></i>
                 <span class="nav-text">Lịch làm việc</span>
             </a>
 
@@ -1079,20 +1016,20 @@
                                                     </td>
                                                     <td>
                                                         <c:choose>
-                                                            <c:when test="${p.labRoom eq 'phòng xét nghiệm máu' or p.labRoom eq 'phòng xét nghiệm máu - đường huyết'}">
-                                                                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle"><i class="bi bi-activity me-1"></i>Xét nghiệm đường huyết</span>
+                                                            <c:when test="${fn:contains(fn:toLowerCase(p.labRoom), 'đường huyết') or fn:contains(fn:toLowerCase(p.labRoom), 'đái tháo đường') or fn:contains(fn:toLowerCase(p.labRoom), 'huyết học') or p.labRoom eq 'phòng xét nghiệm máu'}">
+                                                                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle"><i class="bi bi-activity me-1"></i>Huyết Học / Đái Tháo Đường</span>
                                                             </c:when>
-                                                            <c:when test="${p.labRoom eq 'phòng xét nghiệm nước tiểu'}">
-                                                                <span class="badge bg-info bg-opacity-10 text-info border border-info-subtle"><i class="bi bi-droplet me-1"></i>Xét nghiệm nước tiểu</span>
+                                                            <c:when test="${fn:contains(fn:toLowerCase(p.labRoom), 'nước tiểu') or fn:contains(fn:toLowerCase(p.labRoom), 'tổng phân tích')}">
+                                                                <span class="badge bg-info bg-opacity-10 text-info border border-info-subtle"><i class="bi bi-droplet me-1"></i>Tổng Phân Tích Nước Tiểu</span>
                                                             </c:when>
-                                                            <c:when test="${p.labRoom eq 'phòng xét nghiệm máu - chức năng gan'}">
-                                                                <span class="badge bg-success bg-opacity-10 text-success border border-success-subtle"><i class="bi bi-heart-pulse-fill me-1"></i>Chức năng gan</span>
+                                                            <c:when test="${fn:contains(fn:toLowerCase(p.labRoom), 'gan')}">
+                                                                <span class="badge bg-success bg-opacity-10 text-success border border-success-subtle"><i class="bi bi-heart-pulse-fill me-1"></i>Chức Năng Gan</span>
                                                             </c:when>
-                                                            <c:when test="${p.labRoom eq 'phòng xét nghiệm máu - chức năng thận'}">
-                                                                <span class="badge bg-warning bg-opacity-10 text-warning border border-warning-subtle"><i class="bi bi-prescription me-1"></i>Chức năng thận</span>
+                                                            <c:when test="${fn:contains(fn:toLowerCase(p.labRoom), 'thận')}">
+                                                                <span class="badge bg-warning bg-opacity-10 text-warning border border-warning-subtle"><i class="bi bi-prescription me-1"></i>Chức Năng Thận</span>
                                                             </c:when>
-                                                            <c:when test="${p.labRoom eq 'phòng xét nghiệm máu - mỡ máu'}">
-                                                                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle"><i class="bi bi-droplet-half me-1"></i>Mỡ máu</span>
+                                                            <c:when test="${fn:contains(fn:toLowerCase(p.labRoom), 'mỡ máu') or fn:contains(fn:toLowerCase(p.labRoom), 'sinh hóa')}">
+                                                                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle"><i class="bi bi-droplet-half me-1"></i>Sinh Hóa - Mỡ Máu</span>
                                                             </c:when>
                                                             <c:when test="${not empty p.labRoom}">
                                                                 <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary-subtle" style="text-transform: capitalize;"><i class="bi bi-door-closed me-1"></i><c:out value="${p.labRoom}" /></span>
@@ -1100,8 +1037,8 @@
                                                             <c:otherwise>
                                                                 <span class="text-secondary">-</span>
                                                             </c:otherwise>
-                                                         </c:choose>
-                                                     </td>
+                                                        </c:choose>
+                                                    </td>
                                                     <td>
                                                          <c:choose>
                                                              <c:when test="${isCompleted}">
@@ -1195,7 +1132,7 @@
                                          </c:when>
                                          <c:otherwise>
                                              <c:forEach var="p" items="${patients}">
-                                                 <c:if test="${not empty p.labRoom and (p.waitlistStatus eq 'testing' or p.waitlistStatus eq 'completed')}">
+                                                 <c:if test="${not empty p.labRoom}">
                                                      <c:set var="isCompleted" value="${p.waitlistStatus eq 'completed' or (empty p.waitlistStatus and Integer.parseInt(p.recordCount) gt 0)}" />
                                                      <c:set var="isTesting" value="${p.waitlistStatus eq 'testing'}" />
                                                      <c:set var="isWaiting" value="${p.waitlistStatus eq 'waiting'}" />
@@ -1417,47 +1354,28 @@
                 subMenu.classList.add('show');
             }
 
-            // Expand level 2 blood menu if active room belongs to blood test
-            const bloodSub = document.getElementById('blood-sub-menu');
-            const chevron = document.getElementById('blood-chevron');
-            if (room.startsWith('phòng xét nghiệm máu')) {
-                if (bloodSub) {
-                    bloodSub.style.display = 'flex';
-                    bloodSub.classList.add('show');
-                }
-                if (chevron) chevron.style.transform = 'rotate(180deg)';
-            }
-
             // Highlight sub-items (clean active highlights first)
             document.querySelectorAll('.nav-item-sub').forEach(item => {
                 item.classList.remove('active');
             });
 
             // Highlight chosen item
-            if (room === 'phòng xét nghiệm máu - đường huyết') {
+            if (room === 'phòng xét nghiệm máu - đường huyết' || room.includes('đường huyết') || room.includes('đái tháo đường')) {
                 const el = document.getElementById('sub-room-duonghuyet');
                 if (el) el.classList.add('active');
-                const parentEl = document.getElementById('sub-room-mau');
-                if (parentEl) parentEl.classList.add('active');
-            } else if (room === 'phòng xét nghiệm máu - chức năng gan') {
+            } else if (room === 'phòng xét nghiệm máu - chức năng gan' || room.includes('gan')) {
                 const el = document.getElementById('sub-room-gan');
                 if (el) el.classList.add('active');
-                const parentEl = document.getElementById('sub-room-mau');
-                if (parentEl) parentEl.classList.add('active');
-            } else if (room === 'phòng xét nghiệm máu - chức năng thận') {
+            } else if (room === 'phòng xét nghiệm máu - chức năng thận' || room.includes('thận')) {
                 const el = document.getElementById('sub-room-than');
                 if (el) el.classList.add('active');
-                const parentEl = document.getElementById('sub-room-mau');
-                if (parentEl) parentEl.classList.add('active');
-            } else if (room === 'phòng xét nghiệm máu - mỡ máu') {
+            } else if (room === 'phòng xét nghiệm máu - mỡ máu' || room.includes('mỡ máu') || room.includes('sinh hóa')) {
                 const el = document.getElementById('sub-room-momau');
                 if (el) el.classList.add('active');
-                const parentEl = document.getElementById('sub-room-mau');
-                if (parentEl) parentEl.classList.add('active');
-            } else if (room === 'phòng xét nghiệm nước tiểu') {
+            } else if (room === 'phòng xét nghiệm nước tiểu' || room.includes('nước tiểu') || room.includes('tổng phân tích')) {
                 const el = document.getElementById('sub-room-nuoctieu');
                 if (el) el.classList.add('active');
-            } else if (room === 'phòng xét nghiệm máu') {
+            } else {
                 const el = document.getElementById('sub-room-mau');
                 if (el) el.classList.add('active');
             }
@@ -1465,19 +1383,19 @@
             // Update title
             const titleSpan = document.getElementById('room-table-title');
             if (titleSpan) {
-                let displayName = 'Phòng xét nghiệm';
-                if (room === 'phòng xét nghiệm nước tiểu') {
+                let displayName = 'Xét nghiệm máu tổng quan';
+                if (room.includes('nước tiểu') || room.includes('tổng phân tích')) {
                     displayName = 'Phòng xét nghiệm nước tiểu';
-                } else if (room.includes('đường huyết')) {
-                    displayName = 'Xét nghiệm máu - Đường huyết';
+                } else if (room.includes('đường huyết') || room.includes('đái tháo đường')) {
+                    displayName = 'Phòng xét nghiệm đường huyết';
                 } else if (room.includes('gan')) {
-                    displayName = 'Xét nghiệm máu - Chức năng gan';
+                    displayName = 'Phòng xét nghiệm chức năng gan';
                 } else if (room.includes('thận')) {
-                    displayName = 'Xét nghiệm máu - Chức năng thận';
-                } else if (room.includes('mỡ máu')) {
-                    displayName = 'Xét nghiệm máu - Mỡ máu';
+                    displayName = 'Phòng xét nghiệm chức năng thận';
+                } else if (room.includes('mỡ máu') || room.includes('sinh hóa')) {
+                    displayName = 'Phòng xét nghiệm mỡ máu';
                 } else {
-                    displayName = 'Xét nghiệm máu';
+                    displayName = 'Phòng xét nghiệm máu tổng quan';
                 }
                 titleSpan.innerHTML = `<i class="bi bi-door-closed me-2"></i> ` + displayName;
             }
@@ -1493,18 +1411,33 @@
             }
             const activeSub = document.querySelector('.nav-item-sub.active');
             if (!activeSub) {
-                selectSidebarRoom('phòng xét nghiệm máu - đường huyết');
+                selectSidebarRoom('phòng xét nghiệm máu');
             }
         }
 
         function filterSidebarRoomPatients() {
             const rows = document.querySelectorAll('.room-patient-row');
             rows.forEach(row => {
-                const room = row.getAttribute('data-room');
-                let matched = (room === activeSidebarRoom);
-                if (!matched && activeSidebarRoom === 'phòng xét nghiệm máu' && room.startsWith('phòng xét nghiệm máu')) {
-                    matched = true;
+                const room = (row.getAttribute('data-room') || '').toLowerCase().trim();
+                const active = (activeSidebarRoom || '').toLowerCase().trim();
+                let matched = false;
+                
+                if (active.includes('nước tiểu') || active.includes('tổng phân tích')) {
+                    matched = room.includes('nước tiểu') || room.includes('tổng phân tích');
+                } else if (active.includes('gan')) {
+                    matched = room.includes('gan');
+                } else if (active.includes('thận')) {
+                    matched = room.includes('thận');
+                } else if (active.includes('mỡ máu') || active.includes('sinh hóa')) {
+                    matched = room.includes('mỡ máu') || room.includes('sinh hóa');
+                } else if (active.includes('đường huyết') || active.includes('đái tháo đường')) {
+                    matched = room.includes('đường huyết') || room.includes('đái tháo đường');
+                } else if (active === 'phòng xét nghiệm máu' || active.includes('huyết học') || active.includes('máu')) {
+                    matched = (room === 'phòng xét nghiệm máu' || room.includes('huyết học') || room.includes('máu')) && !room.includes('mỡ máu') && !room.includes('gan') && !room.includes('thận') && !room.includes('đường huyết');
+                } else {
+                    matched = (room === active);
                 }
+
                 if (matched) {
                     row.style.display = '';
                 } else {
@@ -1648,145 +1581,81 @@
                             <h6 class="fw-bold text-dark mb-1"><c:out value="${r.patientName}" /></h6>
                             <span class="text-secondary small"><i class="bi bi-clock me-1"></i>Thời gian: <c:out value="${r.createdAt}" /></span>
                         </div>
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-sm m-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Chỉ số</th>
-                                        <th>Kết quả xét nghiệm</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <%-- ===== BLOOD SUGAR: chỉ hiện Đường huyết + HbA1c ===== --%>
-                                    <c:if test="${isBloodSugarTest}">
-                                        <c:if test="${not empty r.urea and r.urea ne '0' and r.urea ne '0.0' and r.urea ne '0.00'}">
-                                            <tr><td>Chỉ số đường huyết (mmol/L)</td><td class="fw-bold"><c:out value="${r.urea}" /> mmol/L</td></tr>
-                                        </c:if>
-                                        <c:if test="${not empty r.hba1c and r.hba1c ne '0' and r.hba1c ne '0.0' and r.hba1c ne '0.00'}">
-                                            <tr><td>Chỉ số đường huyết (HbA1c)</td><td class="fw-bold text-danger"><c:out value="${r.hba1c}" /> %</td></tr>
-                                        </c:if>
-                                    </c:if>
-                                    <%-- ===== GAN (Liver): AST + ALT ===== --%>
-                                    <c:if test="${isLiverTest}">
-                                        <c:if test="${not empty r.chol and r.chol ne '0' and r.chol ne '0.0' and r.chol ne '0.00'}">
-                                            <tr><td>AST (GOT)</td><td class="fw-bold"><c:out value="${r.chol}" /> UI/L</td></tr>
-                                        </c:if>
-                                        <c:if test="${not empty r.tg and r.tg ne '0' and r.tg ne '0.0' and r.tg ne '0.00'}">
-                                            <tr><td>ALT (GPT)</td><td class="fw-bold"><c:out value="${r.tg}" /> UI/L</td></tr>
-                                        </c:if>
-                                    </c:if>
-                                    <%-- ===== THẬN (Kidney): Ure + Creatinin ===== --%>
-                                    <c:if test="${isKidneyTest}">
-                                        <c:if test="${not empty r.urea and r.urea ne '0' and r.urea ne '0.0' and r.urea ne '0.00'}">
-                                            <tr><td>Ure</td><td class="fw-bold"><c:out value="${r.urea}" /> mmol/L</td></tr>
-                                        </c:if>
-                                        <c:if test="${not empty r.cr and r.cr ne '0' and r.cr ne '0.0' and r.cr ne '0.00'}">
-                                            <tr><td>Creatinin</td><td class="fw-bold"><c:out value="${r.cr}" /> mg/dL</td></tr>
-                                        </c:if>
-                                    </c:if>
-                                    <%-- ===== MỠ MÁU (Lipids): Cholesterol + TG + HDL + LDL + VLDL ===== --%>
-                                    <c:if test="${isLipidsTest}">
-                                        <c:if test="${not empty r.chol and r.chol ne '0' and r.chol ne '0.0' and r.chol ne '0.00'}">
-                                            <tr><td>Cholesterol toàn phần</td><td class="fw-bold"><c:out value="${r.chol}" /> mmol/L</td></tr>
-                                        </c:if>
-                                        <c:if test="${not empty r.tg and r.tg ne '0' and r.tg ne '0.0' and r.tg ne '0.00'}">
-                                            <tr><td>Triglyceride</td><td class="fw-bold"><c:out value="${r.tg}" /> mmol/L</td></tr>
-                                        </c:if>
-                                        <c:if test="${not empty r.hdl and r.hdl ne '0' and r.hdl ne '0.0' and r.hdl ne '0.00'}">
-                                            <tr><td>HDL-Cholesterol</td><td class="fw-bold"><c:out value="${r.hdl}" /> mmol/L</td></tr>
-                                        </c:if>
-                                        <c:if test="${not empty r.ldl and r.ldl ne '0' and r.ldl ne '0.0' and r.ldl ne '0.00'}">
-                                            <tr><td>LDL-Cholesterol</td><td class="fw-bold"><c:out value="${r.ldl}" /> mmol/L</td></tr>
-                                        </c:if>
-                                        <c:if test="${not empty r.vldl and r.vldl ne '0' and r.vldl ne '0.0' and r.vldl ne '0.00'}">
-                                            <tr><td>VLDL-Cholesterol</td><td class="fw-bold"><c:out value="${r.vldl}" /> mmol/L</td></tr>
-                                        </c:if>
-                                    </c:if>
-                                    <%-- ===== NƯỚC TIỂU (Urine): 7 chỉ số ===== --%>
-                                    <c:if test="${isUrineTest}">
-                                        <c:if test="${not empty r.urea and r.urea ne '0' and r.urea ne '0.0' and r.urea ne '0.00'}">
-                                            <tr>
-                                                <td>GLU (Glucose / Đường)</td>
-                                                <td class="fw-bold ${r.urea >= 0.8 ? 'text-danger' : 'text-success'}">
-                                                    <c:out value="${r.urea}" /> mmol/L
-                                                </td>
-                                            </tr>
-                                        </c:if>
-                                        <!-- PRO -->
-                                        <c:if test="${not empty r.cr and r.cr ne '0' and r.cr ne '0.0' and r.cr ne '0.00'}">
-                                            <tr>
-                                                <td>PRO (Protein / Đạm)</td>
-                                                <td class="fw-bold ${r.cr >= 0.1 ? 'text-danger' : 'text-success'}">
-                                                    <c:out value="${r.cr}" /> g/L
-                                                </td>
-                                            </tr>
-                                        </c:if>
-                                        <!-- LEU -->
-                                        <c:if test="${not empty r.hba1c and r.hba1c ne '0' and r.hba1c ne '0.0' and r.hba1c ne '0.00'}">
-                                            <tr>
-                                                <td>LEU (Leukocytes / Bạch cầu)</td>
-                                                <td class="fw-bold ${r.hba1c > 25 ? 'text-danger' : 'text-success'}">
-                                                    <c:out value="${r.hba1c}" /> Leu/&micro;L
-                                                </td>
-                                            </tr>
-                                        </c:if>
-                                        <!-- NIT -->
-                                        <c:if test="${not empty r.hdl}">
-                                            <tr>
-                                                <td>NIT (Nitrit)</td>
-                                                <td class="fw-bold ${r.hdl eq '1' or r.hdl eq '1.0' or r.hdl eq '1.00' ? 'text-danger' : 'text-success'}">
-                                                    <c:choose>
-                                                        <c:when test="${r.hdl eq '1' or r.hdl eq '1.0' or r.hdl eq '1.00'}">Dương tính (+)</c:when>
-                                                        <c:otherwise>Âm tính</c:otherwise>
-                                                    </c:choose>
-                                                </td>
-                                            </tr>
-                                        </c:if>
-                                        <!-- BLD -->
-                                        <c:if test="${not empty r.ldl}">
-                                            <tr>
-                                                <td>BLD (Blood / Hồng cầu)</td>
-                                                <td class="fw-bold ${r.ldl eq '1' or r.ldl eq '1.0' or r.ldl eq '1.00' ? 'text-danger' : 'text-success'}">
-                                                    <c:choose>
-                                                        <c:when test="${r.ldl eq '1' or r.ldl eq '1.0' or r.ldl eq '1.00'}">Dương tính (+)</c:when>
-                                                        <c:otherwise>Âm tính</c:otherwise>
-                                                    </c:choose>
-                                                </td>
-                                            </tr>
-                                        </c:if>
-                                        <!-- SG -->
-                                        <c:if test="${not empty r.vldl and r.vldl ne '0' and r.vldl ne '0.0' and r.vldl ne '0.00'}">
-                                            <tr>
-                                                <td>SG (Tỷ trọng / Specific Gravity)</td>
-                                                <td class="fw-bold ${r.vldl < 1.005 or r.vldl > 1.030 ? 'text-danger' : 'text-success'}">
-                                                    <c:out value="${r.vldl}" />
-                                                </td>
-                                            </tr>
-                                        </c:if>
-                                        <!-- pH -->
-                                        <c:if test="${not empty r.tg and r.tg ne '0' and r.tg ne '0.0' and r.tg ne '0.00'}">
-                                            <tr>
-                                                <td>pH (Độ acid / kiềm)</td>
-                                                <td class="fw-bold ${r.tg < 4.6 or r.tg > 8.0 ? 'text-danger' : 'text-success'}">
-                                                     <c:out value="${r.tg}" />
-                                                 </td>
-                                            </tr>
-                                        </c:if>
-                                    </c:if>
-                                    <!-- Weight -->
-                                    <c:if test="${not empty r.weight and r.weight ne '0' and r.weight ne '0.0' and r.weight ne '0.00'}">
-                                        <tr><td>Cân nặng</td><td><c:out value="${r.weight}" /> kg</td></tr>
-                                    </c:if>
-                                    <!-- Height -->
-                                    <c:if test="${not empty r.height and r.height ne '0' and r.height ne '0.0' and r.height ne '0.00'}">
-                                        <tr><td>Chiều cao</td><td><c:out value="${r.height}" /> cm</td></tr>
-                                    </c:if>
-                                    <!-- BMI -->
-                                    <c:if test="${not empty r.bmi and r.bmi ne '0' and r.bmi ne '0.0' and r.bmi ne '0.00'}">
-                                        <tr><td>BMI</td><td class="fw-bold text-primary"><c:out value="${r.bmi}" /></td></tr>
-                                    </c:if>
-                                </tbody>
-                            </table>
+                        
+                        <c:set var="hasHbA1c" value="${not empty r.hba1c and r.hba1c ne '0' and r.hba1c ne '0.0'}" />
+                        <c:set var="isUreaMerged" value="${hasHbA1c and not empty r.urea and r.urea ne '0' and r.urea ne '0.0'}" />
+                        <c:set var="isCrMerged" value="${hasHbA1c and not empty r.cr and r.cr ne '0' and r.cr ne '0.0'}" />
+                        <c:set var="isCholMerged" value="${hasHbA1c and not empty r.chol and r.chol ne '0' and r.chol ne '0.0'}" />
+                        <c:set var="isTgMerged" value="${hasHbA1c and not empty r.tg and r.tg ne '0' and r.tg ne '0.0'}" />
+                        <c:set var="isHdlMerged" value="${hasHbA1c and not empty r.hdl and r.hdl ne '0' and r.hdl ne '0.0'}" />
+                        <c:set var="isLdlMerged" value="${hasHbA1c and not empty r.ldl and r.ldl ne '0' and r.ldl ne '0.0'}" />
+                        <c:set var="isVldlMerged" value="${hasHbA1c and not empty r.vldl and r.vldl ne '0' and r.vldl ne '0.0'}" />
+                        <c:set var="isBmiMerged" value="${hasHbA1c and not empty r.bmi and r.bmi ne '0' and r.bmi ne '0.0'}" />
+
+                        <div class="row g-3 mb-2">
+                            <!-- UREA -->
+                            <div class="col-4">
+                                <div class="p-3 bg-light rounded-3 text-center border shadow-sm" style="${isUreaMerged ? 'border: 2px solid #004d3a !important; box-shadow: 0 0 0 1px #004d3a;' : ''}">
+                                    <small class="text-secondary text-uppercase fw-bold d-block mb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">UREA</small>
+                                    <span class="fs-5 fw-bold text-dark"><c:out value="${not empty r.urea and r.urea ne '0' and r.urea ne '0.0' ? r.urea : '-'}" /></span>
+                                </div>
+                            </div>
+                            <!-- CREATININE -->
+                            <div class="col-4">
+                                <div class="p-3 bg-light rounded-3 text-center border shadow-sm" style="${isCrMerged ? 'border: 2px solid #004d3a !important; box-shadow: 0 0 0 1px #004d3a;' : ''}">
+                                    <small class="text-secondary text-uppercase fw-bold d-block mb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">CREATININE</small>
+                                    <span class="fs-5 fw-bold text-dark"><c:out value="${not empty r.cr and r.cr ne '0' and r.cr ne '0.0' ? r.cr : '-'}" /></span>
+                                </div>
+                            </div>
+                            <!-- HbA1c -->
+                            <div class="col-4">
+                                <div class="p-3 bg-light rounded-3 text-center border shadow-sm">
+                                    <small class="text-secondary text-uppercase fw-bold d-block mb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">ĐƯỜNG HUYẾT (HBA1C)</small>
+                                    <span class="fs-5 fw-bold text-danger"><c:out value="${not empty r.hba1c and r.hba1c ne '0' and r.hba1c ne '0.0' ? r.hba1c : '-'}" /></span>
+                                </div>
+                            </div>
+                            <!-- CHOLESTEROL -->
+                            <div class="col-4">
+                                <div class="p-3 bg-light rounded-3 text-center border shadow-sm" style="${isCholMerged ? 'border: 2px solid #004d3a !important; box-shadow: 0 0 0 1px #004d3a;' : ''}">
+                                    <small class="text-secondary text-uppercase fw-bold d-block mb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">CHOLESTEROL</small>
+                                    <span class="fs-5 fw-bold text-dark"><c:out value="${not empty r.chol and r.chol ne '0' and r.chol ne '0.0' ? r.chol : '-'}" /></span>
+                                </div>
+                            </div>
+                            <!-- TG -->
+                            <div class="col-4">
+                                <div class="p-3 bg-light rounded-3 text-center border shadow-sm" style="${isTgMerged ? 'border: 2px solid #004d3a !important; box-shadow: 0 0 0 1px #004d3a;' : ''}">
+                                    <small class="text-secondary text-uppercase fw-bold d-block mb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">TG</small>
+                                    <span class="fs-5 fw-bold text-dark"><c:out value="${not empty r.tg and r.tg ne '0' and r.tg ne '0.0' ? r.tg : '-'}" /></span>
+                                </div>
+                            </div>
+                            <!-- HDL -->
+                            <div class="col-4">
+                                <div class="p-3 bg-light rounded-3 text-center border shadow-sm" style="${isHdlMerged ? 'border: 2px solid #004d3a !important; box-shadow: 0 0 0 1px #004d3a;' : ''}">
+                                    <small class="text-secondary text-uppercase fw-bold d-block mb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">HDL</small>
+                                    <span class="fs-5 fw-bold text-dark"><c:out value="${not empty r.hdl and r.hdl ne '0' and r.hdl ne '0.0' ? r.hdl : '-'}" /></span>
+                                </div>
+                            </div>
+                            <!-- LDL -->
+                            <div class="col-4">
+                                <div class="p-3 bg-light rounded-3 text-center border shadow-sm" style="${isLdlMerged ? 'border: 2px solid #004d3a !important; box-shadow: 0 0 0 1px #004d3a;' : ''}">
+                                    <small class="text-secondary text-uppercase fw-bold d-block mb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">LDL</small>
+                                    <span class="fs-5 fw-bold text-dark"><c:out value="${not empty r.ldl and r.ldl ne '0' and r.ldl ne '0.0' ? r.ldl : '-'}" /></span>
+                                </div>
+                            </div>
+                            <!-- VLDL -->
+                            <div class="col-4">
+                                <div class="p-3 bg-light rounded-3 text-center border shadow-sm" style="${isVldlMerged ? 'border: 2px solid #004d3a !important; box-shadow: 0 0 0 1px #004d3a;' : ''}">
+                                    <small class="text-secondary text-uppercase fw-bold d-block mb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">VLDL</small>
+                                    <span class="fs-5 fw-bold text-dark"><c:out value="${not empty r.vldl and r.vldl ne '0' and r.vldl ne '0.0' ? r.vldl : '-'}" /></span>
+                                </div>
+                            </div>
+                            <!-- BMI -->
+                            <div class="col-4">
+                                <div class="p-3 rounded-3 text-center border shadow-sm" style="background-color: #f0fdf4 !important; border-color: ${isBmiMerged ? '#004d3a' : '#bbf7d0'} !important; ${isBmiMerged ? 'border-width: 2px !important; box-shadow: 0 0 0 1px #004d3a;' : ''}">
+                                    <small class="text-success text-uppercase fw-bold d-block mb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">BMI</small>
+                                    <span class="fs-5 fw-bold text-success"><c:out value="${not empty r.bmi and r.bmi ne '0' and r.bmi ne '0.0' ? r.bmi : '-'}" /></span>
+                                </div>
+                            </div>
                         </div>
                         <c:if test="${not empty r.otherInfo}">
                             <div class="mt-3 p-3 bg-light rounded border">
@@ -1927,6 +1796,22 @@
             return weeks;
         }
 
+        function matchLabSlot(sSlot, targetSlotKey) {
+            if (!sSlot) return false;
+            const str = sSlot.toLowerCase().trim();
+            if (targetSlotKey === "Ca 1") {
+                if (str.includes("ca 1") || str.includes("7:30") || str.includes("07:30") || str.includes("08:00") || str.includes("sáng") || str.includes("sang")) return true;
+                const m = str.match(/^(\d{1,2})/);
+                if (m && parseInt(m[1], 10) < 12) return true;
+                return false;
+            } else {
+                if (str.includes("ca 2") || str.includes("13:30") || str.includes("13:00") || str.includes("chiều") || str.includes("chieu") || str.includes("tối")) return true;
+                const m = str.match(/^(\d{1,2})/);
+                if (m && parseInt(m[1], 10) >= 12) return true;
+                return false;
+            }
+        }
+
         function initYearAndWeekDropdowns() {
             const yearDropdowns = [document.getElementById('yearSelectDropdown'), document.getElementById('yearSelectDropdownReg')];
             const weekDropdowns = [document.getElementById('weekSelectDropdown'), document.getElementById('weekSelectDropdownReg')];
@@ -1948,17 +1833,17 @@
             // Generate weeks for selectedYear
             currentYearWeeks = generateWeeksForYear(selectedYear);
 
-            // Find default week (Next Week Monday)
+            // Find default week (Current Week Monday)
             const today = new Date();
             const dayOfWeek = today.getDay();
-            const daysUntilNextMon = dayOfWeek === 0 ? 1 : (8 - dayOfWeek);
-            const nextMon = new Date(today);
-            nextMon.setDate(today.getDate() + daysUntilNextMon);
-            const nextMonStr = nextMon.getFullYear() + '-' + String(nextMon.getMonth() + 1).padStart(2, '0') + '-' + String(nextMon.getDate()).padStart(2, '0');
+            const diffToMon = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek);
+            const curMon = new Date(today);
+            curMon.setDate(today.getDate() + diffToMon);
+            const curMonStr = curMon.getFullYear() + '-' + String(curMon.getMonth() + 1).padStart(2, '0') + '-' + String(curMon.getDate()).padStart(2, '0');
 
             let defaultIndex = 0;
             currentYearWeeks.forEach((w, idx) => {
-                if (w.dateStrs[0] === nextMonStr) {
+                if (w.dateStrs[0] === curMonStr || w.dateStrs.includes(curMonStr)) {
                     defaultIndex = idx;
                 }
             });
@@ -2093,34 +1978,46 @@
 
                         // Filter ONLY current doctor's registered schedules
                         const currentAccId = "${sessionScope.currentUser.id}";
-                        const matches = mockSchedules.filter(s => s.dateStr === dateStr && s.slotKey === slotKey && (
-                            !currentAccId || s.accountId === currentAccId
-                        ));
+                        const matches = mockSchedules.filter(s => {
+                            const cleanSDate = String(s.dateStr).split(' ')[0];
+                            const isDateMatch = cleanSDate === dateStr;
+                            const isSlotMatch = matchLabSlot(s.slotKey, slotKey);
+                            const isDoctorMatch = !currentAccId || String(s.accountId) === String(currentAccId);
+                            return isDateMatch && isSlotMatch && isDoctorMatch;
+                        });
 
 
                         if (matches && matches.length > 0) {
                             td.innerHTML = "";
+                            const todayStr = new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(new Date().getDate()).padStart(2, '0');
                             matches.forEach(match => {
-                                let slotClass = match.type === "blood" ? "slot-blood_sugar" : "slot-urine_test";
-                                let badgeStyle = match.type === "blood"
-                                    ? "background-color: #fee2e2 !important; color: #b91c1c !important; border: 1px solid #fecaca !important;"
-                                    : "background-color: #dbeafe !important; color: #1d4ed8 !important; border: 1px solid #bfdbfe !important;";
-                                let iconClass = match.type === "blood" ? "bi-activity" : "bi-droplet";
+                                let iconClass = "bi-door-open";
+                                const isPast = (match.dateStr || '').split(' ')[0] < todayStr;
+                                const st = (match.status || '').toLowerCase().trim();
+                                let statusText = "Sẵn sàng";
+                                let statusBadgeStyle = "background-color: #dcfce7 !important; color: #15803d !important; border: 1px solid #bbf7d0 !important;";
+                                if (st === 'completed' || st === 'expired' || isPast) {
+                                    statusText = "Hoàn thành";
+                                    statusBadgeStyle = "background-color: #f1f5f9 !important; color: #475569 !important; border: 1px solid #cbd5e1 !important;";
+                                } else if (st === 'cancelled') {
+                                    statusText = "Đã hủy";
+                                    statusBadgeStyle = "background-color: #fee2e2 !important; color: #b91c1c !important; border: 1px solid #fecaca !important;";
+                                }
 
                                 const div = document.createElement("div");
-                                div.className = `fap-card-slot \${slotClass} mb-1 p-1 rounded text-start shadow-sm`;
-                                div.style.cssText = `border-left: 3px solid \${match.type === 'blood' ? '#dc2626' : '#2563eb'}; background-color: \${match.type === 'blood' ? '#fff5f5' : '#f0f9ff'};`;
+                                div.className = `fap-card-slot mb-1 p-1.5 rounded text-start shadow-sm`;
+                                div.style.cssText = `border-left: 3px solid #10b981; background-color: #f0fdf4;`;
                                 div.innerHTML = `
-                                    <div class="fw-bold text-dark d-flex align-items-center gap-1" style="font-size: 0.75rem; word-break: break-word;">
-                                        <i class="bi bi-person-fill text-success" style="font-size: 0.82rem;"></i>
-                                        <span>\${match.doctorName}</span>
+                                    <div class="fw-bold text-dark d-flex align-items-center gap-1 mb-1" style="font-size: 0.75rem; word-break: break-word;">
+                                        <i class="bi bi-clock me-1 text-success" style="font-size: 0.82rem;"></i>
+                                        <span>\${match.slotKey} (\${config.time})</span>
                                     </div>
-                                    <div class="text-secondary mt-0.5 small" style="font-size: 0.7rem;">
+                                    <div class="text-secondary mb-1 small" style="font-size: 0.72rem; color: #0284c7 !important;">
                                         <i class="bi \${iconClass} me-1"></i>\${match.roomId}
                                     </div>
-                                    <div class="mt-0.5">
-                                        <span class="badge px-1 py-0.5 font-monospace" style="font-size: 0.62rem; border-radius: 4px; \${badgeStyle}">
-                                            \${config.label} (\${config.time})
+                                    <div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-top-style: dashed !important; border-top-color: rgba(0,0,0,0.1) !important;">
+                                        <span class="badge px-1.5 py-0.5" style="font-size: 0.65rem; border-radius: 4px; \${statusBadgeStyle}">
+                                            \${statusText}
                                         </span>
                                     </div>
                                 `;
@@ -2162,32 +2059,46 @@
                         td.style.minHeight = "50px";
 
                         // All registered schedules across ALL doctors
-                        const matches = mockSchedules.filter(s => s.dateStr === dateStr && s.slotKey === slotKey);
+                        const matches = mockSchedules.filter(s => {
+                            const cleanSDate = String(s.dateStr).split(' ')[0];
+                            const isDateMatch = cleanSDate === dateStr;
+                            const isSlotMatch = matchLabSlot(s.slotKey, slotKey);
+                            return isDateMatch && isSlotMatch;
+                        });
 
                         if (matches && matches.length > 0) {
                             td.innerHTML = "";
+                            const todayStr = new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(new Date().getDate()).padStart(2, '0');
                             matches.forEach(match => {
-                                let slotClass = match.type === "blood" ? "slot-blood_sugar" : "slot-urine_test";
-                                let badgeStyle = match.type === "blood"
-                                    ? "background-color: #fee2e2 !important; color: #b91c1c !important; border: 1px solid #fecaca !important;"
-                                    : "background-color: #dbeafe !important; color: #1d4ed8 !important; border: 1px solid #bfdbfe !important;";
-                                let iconClass = match.type === "blood" ? "bi-activity" : "bi-droplet";
+                                let iconClass = "bi-door-open";
+                                const isPast = (match.dateStr || '').split(' ')[0] < todayStr;
+                                const st = (match.status || '').toLowerCase().trim();
+                                let statusText = "Sẵn sàng";
+                                let statusBadgeStyle = "background-color: #dcfce7 !important; color: #15803d !important; border: 1px solid #bbf7d0 !important;";
+                                if (st === 'completed' || st === 'expired' || isPast) {
+                                    statusText = "Hoàn thành";
+                                    statusBadgeStyle = "background-color: #f1f5f9 !important; color: #475569 !important; border: 1px solid #cbd5e1 !important;";
+                                } else if (st === 'cancelled') {
+                                    statusText = "Đã hủy";
+                                    statusBadgeStyle = "background-color: #fee2e2 !important; color: #b91c1c !important; border: 1px solid #fecaca !important;";
+                                }
 
                                 const div = document.createElement("div");
-                                div.className = `fap-card-slot \${slotClass} mb-1 p-1 rounded text-start shadow-sm`;
-                                div.style.cssText = `border-left: 3px solid \${match.type === 'blood' ? '#dc2626' : '#2563eb'}; background-color: \${match.type === 'blood' ? '#fff5f5' : '#f0f9ff'};`;
+                                div.className = `fap-card-slot mb-1 p-1.5 rounded text-start shadow-sm`;
+                                div.style.cssText = `border-left: 3px solid #2563eb; background-color: #f0f9ff;`;
                                 div.innerHTML = `
-                                    <div class="fw-bold text-dark d-flex align-items-center gap-1" style="font-size: 0.75rem; word-break: break-word;">
-                                        <i class="bi bi-person-fill text-success" style="font-size: 0.82rem;"></i>
-                                        <span>\${match.doctorName}</span>
+                                    <div class="fw-bold text-dark d-flex align-items-center gap-1 mb-1" style="font-size: 0.75rem; word-break: break-word;">
+                                        <i class="bi bi-clock me-1 text-primary" style="font-size: 0.82rem;"></i>
+                                        <span>\${match.slotKey} (\${config.time})</span>
                                     </div>
-                                    <div class="text-secondary mt-0.5 small" style="font-size: 0.7rem;">
+                                    <div class="text-secondary mb-1 small" style="font-size: 0.72rem; color: #0284c7 !important;">
                                         <i class="bi \${iconClass} me-1"></i>\${match.roomId}
                                     </div>
-                                    <div class="mt-0.5">
-                                        <span class="badge px-1 py-0.5 font-monospace" style="font-size: 0.62rem; border-radius: 4px; \${badgeStyle}">
-                                            \${config.label} (\${config.time})
+                                    <div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-top-style: dashed !important; border-top-color: rgba(0,0,0,0.1) !important;">
+                                        <span class="badge px-1.5 py-0.5" style="font-size: 0.65rem; border-radius: 4px; \${statusBadgeStyle}">
+                                            \${statusText}
                                         </span>
+                                        <span class="text-muted small" style="font-size: 0.65rem;">BS: \${match.doctorName}</span>
                                     </div>
                                 `;
                                 td.appendChild(div);
@@ -2365,192 +2276,7 @@
     </script>
 
 
-    <div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true" data-bs-backdrop="true" data-bs-keyboard="true">
-
-        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-            <form class="modal-content border-0 shadow-lg rounded-4 overflow-hidden" action="${pageContext.request.contextPath}/doctor-lab/dashboard" method="POST" accept-charset="UTF-8" onsubmit="return validateProfileForm(event)" style="max-height: 85vh; display: flex; flex-direction: column;">
-                <input type="hidden" name="action" value="updateProfile">
-
-                <!-- Modal Header -->
-                <div class="modal-header text-white" style="background: linear-gradient(135deg, #007f61 0%, #005f48 100%); padding: 1.1rem 1.4rem; flex-shrink: 0;">
-                    <div class="d-flex align-items-center gap-3">
-                        <div style="width:42px;height:42px;border-radius:10px;background:rgba(0,127,97,0.12);display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:#007f61;">
-                            <i class="bi bi-person-gear"></i>
-                        </div>
-                        <div>
-                            <h5 class="modal-title fw-bold mb-0" id="editProfileModalLabel" style="color:#004d3a;">Chỉnh sửa thông tin bác sĩ</h5>
-                            <small style="color:#4a7a68;font-size:0.78rem;">Phòng Xét nghiệm – ${sessionScope.currentUser.fullName}</small>
-                        </div>
-                    </div>
-                    <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-
-
-                <div class="modal-body" style="padding: 1.5rem; background: #f8fffe; overflow-y: auto; flex: 1 1 auto;">
-
-                        <!-- JS validation alert -->
-                        <div id="profJsAlert" class="alert alert-danger border-0 shadow-sm mb-3 py-2 px-3 small d-none" role="alert"></div>
-
-                        <!-- Incomplete warning banner -->
-                        <c:if test="${not isProfileComplete}">
-                            <div class="alert alert-warning border-0 rounded-3 shadow-sm mb-3 py-1 px-3 small d-flex gap-2 align-items-start" role="alert">
-                                <i class="bi bi-exclamation-triangle-fill text-warning mt-0" style="font-size:0.9rem;flex-shrink:0;"></i>
-                                <div><strong>Tài khoản do Admin cấp:</strong> Vui lòng bổ sung
-                                    (<span class="text-danger">*</span> Họ tên, SĐT, Ngày sinh &ge;18 tuổi, Giới tính, Địa chỉ) để kích hoạt tài khoản.
-                                </div>
-                            </div>
-                        </c:if>
-
-                        <!-- ── Section 1: Thông tin cơ bản ── -->
-                        <div class="mb-2">
-                            <p class="text-uppercase fw-bold small mb-2" style="color:#007f61;letter-spacing:.6px;font-size:0.7rem;">
-                                <i class="bi bi-person-lines-fill me-1"></i>Thông tin cơ bản
-                            </p>
-                            <div class="row g-2">
-                                <!-- Họ và tên -->
-                                <div class="col-md-6">
-                                    <label for="profFullName" class="form-label fw-semibold text-dark small mb-1">
-                                        <i class="bi bi-person-fill text-success me-1"></i>Họ và tên bác sĩ <span class="text-danger">*</span>
-                                    </label>
-                                    <input type="text" class="form-control form-control-sm border-success-subtle fw-semibold"
-                                           id="profFullName" name="fullName" required
-                                           placeholder="Nhập họ và tên đầy đủ..."
-                                           value="${doctorProfile.fullName}">
-                                </div>
-
-                                <!-- Số điện thoại -->
-                                <div class="col-md-6">
-                                    <label for="profPhone" class="form-label fw-semibold text-dark small mb-1">
-                                        <i class="bi bi-telephone-fill text-success me-1"></i>Số điện thoại <span class="text-danger">*</span>
-                                    </label>
-                                    <input type="tel" class="form-control form-control-sm border-success-subtle fw-semibold"
-                                           id="profPhone" name="phone" required
-                                           pattern="^(03[2-9]|05[25689]|07[06-9]|08[1-9]|09[0-9])\d{7}$"
-                                           title="Số điện thoại Việt Nam hợp lệ: 10 số, bắt đầu bằng 03x/05x/07x/08x/09x"
-                                           placeholder="VD: 0987654321"
-                                           oninput="validateVnPhone(this)"
-                                           value="${doctorProfile.phone}">
-                                    <div id="phoneHint" class="form-text" style="font-size:0.7rem;">
-                                        <span class="text-muted">Số điện thoại Việt Nam: 03x, 05x, 07x, 08x, 09x</span>
-                                    </div>
-                                </div>
-
-                                <!-- Ngày sinh -->
-                                <div class="col-md-4">
-                                    <label for="profDob" class="form-label fw-semibold text-dark small mb-1">
-                                        <i class="bi bi-calendar-event text-success me-1"></i>Ngày sinh <span class="text-danger">*</span>
-                                    </label>
-                                    <input type="date" class="form-control form-control-sm border-success-subtle fw-semibold"
-                                           id="profDob" name="dob" required
-                                           max="${maxDobStr}"
-                                           value="${doctorProfile.dob}">
-                                    <span class="form-text text-muted" style="font-size:0.7rem;">Tuổi &ge; 18</span>
-                                </div>
-
-                                <!-- Giới tính -->
-                                <div class="col-md-4">
-                                    <label for="profGender" class="form-label fw-semibold text-dark small mb-1">
-                                        <i class="bi bi-gender-ambiguous text-success me-1"></i>Giới tính <span class="text-danger">*</span>
-                                    </label>
-                                    <select class="form-select form-select-sm border-success-subtle fw-semibold" id="profGender" name="gender" required>
-                                        <option value="Nam" ${doctorProfile.gender == 'Nam' || doctorProfile.gender == '' || empty doctorProfile.gender ? 'selected' : ''}>Nam</option>
-                                        <option value="Nu" ${doctorProfile.gender == 'Nu' || doctorProfile.gender == 'Nữ' ? 'selected' : ''}>Nữ</option>
-                                        <option value="Khac" ${doctorProfile.gender == 'Khac' || doctorProfile.gender == 'Khác' ? 'selected' : ''}>Khác</option>
-                                    </select>
-                                </div>
-
-                                <!-- Địa chỉ -->
-                                <div class="col-md-4">
-                                    <label for="profAddress" class="form-label fw-semibold text-dark small mb-1">
-                                        <i class="bi bi-geo-alt-fill text-success me-1"></i>Địa chỉ <span class="text-danger">*</span>
-                                    </label>
-                                    <input type="text" class="form-control form-control-sm border-success-subtle fw-semibold"
-                                           id="profAddress" name="address" required
-                                           placeholder="Hà Nội, Việt Nam"
-                                           value="${doctorProfile.address}">
-                                </div>
-                            </div>
-                        </div>
-
-                        <hr class="my-3" style="border-color:#d4edda;">
-
-                        <!-- ── Section 2: Thông tin tài khoản (readonly) ── -->
-                        <div class="mb-2">
-                            <p class="text-uppercase fw-bold small mb-2" style="color:#6c757d;letter-spacing:.6px;font-size:0.7rem;">
-                                <i class="bi bi-shield-lock me-1"></i>Thông tin tài khoản (cố định)
-                            </p>
-                            <div class="row g-2">
-                                <!-- Email (Readonly) -->
-                                <div class="col-md-6">
-                                    <label for="profEmail" class="form-label fw-semibold text-dark small mb-1">
-                                        <i class="bi bi-envelope-fill text-secondary me-1"></i>Email đăng nhập
-                                    </label>
-                                    <input type="email" class="form-control form-control-sm bg-light text-secondary fw-bold border-secondary-subtle"
-                                           id="profEmail" name="email" readonly
-                                           value="${not empty doctorProfile.email ? doctorProfile.email : sessionScope.currentUser.email}">
-                                    <span class="form-text text-muted" style="font-size:0.7rem;"><i class="bi bi-lock-fill me-1"></i>Do Admin khởi tạo – không thể thay đổi</span>
-                                </div>
-
-                                <!-- Bộ phận (Readonly) -->
-                                <div class="col-md-6">
-                                    <label for="profLabName" class="form-label fw-semibold text-dark small mb-1">
-                                        <i class="bi bi-building-fill text-secondary me-1"></i>Bộ phận / Chuyên khoa
-                                    </label>
-                                    <input type="text" class="form-control form-control-sm bg-light text-secondary fw-bold border-secondary-subtle"
-                                           id="profLabName" name="labName" readonly
-                                           value="Phòng xét nghiệm">
-                                    <span class="form-text text-muted" style="font-size:0.7rem;"><i class="bi bi-lock-fill me-1"></i>Đơn vị cố định</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <hr class="my-2" style="border-color:#d4edda;">
-
-                        <!-- ── Section 3: Đổi mật khẩu ── -->
-                        <div>
-                            <p class="text-uppercase fw-bold small mb-2" style="color:#856404;letter-spacing:.6px;font-size:0.7rem;">
-                                <i class="bi bi-key-fill me-1"></i>Bảo mật
-                            </p>
-                            <div class="col-md-8">
-                                <label for="profNewPassword" class="form-label fw-semibold text-dark small mb-1">
-                                    Đổi mật khẩu đăng nhập
-                                    <span class="text-muted fw-normal">(bỏ trống = giữ nguyên)</span>
-                                </label>
-                                <div class="input-group input-group-sm">
-                                    <span class="input-group-text bg-warning-subtle border-warning-subtle">
-                                        <i class="bi bi-key-fill text-warning"></i>
-                                    </span>
-                                    <input type="password" class="form-control"
-                                           id="profNewPassword" name="newPassword"
-                                           placeholder="Nhập mật khẩu mới nếu muốn thay đổi...">
-                                </div>
-                                <span class="form-text text-muted" style="font-size:0.7rem;">Khuyến nghị đổi mật khẩu cá nhân mới để tăng bảo mật.</span>
-                            </div>
-                        </div>
-
-                    </div><!-- /modal-body -->
-
-                    <div class="modal-footer bg-white border-top d-flex justify-content-between align-items-center" style="padding: 1rem 1.5rem; flex-shrink: 0;">
-                        <c:choose>
-                            <c:when test="${isProfileComplete}">
-                                <button type="button" class="btn btn-outline-secondary btn-sm px-4 fw-bold" data-bs-dismiss="modal">
-                                    <i class="bi bi-x-circle me-1"></i>Hủy bỏ
-                                </button>
-                            </c:when>
-                            <c:otherwise>
-                                <a href="${pageContext.request.contextPath}/logout" class="btn btn-outline-danger btn-sm px-3 fw-bold" title="Đăng xuất khỏi hệ thống">
-                                    <i class="bi bi-box-arrow-right me-1"></i>Đăng xuất
-                                </a>
-                            </c:otherwise>
-                        </c:choose>
-                        <button type="submit" id="btnSaveLabProfile" class="btn btn-success btn-sm px-4 fw-bold shadow-sm">
-                            <i class="bi bi-check-circle-fill me-1"></i>Lưu thông tin & Kích hoạt
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
+    <%@ include file="/WEB-INF/views/components/edit-profile-modal.jspf" %>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

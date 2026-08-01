@@ -2,8 +2,8 @@
     <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
         <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
             <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
-                <div class="schedule-role-pane is-visible" id="doctorRolePane" role="tabpanel"
-                    aria-labelledby="doctor-role-tab" tabindex="0">
+                <div class="schedule-role-pane" id="doctorRolePane" role="tabpanel"
+                    aria-labelledby="doctor-role-tab" tabindex="0" ${currentRoleFilter != 'Doctor' && currentRoleFilter != 'all' ? 'hidden style="display:none;"' : ''}>
 
                     <div class="card">
                         <div class="card-header fw-semibold">Lịch trực bác sĩ khám</div>
@@ -94,43 +94,15 @@
                                                 <c:choose>
                                                     <c:when test="${not empty s.roomName}">
                                                         <span class="badge bg-light text-dark border"><i
-                                                                class="fa-solid fa-hospital-user me-1 text-primary"></i>${s.roomName}
-                                                            (${s.roomId})</span>
+                                                                class="fa-solid fa-hospital-user me-1 text-primary"></i>${s.roomName} (${s.roomId})</span>
                                                     </c:when>
                                                     <c:when test="${not empty s.roomId}">
                                                         <span class="badge bg-light text-dark border"><i
                                                                 class="fa-solid fa-hospital-user me-1 text-primary"></i>${s.roomId}</span>
                                                     </c:when>
                                                     <c:otherwise>
-                                                        <c:choose>
-                                                            <c:when
-                                                                test="${s.department == 'Nội tiết - Tiểu đường' || s.department == 'Endocrinology' || s.department == 'Khoa Nội Tiết'}">
-                                                                <span
-                                                                    class="badge bg-primary-subtle text-primary border border-primary-subtle"><i
-                                                                        class="fa-solid fa-hospital-user me-1"></i>Phòng
-                                                                    Khám Nội Tiết (R102)</span>
-                                                            </c:when>
-                                                            <c:when
-                                                                test="${s.department == 'Tim mạch' || s.department == 'Cardiology' || s.department == 'Khoa Tim Mạch'}">
-                                                                <span
-                                                                    class="badge bg-primary-subtle text-primary border border-primary-subtle"><i
-                                                                        class="fa-solid fa-hospital-user me-1"></i>Phòng
-                                                                    Khám Tim Mạch (R103)</span>
-                                                            </c:when>
-                                                            <c:when
-                                                                test="${s.department == 'Thận học' || s.department == 'Nephrology' || s.department == 'Khoa Thận Học'}">
-                                                                <span
-                                                                    class="badge bg-primary-subtle text-primary border border-primary-subtle"><i
-                                                                        class="fa-solid fa-hospital-user me-1"></i>Phòng
-                                                                    Khám Thận (R104)</span>
-                                                            </c:when>
-                                                            <c:otherwise>
-                                                                <span
-                                                                    class="badge bg-primary-subtle text-primary border border-primary-subtle"><i
-                                                                        class="fa-solid fa-hospital-user me-1"></i>Phòng
-                                                                    Khám Tổng Quát 1 (R101)</span>
-                                                            </c:otherwise>
-                                                        </c:choose>
+                                                        <span class="badge bg-light text-dark border"><i
+                                                                class="fa-solid fa-hospital-user me-1 text-secondary"></i>Chưa xếp phòng</span>
                                                     </c:otherwise>
                                                 </c:choose>
                                             </td>
@@ -165,9 +137,9 @@
                                                         <span class="badge" style="background:#ffc107;color:#000;"><i
                                                                 class="bi bi-hourglass-split me-1"></i>Chờ duyệt</span>
                                                     </c:when>
-                                                    <c:when test="${s.effectiveStatus == 'Expired'}">
+                                                    <c:when test="${s.effectiveStatus == 'Completed' || s.effectiveStatus == 'Expired'}">
                                                         <span class="badge" style="background:#6c757d;"><i
-                                                                class="bi bi-clock me-1"></i>Đã qua</span>
+                                                                class="bi bi-check2-circle me-1"></i>Đã hoàn thành</span>
                                                     </c:when>
                                                     <c:when test="${s.effectiveStatus == 'Cancelled'}">
                                                         <span class="badge" style="background:#dc3545;"><i
@@ -313,14 +285,6 @@
                                                                         onclick="openEditScheduleModal('${s.scheduleId}'); return false;">
                                                                         <i class="bi bi-pencil-square me-2"></i>Chỉnh
                                                                         sửa
-                                                                    </button>
-                                                                </li>
-                                                                <li>
-                                                                    <button type="button" class="dropdown-item"
-                                                                        onclick="openTransferModalFromRow(this); return false;">
-                                                                        <i
-                                                                            class="bi bi-arrow-left-right me-2"></i>Chuyển
-                                                                        ca
                                                                     </button>
                                                                 </li>
                                                                 <li>

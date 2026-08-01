@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Trigger hot reload v22 -->
+<!-- Trigger hot reload v58 (Dead code cleanup: removed duplicate GeminiIntegration, test scripts, and cleaned debug console logs) -->
 
 <web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
 
@@ -234,6 +234,14 @@
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>PatientPageServlet</servlet-name>
+        <url-pattern>/patient/records</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>PatientPageServlet</servlet-name>
+        <url-pattern>/patient/records/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>PatientPageServlet</servlet-name>
         <url-pattern>/patient/profile</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
@@ -330,6 +338,15 @@
     <servlet-mapping>
         <servlet-name>DoctorRecordDetailServlet</servlet-name>
         <url-pattern>/doctor/records/detail</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>DoctorGeneralRecordDetailServlet</servlet-name>
+        <servlet-class>com.diabetes.monitoring.doctor.servlet.GeneralDetailServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>DoctorGeneralRecordDetailServlet</servlet-name>
+        <url-pattern>/doctor/records/general-detail</url-pattern>
     </servlet-mapping>
 
     <servlet>
@@ -631,4 +648,15 @@
         <extension>json</extension>
         <mime-type>application/json; charset=UTF-8</mime-type>
     </mime-mapping>
+
+    <jsp-config>
+        <jsp-property-group>
+            <url-pattern>*.jsp</url-pattern>
+            <page-encoding>UTF-8</page-encoding>
+        </jsp-property-group>
+        <jsp-property-group>
+            <url-pattern>*.jspf</url-pattern>
+            <page-encoding>UTF-8</page-encoding>
+        </jsp-property-group>
+    </jsp-config>
 </web-app>

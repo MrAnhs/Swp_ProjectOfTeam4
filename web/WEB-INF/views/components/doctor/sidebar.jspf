@@ -1,0 +1,37 @@
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+
+<aside class="doctor-sidebar">
+    <div class="doctor-brand">
+        <span class="doctor-brand-icon"><i class="bi bi-heart-pulse"></i></span> DiabetesCare
+    </div>
+    
+    <!-- Unified Emerald Dark Profile Card -->
+    <div class="user-profile-sidebar-card" style="cursor: pointer; display: flex !important; flex-direction: column !important; align-items: stretch !important; margin: 12px 0; padding: 12px 14px; border-radius: 14px; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); transition: all 0.25s ease;" onclick="openGlobalEditProfileModal()" role="button" tabindex="0" title="Nhấn để chỉnh sửa thông tin cá nhân">
+        <div class="d-flex align-items-center gap-3 mb-2">
+            <div class="user-avatar" style="width: 40px; height: 40px; border-radius: 50%; background: #10b981; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.05rem; flex-shrink: 0; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.35);">
+                <c:out value="${fn:substring(sessionScope.currentUser.fullName,0,1)}" default="D" />
+            </div>
+            <div class="user-info" style="min-width: 0; flex: 1;">
+                <h6 class="mb-0 fw-bold text-white" style="font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #ffffff !important;"><c:out value="${sessionScope.currentUser.fullName}" default="Bác sĩ" /></h6>
+                <span class="badge px-2 py-1 mt-1" style="font-size: 0.65rem; font-family: monospace; background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.35);">DOCTOR</span>
+            </div>
+        </div>
+        <div class="d-flex align-items-center justify-content-between pt-2 mt-1 border-top border-secondary border-opacity-25" style="font-size: 0.76rem;">
+            <span class="fw-semibold d-flex align-items-center gap-1" style="color: #34d399 !important;"><i class="bi bi-check-circle-fill"></i> Hồ sơ hoàn tất</span>
+            <span class="fw-semibold d-flex align-items-center gap-1" style="color: #38bdf8 !important;"><i class="bi bi-pencil-square"></i> Chỉnh sửa</span>
+        </div>
+    </div>
+
+    <nav class="doctor-nav">
+        <a class="${activeDoctorPage eq 'dashboard' or currentPage eq 'dashboard' ? 'active' : ''}" href="${pageContext.request.contextPath}/doctor/dashboard"><i class="bi bi-calendar2-check"></i> Tiếp nhận bệnh nhân</a>
+        <a class="${activeDoctorPage eq 'general-examinations' or currentPage eq 'general-examinations' ? 'active' : ''}" href="${pageContext.request.contextPath}/doctor/general-examinations"><i class="bi bi-person-vcard"></i> Khám tổng quát</a>
+        <a class="${activeDoctorPage eq 'laboratory-requests' or currentPage eq 'laboratory-requests' ? 'active' : ''}" href="${pageContext.request.contextPath}/doctor/laboratory-requests"><i class="bi bi-eyedropper"></i> Xét nghiệm</a>
+        <a class="${activeDoctorPage eq 'examinations' or currentPage eq 'examinations' ? 'active' : ''}" href="${pageContext.request.contextPath}/doctor/examinations"><i class="bi bi-clipboard2-pulse-fill"></i> Khám chi tiết</a>
+        <a class="${activeDoctorPage eq 'completed-records' or currentPage eq 'completed-records' ? 'active' : ''}" href="${pageContext.request.contextPath}/doctor/completed-records"><i class="bi bi-archive"></i> Đã hoàn thành</a>
+        <a class="${activeDoctorPage eq 'patient-search' or currentPage eq 'patient-search' ? 'active' : ''}" href="${pageContext.request.contextPath}/doctor/patients/search"><i class="bi bi-search"></i> Tra cứu</a>
+        <a class="${activeDoctorPage eq 'schedule' or currentPage eq 'schedule' ? 'active' : ''}" href="${pageContext.request.contextPath}/doctor/schedule"><i class="bi bi-calendar3"></i> Lịch trực</a>
+        <a class="text-danger mt-lg-4" href="${pageContext.request.contextPath}/logout"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a>
+    </nav>
+</aside>
+<%@ include file="/WEB-INF/views/components/edit-profile-modal.jspf" %>

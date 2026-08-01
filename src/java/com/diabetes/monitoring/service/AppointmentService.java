@@ -36,13 +36,20 @@ public class AppointmentService {
             }
 
             int bookedPatients = countBookedPatients(connection, scheduleId);
-            if (bookedPatients >= schedule.maxPatients) {
-                markScheduleFull(connection, scheduleId);
-                throw new AppointmentBookingException("Ca kh\u00E1m \u0111\u00E3 \u0111\u1EE7 s\u1ED1 l\u01B0\u1EE3ng b\u1EC7nh nh\u00E2n.");
+            int onlineBookedPatients = countOnlineBookedPatients(connection, scheduleId);
+            int effectiveOnlineQuota = schedule.onlineQuota != null && schedule.onlineQuota >= 0
+                    ? Math.min(schedule.onlineQuota, Math.max(0, schedule.maxPatients))
+                    : (schedule.maxPatients <= 1 ? Math.max(0, schedule.maxPatients) : Math.max(1, (int) Math.ceil(schedule.maxPatients * 0.6)));
+
+            if (onlineBookedPatients >= effectiveOnlineQuota || bookedPatients >= schedule.maxPatients) {
+                if (bookedPatients >= schedule.maxPatients) {
+                    markScheduleFull(connection, scheduleId);
+                }
+                throw new AppointmentBookingException("Ca khám đã đủ số lượng bệnh nhân đăng ký trực tuyến.");
             }
 
             if (hasDuplicateAppointment(connection, patientId, scheduleId, appointmentTime)) {
-                throw new AppointmentBookingException("B\u1EA1n \u0111\u00E3 c\u00F3 l\u1ECBch h\u1EB9n trong ca kh\u00E1m n\u00E0y.");
+                throw new AppointmentBookingException("Bạn đã có lịch hẹn trong ca khám này.");
             }
 
             int queueNumber = nextQueueNumber(connection, scheduleId);
@@ -61,7 +68,7 @@ public class AppointmentService {
             throw e;
         } catch (RuntimeException e) {
             rollback(connection);
-            throw new AppointmentBookingException("D\u1EEF li\u1EC7u ca kh\u00E1m kh\u00F4ng h\u1EE3p l\u1EC7.");
+            throw new AppointmentBookingException("Dữ liệu ca khám không hợp lệ.");
         } finally {
             close(connection);
         }
@@ -84,8 +91,16 @@ public class AppointmentService {
             }
 
             int bookedPatients = countBookedPatients(connection, schedule.scheduleId);
-            if (bookedPatients >= schedule.maxPatients) {
-                throw new AppointmentBookingException("Ca kh\u00E1m \u0111\u00E3 \u0111\u1EE7 s\u1ED1 l\u01B0\u1EE3ng b\u1EC7nh nh\u00E2n.");
+            int onlineBookedPatients = countOnlineBookedPatients(connection, schedule.scheduleId);
+            int effectiveOnlineQuota = schedule.onlineQuota != null && schedule.onlineQuota >= 0
+                    ? Math.min(schedule.onlineQuota, Math.max(0, schedule.maxPatients))
+                    : (schedule.maxPatients <= 1 ? Math.max(0, schedule.maxPatients) : Math.max(1, (int) Math.ceil(schedule.maxPatients * 0.6)));
+
+            if (onlineBookedPatients >= effectiveOnlineQuota || bookedPatients >= schedule.maxPatients) {
+                if (bookedPatients >= schedule.maxPatients) {
+                    markScheduleFull(connection, schedule.scheduleId);
+                }
+                throw new AppointmentBookingException("Ca khám đã đủ số lượng bệnh nhân đăng ký trực tuyến.");
             }
 
             if (hasDuplicateAppointment(connection, patientId, schedule.scheduleId, appointmentTime)) {
@@ -131,7 +146,7 @@ public class AppointmentService {
 
     private ScheduleSelection lockSchedule(Connection connection, int doctorId, int scheduleId)
             throws SQLException, AppointmentBookingException {
-        String sql = "SELECT ds.work_date, ds.time_slot, ds.max_patients, ds.status, "
+        String sql = "SELECT ds.work_date, ds.time_slot, ds.max_patients, ds.online_quota, ds.status, "
                 + "d.full_name, d.department, ds.room_id, r.room_name, r.location AS room_location "
                 + "FROM Doctor_Schedule ds WITH (UPDLOCK, HOLDLOCK) "
                 + "INNER JOIN Doctor d ON d.doctor_id = ds.doctor_id "
@@ -145,18 +160,22 @@ public class AppointmentService {
             statement.setInt(2, doctorId);
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (!resultSet.next()) {
-                    throw new AppointmentBookingException("Kh\u00F4ng t\u00ECm th\u1EA5y ca kh\u00E1m c\u1EE7a b\u00E1c s\u0129 \u0111\u00E3 ch\u1ECDn.");
+                    throw new AppointmentBookingException("Không tìm thấy ca khám của bác sĩ đã chọn.");
                 }
 
                 String status = resultSet.getString("status");
                 if (!"Available".equals(status)) {
-                    throw new AppointmentBookingException("Ca kh\u00E1m hi\u1EC7n kh\u00F4ng c\u00F2n kh\u1EA3 d\u1EE5ng.");
+                    throw new AppointmentBookingException("Ca khám hiện không còn khả dụng.");
                 }
 
                 ScheduleSelection schedule = new ScheduleSelection();
                 schedule.workDate = resultSet.getDate("work_date").toLocalDate();
                 schedule.timeSlot = resultSet.getString("time_slot");
                 schedule.maxPatients = resultSet.getInt("max_patients");
+                Object onlineQuotaObj = resultSet.getObject("online_quota");
+                if (onlineQuotaObj instanceof Number) {
+                    schedule.onlineQuota = ((Number) onlineQuotaObj).intValue();
+                }
                 schedule.doctorName = resultSet.getString("full_name");
                 schedule.department = resultSet.getString("department");
                 schedule.roomId = resultSet.getString("room_id");
@@ -170,7 +189,7 @@ public class AppointmentService {
     private ScheduleSelection lockBestAvailableSchedule(Connection connection, LocalDate workDate,
             String timeSlot) throws SQLException, AppointmentBookingException {
         String sql = "SELECT TOP 1 ds.schedule_id, ds.doctor_id, ds.work_date, ds.time_slot, "
-                + "ds.max_patients, d.full_name, d.department, ds.room_id, r.room_name, r.location AS room_location, "
+                + "ds.max_patients, ds.online_quota, d.full_name, d.department, ds.room_id, r.room_name, r.location AS room_location, "
                 + "SUM(CASE WHEN ap.status = 'Waiting' THEN 1 ELSE 0 END) AS waiting_patients, "
                 + "SUM(CASE WHEN ap.status <> 'Cancelled' THEN 1 ELSE 0 END) AS booked_patients "
                 + "FROM Doctor_Schedule ds WITH (UPDLOCK, HOLDLOCK) "
@@ -181,8 +200,10 @@ public class AppointmentService {
                 + "WHERE ds.work_date = ? AND ds.time_slot = ? AND ds.status = 'Available' "
                 + "AND acc.role = 'Doctor' AND acc.status = 'Active' "
                 + "GROUP BY ds.schedule_id, ds.doctor_id, ds.work_date, ds.time_slot, "
-                + "ds.max_patients, d.full_name, d.department, ds.room_id, r.room_name, r.location "
-                + "HAVING SUM(CASE WHEN ap.status <> 'Cancelled' THEN 1 ELSE 0 END) < ds.max_patients "
+                + "ds.max_patients, ds.online_quota, d.full_name, d.department, ds.room_id, r.room_name, r.location "
+                + "HAVING ISNULL(SUM(CASE WHEN ap.status <> 'Cancelled' THEN 1 ELSE 0 END), 0) < ds.max_patients "
+                + "AND ISNULL(SUM(CASE WHEN ap.status <> 'Cancelled' AND LOWER(LTRIM(RTRIM(COALESCE(ap.booking_type, '')))) = 'online' THEN 1 ELSE 0 END), 0) < "
+                + "ISNULL(ds.online_quota, CASE WHEN ISNULL(ds.max_patients, 1) <= 1 THEN ISNULL(ds.max_patients, 1) WHEN CEILING(ISNULL(ds.max_patients, 1) * 0.6) >= ISNULL(ds.max_patients, 1) THEN ISNULL(ds.max_patients, 1) - 1 ELSE CAST(CEILING(ISNULL(ds.max_patients, 1) * 0.6) AS int) END) "
                 + "ORDER BY waiting_patients ASC, booked_patients ASC, ds.doctor_id ASC";
 
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -191,7 +212,7 @@ public class AppointmentService {
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (!resultSet.next()) {
                     throw new AppointmentBookingException(
-                            "Kh\u00F4ng c\u00F2n b\u00E1c s\u0129 kh\u1EA3 d\u1EE5ng trong ca kh\u00E1m \u0111\u00E3 ch\u1ECDn.");
+                            "Không còn bác sĩ khả dụng trong ca khám đã chọn.");
                 }
 
                 ScheduleSelection schedule = new ScheduleSelection();
@@ -200,6 +221,10 @@ public class AppointmentService {
                 schedule.workDate = resultSet.getDate("work_date").toLocalDate();
                 schedule.timeSlot = resultSet.getString("time_slot");
                 schedule.maxPatients = resultSet.getInt("max_patients");
+                Object onlineQuotaObj = resultSet.getObject("online_quota");
+                if (onlineQuotaObj instanceof Number) {
+                    schedule.onlineQuota = ((Number) onlineQuotaObj).intValue();
+                }
                 schedule.doctorName = resultSet.getString("full_name");
                 schedule.department = resultSet.getString("department");
                 schedule.roomId = resultSet.getString("room_id");
@@ -247,6 +272,20 @@ public class AppointmentService {
     private int countBookedPatients(Connection connection, int scheduleId) throws SQLException {
         String sql = "SELECT COUNT(*) FROM Appointment WITH (UPDLOCK, HOLDLOCK) "
                 + "WHERE schedule_id = ? AND status <> 'Cancelled'";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, scheduleId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                resultSet.next();
+                return resultSet.getInt(1);
+            }
+        }
+    }
+
+    private int countOnlineBookedPatients(Connection connection, int scheduleId) throws SQLException {
+        boolean hasBookingType = hasColumn(connection, "Appointment", "booking_type");
+        if (!hasBookingType) return 0;
+        String sql = "SELECT COUNT(*) FROM Appointment WITH (UPDLOCK, HOLDLOCK) "
+                + "WHERE schedule_id = ? AND status <> 'Cancelled' AND LOWER(LTRIM(RTRIM(COALESCE(booking_type, '')))) = 'online'";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, scheduleId);
             try (ResultSet resultSet = statement.executeQuery()) {
@@ -443,6 +482,7 @@ public class AppointmentService {
         private LocalDate workDate;
         private String timeSlot;
         private int maxPatients;
+        private Integer onlineQuota;
         private String doctorName;
         private String department;
         private String roomId;

@@ -79,7 +79,7 @@ function normalizeSearchText(value) {
     return (value || '')
         .toLowerCase()
         .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[̀-ͯ]/g, '')
         .replace(/đ/g, 'd')
         .replace(/Đ/g, 'd')
         .replace(/[^a-z0-9]+/g, ' ')
@@ -120,21 +120,20 @@ function formatDepartmentName(dept) {
 
 function getActiveRoomsForSpecialty(specialty) {
     if (!window.activeRoomsList || !Array.isArray(window.activeRoomsList) || window.activeRoomsList.length === 0) {
-        return [{ roomId: 'R102', roomName: 'Phòng Khám Tổng Quát 1', department: 'Tổng quát', status: 'active' }];
+        return [];
     }
-    // Lọc lấy các phòng khám tổng quát dành cho Bác sĩ (Không lấy Quầy lễ tân R101 & Phòng xét nghiệm R104/R105)
     const doctorRooms = window.activeRoomsList.filter(room => {
         const id = (room.roomId || '').toLowerCase().trim();
         const name = normalizeSearchText(room.roomName || '');
         const status = (room.status || '').toLowerCase().trim();
         const isActive = status === 'active' || status === '';
-        const isLab = name.includes('xet nghiem') || name.includes('lab') || name.includes('xn') || id === 'r104' || id === 'r105';
-        const isReception = name.includes('quay') || name.includes('reception') || id === 'r101';
+        const isLab = name.includes('xet nghiem') || name.includes('lab') || name.includes('xn') || id.startsWith('lab');
+        const isReception = name.includes('quay') || name.includes('reception') || name.includes('le tan') || id === 'r105';
         return isActive && !isLab && !isReception;
     });
 
     if (doctorRooms.length === 0) {
-        return [{ roomId: 'R102', roomName: 'Phòng Khám Tổng Quát 1', department: 'Tổng quát', status: 'active' }];
+        return window.activeRoomsList;
     }
 
     const keywords = specialtyKeywords[specialty] || [];
@@ -158,25 +157,19 @@ function countShiftTemplateLines() {
 
 function getDoctorActiveRooms() {
     if (!window.activeRoomsList || !Array.isArray(window.activeRoomsList) || window.activeRoomsList.length === 0) {
-        return [
-            { roomId: 'R102', roomName: 'Phòng Khám Tổng Quát 1', department: 'Tổng quát', status: 'active' },
-            { roomId: 'R103', roomName: 'Phòng KhámTổng Quát 2', department: 'Tổng quát', status: 'active' }
-        ];
+        return [];
     }
     const doctorRooms = window.activeRoomsList.filter(room => {
         const id = (room.roomId || '').toLowerCase().trim();
         const name = normalizeSearchText(room.roomName || '');
         const status = (room.status || '').toLowerCase().trim();
         const isActive = status === 'active' || status === '';
-        const isLab = name.includes('xet nghiem') || name.includes('lab') || name.includes('xn') || id === 'r104' || id === 'r105';
-        const isReception = name.includes('quay') || name.includes('reception') || id === 'r101';
+        const isLab = name.includes('xet nghiem') || name.includes('lab') || name.includes('xn') || id.startsWith('lab');
+        const isReception = name.includes('quay') || name.includes('reception') || name.includes('le tan') || id === 'r105';
         return isActive && !isLab && !isReception;
     });
 
-    return doctorRooms.length > 0 ? doctorRooms : [
-        { roomId: 'R102', roomName: 'Phòng Khám Tổng Quát 1', department: 'Tổng quát', status: 'active' },
-        { roomId: 'R103', roomName: 'Phòng KhámTổng Quát 2', department: 'Tổng quát', status: 'active' }
-    ];
+    return doctorRooms.length > 0 ? doctorRooms : window.activeRoomsList;
 }
 
 /**
@@ -418,21 +411,15 @@ async function loadWeeklyCalendar() {
     });
 
     const roleFilterEl = document.getElementById('unifiedRoleFilter') || document.getElementById('calendarRoleFilter');
-    const roomFilterEl = document.getElementById('unifiedRoomFilter') || document.getElementById('calendarRoomFilter');
+    const searchFilterEl = document.getElementById('unifiedSearchInput') || document.getElementById('unifiedSearch');
 
     const role = roleFilterEl ? roleFilterEl.value : 'all';
-    let room = roomFilterEl ? roomFilterEl.value : 'all';
-
-    if (room && room.startsWith('room_')) {
-        room = room.substring('room_'.length);
-    } else if (room && room.startsWith('dept_')) {
-        room = 'all';
-    }
+    const search = searchFilterEl ? searchFilterEl.value.trim() : '';
 
     const ctx = (window.AdminConfig && window.AdminConfig.contextPath) ? window.AdminConfig.contextPath : (typeof window.adminContextPath !== 'undefined' ? window.adminContextPath : '');
 
     try {
-        const url = `${ctx}/admin?action=getCalendarSchedule&weekDate=${encodeURIComponent(formatDateIso(baseDate))}&role=${encodeURIComponent(role)}&room=${encodeURIComponent(room)}`;
+        const url = `${ctx}/admin?action=getCalendarSchedule&weekDate=${encodeURIComponent(formatDateIso(baseDate))}&role=${encodeURIComponent(role)}&search=${encodeURIComponent(search)}`;
         const resp = await fetch(url, { headers: { 'Accept': 'application/json' } });
         const data = await resp.json();
 
@@ -444,7 +431,7 @@ async function loadWeeklyCalendar() {
             ? data
             : (Array.isArray(data.items) ? data.items : []);
 
-        renderWeeklyCalendarCards(currentWeeklySchedules, datesMap, role);
+        renderWeeklyCalendarCards(currentWeeklySchedules, datesMap, role, search);
     } catch (err) {
         console.error('Failed to load weekly calendar', err);
         if (typeof showTempAlert === 'function') {
@@ -570,14 +557,14 @@ function populateLabRoomCheckboxes() {
             const name = normalizeSearchText(room.roomName || '');
             const status = (room.status || '').toLowerCase().trim();
             const isActive = status === 'active' || status === '';
-            return isActive && (name.includes('xet nghiem') || name.includes('lab') || name.includes('xn') || id === 'r104' || id === 'r105');
+            return isActive && (name.includes('xet nghiem') || name.includes('lab') || name.includes('xn') || id.startsWith('lab'));
         });
     }
 
     if (!labRooms || labRooms.length === 0) {
         labRooms = [
-            { roomId: 'R104', roomName: 'Phòng Xét Nghiệm Máu & Sinh Hóa' },
-            { roomId: 'R105', roomName: 'Phòng Xét Nghiệm Huyết Học' }
+            { roomId: 'LAB01', roomName: 'Phòng Xét Nghiệm 1' },
+            { roomId: 'LAB02', roomName: 'Phòng Xét Nghiệm 2' }
         ];
     }
 
@@ -743,7 +730,6 @@ function buildScheduleRow(schedule) {
         let additionalActions = '';
         if (status !== 'Expired' && status !== 'Cancelled') {
             additionalActions = '<li><button type="button" class="dropdown-item" onclick="openEditScheduleModal(\'' + scheduleId + '\')"><i class="bi bi-pencil-square me-2"></i>Chỉnh sửa</button></li>'
-                + '<li><button type="button" class="dropdown-item" onclick="openTransferModalFromRow(this)"><i class="bi bi-arrow-left-right me-2"></i>Chuyển ca</button></li>'
                 + '<li><form method="post" onsubmit="return confirm(\'Bạn có chắc muốn hủy lịch trực này?\');">'
                 + '<input type="hidden" name="action" value="cancelSchedule">'
                 + '<input type="hidden" name="scheduleId" value="' + scheduleId + '">'
@@ -816,7 +802,7 @@ function buildScheduleRow(schedule) {
 // 5. RENDER LỊCH TUẦN (TOP-LEVEL – accessible from loadWeeklyCalendar above)
 // ==========================================
 
-function renderWeeklyCalendarCards(schedules, datesMap, activeRole) {
+function renderWeeklyCalendarCards(schedules, datesMap, activeRole, searchFilter) {
     const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
     const daysMapByDate = {};
     Object.keys(datesMap).forEach(key => {
@@ -836,16 +822,40 @@ function renderWeeklyCalendarCards(schedules, datesMap, activeRole) {
         });
     }
 
+    if (searchFilter && String(searchFilter).trim().length > 0) {
+        const searchLower = String(searchFilter).trim().toLowerCase();
+        schedules = schedules.filter(shift => {
+            const name = (shift.staff || shift.staffName || shift.fullName || '').toLowerCase();
+            return name.includes(searchLower);
+        });
+    }
+
     const shiftsByCell = {};
     schedules.forEach(shift => {
         const rawDate = shift.date || shift.workDate || shift.work_date;
         const dateStr = formatDateIso(rawDate);
         const dayKey = daysMapByDate[dateStr];
         if (!dayKey) return;
-        const slotStr = (shift.time_slot || shift.timeSlot || '').toLowerCase();
-        const startTime = (shift.start_time || shift.start || '').toLowerCase();
-        const isMorning = startTime === '08:00' || startTime.startsWith('07') || startTime.startsWith('08') || slotStr.includes('morning') || slotStr.includes('07:') || slotStr.includes('08:') || slotStr.includes('sáng') || slotStr.includes('sang');
-        const timeKey = isMorning ? '0800' : '1300';
+        const slotStr = (shift.time_slot || shift.timeSlot || '').trim();
+        const startTime = (shift.start_time || shift.start || '').trim();
+
+        let timeKey = '1300';
+        const fullTimeText = (slotStr + ' ' + startTime).trim();
+        const timeMatches = fullTimeText.match(/(\d{1,2}):(\d{2})/g);
+        let firstHour = -1;
+        if (timeMatches && timeMatches.length > 0) {
+            const parts = timeMatches[0].split(':');
+            firstHour = parseInt(parts[0], 10);
+        }
+
+        const lowerText = fullTimeText.toLowerCase();
+        if (lowerText.includes('sáng') || lowerText.includes('sang') || lowerText.includes('morning') || lowerText.includes('am')) {
+            timeKey = '0800';
+        } else if (firstHour >= 0 && firstHour < 12) {
+            timeKey = '0800';
+        } else {
+            timeKey = '1300';
+        }
         const cellId = `cell-${dayKey}-${timeKey}`;
         if (!shiftsByCell[cellId]) shiftsByCell[cellId] = [];
         shiftsByCell[cellId].push(shift);

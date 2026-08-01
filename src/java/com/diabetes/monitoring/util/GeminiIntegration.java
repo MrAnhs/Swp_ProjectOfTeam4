@@ -10,11 +10,7 @@ import java.util.List;
 
 public class GeminiIntegration {
     private static final String[] API_KEYS = {
-        "AQ.Ab8RN6JXx-17M3dTYTMyWwJdXG4M_OVS4hyVtxPkvTVovHWj9Q",
-        "AQ.Ab8RN6JmF24QfowX0cUVFwLxK4XXDQvupuU8M2CKpWtoahDOBQ",
-        "AQ.Ab8RN6KCcH6OZnvg8CIy3wJVss_Qe6ryzmu0ldEnbq9lWwZWIQ",
-        "AQ.Ab8RN6L7qmRY2F5K7UZXg0BL9iX-gfaE8OzYu8SCekICYOXpWg",
-        "AQ.Ab8RN6LSN_IDsstecuIZe1aArW4F53nOiZZmHr9pOLN6ZMyOmw"
+        System.getenv("GEMINI_API_KEY") != null ? System.getenv("GEMINI_API_KEY") : "YOUR_GEMINI_API_KEY"
     };
     private static final String API_URL_BASE =
             "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=";

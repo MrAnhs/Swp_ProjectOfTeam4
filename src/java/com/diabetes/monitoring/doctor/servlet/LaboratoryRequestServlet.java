@@ -49,11 +49,33 @@ public class LaboratoryRequestServlet extends DoctorServlet {
         } catch (NumberFormatException e) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST);
         } catch (java.sql.SQLException e) {
-            session.setAttribute("doctorMessage", e.getMessage());
-            response.sendRedirect(request.getContextPath()
-                    + "/doctor/general-examinations");
+            e.printStackTrace();
+            session.setAttribute("doctorMessage", "Lỗi CSDL: " + e.getMessage());
+            int recordId = -1;
+            try {
+                recordId = Integer.parseInt(request.getParameter("record_id"));
+            } catch (Exception ignored) {}
+            if (recordId > 0) {
+                response.sendRedirect(request.getContextPath()
+                        + "/doctor/records/general-detail?record_id=" + recordId);
+            } else {
+                response.sendRedirect(request.getContextPath()
+                        + "/doctor/general-examinations");
+            }
         } catch (Exception e) {
-            throw new ServletException("Khong the tao yeu cau xet nghiem", e);
+            e.printStackTrace();
+            session.setAttribute("doctorMessage", "Lỗi hệ thống: " + e.getMessage());
+            int recordId = -1;
+            try {
+                recordId = Integer.parseInt(request.getParameter("record_id"));
+            } catch (Exception ignored) {}
+            if (recordId > 0) {
+                response.sendRedirect(request.getContextPath()
+                        + "/doctor/records/general-detail?record_id=" + recordId);
+            } else {
+                response.sendRedirect(request.getContextPath()
+                        + "/doctor/general-examinations");
+            }
         }
     }
 }

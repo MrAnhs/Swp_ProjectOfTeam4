@@ -1,8 +1,9 @@
 @import '../../components/forms.css';
 
 body {
-    background: #f5f7fa !important;
-    color: #1a202c !important;
+    background: #0B0F19 !important;
+    background: radial-gradient(circle at center, rgba(42, 181, 163, 0.12) 0%, #0B0F19 80%) !important;
+    color: #F8FAFC !important;
     font-family: "Inter", sans-serif;
 }
 
@@ -18,12 +19,12 @@ body {
     margin: 0 0 0.35rem;
     font-size: 2rem;
     font-weight: 700;
-    color: #1a202c !important;
+    color: #FFFFFF !important;
 }
 
 .page-header p {
     margin: 0;
-    color: #64748b !important;
+    color: #94A3B8 !important;
 }
 
 .page-eyebrow {
@@ -83,18 +84,19 @@ body {
 
 .shortcut-card,
 .page-card {
-    background: #ffffff !important;
-    border: 1px solid #e8ecf0 !important;
-    border-radius: 16px !important;
-    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06) !important;
-    backdrop-filter: none !important;
+    background: rgba(15, 23, 42, 0.75) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4) !important;
+    backdrop-filter: blur(20px) !important;
+    color: #FFFFFF !important;
 }
 
 .shortcut-card {
     display: grid;
     gap: 0.45rem;
     padding: 1.5rem;
-    color: #1a202c !important;
+    color: #FFFFFF !important;
     text-decoration: none;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
@@ -113,9 +115,9 @@ body {
 
 .shortcut-card:hover {
     transform: translateY(-5px) !important;
-    border-color: rgba(0, 127, 97, 0.3) !important;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1) !important;
-    background: #f0faf7 !important;
+    border-color: rgba(42, 181, 163, 0.4) !important;
+    box-shadow: 0 12px 30px rgba(42, 181, 163, 0.15) !important;
+    background: rgba(42, 181, 163, 0.1) !important;
 }
 
 .shortcut-card:hover::before {
@@ -128,13 +130,13 @@ body {
 }
 
 .shortcut-card strong {
-    color: #1a202c !important;
+    color: #FFFFFF !important;
     font-weight: 700 !important;
 }
 
 .shortcut-card span,
 .page-card__header p {
-    color: #64748b !important;
+    color: #94A3B8 !important;
     font-size: 0.875rem !important;
 }
 
@@ -143,7 +145,7 @@ body {
 }
 
 .page-card__header h2 {
-    color: #1a202c !important;
+    color: #FFFFFF !important;
 }
 
 .page-card__header a {

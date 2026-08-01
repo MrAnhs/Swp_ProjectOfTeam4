@@ -24,7 +24,7 @@ public class AcceptRecordServlet extends DoctorServlet {
             request.getSession().setAttribute(
                     "doctorMessage", "Đã tiếp nhận lịch hẹn #" + appointmentId);
             response.sendRedirect(recordUrl(
-                    request, "doctor/records/detail", healthRecordId));
+                    request, "doctor/records/general-detail", healthRecordId));
         } catch (Exception e) {
             request.getSession().setAttribute(
                     "doctorMessage", "Không thể tiếp nhận: " + e.getMessage());

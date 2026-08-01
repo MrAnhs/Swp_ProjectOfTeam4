@@ -6,9 +6,9 @@
  */
 
 // Global Context Fallbacks
-const adminContextPath = (window.AdminConfig && window.AdminConfig.contextPath) ? window.AdminConfig.contextPath : (typeof window.adminContextPath !== 'undefined' ? window.adminContextPath : '');
-const adminCsrfToken = (window.AdminConfig && window.AdminConfig.csrfToken) ? window.AdminConfig.csrfToken : (typeof window.adminCsrfToken !== 'undefined' ? window.adminCsrfToken : '');
-const adminLoginUrl = (window.AdminConfig && window.AdminConfig.loginUrl) ? window.AdminConfig.loginUrl : (typeof window.adminLoginUrl !== 'undefined' ? window.adminLoginUrl : adminContextPath + '/login.jsp');
+var adminContextPath = window.adminContextPath || (window.AdminConfig && window.AdminConfig.contextPath ? window.AdminConfig.contextPath : '');
+var adminCsrfToken = window.adminCsrfToken || (window.AdminConfig && window.AdminConfig.csrfToken ? window.AdminConfig.csrfToken : '');
+var adminLoginUrl = window.adminLoginUrl || (window.AdminConfig && window.AdminConfig.loginUrl ? window.AdminConfig.loginUrl : adminContextPath + '/login.jsp');
 
 if (typeof window.escapeHtml !== 'function') {
     window.escapeHtml = function (s) {
@@ -47,11 +47,11 @@ function getStaffRoleConfig(staffType) {
  * @param {string} status 
  */
 function formatStaffStatus(status) {
-    const value = String(status || 'Scheduled');
-    if (value === 'Expired') return 'Đã qua';
+    const value = String(status || 'Available');
+    if (value === 'Expired' || value === 'Completed') return 'Đã hoàn thành';
     if (value === 'Cancelled') return 'Đã hủy';
-    if (value === 'Completed') return 'Hoàn tất';
-    return 'Đã xếp lịch';
+    if (value === 'Full') return 'Đã đầy';
+    return 'Sẵn sàng';
 }
 
 /**
@@ -193,7 +193,7 @@ async function openEditStaffScheduleModal(staffScheduleId) {
             + departmentControl
             + roomControl
             + areaControl
-            + '<div class="col-md-6"><label class="form-label">Trạng thái</label><select class="form-select" name="status" ' + (finalStatus ? 'disabled' : '') + '><option value="Scheduled"' + (schedule.status === 'Scheduled' ? ' selected' : '') + '>Đã xếp lịch</option><option value="Cancelled"' + (schedule.status === 'Cancelled' ? ' selected' : '') + '>Đã hủy</option></select></div>'
+            + '<div class="col-md-6"><label class="form-label">Trạng thái</label><select class="form-select" name="status" ' + (finalStatus ? 'disabled' : '') + '><option value="Available"' + (schedule.status === 'Available' || schedule.status === 'Scheduled' ? ' selected' : '') + '>Sẵn sàng (Available)</option>' + (cfg.isLab ? '<option value="Full"' + (schedule.status === 'Full' ? ' selected' : '') + '>Đã đầy (Full)</option>' : '') + '<option value="Cancelled"' + (schedule.status === 'Cancelled' ? ' selected' : '') + '>Đã hủy (Cancelled)</option><option value="Completed"' + (schedule.status === 'Completed' || schedule.status === 'Expired' ? ' selected' : '') + '>Đã hoàn thành (Completed)</option></select></div>'
             + '</div></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>' + (finalStatus ? '' : '<button type="submit" class="btn btn-primary">Lưu thay đổi</button>') + '</div>'
             + '</form></div></div>';
 

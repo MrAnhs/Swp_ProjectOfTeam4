@@ -1,9 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" language="java" %>
     <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
-        <c:if test="${empty users and empty errorMessage}">
-            <c:redirect url="/admin?action=listUsers" />
-        </c:if>
+
 
         <c:set var="currentAction" value="listUsers" />
 
@@ -14,15 +12,10 @@
             <html lang="vi">
 
             <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Quản lý tài khoản và phân quyền - S-COMS</title>
-                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-                <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
-                <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
-                    rel="stylesheet">
-
-                <link href="${pageContext.request.contextPath}/assets/css/pages/admin/admin-ui.css" rel="stylesheet">
+    <title>Quản lý tài khoản - DiabetesCare Admin</title>
+    <%@ include file="/WEB-INF/views/components/shared/master-head.jspf" %>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/css/pages/admin/admin-ui.css" rel="stylesheet">
                 <style>
                     tr.account-row {
                         cursor: pointer;
@@ -171,13 +164,15 @@
                                                 <option value="Doctor">Bác sĩ khám</option>
                                                 <option value="doctor_lab">Bác sĩ xét nghiệm</option>
                                                 <option value="Receptionist">Nhân viên Lễ tân</option>
-                                                <option value="Admin">Quản trị viên</option>
                                             </select>
                                         </div>
                                         <div class="col-md-2" id="specializationContainer">
                                             <label class="form-label">Chuyên khoa</label>
-                                            <input class="form-control" name="specialization" id="specializationInput"
-                                                placeholder="VD: Nội tiết, Xét nghiệm,...">
+                                            <select class="form-select" name="specialization" id="specializationInput">
+                                                <option value="Nội tiết">Nội tiết</option>
+                                                <option value="Tim mạch">Tim mạch</option>
+                                                <option value="Da liễu">Da liễu</option>
+                                            </select>
                                         </div>
                                         <div class="col-md-2 d-flex align-items-end" id="createSubmitBtnCol"><button
                                                 class="btn btn-primary w-100" type="submit">Tạo</button></div>
@@ -192,12 +187,12 @@
                                     function toggleSpec() {
                                         if (!roleSelect || !specContainer) return;
                                         const val = roleSelect.value;
-                                        if (val === 'Doctor' || val === 'doctor_lab') {
+                                        if (val === 'Doctor') {
                                             specContainer.style.display = 'block';
                                             if (specInput) specInput.required = true;
                                         } else {
                                             specContainer.style.display = 'none';
-                                            if (specInput) { specInput.required = false; specInput.value = ''; }
+                                            if (specInput) { specInput.required = false; }
                                         }
                                     }
                                     if (roleSelect) {
@@ -300,6 +295,13 @@
                                                                 <i class="bi bi-three-dots-vertical"></i>
                                                             </button>
                                                             <ul class="dropdown-menu dropdown-menu-end">
+                                                                <li>
+                                                                    <button type="button"
+                                                                        class="dropdown-item view-account-btn"
+                                                                        data-account-id="${u.id}">
+                                                                        <i class="bi bi-eye me-2 text-info"></i>Xem chi tiết
+                                                                    </button>
+                                                                </li>
                                                                 <li>
                                                                     <button type="button"
                                                                         class="dropdown-item edit-account-btn"
@@ -582,16 +584,16 @@
 
                                         <div class="col-md-6 d-none" id="editPhoneWrap">
                                             <label class="form-label">Số điện thoại</label>
-                                            <input class="form-control" name="phone" id="editPhone">
+                                            <input class="form-control" name="phone" id="editPhone" placeholder="Ví dụ: 0912345678">
+                                            <div class="invalid-feedback">Số điện thoại phải là số di động Việt Nam hợp lệ (ví dụ: 0912345678 hoặc +84912345678).</div>
                                         </div>
 
                                         <div class="col-md-6 d-none" id="editDepartmentWrap">
                                             <label class="form-label">Chuyên khoa (Bác sĩ)</label>
                                             <select class="form-select" name="department" id="editDepartment">
-                                                <option value="Endocrinology">Nội tiết - Tiểu đường</option>
-                                                <option value="Cardiology">Tim mạch</option>
-                                                <option value="Nephrology">Thận học</option>
-                                                <option value="General">Tổng quát</option>
+                                                <option value="Nội tiết">Nội tiết</option>
+                                                <option value="Tim mạch">Tim mạch</option>
+                                                <option value="Da liễu">Da liễu</option>
                                             </select>
                                         </div>
 
@@ -662,7 +664,7 @@
                     window.AdminConfig.loginUrl = '${pageContext.request.contextPath}/login.jsp';
                 </script>
                 <script charset="UTF-8"
-                    src="${pageContext.request.contextPath}/assets/js/pages/admin/users.js?v=20260709-fontfix2"></script>
+                    src="${pageContext.request.contextPath}/assets/js/pages/admin/users.js?v=20260725-rolefix"></script>
                 <script>
                     document.addEventListener('DOMContentLoaded', function () {
                         const createRoleSelect = document.getElementById('createRole');

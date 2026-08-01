@@ -27,7 +27,7 @@ public class LaboratoryDAO {
                 + "COALESCE((SELECT TOP 1 r.room_name + ' - ' + r.room_id FROM Lab_Schedule ls "
                 + "JOIN Room r ON ls.room_id = r.room_id "
                 + "WHERE ls.lab_id = id.lab_id AND ls.work_date = CAST(GETDATE() AS date) "
-                + "AND LOWER(ls.status) = 'scheduled' ORDER BY ls.lab_sched_id DESC), dl.lab_name) AS lab_room_name "
+                + "AND LOWER(ls.status) IN ('available', 'scheduled') ORDER BY ls.lab_sched_id DESC), dl.lab_name) AS lab_room_name "
                 + "FROM Invoice_Detail id "
                 + "JOIN Invoice i ON i.invoice_id = id.invoice_id "
                 + "JOIN Medical_Service ms ON ms.service_id = id.service_id "

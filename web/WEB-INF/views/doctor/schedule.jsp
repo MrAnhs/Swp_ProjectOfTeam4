@@ -4,11 +4,8 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Lịch trực bác sĩ - DiabetesCare</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <title>Lịch trực Bác sĩ - DiabetesCare</title>
+    <%@ include file="/WEB-INF/views/components/shared/master-head.jspf" %>
     <link href="${pageContext.request.contextPath}/assets/css/pages/doctor/doctor.css?v=20260721-ui2" rel="stylesheet">
     <style>
         .grid-header-cell {
@@ -43,39 +40,9 @@
         }
     </style>
 </head>
-<body class="doctor-app">
-<aside class="doctor-sidebar">
-    <div class="doctor-brand"><span class="doctor-brand-icon"><i class="bi bi-heart-pulse"></i></span> Cổng bác sĩ</div>
-    <div class="doctor-profile-card">
-        <div class="doctor-avatar">
-            <c:choose>
-                <c:when test="${not empty sessionScope.currentUser.fullName}">
-                    <c:out value="${sessionScope.currentUser.fullName.substring(0, 1)}" />
-                </c:when>
-                <c:otherwise>D</c:otherwise>
-            </c:choose>
-        </div>
-        <div class="doctor-info">
-            <div class="doctor-name" title="<c:out value='${sessionScope.currentUser.fullName}' />">
-                <c:out value="${sessionScope.currentUser.fullName}" default="Bác sĩ" />
-            </div>
-            <div class="doctor-role-tag">Bác sĩ</div>
-        </div>
-        <a href="${pageContext.request.contextPath}/settings" class="doctor-edit-profile-btn" title="Chỉnh sửa hồ sơ">
-            <i class="bi bi-pencil-square"></i>
-        </a>
-    </div>
-    <nav class="doctor-nav">
-        <a href="${pageContext.request.contextPath}/doctor/dashboard"><i class="bi bi-grid"></i> Tiếp nhận hồ sơ</a>
-        <a href="${pageContext.request.contextPath}/doctor/general-examinations"><i class="bi bi-person-vcard"></i> Khám tổng quát</a>
-        <a href="${pageContext.request.contextPath}/doctor/laboratory-requests"><i class="bi bi-eyedropper"></i> Xét nghiệm</a>
-        <a href="${pageContext.request.contextPath}/doctor/examinations"><i class="bi bi-clipboard2-pulse"></i> Khám chi tiết</a>
-        <a href="${pageContext.request.contextPath}/doctor/completed-records"><i class="bi bi-archive"></i> Đã hoàn thành</a>
-        <a href="${pageContext.request.contextPath}/doctor/patients/search"><i class="bi bi-search"></i> Tra cứu</a>
-        <a class="active" href="${pageContext.request.contextPath}/doctor/schedule"><i class="bi bi-calendar3"></i> Lịch trực</a>
-        <a class="text-danger mt-lg-4" href="${pageContext.request.contextPath}/logout"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a>
-    </nav>
-</aside>
+<body class="doctor-app master-ui-body master-ui-dark">
+<c:set var="activeDoctorPage" value="schedule" />
+<%@ include file="/WEB-INF/views/components/doctor/sidebar.jspf" %>
 
 <main class="doctor-main">
     <!-- Alert Messages -->
@@ -94,68 +61,100 @@
         <c:remove var="errorMsg" scope="session" />
     </c:if>
 
-    <section class="doctor-topbar mb-4">
-        <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 align-items-lg-center">
-            <div>
-                <div class="doctor-muted small">LỊCH LÀM VIỆC LÂM SÀNG</div>
-                <h1 class="doctor-title h3 mb-1">Lịch trực của tôi</h1>
-                <p class="doctor-muted mb-0">Xem danh sách phân công lịch trực theo từng tuần.</p>
-            </div>
-            
-            <!-- Filter Dropdowns -->
-            <div class="d-flex align-items-center gap-2">
-                <div class="d-flex align-items-center gap-1">
-                    <label class="fw-bold text-uppercase small m-0" style="color: #cbd5e1;" for="yearSelect">Năm</label>
-                    <select id="yearSelect" class="form-select form-select-sm doctor-filter" style="width: 90px;" onchange="generateWeekOptions(); renderScheduleGrid();">
-                    </select>
-                </div>
-                <div class="d-flex align-items-center gap-1">
-                    <label class="fw-bold text-uppercase small m-0" style="color: #cbd5e1;" for="weekSelect">Tuần</label>
-                    <select id="weekSelect" class="form-select form-select-sm doctor-filter" style="width: 250px;" onchange="renderScheduleGrid();">
-                    </select>
-                </div>
-            </div>
+    <!-- Doctor Action Bar -->
+    <div class="d-flex justify-content-between align-items-center mb-4 px-2">
+        <div>
+            <h1 class="h3 text-white fw-bold mb-1">Lịch trực bác sĩ</h1>
+            <p class="text-white-50 small mb-0">Quản lý ca trực lâm sàng và gửi yêu cầu đăng ký lịch trực mới với Admin.</p>
         </div>
-    </section>
+        <button type="button" class="master-btn-primary" data-bs-toggle="modal" data-bs-target="#proposeScheduleModal">
+            <i class="bi bi-plus-lg me-1"></i> Đăng ký ca trực mới
+        </button>
+    </div>
 
-    <!-- Schedule Grid Table -->
-    <div class="doctor-card p-0 overflow-hidden">
-        <div class="table-responsive">
-            <table class="table doctor-table m-0">
-                <thead>
-                    <tr id="headerRow">
-                        <th class="grid-header-cell" style="width: 140px; background-color: #0F172A !important;">Khung giờ</th>
-                    </tr>
-                </thead>
-                <tbody id="gridBody">
-                </tbody>
-            </table>
+    <!-- Shared Master Duty Schedule Grid Component -->
+    <%@ include file="/WEB-INF/views/components/shared/duty-schedule-grid.jspf" %>
+</main>
+
+<!-- Modal Đăng Ký Ca Trực Bác Sĩ -->
+<div class="modal fade" id="proposeScheduleModal" tabindex="-1" aria-labelledby="proposeScheduleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content master-panel-card p-2" style="background: #0F172A; border: 1px solid rgba(255, 255, 255, 0.12);">
+            <div class="modal-header border-bottom border-secondary border-opacity-10 pb-3">
+                <h5 class="modal-title text-white fw-bold" id="proposeScheduleModalLabel">
+                    <i class="bi bi-calendar-plus text-teal me-2" style="color: #2AB5A3;"></i>Đăng Ký Ca Trực Mới
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="${pageContext.request.contextPath}/doctor/schedule" method="POST">
+                <div class="modal-body py-4">
+                    <!-- Ngày trực -->
+                    <div class="mb-3">
+                        <label class="master-form-label" for="workDate">NGÀY LÀM VIỆC</label>
+                        <div class="master-input-group">
+                            <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
+                            <input type="date" class="form-control" id="workDate" name="workDate" required />
+                        </div>
+                    </div>
+
+                    <!-- Ca trực -->
+                    <div class="mb-3">
+                        <label class="master-form-label" for="timeSlot">CA TRỰC / KHUNG GIỜ</label>
+                        <div class="master-input-group">
+                            <span class="input-group-text"><i class="bi bi-clock"></i></span>
+                            <select class="form-select" id="timeSlot" name="timeSlot" required>
+                                <option value="Ca 1">Ca 1 (Sáng: 07:30 - 12:00)</option>
+                                <option value="Ca 2">Ca 2 (Chiều: 13:30 - 16:30)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Số bệnh nhân tối đa -->
+                    <div class="mb-3">
+                        <label class="master-form-label" for="maxPatients">SỐ BỆNH NHÂN TỐI ĐA</label>
+                        <div class="master-input-group">
+                            <span class="input-group-text"><i class="bi bi-person-bounding-box"></i></span>
+                            <input type="number" class="form-control" id="maxPatients" name="maxPatients" value="15" min="1" max="50" required />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top border-secondary border-opacity-10 pt-3">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="master-btn-primary px-4">Gửi Yêu Cầu</button>
+                </div>
+            </form>
         </div>
     </div>
-</main>
+</div>
+<script src="${pageContext.request.contextPath}/assets/js/core/duty-schedule-shared.js"></script>
 
 <script>
 const schedules = [
     <c:forEach var="s" items="${schedules}" varStatus="loop">
         {
-            workDate: '${s.workDate != null ? s.workDate : ""}',
-            timeSlot: '${s.timeSlot != null ? s.timeSlot : ""}',
-            roomName: '${s.roomName != null ? s.roomName : ""}',
-            roomId: '${s.roomId != null ? s.roomId : ""}',
-            maxPatients: ${not empty s.maxPatients ? s.maxPatients : 0},
-            bookedPatients: ${not empty s.bookedPatients ? s.bookedPatients : 0},
-            status: '${s.status != null ? s.status : ""}'
+            workDate: "${s.workDate}",
+            timeSlot: "${s.timeSlot}",
+            roomName: "${s.roomName}",
+            roomId: "${s.roomId}",
+            maxPatients: ${empty s.maxPatients ? 0 : s.maxPatients},
+            bookedPatients: ${empty s.bookedPatients ? 0 : s.bookedPatients},
+            status: "${s.status}"
         }${!loop.last ? ',' : ''}
     </c:forEach>
 ];
 
 function parseLocalDate(dateStr) {
-    if (!dateStr) return new Date();
-    const parts = dateStr.split('-');
-    return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    if (!dateStr || typeof dateStr !== 'string' || !dateStr.includes('-')) return new Date();
+    const parts = dateStr.trim().split('-');
+    const y = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10) - 1;
+    const d = parseInt(parts[2], 10);
+    if (isNaN(y) || isNaN(m) || isNaN(d)) return new Date();
+    return new Date(y, m, d);
 }
 
 function formatDateLocal(dateObj) {
+    if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) return '';
     const y = dateObj.getFullYear();
     const m = String(dateObj.getMonth() + 1).padStart(2, '0');
     const d = String(dateObj.getDate()).padStart(2, '0');
@@ -163,6 +162,7 @@ function formatDateLocal(dateObj) {
 }
 
 function formatDateShort(dateObj) {
+    if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) return '';
     const d = String(dateObj.getDate()).padStart(2, '0');
     const m = String(dateObj.getMonth() + 1).padStart(2, '0');
     return d + '/' + m;
@@ -176,16 +176,30 @@ function getMonday(d) {
 }
 
 function populateYearSelect() {
-    const select = document.getElementById("yearSelect");
+    const select = document.getElementById("dutyYearSelect") || document.getElementById("yearSelect");
     if (!select) return;
     
     const currentYear = new Date().getFullYear();
-    select.innerHTML = "";
+    let minYear = currentYear - 1;
+    let maxYear = currentYear + 1;
     
-    for (let y = currentYear - 1; y <= currentYear + 1; y++) {
+    if (typeof schedules !== 'undefined' && Array.isArray(schedules)) {
+        schedules.forEach(s => {
+            if (s && s.workDate) {
+                const y = parseInt(String(s.workDate).split('-')[0], 10);
+                if (!isNaN(y)) {
+                    if (y < minYear) minYear = y;
+                    if (y > maxYear) maxYear = y;
+                }
+            }
+        });
+    }
+    
+    select.innerHTML = "";
+    for (let y = minYear; y <= maxYear; y++) {
         const option = document.createElement("option");
         option.value = y;
-        option.textContent = y;
+        option.textContent = "Năm " + y;
         if (y === currentYear) {
             option.selected = true;
         }
@@ -194,23 +208,24 @@ function populateYearSelect() {
 }
 
 function generateWeekOptions() {
-    const select = document.getElementById("weekSelect");
+    const select = document.getElementById("dutyWeekSelect") || document.getElementById("weekSelect");
     if (!select) return;
     select.innerHTML = "";
-    const yearSelect = document.getElementById("yearSelect");
-    const selectedYear = yearSelect ? parseInt(yearSelect.value) : new Date().getFullYear();
+    const yearSelect = document.getElementById("dutyYearSelect") || document.getElementById("yearSelect");
+    const selectedYear = yearSelect && yearSelect.value ? parseInt(yearSelect.value, 10) : new Date().getFullYear();
     const today = new Date();
     let tempDate = new Date(selectedYear, 0, 1);
     let firstMonday = getMonday(tempDate);
     let current = new Date(firstMonday);
     let weekIndex = 1;
-    while (current.getFullYear() <= selectedYear) {
+    while (current.getFullYear() <= selectedYear || weekIndex <= 52) {
+        if (current.getFullYear() > selectedYear + 1) break;
         const monday = new Date(current);
         const sunday = new Date(monday);
         sunday.setDate(monday.getDate() + 6);
         const option = document.createElement("option");
         option.value = formatDateLocal(monday);
-        option.textContent = "Tuần " + String(weekIndex).padStart(2, '0') + " (" + formatDateShort(monday) + " - " + formatDateShort(sunday) + ")";
+        option.textContent = "Tuần " + String(weekIndex).padStart(2, '0') + " [" + formatDateShort(monday) + " - " + formatDateShort(sunday) + "]";
         if (selectedYear === today.getFullYear()) {
             const todayStr = formatDateLocal(today);
             if (todayStr >= formatDateLocal(monday) && todayStr <= formatDateLocal(sunday)) {
@@ -222,41 +237,63 @@ function generateWeekOptions() {
         select.appendChild(option);
         current.setDate(current.getDate() + 7);
         weekIndex++;
+        if (weekIndex > 53) break;
     }
 }
 
 function getStandardShift(dbTimeSlot) {
-    if (!dbTimeSlot) return null;
-    const timeStr = dbTimeSlot.toLowerCase().replace(/\s/g, '');
-    const match = timeStr.match(/^(\d{1,2})[\:\s\-\_]/);
-    if (match) {
-        const startHour = parseInt(match[1]);
-        return startHour < 12 ? "7:30 - 12:00" : "13:30 - 16:30";
+    if (!dbTimeSlot) return "7:30 - 12:00";
+    const timeStr = dbTimeSlot.toLowerCase().trim();
+    if (timeStr.includes("ca 2") || timeStr.includes("chiều") || timeStr.includes("chieu") || timeStr.includes("afternoon")) {
+        return "13:30 - 16:30";
     }
-    return timeStr.includes("12:") || timeStr.includes("13:") || timeStr.includes("14:") || timeStr.includes("15:") || timeStr.includes("16:") || timeStr.includes("17:") || timeStr.includes("18:") ? "13:30 - 16:30" : "7:30 - 12:00";
+    if (timeStr.includes("ca 1") || timeStr.includes("sáng") || timeStr.includes("sang") || timeStr.includes("morning")) {
+        return "7:30 - 12:00";
+    }
+    const match = timeStr.replace(/\s/g, '').match(/^(\d{1,2})[\:\s\-\_]/);
+    if (match) {
+        const startHour = parseInt(match[1], 10);
+        return startHour >= 12 ? "13:30 - 16:30" : "7:30 - 12:00";
+    }
+    return "7:30 - 12:00";
 }
 
 function renderScheduleGrid() {
-    const mondayStr = document.getElementById("weekSelect").value;
+    const weekSelect = document.getElementById("dutyWeekSelect") || document.getElementById("weekSelect");
+    const mondayStr = weekSelect ? weekSelect.value : '';
     if (!mondayStr) return;
     const mondayDate = parseLocalDate(mondayStr);
-    const headerRow = document.getElementById("headerRow");
-    headerRow.innerHTML = '<th class="grid-header-cell" style="width: 140px; background-color: #0F172A !important;">Khung giờ</th>';
+    const headerRow = document.getElementById("dutyGridHeaderRow") || document.getElementById("headerRow");
+    if (headerRow) {
+        headerRow.innerHTML = '<th style="width: 140px; color: #2AB5A3; background-color: rgba(30, 41, 59, 0.8) !important;" class="text-start ps-3">Khung Giờ</th>';
+        const dayNames = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ Nhật"];
+        for (let i = 0; i < 7; i++) {
+            const current = new Date(mondayDate);
+            current.setDate(mondayDate.getDate() + i);
+            headerRow.innerHTML += '<th style="min-width: 130px; background-color: rgba(30, 41, 59, 0.8) !important;"><div>' + dayNames[i] + '</div><div class="fw-normal text-white-50 small mt-0.5">' + formatDateShort(current) + '</div></th>';
+        }
+    }
+    
     const weekDates = [];
-    const dayNames = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
     for (let i = 0; i < 7; i++) {
         const current = new Date(mondayDate);
         current.setDate(mondayDate.getDate() + i);
         weekDates.push(current);
-        headerRow.innerHTML += '<th class="grid-header-cell" style="min-width: 130px;"><div>' + dayNames[i] + '</div><div class="fw-normal text-xs opacity-75 mt-0.5">' + formatDateShort(current) + '</div></th>';
     }
+    
     const weekStart = new Date(mondayDate);
     const weekEnd = new Date(mondayDate);
     weekEnd.setDate(mondayDate.getDate() + 6);
-    const weekSchedules = schedules.filter(s => s.workDate >= formatDateLocal(weekStart) && s.workDate <= formatDateLocal(weekEnd));
+    const weekSchedules = (typeof schedules !== 'undefined' && Array.isArray(schedules)) 
+        ? schedules.filter(s => s && s.workDate >= formatDateLocal(weekStart) && s.workDate <= formatDateLocal(weekEnd))
+        : [];
+        
     const timeSlots = ["7:30 - 12:00", "13:30 - 16:30"];
-    const tbody = document.getElementById("gridBody");
+    const tbody = document.getElementById("dutyGridBody") || document.getElementById("gridBody");
+    if (!tbody) return;
     tbody.innerHTML = "";
+    const todayStr = formatDateLocal(new Date());
+    
     timeSlots.forEach((slot, index) => {
         let rowHtml = '<tr>' +
             '<td class="fw-semibold text-nowrap text-center py-4" style="width: 140px; background: rgba(15, 23, 42, 0.6); color: #cbd5e1; border-color: rgba(255,255,255,0.06);">' +
@@ -271,13 +308,17 @@ function renderScheduleGrid() {
                 matchedSchedules.forEach(matched => {
                     let badgeClass = "bg-success-subtle text-success";
                     let statusText = "Sẵn sàng";
-                    if (matched.status === "Full" || matched.status === "full") { badgeClass = "bg-danger-subtle text-danger"; statusText = "Đầy lịch"; }
-                    else if (matched.status === "Expired" || matched.status === "expired") { badgeClass = "bg-secondary-subtle text-secondary"; statusText = "Đã qua"; }
-                    else if (matched.status === "Pending" || matched.status === "pending") { badgeClass = "bg-warning-subtle text-warning"; statusText = "Chờ duyệt"; }
-                    else if (matched.status === "Cancelled" || matched.status === "cancelled") { badgeClass = "bg-danger-subtle text-danger"; statusText = "Đã hủy"; }
+                    const isPast = matched.workDate < todayStr;
+                    const st = (matched.status || '').toLowerCase().trim();
+                    if (st === "full") { badgeClass = "bg-danger-subtle text-danger"; statusText = "Đầy lịch"; }
+                    else if (st === "expired" || st === "completed" || isPast) { badgeClass = "bg-secondary-subtle text-secondary"; statusText = "Hoàn thành"; }
+                    else if (st === "pending") { badgeClass = "bg-warning-subtle text-warning"; statusText = "Chờ duyệt"; }
+                    else if (st === "cancelled") { badgeClass = "bg-danger-subtle text-danger"; statusText = "Đã hủy"; }
+                    const roomDisplayName = matched.roomName ? matched.roomName : (matched.roomId ? ('Phòng ' + matched.roomId) : 'Phòng khám');
                     cellHtml += '<div class="schedule-cell-card p-2 text-start w-100 shadow-xs">' +
                         '<div class="small mb-1" style="font-size: 0.78rem; color: #94a3b8;"><span class="fw-semibold" style="color: #ffffff;"><i class="bi bi-clock me-1" style="color: #2AB5A3;"></i>' + matched.timeSlot + '</span></div>' +
-                        '<div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-top-style: dashed !important; border-top-color: rgba(255,255,255,0.1) !important;"><span class="badge ' + badgeClass + ' text-xs py-0.5 px-1">' + statusText + '</span><span class="fw-semibold text-xs" style="color: #94a3b8;"><i class="bi bi-people me-1"></i>' + matched.bookedPatients + '/' + matched.maxPatients + '</span></div></div>';
+                        '<div class="small text-secondary mb-1" style="font-size: 0.72rem; color: #38bdf8 !important;"><i class="bi bi-door-open me-1"></i>' + roomDisplayName + '</div>' +
+                        '<div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-top-style: dashed !important; border-top-color: rgba(255,255,255,0.1) !important;"><span class="badge ' + badgeClass + ' text-xs py-0.5 px-1">' + statusText + '</span><span class="fw-semibold text-xs" style="color: #94a3b8;"><i class="bi bi-people me-1"></i>' + (matched.bookedPatients || 0) + '/' + (matched.maxPatients || 0) + '</span></div></div>';
                 });
                 cellHtml += '</div></td>';
                 rowHtml += cellHtml;

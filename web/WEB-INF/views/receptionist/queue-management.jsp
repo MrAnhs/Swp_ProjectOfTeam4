@@ -5,20 +5,17 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hàng đợi khám</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="${pageContext.request.contextPath}/assets/css/pages/receptionist/receptionist.css" rel="stylesheet">
+    <title>Hàng đợi khám - DiabetesCare</title>
+    <%@ include file="/WEB-INF/views/components/shared/master-head.jspf" %>
+    <link href="${pageContext.request.contextPath}/assets/css/pages/receptionist/receptionist.css?v=20260801" rel="stylesheet">
 </head>
-<body class="receptionist-page">
+<body class="receptionist-page master-ui-body master-ui-dark">
 <div class="receptionist-shell">
     <%@ include file="/WEB-INF/views/components/receptionist/sidebar.jspf" %>
     <main class="receptionist-main">
         <div class="page-kicker">Vận hành</div>
         <h1 class="page-title">Hàng đợi khám hôm nay</h1>
-        <p class="page-subtitle">Danh sách bệnh nhân đang chờ hoặc đã check-in trong ngày.</p>
+        <p class="page-subtitle">Danh sách bệnh nhân đang chờ, đã xác nhận hoặc đang khám trong ngày.</p>
 
         <section class="panel-card mt-4">
             <div class="row g-3">
@@ -26,8 +23,8 @@
                     <label class="form-label fw-semibold">Trạng thái</label>
                     <select id="queueStatusFilter" class="form-select">
                         <option value="">Tất cả</option>
-                        <option value="Waiting">Chờ khám</option>
-                        <option value="Checked_In">Đã check-in</option>
+                        <option value="Waiting">Đang chờ xác nhận</option>
+                        <option value="Checked_In">Đã xác nhận</option>
                         <option value="In_Progress">Đang khám</option>
                     </select>
                 </div>
@@ -48,6 +45,6 @@
     };
 </script>
 <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/receptionist/receptionist-utils.js?v=20260709-fontfix2"></script>
-<script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/receptionist/queue-management.js?v=20260709-fontfix2"></script>
+<script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/receptionist/queue-management.js?v=20260723-v3"></script>
 </body>
 </html>

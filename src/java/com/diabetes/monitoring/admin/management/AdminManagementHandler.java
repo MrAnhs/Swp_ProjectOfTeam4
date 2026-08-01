@@ -99,8 +99,16 @@ class AdminAccountHandler {
         try {
             User currentUser = (User) request.getSession().getAttribute("currentUser");
             boolean created = accountService.createAccount(fullName, normalizedEmail, PasswordUtil.hashPassword(password), role, "active", specialization, currentUser);
-            request.getSession().setAttribute(created ? "successMessage" : "errorMessage",
-                    created ? "Đã tạo tài khoản thành công" : "Không thể tạo tài khoản (Email đã tồn tại hoặc thông tin không hợp lệ)");
+            if (created) {
+                try {
+                    com.diabetes.monitoring.util.EmailUtil.sendAccountDetails(normalizedEmail, fullName, password);
+                    request.getSession().setAttribute("successMessage", "Đã tạo tài khoản và gửi email thông tin đăng nhập thành công cho nhân viên!");
+                } catch (jakarta.mail.MessagingException mailEx) {
+                    request.getSession().setAttribute("successMessage", "Đã tạo tài khoản thành công! (Lưu ý: Không thể gửi email thông tin đăng nhập: " + mailEx.getMessage() + ")");
+                }
+            } else {
+                request.getSession().setAttribute("errorMessage", "Không thể tạo tài khoản (Email đã tồn tại hoặc thông tin không hợp lệ)");
+            }
         } catch (IllegalArgumentException | SecurityException ex) {
             request.getSession().setAttribute("errorMessage", ex.getMessage());
         }
@@ -156,6 +164,15 @@ class AdminAccountHandler {
             request.getSession().setAttribute("errorMessage", "Vui lòng nhập đầy đủ họ tên và email hợp lệ");
             response.sendRedirect(request.getContextPath() + "/admin?action=listUsers");
             return;
+        }
+
+        if (phone != null && !phone.isBlank()) {
+            String cleanedPhone = phone.trim().replaceAll("[\\s.\\-()]", "");
+            if (!cleanedPhone.matches("^(0|\\+84)(3|5|7|8|9)\\d{8}$")) {
+                request.getSession().setAttribute("errorMessage", "Số điện thoại không hợp lệ. Vui lòng nhập số di động Việt Nam hợp lệ (ví dụ: 0912345678 hoặc +84912345678)");
+                response.sendRedirect(request.getContextPath() + "/admin?action=listUsers");
+                return;
+            }
         }
 
         try {

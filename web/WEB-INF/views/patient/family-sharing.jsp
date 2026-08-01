@@ -3,16 +3,13 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chia sẻ hồ sơ gia đình - DiabetesCare</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/base/variables.css?v=20260721-ui2">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/layouts/patient-shell.css?v=20260721-ui2">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/pages/patient/patient-pages.css?v=20260721-ui2">
+    <%@ include file="/WEB-INF/views/components/shared/master-head.jspf" %>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/layouts/patient-shell.css?v=20260801">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/pages/patient/patient-pages.css?v=20260801">
     <style>
         .fs-container { max-width: 1100px; margin: 0 auto; padding-bottom: 2rem; }
-        .fs-card { background: rgba(30, 41, 59, 0.45) !important; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid rgba(255, 255, 255, 0.08) !important; color: #ffffff !important; backdrop-filter: blur(12px) !important; }
+        .fs-card { background: rgba(15, 23, 42, 0.75) !important; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.4); padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid rgba(255, 255, 255, 0.08) !important; color: #ffffff !important; backdrop-filter: blur(20px) !important; }
         .fs-nav-tabs { display: flex; gap: 1rem; border-bottom: 2px solid rgba(255, 255, 255, 0.08); margin-bottom: 1.5rem; }
         .fs-tab-btn { background: none; border: none; padding: 0.75rem 1.25rem; font-weight: 600; color: #94a3b8; font-size: 1.05rem; cursor: pointer; position: relative; transition: all 0.2s; }
         .fs-tab-btn:hover { color: #2AB5A3; }
@@ -24,7 +21,7 @@
         .fs-form-row { display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end; }
         .fs-form-group { flex: 1; min-width: 250px; }
         .fs-form-group label { display: block; font-weight: 600; margin-bottom: 0.4rem; color: #cbd5e1 !important; }
-        .fs-form-control { width: 100%; padding: 0.6rem 0.9rem; border: 1px solid rgba(255, 255, 255, 0.1) !important; border-radius: 8px; font-size: 0.95rem; background: rgba(15, 23, 42, 0.6) !important; color: #ffffff !important; }
+        .fs-form-control { width: 100%; padding: 0.6rem 0.9rem; border: 1px solid rgba(255, 255, 255, 0.12) !important; border-radius: 8px; font-size: 0.95rem; background: rgba(255, 255, 255, 0.04) !important; color: #ffffff !important; }
         .fs-form-control:focus { outline: none; border-color: #2AB5A3 !important; box-shadow: 0 0 0 3px rgba(42,181,163,0.2); }
         
         .fs-checkbox-group { display: flex; gap: 1.25rem; align-items: center; padding: 0.6rem 0; flex-wrap: wrap; }
@@ -45,20 +42,20 @@
         .fs-btn-outline-primary:hover { background: #2AB5A3; color: #fff; }
         
         .fs-list-table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 1rem; }
-        .fs-list-table th, .fs-list-table td { padding: 0.9rem 1rem; text-align: left; border-bottom: 1px solid #eef2f5; font-size: 0.95rem; }
-        .fs-list-table th { background-color: #f8f9fa; font-weight: 600; color: #495057; }
+        .fs-list-table th, .fs-list-table td { padding: 0.9rem 1rem; text-align: left; border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important; font-size: 0.95rem; color: #FFFFFF !important; }
+        .fs-list-table th { background: rgba(30, 41, 59, 0.8) !important; font-weight: 600; color: #94A3B8 !important; }
         
         .fs-badge { display: inline-block; padding: 0.35rem 0.65rem; border-radius: 20px; font-size: 0.82rem; font-weight: 600; }
-        .fs-badge-pending { background-color: #fff3cd; color: #664d03; }
-        .fs-badge-accepted { background-color: #d1e7dd; color: #0f5132; }
-        .fs-badge-rejected { background-color: #f8d7da; color: #842029; }
+        .fs-badge-pending { background-color: rgba(234, 179, 8, 0.2); color: #eab308; border: 1px solid rgba(234, 179, 8, 0.3); }
+        .fs-badge-accepted { background-color: rgba(42, 181, 163, 0.2); color: #2AB5A3; border: 1px solid rgba(42, 181, 163, 0.3); }
+        .fs-badge-rejected { background-color: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
         
-        .fs-modal-backdrop { fixed: inset 0; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        .fs-modal-backdrop { fixed: inset 0; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(8px); }
         .fs-modal-backdrop[hidden] { display: none; }
-        .fs-modal-box { background: #fff; border-radius: 12px; max-width: 450px; width: 90%; padding: 1.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-        .fs-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid #eee; padding-bottom: 0.75rem; }
-        .fs-modal-title { font-weight: 700; font-size: 1.1rem; color: #333; margin: 0; }
-        .fs-modal-body { margin-bottom: 1.25rem; }
+        .fs-modal-box { background: #0F172A !important; border: 1px solid rgba(255, 255, 255, 0.12) !important; border-radius: 16px; max-width: 450px; width: 90%; padding: 1.5rem; box-shadow: 0 20px 60px rgba(0,0,0,0.5); color: #FFFFFF !important; }
+        .fs-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 0.75rem; }
+        .fs-modal-title { font-weight: 700; font-size: 1.1rem; color: #FFFFFF !important; margin: 0; }
+        .fs-modal-body { margin-bottom: 1.25rem; color: #CBD5E1 !important; }
         .fs-modal-footer { display: flex; justify-content: flex-end; gap: 0.75rem; }
         
         .fs-toast { position: fixed; top: 20px; right: 20px; z-index: 10000; padding: 1rem 1.25rem; border-radius: 8px; color: #fff; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 0.5rem; transition: opacity 0.3s; }
@@ -66,7 +63,7 @@
         .fs-toast-error { background: #dc3545; }
     </style>
 </head>
-<body>
+<body class="master-ui-body master-ui-dark">
     <c:set var="activePatientPage" value="family-sharing" />
     <%@ include file="/WEB-INF/views/components/patient/sidebar.jspf" %>
 

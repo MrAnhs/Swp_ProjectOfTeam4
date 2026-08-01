@@ -12,9 +12,9 @@
 
     function statusMeta(visit) {
         if (visit.resultVisible) {
-            return { label: "\u0110\u00E3 ho\u00E0n th\u00E0nh", className: "completed", filter: "completed" };
+            return { label: "Đã hoàn thành", className: "completed", filter: "completed" };
         }
-        return { label: "\u0110ang x\u1EED l\u00FD", className: "waiting", filter: "processing" };
+        return { label: "Đang xử lý", className: "waiting", filter: "processing" };
     }
 
     function render() {
@@ -28,7 +28,7 @@
 
         list.replaceChildren();
         if (!visible.length) {
-            list.textContent = "B\u1EA1n ch\u01B0a c\u00F3 l\u1ECBch s\u1EED kh\u00E1m ph\u00F9 h\u1EE3p.";
+            list.textContent = "Bạn chưa có lịch sử khám phù hợp.";
             return;
         }
 
@@ -37,11 +37,11 @@
             item.className = "record-item";
             const info = document.createElement("div");
             const title = document.createElement("h3");
-            title.textContent = `L\u1EA7n kh\u00E1m #${visit.appointmentId}`;
+            title.textContent = `Lần khám #${visit.appointmentId}`;
             const doctor = document.createElement("p");
-            doctor.textContent = `${visit.doctorName} - ${visit.department || "Ch\u01B0a c\u1EADp nh\u1EADt chuy\u00EAn khoa"}`;
+            doctor.textContent = `${visit.doctorName} - ${visit.department || "Chưa cập nhật chuyên khoa"}`;
             const time = document.createElement("p");
-            time.textContent = `Ng\u00E0y kh\u00E1m: ${date(visit.appointmentTime)}`;
+            time.textContent = `Ngày khám: ${date(visit.appointmentTime)}`;
             const result = document.createElement("span");
             const meta = statusMeta(visit);
             result.className = `status-pill ${meta.className}`;
@@ -49,7 +49,7 @@
             const link = document.createElement("a");
             link.className = "btn-page-secondary";
             link.href = ApiClient.buildUrl(`/patient/history/detail?id=${visit.appointmentId}`);
-            link.textContent = "Xem chi ti\u1EBFt";
+            link.textContent = "Xem chi tiết";
             info.append(title, doctor, time, result);
             item.append(info, link);
             list.append(item);
@@ -63,7 +63,7 @@
         ApiClient.get(`/patient/api/history${query}`)
             .then((data) => { visits = data.visits || []; render(); })
             .catch((error) => {
-                list.textContent = `Kh\u00F4ng th\u1EC3 t\u1EA3i l\u1ECBch s\u1EED kh\u00E1m: ${error.message}`;
+                list.textContent = `Không thể tải lịch sử khám: ${error.message}`;
             })
             .finally(() => list.classList.remove("loading-state"));
     }

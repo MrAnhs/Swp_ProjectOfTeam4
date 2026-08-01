@@ -83,11 +83,14 @@ public class DoctorDAO {
                 + "FROM Doctor d "
                 + "INNER JOIN Account acc ON acc.account_id = d.account_id "
                 + "INNER JOIN Doctor_Schedule ds ON ds.doctor_id = d.doctor_id "
-                + "CROSS APPLY (SELECT COUNT(*) AS booked_patients FROM Appointment ap "
+                + "CROSS APPLY (SELECT COUNT(*) AS booked_patients, "
+                + "ISNULL(SUM(CASE WHEN LOWER(LTRIM(RTRIM(COALESCE(ap.booking_type, '')))) = 'online' THEN 1 ELSE 0 END), 0) AS online_booked_patients "
+                + "FROM Appointment ap "
                 + "WHERE ap.schedule_id = ds.schedule_id AND ap.status <> 'Cancelled') booked "
                 + "WHERE acc.role = 'Doctor' AND acc.status = 'Active' "
                 + "AND ds.work_date = ? AND ds.status = 'Available' "
                 + "AND booked.booked_patients < ds.max_patients "
+                + "AND booked.online_booked_patients < ISNULL(ds.online_quota, CASE WHEN ISNULL(ds.max_patients, 1) <= 1 THEN ISNULL(ds.max_patients, 1) WHEN CEILING(ISNULL(ds.max_patients, 1) * 0.6) >= ISNULL(ds.max_patients, 1) THEN ISNULL(ds.max_patients, 1) - 1 ELSE CAST(CEILING(ISNULL(ds.max_patients, 1) * 0.6) AS int) END) "
                 + "AND (ds.work_date > CAST(GETDATE() AS date) "
                 + "OR CAST(GETDATE() AS time) < DATEADD(minute, -30, TRY_CONVERT(time, RIGHT(REPLACE(ds.time_slot, ' ', ''), 5)))) ");
         appendSessionFilter(sql, session);
@@ -137,17 +140,20 @@ public class DoctorDAO {
     }
 
     public List<DoctorScheduleInfo> findAvailableSchedules(int doctorId) throws SQLException {
-        String sql = "SELECT ds.schedule_id, ds.work_date, ds.time_slot, ds.max_patients, ds.status, "
+        String sql = "SELECT ds.schedule_id, ds.work_date, ds.time_slot, ds.max_patients, ds.online_quota, ds.status, "
                 + "ds.room_id, r.room_name, r.location AS room_location, "
-                + "SUM(CASE WHEN a.status IN ('Waiting', 'In_Progress') THEN 1 ELSE 0 END) AS booked_patients "
+                + "ISNULL(SUM(CASE WHEN a.status <> 'Cancelled' THEN 1 ELSE 0 END), 0) AS booked_patients, "
+                + "ISNULL(SUM(CASE WHEN a.status <> 'Cancelled' AND LOWER(LTRIM(RTRIM(COALESCE(a.booking_type, '')))) = 'online' THEN 1 ELSE 0 END), 0) AS online_booked_patients "
                 + "FROM Doctor_Schedule ds "
                 + "LEFT JOIN Appointment a ON a.schedule_id = ds.schedule_id "
                 + "LEFT JOIN Room r ON r.room_id = ds.room_id "
                 + "WHERE ds.doctor_id = ? AND ds.work_date >= CAST(GETDATE() AS date) "
                 + "AND ds.status = 'Available' "
-                + "GROUP BY ds.schedule_id, ds.work_date, ds.time_slot, ds.max_patients, ds.status, "
+                + "GROUP BY ds.schedule_id, ds.work_date, ds.time_slot, ds.max_patients, ds.online_quota, ds.status, "
                 + "ds.room_id, r.room_name, r.location "
-                + "HAVING SUM(CASE WHEN a.status IN ('Waiting', 'In_Progress') THEN 1 ELSE 0 END) < ds.max_patients "
+                + "HAVING ISNULL(SUM(CASE WHEN a.status <> 'Cancelled' THEN 1 ELSE 0 END), 0) < ds.max_patients "
+                + "AND ISNULL(SUM(CASE WHEN a.status <> 'Cancelled' AND LOWER(LTRIM(RTRIM(COALESCE(a.booking_type, '')))) = 'online' THEN 1 ELSE 0 END), 0) < "
+                + "ISNULL(ds.online_quota, CASE WHEN ISNULL(ds.max_patients, 1) <= 1 THEN ISNULL(ds.max_patients, 1) WHEN CEILING(ISNULL(ds.max_patients, 1) * 0.6) >= ISNULL(ds.max_patients, 1) THEN ISNULL(ds.max_patients, 1) - 1 ELSE CAST(CEILING(ISNULL(ds.max_patients, 1) * 0.6) AS int) END) "
                 + "ORDER BY ds.work_date, ds.time_slot";
         List<DoctorScheduleInfo> schedules = new ArrayList<>();
         try (Connection connection = DatabaseConnection.getConnection();
@@ -165,9 +171,10 @@ public class DoctorDAO {
     public List<DoctorScheduleInfo> findAvailableSchedules(int doctorId, LocalDate workDate,
             String session) throws SQLException {
         StringBuilder sql = new StringBuilder(
-                "SELECT ds.schedule_id, ds.work_date, ds.time_slot, ds.max_patients, ds.status, "
+                "SELECT ds.schedule_id, ds.work_date, ds.time_slot, ds.max_patients, ds.online_quota, ds.status, "
                 + "ds.room_id, r.room_name, r.location AS room_location, "
-                + "SUM(CASE WHEN ap.status <> 'Cancelled' THEN 1 ELSE 0 END) AS booked_patients "
+                + "ISNULL(SUM(CASE WHEN ap.status <> 'Cancelled' THEN 1 ELSE 0 END), 0) AS booked_patients, "
+                + "ISNULL(SUM(CASE WHEN ap.status <> 'Cancelled' AND LOWER(LTRIM(RTRIM(COALESCE(ap.booking_type, '')))) = 'online' THEN 1 ELSE 0 END), 0) AS online_booked_patients "
                 + "FROM Doctor_Schedule ds "
                 + "LEFT JOIN Appointment ap ON ap.schedule_id = ds.schedule_id "
                 + "LEFT JOIN Room r ON r.room_id = ds.room_id "
@@ -176,8 +183,10 @@ public class DoctorDAO {
                 + "OR CAST(GETDATE() AS time) < DATEADD(minute, -30, TRY_CONVERT(time, RIGHT(REPLACE(ds.time_slot, ' ', ''), 5)))) ");
         appendSessionFilter(sql, session);
         sql.append("GROUP BY ds.schedule_id, ds.work_date, ds.time_slot, "
-                + "ds.max_patients, ds.status, ds.room_id, r.room_name, r.location "
-                + "HAVING SUM(CASE WHEN ap.status <> 'Cancelled' THEN 1 ELSE 0 END) < ds.max_patients "
+                + "ds.max_patients, ds.online_quota, ds.status, ds.room_id, r.room_name, r.location "
+                + "HAVING ISNULL(SUM(CASE WHEN ap.status <> 'Cancelled' THEN 1 ELSE 0 END), 0) < ds.max_patients "
+                + "AND ISNULL(SUM(CASE WHEN ap.status <> 'Cancelled' AND LOWER(LTRIM(RTRIM(COALESCE(ap.booking_type, '')))) = 'online' THEN 1 ELSE 0 END), 0) < "
+                + "ISNULL(ds.online_quota, CASE WHEN ISNULL(ds.max_patients, 1) <= 1 THEN ISNULL(ds.max_patients, 1) WHEN CEILING(ISNULL(ds.max_patients, 1) * 0.6) >= ISNULL(ds.max_patients, 1) THEN ISNULL(ds.max_patients, 1) - 1 ELSE CAST(CEILING(ISNULL(ds.max_patients, 1) * 0.6) AS int) END) "
                 + "ORDER BY TRY_CONVERT(time, LEFT(ds.time_slot, 5))");
 
         List<DoctorScheduleInfo> schedules = new ArrayList<>();
@@ -196,16 +205,21 @@ public class DoctorDAO {
 
     public List<AvailabilitySlot> findAvailableTimeSlots() throws SQLException {
         String sql = "SELECT ds.work_date, ds.time_slot, COUNT(*) AS doctor_count, "
-                + "SUM(ds.max_patients - booked.booked_patients) AS available_slots "
+                + "SUM(CASE WHEN (ISNULL(ds.online_quota, CASE WHEN ISNULL(ds.max_patients, 1) <= 1 THEN ISNULL(ds.max_patients, 1) WHEN CEILING(ISNULL(ds.max_patients, 1) * 0.6) >= ISNULL(ds.max_patients, 1) THEN ISNULL(ds.max_patients, 1) - 1 ELSE CAST(CEILING(ISNULL(ds.max_patients, 1) * 0.6) AS int) END) - booked.online_booked_patients) < (ds.max_patients - booked.booked_patients) "
+                + "THEN (ISNULL(ds.online_quota, CASE WHEN ISNULL(ds.max_patients, 1) <= 1 THEN ISNULL(ds.max_patients, 1) WHEN CEILING(ISNULL(ds.max_patients, 1) * 0.6) >= ISNULL(ds.max_patients, 1) THEN ISNULL(ds.max_patients, 1) - 1 ELSE CAST(CEILING(ISNULL(ds.max_patients, 1) * 0.6) AS int) END) - booked.online_booked_patients) "
+                + "ELSE (ds.max_patients - booked.booked_patients) END) AS available_slots "
                 + "FROM Doctor_Schedule ds "
                 + "INNER JOIN Doctor d ON d.doctor_id = ds.doctor_id "
                 + "INNER JOIN Account acc ON acc.account_id = d.account_id "
-                + "CROSS APPLY (SELECT COUNT(*) AS booked_patients FROM Appointment a "
+                + "CROSS APPLY (SELECT COUNT(*) AS booked_patients, "
+                + "ISNULL(SUM(CASE WHEN LOWER(LTRIM(RTRIM(COALESCE(a.booking_type, '')))) = 'online' THEN 1 ELSE 0 END), 0) AS online_booked_patients "
+                + "FROM Appointment a "
                 + "WHERE a.schedule_id = ds.schedule_id AND a.status <> 'Cancelled') booked "
                 + "WHERE ds.work_date >= CAST(GETDATE() AS date) "
                 + "AND ds.status = 'Available' "
                 + "AND acc.role = 'Doctor' AND acc.status = 'Active' "
                 + "AND booked.booked_patients < ds.max_patients "
+                + "AND booked.online_booked_patients < ISNULL(ds.online_quota, CASE WHEN ISNULL(ds.max_patients, 1) <= 1 THEN ISNULL(ds.max_patients, 1) WHEN CEILING(ISNULL(ds.max_patients, 1) * 0.6) >= ISNULL(ds.max_patients, 1) THEN ISNULL(ds.max_patients, 1) - 1 ELSE CAST(CEILING(ISNULL(ds.max_patients, 1) * 0.6) AS int) END) "
                 + "GROUP BY ds.work_date, ds.time_slot "
                 + "ORDER BY ds.work_date, ds.time_slot";
         List<AvailabilitySlot> slots = new ArrayList<>();
@@ -240,7 +254,18 @@ public class DoctorDAO {
         schedule.setWorkDate(resultSet.getDate("work_date").toLocalDate());
         schedule.setTimeSlot(resultSet.getString("time_slot"));
         schedule.setMaxPatients(resultSet.getInt("max_patients"));
+        try {
+            Object onlineQuotaObj = resultSet.getObject("online_quota");
+            if (onlineQuotaObj instanceof Number) {
+                schedule.setOnlineQuota(((Number) onlineQuotaObj).intValue());
+            }
+        } catch (SQLException ignored) {
+        }
         schedule.setBookedPatients(resultSet.getInt("booked_patients"));
+        try {
+            schedule.setOnlineBookedPatients(resultSet.getInt("online_booked_patients"));
+        } catch (SQLException ignored) {
+        }
         schedule.setStatus(resultSet.getString("status"));
         schedule.setRoomId(resultSet.getString("room_id"));
         schedule.setRoomName(resultSet.getString("room_name"));

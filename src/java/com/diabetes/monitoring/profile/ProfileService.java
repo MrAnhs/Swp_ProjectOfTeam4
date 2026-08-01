@@ -84,6 +84,27 @@ public class ProfileService {
         }
     }
 
+    public void updatePasswordDirectly(User user, String newPassword) throws Exception {
+        ensureAllowedRole(user);
+        if (newPassword == null || newPassword.isBlank()) return;
+        if (newPassword.trim().length() < 8) {
+            throw new IllegalArgumentException("M\u1EADt kh\u1EA9u m\u1EDBi ph\u1EA3i c\u00F3 \u00EDt nh\u1EA5t 8 k\u00FD t\u1EF1");
+        }
+        try (Connection connection = DatabaseConnection.getConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                profileDAO.updatePassword(connection, user.getId(), PasswordUtil.hashPassword(newPassword.trim()));
+                new com.diabetes.monitoring.notification.NotificationService().notifyPasswordChanged(connection, user.getId(), false);
+                connection.commit();
+            } catch (Exception e) {
+                connection.rollback();
+                throw e;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        }
+    }
+
     private void validate(Profile profile) {
         if (profile.getFullName() == null || profile.getFullName().isBlank()) {
             throw new IllegalArgumentException("H\u1ECD t\u00EAn kh\u00F4ng \u0111\u01B0\u1EE3c \u0111\u1EC3 tr\u1ED1ng");
@@ -109,6 +130,12 @@ public class ProfileService {
                 if (date.isBefore(LocalDate.of(1900, 1, 1))
                         || date.isAfter(LocalDate.now())) {
                     throw new IllegalArgumentException("Ng\u00E0y sinh kh\u00F4ng h\u1EE3p l\u1EC7");
+                }
+                String normRole = normalizeRole(profile.getRole());
+                if (!"patient".equals(normRole)) {
+                    if (date.isAfter(LocalDate.now().minusYears(18))) {
+                        throw new IllegalArgumentException("Y\u00EAu c\u1EA7u \u0111\u1ED9 tu\u1ED5i \u2265 18 \u0111\u1ED1i v\u1EDBi B\u00E1c s\u0129 v\u00E0 L\u1EC5 t\u00E2n");
+                    }
                 }
             } catch (DateTimeParseException e) {
                 throw new IllegalArgumentException("Ng\u00E0y sinh kh\u00F4ng h\u1EE3p l\u1EC7");

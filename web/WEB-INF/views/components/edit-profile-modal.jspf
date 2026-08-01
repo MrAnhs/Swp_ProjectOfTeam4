@@ -1,0 +1,705 @@
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+
+<!-- Modal Chỉnh Sửa Thông Tin Cá Nhân & Tài Khoản (Emerald Dark Theme 2-State Interface) -->
+<div class="modal fade" id="globalEditProfileModal" tabindex="-1" aria-labelledby="globalEditProfileModalLabel" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg text-white" style="background: #003627; border-radius: 20px; overflow: hidden; border: 1px solid rgba(16, 185, 129, 0.3);">
+            <div class="modal-header border-0 px-4 pt-4 pb-2 d-flex align-items-center justify-content-between w-100" style="background: #003627;">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 42px; height: 42px; background: rgba(16, 185, 129, 0.2); color: #10b981;">
+                        <i class="bi bi-person-gear fs-4"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title fw-bold text-white mb-0" id="globalEditProfileModalLabel">
+                            Chỉnh sửa thông tin <c:out value="${sessionScope.currentUser.role}" default="người dùng" />
+                        </h5>
+                        <small class="text-emerald" style="font-size: 0.82rem;">
+                            <c:out value="${sessionScope.currentUser.fullName}" /> &bull; <c:out value="${sessionScope.currentUser.email}" />
+                        </small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close-custom" onclick="closeGlobalEditProfileModal()" title="Thoát / Đóng cửa sổ" aria-label="Đóng">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            
+            <form id="globalEditProfileForm" novalidate>
+                <div class="modal-body p-4" style="background: #002d20;">
+                    
+                    <!-- Tab Navigation Bar (2 Nút chuyển đổi: Thông tin cá nhân & Thông tin tài khoản) -->
+                    <ul class="nav nav-pills profile-modal-pills p-1 mb-4 rounded-3 border border-secondary border-opacity-25" style="background: rgba(0, 24, 17, 0.6);" role="tablist">
+                        <li class="nav-item flex-fill" role="presentation">
+                            <button class="nav-link active w-100 py-2 fw-bold text-center border-0 rounded-3" id="pills-personal-tab" type="button" role="tab" onclick="switchProfileModalTab('personal')">
+                                <i class="bi bi-person-vcard me-2"></i>Thông tin cá nhân
+                            </button>
+                        </li>
+                        <li class="nav-item flex-fill" role="presentation">
+                            <button class="nav-link w-100 py-2 fw-bold text-center border-0 rounded-3" id="pills-account-tab" type="button" role="tab" onclick="switchProfileModalTab('account')">
+                                <i class="bi bi-shield-lock me-2"></i>Thông tin tài khoản
+                            </button>
+                        </li>
+                    </ul>
+
+                    <!-- Tab Content Container -->
+                    <div class="tab-content" id="profileModalTabContent">
+                        
+                        <!-- TAB 1: THÔNG TIN CÁ NHÂN -->
+                        <div class="tab-pane fade show active" id="pills-personal" role="tabpanel">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <div class="text-emerald fw-bold small text-uppercase tracking-wider d-flex align-items-center gap-2">
+                                    <i class="bi bi-person-vcard"></i> THÔNG TIN CƠ BẢN NGƯỜI DÙNG
+                                </div>
+                                <!-- Green Edit Button (State 1: Read-Only Mode) -->
+                                <button type="button" id="editPersonalProfileBtn" class="btn btn-sm fw-bold rounded-pill px-3 py-1 text-white shadow-sm" style="background: #10b981; border: none; font-size: 0.85rem;" onclick="enablePersonalProfileEditing()">
+                                    <i class="bi bi-pencil me-1"></i>Chỉnh sửa
+                                </button>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label text-secondary small fw-semibold">Họ và tên *</label>
+                                    <input type="text" name="fullName" id="profileFullName" class="form-control form-control-dark" value="<c:out value='${sessionScope.currentUser.fullName}'/>" readonly disabled required placeholder="Nhập họ và tên...">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-secondary small fw-semibold">Số điện thoại *</label>
+                                    <input type="tel" name="phone" id="profilePhone" class="form-control form-control-dark" value="<c:out value='${sessionScope.currentUser.phone}'/>" readonly disabled required placeholder="Số điện thoại Việt Nam">
+                                    <div class="form-text text-muted small" style="font-size: 0.72rem;">Số điện thoại Việt Nam: 03x, 05x, 07x, 08x, 09x</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label text-secondary small fw-semibold">Ngày sinh *</label>
+                                    <input type="date" name="dateOfBirth" id="profileDob" class="form-control form-control-dark" value="<c:out value='${sessionScope.currentUser.dob}'/>" readonly disabled>
+                                    <c:set var="roleNorm" value="${fn:toLowerCase(sessionScope.currentUser.role)}" />
+                                    <c:choose>
+                                        <c:when test="${roleNorm eq 'patient'}">
+                                            <div class="form-text text-muted small" style="font-size: 0.72rem;">Không giới hạn độ tuổi</div>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <div class="form-text text-muted small" style="font-size: 0.72rem;">Tuổi &ge; 18</div>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label text-secondary small fw-semibold">Giới tính *</label>
+                                    <select name="gender" id="profileGender" class="form-select form-select-dark" disabled>
+                                        <option value="male" ${sessionScope.currentUser.gender eq 'male' or sessionScope.currentUser.gender eq 'Nam' ? 'selected' : ''}>Nam</option>
+                                        <option value="female" ${sessionScope.currentUser.gender eq 'female' or sessionScope.currentUser.gender eq 'Nữ' ? 'selected' : ''}>Nữ</option>
+                                        <option value="other" ${sessionScope.currentUser.gender eq 'other' or sessionScope.currentUser.gender eq 'Khác' ? 'selected' : ''}>Khác</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label text-secondary small fw-semibold">Địa chỉ *</label>
+                                    <input type="text" name="address" id="profileAddress" class="form-control form-control-dark" value="<c:out value='${sessionScope.currentUser.address}'/>" readonly disabled placeholder="Tỉnh / Thành phố">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB 2: THÔNG TIN TÀI KHOẢN & BẢO MẬT (Chuẩn Thiết Kế Ảnh Mẫu) -->
+                        <div class="tab-pane fade" id="pills-account" role="tabpanel" style="display: none;">
+                            <div class="text-emerald fw-bold small text-uppercase mb-3 tracking-wider d-flex align-items-center gap-2">
+                                <i class="bi bi-shield-lock"></i> THÔNG TIN TÀI KHOẢN (CỐ ĐỊNH) &amp; BẢO MẬT
+                            </div>
+
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label text-secondary small fw-semibold">Email đăng nhập</label>
+                                    <input type="email" class="form-control form-control-dark-readonly" value="<c:out value='${sessionScope.currentUser.email}'/>" readonly disabled>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-secondary small fw-semibold">Bộ phận / Vai trò</label>
+                                    <input type="text" class="form-control form-control-dark-readonly" value="<c:out value='${sessionScope.currentUser.role}'/>" readonly disabled>
+                                </div>
+                            </div>
+
+                            <div class="text-emerald fw-bold small text-uppercase mb-3 tracking-wider d-flex align-items-center gap-2">
+                                <i class="bi bi-sliders"></i> THÔNG TIN TÀI KHOẢN HIỆN TẠI
+                            </div>
+
+                            <!-- 2 Nút Sub-Tab Chuyển Đổi (Đổi email / Đổi mật khẩu) -->
+                            <div class="d-flex gap-3 mb-4">
+                                <button type="button" id="btnSubTabEmail" class="btn flex-fill py-2.5 fw-bold rounded-3 border-0 text-white shadow-sm" style="background: #10b981;" onclick="switchAccountSubTab('email')">
+                                    <i class="bi bi-envelope me-2"></i>Đổi email
+                                </button>
+                                <button type="button" id="btnSubTabPassword" class="btn flex-fill py-2.5 fw-bold rounded-3 border border-secondary border-opacity-50 text-secondary" style="background: rgba(0, 31, 22, 0.6);" onclick="switchAccountSubTab('password')">
+                                    <i class="bi bi-key me-2"></i>Đổi mật khẩu
+                                </button>
+                            </div>
+
+                            <!-- KHU VỰC 1: ĐỔI EMAIL BẰNG XÁC THỰC OTP -->
+                            <div id="subPanelEmail" class="p-3 rounded-3 border border-secondary border-opacity-25" style="background: rgba(0, 24, 17, 0.5);">
+                                <div id="emailStep1">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label text-secondary small fw-semibold">Email mới *</label>
+                                            <input type="email" id="inputNewEmail" class="form-control form-control-dark" placeholder="Nhập địa chỉ email mới...">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label text-secondary small fw-semibold">Mật khẩu hiện tại *</label>
+                                            <input type="password" id="inputEmailCurrentPassword" class="form-control form-control-dark" placeholder="Xác nhận mật khẩu hiện tại...">
+                                        </div>
+                                    </div>
+                                    <div class="mt-3 text-end">
+                                        <button type="button" id="btnSendEmailOtp" class="btn btn-success px-4 rounded-pill fw-bold" style="background: #10b981; border: none;" onclick="handleSendEmailOtp()">
+                                            <i class="bi bi-send me-1"></i>Gửi mã OTP xác thực
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div id="emailStep2" style="display: none;" class="mt-3 pt-3 border-top border-secondary border-opacity-25">
+                                    <div class="alert alert-success py-2 px-3 small rounded-3 mb-3 d-flex align-items-center gap-2">
+                                        <i class="bi bi-check-circle-fill"></i>
+                                        <span>Mã OTP đã được gửi đến email mới! Vui lòng kiểm tra hộp thư.</span>
+                                    </div>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label text-secondary small fw-semibold">Mã OTP xác thực (6 chữ số) *</label>
+                                            <input type="text" id="inputEmailOtp" class="form-control form-control-dark text-center fw-bold" maxlength="6" placeholder="000000">
+                                        </div>
+                                        <div class="col-md-6 d-flex align-items-end">
+                                            <button type="button" id="btnConfirmEmailOtp" class="btn btn-success w-100 rounded-pill fw-bold" style="background: #10b981; border: none;" onclick="handleConfirmEmailOtp()">
+                                                <i class="bi bi-check-lg me-1"></i>Xác nhận thay đổi Email
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- KHU VỰC 2: ĐỔI MẬT KHẨU (1 MẬT KHẨU CŨ & 2 LẦN MẬT KHẨU MỚI) -->
+                            <div id="subPanelPassword" class="p-3 rounded-3 border border-secondary border-opacity-25" style="display: none; background: rgba(0, 24, 17, 0.5);">
+                                <div class="row g-3">
+                                    <div class="col-md-12">
+                                        <label class="form-label text-secondary small fw-semibold">Mật khẩu hiện tại *</label>
+                                        <input type="password" id="inputCurrentPassword" class="form-control form-control-dark" placeholder="Nhập mật khẩu hiện tại...">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label text-secondary small fw-semibold">Mật khẩu mới *</label>
+                                        <input type="password" id="inputNewPassword" class="form-control form-control-dark" minlength="8" placeholder="Tối thiểu 8 ký tự...">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label text-secondary small fw-semibold">Xác nhận mật khẩu mới *</label>
+                                        <input type="password" id="inputConfirmPassword" class="form-control form-control-dark" minlength="8" placeholder="Nhập lại mật khẩu mới...">
+                                    </div>
+                                </div>
+                                <div class="mt-3 text-end">
+                                    <button type="button" id="btnSubmitChangePassword" class="btn btn-success px-4 rounded-pill fw-bold" style="background: #10b981; border: none;" onclick="handleSubmitChangePassword()">
+                                        <i class="bi bi-key-fill me-1"></i>Cập nhật mật khẩu
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div id="accountTabAlert" class="alert alert-danger d-none py-2 px-3 small rounded-3 mt-3" role="alert"></div>
+                            <div id="accountTabSuccess" class="alert alert-success d-none py-2 px-3 small rounded-3 mt-3" role="alert"></div>
+                        </div>
+
+                    </div>
+
+                    <div id="globalEditProfileAlert" class="alert alert-danger d-none py-2 px-3 small rounded-3 mt-3" role="alert"></div>
+                </div>
+
+                <!-- Modal Footer Buttons (Shown ONLY in Editing Mode - State 2) -->
+                <div class="modal-footer border-0 px-4 py-3" id="globalEditProfileFooter" style="background: #002218; display: none;">
+                    <button type="button" class="btn btn-outline-secondary text-white px-4 rounded-pill fw-bold" onclick="cancelPersonalProfileEditing()">
+                        <i class="bi bi-x-circle me-1"></i>Hủy
+                    </button>
+                    <button type="submit" id="globalEditProfileSubmitBtn" class="btn btn-success px-4 rounded-pill fw-bold" style="background: #10b981; border: none;">
+                        <i class="bi bi-check-circle-fill me-1"></i>Cập nhật
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.btn-close-custom {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 1.1rem;
+    margin-left: auto !important;
+    flex-shrink: 0 !important;
+}
+.btn-close-custom:hover {
+    background: rgba(239, 68, 68, 0.9);
+    color: #ffffff;
+    border-color: #ef4444;
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+#globalEditProfileModal:not(.show) {
+    display: none !important;
+}
+#globalEditProfileModal.show {
+    display: block !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1060;
+    overflow-x: hidden;
+    overflow-y: auto;
+    outline: 0;
+}
+.profile-modal-pills .nav-link {
+    transition: all 0.25s ease;
+    color: #94a3b8 !important;
+    background: transparent !important;
+}
+.profile-modal-pills .nav-link.active {
+    background-color: #10b981 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+}
+.profile-modal-pills .nav-link:hover:not(.active) {
+    color: #34d399 !important;
+    background: rgba(16, 185, 129, 0.1) !important;
+}
+.form-control-dark {
+    background-color: #001f16 !important;
+    border: 1px solid #005941 !important;
+    color: #ffffff !important;
+    border-radius: 10px !important;
+}
+.form-control-dark:focus {
+    border-color: #10b981 !important;
+    box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.25) !important;
+}
+.form-control-dark:disabled, .form-control-dark[readonly] {
+    background-color: #001811 !important;
+    border-color: #003829 !important;
+    color: #cbd5e1 !important;
+    opacity: 0.85;
+}
+.form-control-dark-readonly {
+    background-color: #001811 !important;
+    border: 1px solid #003829 !important;
+    color: #94a3b8 !important;
+    border-radius: 10px !important;
+    cursor: not-allowed !important;
+}
+.form-select-dark {
+    background-color: #001f16 !important;
+    border: 1px solid #005941 !important;
+    color: #ffffff !important;
+    border-radius: 10px !important;
+}
+.form-select-dark:disabled {
+    background-color: #001811 !important;
+    border-color: #003829 !important;
+    color: #cbd5e1 !important;
+    opacity: 0.85;
+}
+.text-emerald {
+    color: #34d399 !important;
+}
+</style>
+
+<script>
+let originalProfileData = {};
+
+function saveOriginalProfileData() {
+    const form = document.getElementById('globalEditProfileForm');
+    if (!form) return;
+    originalProfileData = {
+        fullName: form.fullName ? form.fullName.value : '',
+        phone: form.phone ? form.phone.value : '',
+        dateOfBirth: form.dateOfBirth ? form.dateOfBirth.value : '',
+        gender: form.gender ? form.gender.value : '',
+        address: form.address ? form.address.value : ''
+    };
+}
+
+function disablePersonalProfileEditing() {
+    const form = document.getElementById('globalEditProfileForm');
+    if (!form) return;
+    
+    ['fullName', 'phone', 'dateOfBirth', 'address'].forEach(name => {
+        if (form[name]) {
+            form[name].readOnly = true;
+            form[name].disabled = true;
+        }
+    });
+    if (form.gender) {
+        form.gender.disabled = true;
+    }
+    
+    const editBtn = document.getElementById('editPersonalProfileBtn');
+    if (editBtn) editBtn.style.display = 'inline-flex';
+    
+    const footer = document.getElementById('globalEditProfileFooter');
+    if (footer) footer.style.display = 'none';
+}
+
+function enablePersonalProfileEditing() {
+    const form = document.getElementById('globalEditProfileForm');
+    if (!form) return;
+    
+    saveOriginalProfileData();
+    
+    ['fullName', 'phone', 'dateOfBirth', 'address'].forEach(name => {
+        if (form[name]) {
+            form[name].readOnly = false;
+            form[name].disabled = false;
+        }
+    });
+    if (form.gender) {
+        form.gender.disabled = false;
+    }
+    
+    const editBtn = document.getElementById('editPersonalProfileBtn');
+    if (editBtn) editBtn.style.display = 'none';
+    
+    const footer = document.getElementById('globalEditProfileFooter');
+    if (footer) footer.style.display = 'flex';
+    
+    if (form.fullName) form.fullName.focus();
+}
+
+function cancelPersonalProfileEditing() {
+    const form = document.getElementById('globalEditProfileForm');
+    if (!form) return;
+    
+    if (originalProfileData.fullName !== undefined) {
+        if (form.fullName) form.fullName.value = originalProfileData.fullName;
+        if (form.phone) form.phone.value = originalProfileData.phone;
+        if (form.dateOfBirth) form.dateOfBirth.value = originalProfileData.dateOfBirth;
+        if (form.gender) form.gender.value = originalProfileData.gender;
+        if (form.address) form.address.value = originalProfileData.address;
+    }
+    
+    disablePersonalProfileEditing();
+}
+
+function switchProfileModalTab(tabName) {
+    const personalBtn = document.getElementById('pills-personal-tab');
+    const accountBtn = document.getElementById('pills-account-tab');
+    const personalPane = document.getElementById('pills-personal');
+    const accountPane = document.getElementById('pills-account');
+    const footer = document.getElementById('globalEditProfileFooter');
+    
+    if (!personalBtn || !accountBtn || !personalPane || !accountPane) return;
+    
+    if (tabName === 'personal') {
+        personalBtn.classList.add('active');
+        accountBtn.classList.remove('active');
+        personalPane.style.display = 'block';
+        personalPane.classList.add('show', 'active');
+        accountPane.style.display = 'none';
+        accountPane.classList.remove('show', 'active');
+        disablePersonalProfileEditing();
+    } else {
+        accountBtn.classList.add('active');
+        personalBtn.classList.remove('active');
+        accountPane.style.display = 'block';
+        accountPane.classList.add('show', 'active');
+        personalPane.style.display = 'none';
+        personalPane.classList.remove('show', 'active');
+        if (footer) footer.style.display = 'none';
+        switchAccountSubTab('email');
+    }
+}
+
+function switchAccountSubTab(type) {
+    const btnEmail = document.getElementById('btnSubTabEmail');
+    const btnPassword = document.getElementById('btnSubTabPassword');
+    const panelEmail = document.getElementById('subPanelEmail');
+    const panelPassword = document.getElementById('subPanelPassword');
+    const alertEl = document.getElementById('accountTabAlert');
+    const successEl = document.getElementById('accountTabSuccess');
+
+    if (alertEl) alertEl.classList.add('d-none');
+    if (successEl) successEl.classList.add('d-none');
+
+    if (type === 'email') {
+        btnEmail.style.background = '#10b981';
+        btnEmail.style.color = '#ffffff';
+        btnEmail.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.35)';
+        btnEmail.className = 'btn flex-fill py-2.5 fw-bold rounded-3 border-0 transition-all text-white';
+
+        btnPassword.style.background = 'rgba(0, 31, 22, 0.6)';
+        btnPassword.style.color = '#94a3b8';
+        btnPassword.style.boxShadow = 'none';
+        btnPassword.className = 'btn flex-fill py-2.5 fw-bold rounded-3 border border-secondary border-opacity-50 transition-all text-secondary';
+
+        panelEmail.style.display = 'block';
+        panelPassword.style.display = 'none';
+    } else {
+        btnPassword.style.background = '#10b981';
+        btnPassword.style.color = '#ffffff';
+        btnPassword.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.35)';
+        btnPassword.className = 'btn flex-fill py-2.5 fw-bold rounded-3 border-0 transition-all text-white';
+
+        btnEmail.style.background = 'rgba(0, 31, 22, 0.6)';
+        btnEmail.style.color = '#94a3b8';
+        btnEmail.style.boxShadow = 'none';
+        btnEmail.className = 'btn flex-fill py-2.5 fw-bold rounded-3 border border-secondary border-opacity-50 transition-all text-secondary';
+
+        panelPassword.style.display = 'block';
+        panelEmail.style.display = 'none';
+    }
+}
+
+async function handleSendEmailOtp() {
+    const newEmail = document.getElementById('inputNewEmail').value.trim();
+    const currentPassword = document.getElementById('inputEmailCurrentPassword').value.trim();
+    const alertEl = document.getElementById('accountTabAlert');
+    const successEl = document.getElementById('accountTabSuccess');
+    const btn = document.getElementById('btnSendEmailOtp');
+
+    alertEl.classList.add('d-none');
+    successEl.classList.add('d-none');
+
+    if (!newEmail || !currentPassword) {
+        alertEl.textContent = 'Vui lòng nhập đầy đủ Email mới và Mật khẩu hiện tại.';
+        alertEl.classList.remove('d-none');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang gửi OTP...';
+
+    try {
+        const params = new URLSearchParams();
+        params.append('newEmail', newEmail);
+        params.append('currentPassword', currentPassword);
+
+        const response = await fetch('${pageContext.request.contextPath}/settings/email/request-otp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: params.toString()
+        });
+
+        const resData = await response.json();
+        if (response.ok && resData.success) {
+            document.getElementById('emailStep2').style.display = 'block';
+            successEl.textContent = 'Mã OTP 6 chữ số đã được gửi đến ' + newEmail + '! Vui lòng kiểm tra hộp thư.';
+            successEl.classList.remove('d-none');
+        } else {
+            alertEl.textContent = resData.error || resData.message || 'Không thể gửi mã OTP.';
+            alertEl.classList.remove('d-none');
+        }
+    } catch (err) {
+        alertEl.textContent = 'Lỗi kết nối máy chủ: ' + err.message;
+        alertEl.classList.remove('d-none');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-send me-1"></i>Gửi mã OTP xác thực';
+    }
+}
+
+async function handleConfirmEmailOtp() {
+    const newEmail = document.getElementById('inputNewEmail').value.trim();
+    const otp = document.getElementById('inputEmailOtp').value.trim();
+    const alertEl = document.getElementById('accountTabAlert');
+    const successEl = document.getElementById('accountTabSuccess');
+    const btn = document.getElementById('btnConfirmEmailOtp');
+
+    alertEl.classList.add('d-none');
+    successEl.classList.add('d-none');
+
+    if (!otp || otp.length < 6) {
+        alertEl.textContent = 'Vui lòng nhập đủ 6 chữ số mã OTP.';
+        alertEl.classList.remove('d-none');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang xác nhận...';
+
+    try {
+        const params = new URLSearchParams();
+        params.append('newEmail', newEmail);
+        params.append('otp', otp);
+
+        const response = await fetch('${pageContext.request.contextPath}/settings/email/confirm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: params.toString()
+        });
+
+        const resData = await response.json();
+        if (response.ok && resData.success) {
+            alert('Đã thay đổi Email thành công!');
+            window.location.reload();
+        } else {
+            alertEl.textContent = resData.error || resData.message || 'Mã OTP không chính xác hoặc đã hết hạn.';
+            alertEl.classList.remove('d-none');
+        }
+    } catch (err) {
+        alertEl.textContent = 'Lỗi kết nối máy chủ: ' + err.message;
+        alertEl.classList.remove('d-none');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Xác nhận thay đổi Email';
+    }
+}
+
+async function handleSubmitChangePassword() {
+    const currentPassword = document.getElementById('inputCurrentPassword').value.trim();
+    const newPassword = document.getElementById('inputNewPassword').value.trim();
+    const confirmation = document.getElementById('inputConfirmPassword').value.trim();
+    const alertEl = document.getElementById('accountTabAlert');
+    const successEl = document.getElementById('accountTabSuccess');
+    const btn = document.getElementById('btnSubmitChangePassword');
+
+    alertEl.classList.add('d-none');
+    successEl.classList.add('d-none');
+
+    if (!currentPassword || !newPassword || !confirmation) {
+        alertEl.textContent = 'Vui lòng nhập đầy đủ mật khẩu hiện tại, mật khẩu mới và xác nhận mật khẩu.';
+        alertEl.classList.remove('d-none');
+        return;
+    }
+
+    if (newPassword !== confirmation) {
+        alertEl.textContent = 'Mật khẩu mới và xác nhận mật khẩu không trùng khớp.';
+        alertEl.classList.remove('d-none');
+        return;
+    }
+
+    if (newPassword.length < 8) {
+        alertEl.textContent = 'Mật khẩu mới phải chứa ít nhất 8 ký tự.';
+        alertEl.classList.remove('d-none');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang cập nhật...';
+
+    try {
+        const params = new URLSearchParams();
+        params.append('currentPassword', currentPassword);
+        params.append('newPassword', newPassword);
+        params.append('confirmation', confirmation);
+
+        const response = await fetch('${pageContext.request.contextPath}/settings/password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: params.toString()
+        });
+
+        const resData = await response.json();
+        if (response.ok && resData.success) {
+            successEl.textContent = 'Đã đổi mật khẩu đăng nhập thành công!';
+            successEl.classList.remove('d-none');
+            document.getElementById('inputCurrentPassword').value = '';
+            document.getElementById('inputNewPassword').value = '';
+            document.getElementById('inputConfirmPassword').value = '';
+        } else {
+            alertEl.textContent = resData.error || resData.message || 'Mật khẩu hiện tại không đúng hoặc không hợp lệ.';
+            alertEl.classList.remove('d-none');
+        }
+    } catch (err) {
+        alertEl.textContent = 'Lỗi kết nối máy chủ: ' + err.message;
+        alertEl.classList.remove('d-none');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-key-fill me-1"></i>Cập nhật mật khẩu';
+    }
+}
+
+function openGlobalEditProfileModal() {
+    const modalEl = document.getElementById('globalEditProfileModal');
+    if (!modalEl) return;
+
+    disablePersonalProfileEditing();
+    switchProfileModalTab('personal');
+
+    const bs = window.bootstrap || (typeof bootstrap !== 'undefined' ? bootstrap : null);
+    if (bs && bs.Modal) {
+        const modal = bs.Modal.getOrCreateInstance(modalEl);
+        modal.show();
+    } else {
+        modalEl.style.display = 'block';
+        modalEl.classList.add('show');
+        modalEl.removeAttribute('aria-hidden');
+        modalEl.setAttribute('aria-modal', 'true');
+        
+        let backdrop = document.getElementById('globalModalBackdrop');
+        if (!backdrop) {
+            backdrop = document.createElement('div');
+            backdrop.id = 'globalModalBackdrop';
+            backdrop.className = 'modal-backdrop fade show';
+            backdrop.style.zIndex = '1055';
+            backdrop.onclick = closeGlobalEditProfileModal;
+            document.body.appendChild(backdrop);
+        }
+        document.body.classList.add('modal-open');
+    }
+}
+
+function closeGlobalEditProfileModal() {
+    const modalEl = document.getElementById('globalEditProfileModal');
+    if (!modalEl) return;
+    
+    disablePersonalProfileEditing();
+    
+    const bs = window.bootstrap || (typeof bootstrap !== 'undefined' ? bootstrap : null);
+    if (bs && bs.Modal) {
+        const modal = bs.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
+    }
+    
+    modalEl.style.display = 'none';
+    modalEl.classList.remove('show');
+    modalEl.setAttribute('aria-hidden', 'true');
+    modalEl.removeAttribute('aria-modal');
+    
+    const backdrop = document.getElementById('globalModalBackdrop');
+    if (backdrop) backdrop.remove();
+    document.body.classList.remove('modal-open');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('globalEditProfileForm');
+    if (!form) return;
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const submitBtn = document.getElementById('globalEditProfileSubmitBtn');
+        const alertEl = document.getElementById('globalEditProfileAlert');
+        alertEl.classList.add('d-none');
+        
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang cập nhật...';
+        
+        try {
+            const formData = new FormData(form);
+            const params = new URLSearchParams();
+            for (const [key, value] of formData.entries()) {
+                params.append(key, value);
+            }
+            
+            const response = await fetch('${pageContext.request.contextPath}/settings/profile', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: params.toString()
+            });
+            
+            const resData = await response.json();
+            if (response.ok && resData.success) {
+                closeGlobalEditProfileModal();
+                alert('Đã cập nhật thông tin hồ sơ thành công!');
+                window.location.reload();
+            } else {
+                alertEl.textContent = resData.error || resData.message || 'Không thể cập nhật hồ sơ.';
+                alertEl.classList.remove('d-none');
+            }
+        } catch (err) {
+            alertEl.textContent = 'Lỗi kết nối máy chủ: ' + err.message;
+            alertEl.classList.remove('d-none');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>Cập nhật';
+        }
+    });
+});
+</script>

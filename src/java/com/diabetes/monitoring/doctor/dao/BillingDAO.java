@@ -77,9 +77,9 @@ public class BillingDAO {
                 + "WHERE status = 'Active' AND service_id IN ("
                 + placeholders(serviceQuantities.size()) + ")";
         String invoiceSql = "INSERT INTO Invoice "
-                + "(patient_id, receptionist_id, total_amount, insurance_deduction, "
+                + "(patient_id, receptionist_id, "
                 + "final_amount, payment_method, status, created_at) "
-                + "VALUES (?, ?, ?, ?, ?, ?, 'Pending', GETDATE())";
+                + "VALUES (?, ?, ?, ?, 'Pending', GETDATE())";
         String detailSql = "INSERT INTO Invoice_Detail "
                 + "(invoice_id, service_id, appointment_id, quantity, price) "
                 + "VALUES (?, ?, ?, ?, ?)";
@@ -103,12 +103,7 @@ public class BillingDAO {
                     );
                 }
 
-                BigDecimal deduction =
-                        insuranceDeduction == null ? BigDecimal.ZERO : insuranceDeduction;
-                if (deduction.signum() < 0 || deduction.compareTo(total) > 0) {
-                    throw new SQLException("So tien bao hiem khong hop le");
-                }
-                BigDecimal finalAmount = total.subtract(deduction);
+                BigDecimal finalAmount = total;
 
                 int invoiceId;
                 try (PreparedStatement ps = conn.prepareStatement(
@@ -119,10 +114,8 @@ public class BillingDAO {
                     } else {
                         ps.setInt(2, receptionistId);
                     }
-                    ps.setBigDecimal(3, total);
-                    ps.setBigDecimal(4, deduction);
-                    ps.setBigDecimal(5, finalAmount);
-                    ps.setString(6, paymentMethod);
+                    ps.setBigDecimal(3, finalAmount);
+                    ps.setString(4, paymentMethod);
                     ps.executeUpdate();
                     try (ResultSet rs = ps.getGeneratedKeys()) {
                         if (!rs.next()) {
@@ -195,6 +188,8 @@ public class BillingDAO {
                 }
                 detail.setInt(1, invoiceId);
                 detail.executeUpdate();
+                com.diabetes.monitoring.notification.NotificationService notificationService = new com.diabetes.monitoring.notification.NotificationService();
+                notificationService.prepareLaboratoryOrders(conn, invoiceId);
                 conn.commit();
                 return true;
             } catch (SQLException e) {
@@ -275,8 +270,8 @@ public class BillingDAO {
                     invoice.setPatientName(rs.getString("patient_name"));
                     int receptionistId = rs.getInt("receptionist_id");
                     invoice.setReceptionistId(rs.wasNull() ? null : receptionistId);
-                    invoice.setTotalAmount(rs.getBigDecimal("total_amount"));
-                    invoice.setInsuranceDeduction(rs.getBigDecimal("insurance_deduction"));
+                    invoice.setTotalAmount(rs.getBigDecimal("final_amount"));
+                    invoice.setInsuranceDeduction(BigDecimal.ZERO);
                     invoice.setFinalAmount(rs.getBigDecimal("final_amount"));
                     invoice.setPaymentMethod(rs.getString("payment_method"));
                     invoice.setStatus(rs.getString("status"));

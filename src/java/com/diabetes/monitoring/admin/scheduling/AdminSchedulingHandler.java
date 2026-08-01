@@ -65,13 +65,26 @@ class AdminScheduleHandler {
         scheduleService.prepareScheduleViews();
         staffScheduleService.refreshStaffScheduleStatus();
 
+        String searchParam = cleanText(request.getParameter("search"));
         String department = request.getParameter("department");
         String doctorName = request.getParameter("doctorName");
+        if ((doctorName == null || doctorName.isBlank()) && searchParam != null) {
+            doctorName = searchParam;
+        }
         Date workDate = nullableDate(request.getParameter("workDate"));
         String staffType = request.getParameter("staffType");
         String staffName = request.getParameter("staffName");
+        if ((staffName == null || staffName.isBlank()) && searchParam != null) {
+            staffName = searchParam;
+        }
         String staffDepartment = request.getParameter("staffDepartment");
+        if ((staffDepartment == null || staffDepartment.isBlank()) && department != null) {
+            staffDepartment = department;
+        }
         Date staffWorkDate = nullableDate(request.getParameter("staffWorkDate"));
+        if (staffWorkDate == null && workDate != null) {
+            staffWorkDate = workDate;
+        }
         String doctorStatus = cleanText(request.getParameter("doctorStatus"));
         String receptionistStatus = cleanText(request.getParameter("receptionistStatus"));
         String labStatus = cleanText(request.getParameter("labStatus"));
@@ -116,6 +129,7 @@ class AdminScheduleHandler {
         request.setAttribute("rooms", scheduleService.getRoomsForSchedule());
         request.setAttribute("labRooms", scheduleService.getLabRoomsForSchedule());
         request.setAttribute("selectedDepartment", department == null ? "" : department);
+        request.setAttribute("searchFilter", searchParam == null ? "" : searchParam);
         request.setAttribute("doctorNameFilter", doctorName == null ? "" : doctorName);
         request.setAttribute("selectedWorkDate", request.getParameter("workDate"));
         request.setAttribute("selectedDoctorStatus", doctorStatus == null ? "" : doctorStatus);
@@ -485,6 +499,7 @@ class AdminStaffScheduleHandler {
         String weekDateStr = request.getParameter("weekDate");
         String roleFilter = request.getParameter("role");
         String roomFilter = request.getParameter("room");
+        String searchFilter = request.getParameter("search");
 
         Date selectedDate = nullableDate(weekDateStr);
         if (selectedDate == null) selectedDate = new java.sql.Date(System.currentTimeMillis());
@@ -501,9 +516,9 @@ class AdminStaffScheduleHandler {
         Date sundayDate = new java.sql.Date(cal.getTimeInMillis());
 
         try {
-            List<Map<String, Object>> rows = staffScheduleRepository.getWeeklyCalendarSchedules(mondayDate, sundayDate, roleFilter, roomFilter);
+            List<Map<String, Object>> rows = staffScheduleRepository.getWeeklyCalendarSchedules(mondayDate, sundayDate, roleFilter, roomFilter, searchFilter);
             java.util.logging.Logger.getLogger(getClass().getName()).info(
-                "[getCalendarSchedule] weekDate=" + weekDateStr + " role=" + roleFilter + " room=" + roomFilter
+                "[getCalendarSchedule] weekDate=" + weekDateStr + " role=" + roleFilter + " room=" + roomFilter + " search=" + searchFilter
                 + " -> mondayDate=" + mondayDate + " sundayDate=" + sundayDate + " rows=" + rows.size());
             try (PrintWriter out = response.getWriter()) {
                 out.print(AdminJsonUtil.toJsonSimpleRows(rows));
@@ -603,9 +618,18 @@ class AdminStaffScheduleHandler {
         String staffType = request.getParameter("staffType");
         Date workDate = nullableDate(request.getParameter("workDate"));
         String timeSlot = request.getParameter("timeSlot");
+        String startTime = request.getParameter("startTime");
+        String endTime = request.getParameter("endTime");
+        if ((timeSlot == null || timeSlot.trim().isEmpty()) && startTime != null && endTime != null && !startTime.isBlank() && !endTime.isBlank()) {
+            timeSlot = startTime.trim() + "-" + endTime.trim();
+        }
+
         String department = request.getParameter("department");
         String workArea = request.getParameter("workArea");
         Integer maxWorkload = nullableInt(request.getParameter("maxWorkload"));
+        if (maxWorkload == null) {
+            maxWorkload = nullableInt(request.getParameter("maxPatients"));
+        }
         String roomId = cleanText(request.getParameter("roomId"));
 
         boolean ok = accountId > 0 && workDate != null
@@ -621,9 +645,18 @@ class AdminStaffScheduleHandler {
         String staffType = request.getParameter("staffType");
         Date workDate = nullableDate(request.getParameter("workDate"));
         String timeSlot = request.getParameter("timeSlot");
+        String startTime = request.getParameter("startTime");
+        String endTime = request.getParameter("endTime");
+        if ((timeSlot == null || timeSlot.trim().isEmpty()) && startTime != null && endTime != null && !startTime.isBlank() && !endTime.isBlank()) {
+            timeSlot = startTime.trim() + "-" + endTime.trim();
+        }
+
         String department = request.getParameter("department");
         String workArea = request.getParameter("workArea");
         Integer maxWorkload = nullableInt(request.getParameter("maxWorkload"));
+        if (maxWorkload == null) {
+            maxWorkload = nullableInt(request.getParameter("maxPatients"));
+        }
         String status = request.getParameter("status");
         String roomId = cleanText(request.getParameter("roomId"));
 

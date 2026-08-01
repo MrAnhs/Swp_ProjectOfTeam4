@@ -4,9 +4,7 @@
 
 <fmt:setLocale value="vi_VN" />
 
-<c:if test="${empty services and empty errorMessage}">
-    <c:redirect url="/admin?action=manageServices"/>
-</c:if>
+
 
 <c:set var="currentAction" value="manageServices" />
 
@@ -19,11 +17,10 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản trị Danh mục Y tế - S-COMS</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Quản trị Danh mục Y tế - DiabetesCare Admin</title>
+    <%@ include file="/WEB-INF/views/components/shared/master-head.jspf" %>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/css/pages/admin/admin-ui.css" rel="stylesheet">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 
@@ -167,17 +164,6 @@
                                             <button type="submit" class="dropdown-item ${s.status == 'Active' ? 'text-warning' : 'text-success'}">
                                                 <i class="bi ${s.status == 'Active' ? 'bi-pause-circle me-2 text-warning' : 'bi-play-circle me-2 text-success'}"></i>
                                                 ${s.status == 'Active' ? 'Ngừng hoạt động' : 'Kích hoạt lại'}
-                                            </button>
-                                        </form>
-                                    </li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li>
-                                        <form method="post" action="${pageContext.request.contextPath}/admin" onsubmit="return confirm('Bạn có chắc muốn xóa dịch vụ này?');" class="d-inline">
-                                            <input type="hidden" name="action" value="deleteService">
-                                            <input type="hidden" name="serviceId" value="${s.serviceId}">
-                                            <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
-                                            <button type="submit" class="dropdown-item text-danger">
-                                                <i class="bi bi-trash me-2 text-danger"></i>Xóa dịch vụ
                                             </button>
                                         </form>
                                     </li>

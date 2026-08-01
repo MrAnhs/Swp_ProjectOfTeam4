@@ -7,9 +7,9 @@
  */
 
 // Global Context Fallbacks
-const adminContextPath = (window.AdminConfig && window.AdminConfig.contextPath) ? window.AdminConfig.contextPath : (typeof window.adminContextPath !== 'undefined' ? window.adminContextPath : '');
-const adminCsrfToken = (window.AdminConfig && window.AdminConfig.csrfToken) ? window.AdminConfig.csrfToken : (typeof window.adminCsrfToken !== 'undefined' ? window.adminCsrfToken : '');
-const adminLoginUrl = (window.AdminConfig && window.AdminConfig.loginUrl) ? window.AdminConfig.loginUrl : (typeof window.adminLoginUrl !== 'undefined' ? window.adminLoginUrl : adminContextPath + '/login.jsp');
+var adminContextPath = window.adminContextPath || (window.AdminConfig && window.AdminConfig.contextPath ? window.AdminConfig.contextPath : '');
+var adminCsrfToken = window.adminCsrfToken || (window.AdminConfig && window.AdminConfig.csrfToken ? window.AdminConfig.csrfToken : '');
+var adminLoginUrl = window.adminLoginUrl || (window.AdminConfig && window.AdminConfig.loginUrl ? window.AdminConfig.loginUrl : adminContextPath + '/login.jsp');
 
 if (typeof window.escapeHtml !== 'function') {
     window.escapeHtml = function (s) {
@@ -24,135 +24,8 @@ if (typeof window.escapeHtmlForSchedule !== 'function') {
 }
 
 // ==========================================
-// 1. CHUYỂN GIAO CA TRỰC (TRANSFER SCHEDULE)
+// 1. CHỈNH SỬA CA TRỰC BÁC SĨ (EDIT DOCTOR SCHEDULE)
 // ==========================================
-
-/**
- * Mở modal chuyển giao ca trực và tải danh sách bác sĩ thay thế qua AJAX.
- * @param {string|number} scheduleId - ID của ca trực hiện tại cần chuyển
- * @param {string} doctorName - Tên bác sĩ hiện tại
- * @param {string} department - Chuyên khoa
- * @param {string} workDate - Ngày trực
- * @param {string} timeSlot - Khung giờ trực
- */
-async function openTransferModal(scheduleId, doctorName, department, workDate, timeSlot) {
-    const modalEl = document.getElementById('transferScheduleModal');
-    const bsModal = new bootstrap.Modal(modalEl);
-    
-    // Hiển thị thông tin ca trực hiện tại đang được chọn
-    document.getElementById('transferSelectedInfo').textContent = doctorName + ' - ' + department + ' - ' + workDate + ' - ' + timeSlot;
-    
-    const select = document.getElementById('transferTargetDoctor');
-    select.innerHTML = '<option>Đang tải...</option>';
-    
-    try {
-        const resp = await fetch(adminContextPath + '/admin?action=getTransferCandidates&scheduleId=' + encodeURIComponent(scheduleId), {
-            headers: { 'Accept': 'application/json' }
-        });
-        if (!resp.ok) throw new Error('HTTP ' + resp.status);
-        const data = await resp.json();
-        
-        const currentId = data.currentDoctorId || null;
-        const items = data.items || [];
-        
-        let options = '<option value="">-- Chọn bác sĩ thay thế --</option>';
-        for (const d of items) {
-            // Không hiển thị lại bác sĩ hiện tại trong danh sách chuyển
-            if (currentId && String(d.doctorId) === String(currentId)) continue;
-            options += '<option value="' + d.doctorId + '">' + escapeHtml(d.fullName) + ' - ' + escapeHtml(d.department) + '</option>';
-        }
-        select.innerHTML = options;
-    } catch (err) {
-        select.innerHTML = '<option value="">Không tải được danh sách bác sĩ</option>';
-    }
-    
-    // Gán ID ca trực vào nút xác nhận
-    document.getElementById('transferConfirmBtn').setAttribute('data-schedule-id', scheduleId);
-    bsModal.show();
-}
-
-/**
- * Lắng nghe sự kiện click xác nhận chuyển giao ca trực
- */
-document.getElementById('transferConfirmBtn')?.addEventListener('click', async function () {
-    const scheduleId = this.getAttribute('data-schedule-id');
-    const targetDoctorId = document.getElementById('transferTargetDoctor').value;
-    const alertBox = document.getElementById('transferAlert');
-    alertBox.className = 'alert d-none';
-    
-    if (!targetDoctorId) {
-        alertBox.className = 'alert alert-danger';
-        alertBox.textContent = 'Vui lòng chọn bác sĩ nhận ca.';
-        return;
-    }
-    
-    try {
-        const params = new URLSearchParams();
-        params.set('action', 'transferSchedule');
-        params.set('scheduleId', scheduleId);
-        params.set('targetDoctorId', targetDoctorId);
-        params.set('csrfToken', adminCsrfToken);
-        
-        const resp = await fetch(adminContextPath + '/admin', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: params.toString()
-        });
-        
-        let json = null;
-        try { json = await resp.json(); } catch (e) {}
-        
-        if (json && json.success) {
-            alertBox.className = 'alert alert-success';
-            alertBox.textContent = json.message || 'Đã chuyển giao ca trực';
-            
-            // Cập nhật tên bác sĩ trực tiếp trên dòng của bảng biểu mà không cần reload trang
-            const row = document.querySelector('tr[data-schedule-id="' + scheduleId + '"]');
-            if (row) {
-                row.setAttribute('data-doctor-name', json.targetDoctorName || '');
-                const firstTd = row.querySelector('td');
-                if (firstTd) firstTd.textContent = json.targetDoctorName || firstTd.textContent;
-            }
-            
-            setTimeout(() => {
-                const bsModal = bootstrap.Modal.getInstance(document.getElementById('transferScheduleModal'));
-                if (bsModal) bsModal.hide();
-            }, 900);
-        } else {
-            const msg = (json && json.message) ? json.message : ('HTTP ' + resp.status);
-            alertBox.className = 'alert alert-danger';
-            alertBox.textContent = 'Không thể chuyển giao ca: ' + msg;
-        }
-    } catch (err) {
-        alertBox.className = 'alert alert-danger';
-        alertBox.textContent = 'Lỗi khi gửi yêu cầu: ' + err.message;
-    }
-});
-
-window.openTransferModal = openTransferModal;
-
-/**
- * Trích xuất dữ liệu từ hàng (tr) và mở modal chuyển giao ca trực
- * @param {HTMLElement} el - Element nút bấm chuyển ca trên hàng
- */
-function openTransferModalFromRow(el) {
-    const tr = el.closest('tr');
-    if (!tr) return;
-    const scheduleId = tr.getAttribute('data-schedule-id');
-    const doctorName = tr.getAttribute('data-doctor-name') || tr.querySelector('td')?.textContent || '';
-    const department = tr.getAttribute('data-department') || '';
-    const workDate = tr.querySelector('td:nth-child(3)')?.textContent.trim() || '';
-    const timeSlot = tr.querySelector('td:nth-child(4)')?.textContent.trim() || '';
-    openTransferModal(scheduleId, doctorName, department, workDate, timeSlot);
-}
-window.openTransferModalFromRow = openTransferModalFromRow;
-
-
-// ==========================================
-// 2. CHỈNH SỬA CA TRỰC BÁC SĨ (EDIT DOCTOR SCHEDULE)
 // ==========================================
 
 /**
@@ -199,9 +72,10 @@ async function openEditScheduleModal(scheduleId) {
                                 <div class="mb-3">
                                     <label class="form-label">Trạng thái</label>
                                     <select id="editStatus" name="status" class="form-select">
-                                        <option value="Available">Khả dụng</option>
-                                        <option value="Full">Đã đầy</option>
-                                        <option value="Cancelled">Đã hủy</option>
+                                        <option value="Available">Sẵn sàng (Available)</option>
+                                        <option value="Full">Đã đầy (Full)</option>
+                                        <option value="Cancelled">Đã hủy (Cancelled)</option>
+                                        <option value="Completed">Đã hoàn thành (Completed)</option>
                                     </select>
                                 </div>
                             </div>
@@ -500,3 +374,8 @@ function getStatusBadge(status) {
     };
     return statusMap[status] || '<span class="badge text-bg-secondary">' + (status || 'Không xác định') + '</span>';
 }
+
+/**
+ * Tự động lọc danh sách phòng trực theo chuyên khoa của Bác sĩ được chọn khi tạo ca
+ */
+

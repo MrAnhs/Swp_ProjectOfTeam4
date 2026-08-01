@@ -4,7 +4,7 @@ import com.diabetes.monitoring.admin.analytics.AdminAnalyticsHandler;
 import com.diabetes.monitoring.admin.management.AdminManagementHandler;
 import com.diabetes.monitoring.admin.patientflow.AdminPatientFlowHandler;
 import com.diabetes.monitoring.admin.scheduling.AdminSchedulingHandler;
-import com.diabetes.monitoring.admin.ai.AdminAIHandler;
+
 import com.diabetes.monitoring.model.User;
 import com.diabetes.monitoring.util.CsrfUtil;
 
@@ -25,7 +25,7 @@ public class AdminServlet extends HttpServlet {
     private final AdminManagementHandler managementHandler = new AdminManagementHandler();
     private final AdminSchedulingHandler schedulingHandler = new AdminSchedulingHandler();
     private final AdminPatientFlowHandler patientFlowHandler = new AdminPatientFlowHandler();
-    private final AdminAIHandler aiHandler = new AdminAIHandler();
+
 
     /**
      * Handles read-only Admin requests and forwards them to matching handlers.
@@ -62,26 +62,7 @@ public class AdminServlet extends HttpServlet {
             return;
         }
 
-        if ("ai-management".equals(action)
-                || "ai-dashboard".equals(action)
-                || "ai-dataset".equals(action)
-                || "ai-training".equals(action)
-                || "ai-model".equals(action)) {
-            aiHandler.loadManagementPage(request, response);
-            return;
-        }
-        if ("ai-dataset-detail-json".equals(action)) {
-            aiHandler.getDatasetDetailJson(request, response);
-            return;
-        }
-        if ("ai-dataset-global-info-json".equals(action)) {
-            aiHandler.getGlobalPendingCountsJson(request, response);
-            return;
-        }
-        if ("ai-training-progress".equals(action)) {
-            aiHandler.getTrainingProgress(request, response);
-            return;
-        }
+
 
         if ("listUsers".equals(action)) {
             managementHandler.loadAccounts(request, response);
@@ -219,22 +200,7 @@ public class AdminServlet extends HttpServlet {
             return;
         }
 
-        if ("ai-dataset-confirm".equals(action)) {
-            aiHandler.confirmDatasetDecision(request, response);
-            return;
-        }
-        if ("ai-dataset-confirm-bulk".equals(action)) {
-            aiHandler.confirmDatasetDecisionBulk(request, response);
-            return;
-        }
-        if ("ai-dataset-confirm-global".equals(action)) {
-            aiHandler.confirmDatasetDecisionGlobal(request, response);
-            return;
-        }
-        if ("ai-start-training".equals(action)) {
-            aiHandler.startTraining(request, response);
-            return;
-        }
+
 
         if ("createAccount".equals(action)) {
             managementHandler.createAccount(request, response);

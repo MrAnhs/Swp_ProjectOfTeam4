@@ -12,38 +12,8 @@
         <link href="${pageContext.request.contextPath}/assets/css/pages/doctor/doctor.css?v=20260721-ui2" rel="stylesheet">
     </head>
     <body class="doctor-app">
-        <aside class="doctor-sidebar">
-            <div class="doctor-brand"><span class="doctor-brand-icon"><i class="bi bi-heart-pulse"></i></span> Cổng bác sĩ</div>
-            <div class="doctor-profile-card">
-                <div class="doctor-avatar">
-                    <c:choose>
-                        <c:when test="${not empty sessionScope.currentUser.fullName}">
-                            <c:out value="${sessionScope.currentUser.fullName.substring(0, 1)}" />
-                        </c:when>
-                        <c:otherwise>D</c:otherwise>
-                    </c:choose>
-                </div>
-                <div class="doctor-info">
-                    <div class="doctor-name" title="<c:out value='${sessionScope.currentUser.fullName}' />">
-                        <c:out value="${sessionScope.currentUser.fullName}" default="Bác sĩ" />
-                    </div>
-                    <div class="doctor-role-tag">Bác sĩ</div>
-                </div>
-                <a href="${pageContext.request.contextPath}/settings" class="doctor-edit-profile-btn" title="Chỉnh sửa hồ sơ">
-                    <i class="bi bi-pencil-square"></i>
-                </a>
-            </div>
-            <nav class="doctor-nav">
-                <a href="${pageContext.request.contextPath}/doctor/dashboard"><i class="bi bi-grid"></i> Tiếp nhận hồ sơ</a>
-                <a href="${pageContext.request.contextPath}/doctor/general-examinations"><i class="bi bi-person-vcard"></i> Khám tổng quát</a>
-                <a href="${pageContext.request.contextPath}/doctor/laboratory-requests"><i class="bi bi-eyedropper"></i> Xét nghiệm</a>
-                <a href="${pageContext.request.contextPath}/doctor/examinations"><i class="bi bi-clipboard2-pulse-fill"></i> Khám chi tiết</a>
-                <a class="active" href="${pageContext.request.contextPath}/doctor/completed-records"><i class="bi bi-archive"></i> Đã hoàn thành</a>
-                <a href="${pageContext.request.contextPath}/doctor/patients/search"><i class="bi bi-search"></i> Tra cứu</a>
-                <a href="${pageContext.request.contextPath}/doctor/schedule"><i class="bi bi-calendar3"></i> Lịch trực</a>
-                <a class="text-danger mt-lg-4" href="${pageContext.request.contextPath}/logout"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a>
-            </nav>
-        </aside>
+<c:set var="activeDoctorPage" value="completed-records" />
+<%@ include file="/WEB-INF/views/components/doctor/sidebar.jspf" %>
         <main class="doctor-main">
             <section class="doctor-topbar mb-4">
                 <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 align-items-lg-center">

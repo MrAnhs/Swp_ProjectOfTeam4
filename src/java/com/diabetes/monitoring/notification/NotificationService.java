@@ -135,17 +135,26 @@ public class NotificationService {
             statement.executeUpdate();
         }
 
+        String updateOrders = "UPDATE lo SET lo.status = 'Requested' "
+                + "FROM Lab_Order lo JOIN Invoice_Detail id ON lo.order_id = CONCAT('LAB-', id.invoice_detail_id) "
+                + "WHERE id.invoice_id = ? AND (lo.status IS NULL OR lo.status = 'Waiting_Payment' OR LOWER(lo.status) = 'waiting_payment')";
+        try (PreparedStatement statement = connection.prepareStatement(updateOrders)) {
+            statement.setInt(1, invoiceId);
+            statement.executeUpdate();
+        }
+
         String insertOrders = "INSERT INTO Lab_Order "
                 + "(order_id, appointment_id, patient_id, room_id, service_id, lab_id, status, created_at) "
-                + "SELECT CONCAT('LAB-', id.invoice_detail_id), id.appointment_id, i.patient_id, "
-                + "(SELECT TOP 1 r.room_id FROM Room r WHERE r.status = 'Active' "
-                + "AND (r.room_id LIKE 'LAB%' OR r.room_name LIKE N'%x\u00E9t nghi\u1EC7m%') "
-                + "ORDER BY (SELECT COUNT(*) FROM Lab_Order existing "
-                + "WHERE existing.room_id = r.room_id AND existing.status IN ('Requested','Processing')), "
-                + "r.room_id), id.service_id, NULL, 'Requested', GETDATE() "
+                + "SELECT CONCAT('LAB-', id.invoice_detail_id), "
+                + "COALESCE(id.appointment_id, (SELECT TOP 1 appt.appointment_id FROM Appointment appt WHERE appt.patient_id = i.patient_id ORDER BY appt.appointment_id DESC), 0), "
+                + "i.patient_id, "
+                + "COALESCE("
+                + "  (SELECT TOP 1 ls.room_id FROM Lab_Schedule ls WHERE ls.lab_id = id.lab_id AND CAST(ls.work_date AS date) = CAST(GETDATE() AS date) AND (ls.status IS NULL OR LOWER(ls.status) <> 'cancelled')), "
+                + "  (SELECT TOP 1 r.room_id FROM Room r WHERE r.status = 'Active' AND (r.room_id LIKE 'LAB%' OR r.room_name LIKE N'%x\u00E9t nghi\u1EC7m%') ORDER BY (SELECT COUNT(*) FROM Lab_Order existing WHERE existing.room_id = r.room_id AND existing.status IN ('Requested','Processing')), r.room_id)"
+                + "), id.service_id, id.lab_id, 'Requested', GETDATE() "
                 + "FROM Invoice_Detail id JOIN Invoice i ON i.invoice_id = id.invoice_id "
                 + "JOIN Medical_Service ms ON ms.service_id = id.service_id "
-                + "WHERE id.invoice_id = ? AND id.appointment_id IS NOT NULL "
+                + "WHERE id.invoice_id = ? "
                 + "AND ms.service_type = 'Lab_Test' "
                 + "AND NOT EXISTS (SELECT 1 FROM Lab_Order lo "
                 + "WHERE lo.order_id = CONCAT('LAB-', id.invoice_detail_id))";

@@ -10,77 +10,212 @@
     <title>Lịch trực của tôi</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="${pageContext.request.contextPath}/assets/css/pages/receptionist/receptionist.css" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/css/pages/receptionist/receptionist.css?v=20260725-balanced" rel="stylesheet">
     <style>
-        .schedule-grid {
-            display: grid;
-            grid-template-columns: 100px repeat(7, 1fr);
-            gap: 1px;
-            background-color: #dee2e6;
-            border: 1px solid #dee2e6;
+        .receptionist-page {
+            background-color: #f8fafc !important;
+        }
+        .page-kicker-green {
+            color: #16a34a;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+        }
+        .page-title-dark {
+            color: #0f172a;
+            font-weight: 800;
+            font-size: 2rem;
+            margin-bottom: 4px;
+        }
+        .page-subtitle-muted {
+            color: #64748b;
+            font-size: 0.925rem;
+        }
+
+        /* Top Right Filters Box matching Image 2 */
+        .filter-controls-box {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
             border-radius: 8px;
-            overflow: hidden;
+            padding: 6px 12px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+            display: inline-flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .filter-label-year {
+            color: #dc2626;
+            font-weight: 700;
+            font-size: 0.8rem;
+            letter-spacing: 0.05em;
+        }
+        .filter-label-week {
+            color: #2563eb;
+            font-weight: 700;
+            font-size: 0.8rem;
+            letter-spacing: 0.05em;
+        }
+        .filter-select {
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 4px 28px 4px 10px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #334155;
+            background-color: #ffffff;
+            cursor: pointer;
+        }
+
+        /* Schedule Container & Grid Table matching Image 2 */
+        .schedule-card-panel {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
             margin-top: 20px;
         }
-        .schedule-header {
-            background-color: #f8f9fa;
-            padding: 15px;
-            text-align: center;
-            font-weight: 600;
+
+        .schedule-table-grid {
+            display: grid;
+            grid-template-columns: 110px repeat(7, 1fr);
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: #e2e8f0;
+            gap: 1px;
         }
-        .schedule-time {
-            background-color: #f8f9fa;
-            padding: 15px;
+
+        .sched-hdr-cell {
+            background-color: #f8fafc;
+            padding: 12px 8px;
             text-align: center;
-            font-weight: 600;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
         }
-        .schedule-cell {
-            background-color: #fff;
-            padding: 10px;
-            min-height: 100px;
+        .sched-hdr-title {
+            font-weight: 700;
+            color: #334155;
+            font-size: 0.9rem;
+        }
+
+        .sched-day-name {
+            font-size: 0.8rem;
+            color: #64748b;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+        .sched-date-num {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #2563eb;
+            line-height: 1;
+            margin-bottom: 3px;
+        }
+        .sched-month-name {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+
+        .sched-hdr-cell.is-today .sched-date-num {
+            background-color: #2563eb;
+            color: #ffffff;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 1px;
+            margin-bottom: 2px;
+        }
+
+        .sched-time-col {
+            background-color: #ffffff;
+            padding: 16px 8px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .sched-shift-title {
+            font-weight: 800;
+            color: #0f172a;
+            font-size: 0.95rem;
+        }
+        .sched-shift-time {
+            font-size: 0.775rem;
+            color: #64748b;
+            margin-top: 2px;
+        }
+
+        .sched-grid-cell {
+            background-color: #ffffff;
+            padding: 8px;
+            min-height: 130px;
             display: flex;
             flex-direction: column;
             gap: 8px;
         }
-        .schedule-item {
-            background-color: #e3f2fd;
-            border-left: 4px solid #0d6efd;
-            padding: 8px;
-            border-radius: 4px;
-            font-size: 0.875rem;
+
+        /* Shift Card Components (Exact Image 2 Match) */
+        .shift-card {
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 0.8rem;
+            line-height: 1.45;
         }
-        .schedule-item.status-scheduled {
-            border-left-color: #0d6efd;
-            background-color: #e3f2fd;
+
+        /* Expired / Cancelled (Red theme in Image 2) */
+        .shift-card.status-cancelled,
+        .shift-card.status-expired {
+            background-color: #fce8e6;
+            color: #1f2937;
         }
-        .schedule-item.status-completed {
-            border-left-color: #198754;
-            background-color: #d1e7dd;
+        .shift-card.status-cancelled .shift-time-head,
+        .shift-card.status-expired .shift-time-head {
+            color: #991b1b;
+            font-weight: 700;
         }
-        .schedule-item.status-cancelled {
-            border-left-color: #dc3545;
-            background-color: #f8d7da;
+
+        /* Active / Scheduled (Blue theme in Image 2) */
+        .shift-card.status-scheduled,
+        .shift-card.status-active {
+            background-color: #e0f2fe;
+            color: #1f2937;
         }
-        .date-number {
-            font-size: 1.5rem;
-            color: #0d6efd;
-            margin-bottom: 5px;
+        .shift-card.status-scheduled .shift-time-head,
+        .shift-card.status-active .shift-time-head {
+            color: #1e40af;
+            font-weight: 700;
         }
-        .day-name {
-            font-size: 0.875rem;
-            color: #6c757d;
+
+        .shift-staff-name {
+            color: #4b5563;
+            margin-top: 3px;
+            margin-bottom: 4px;
         }
-        .today .date-number {
-            color: #fff;
-            background-color: #0d6efd;
-            display: inline-block;
-            width: 40px;
-            height: 40px;
-            line-height: 40px;
-            border-radius: 50%;
+
+        .shift-badge-expired {
+            background-color: #dc2626;
+            color: #ffffff;
+            font-weight: 600;
+            border-radius: 12px;
+            padding: 3px 8px;
+            font-size: 0.725rem;
+        }
+        .shift-badge-scheduled {
+            background-color: #2563eb;
+            color: #ffffff;
+            font-weight: 600;
+            border-radius: 12px;
+            padding: 3px 8px;
+            font-size: 0.725rem;
         }
     </style>
 </head>
@@ -88,65 +223,8 @@
 <div class="receptionist-shell">
     <%@ include file="/WEB-INF/views/components/receptionist/sidebar.jspf" %>
     <main class="receptionist-main">
-        <div class="page-kicker">Lễ tân</div>
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h1 class="page-title">Lịch trực của tôi</h1>
-                <p class="page-subtitle">Xem lịch làm việc theo tuần.</p>
-            </div>
-            <div class="d-flex align-items-center gap-3">
-                <button class="btn btn-outline-secondary" id="btnPrevWeek">
-                    <i class="bi bi-chevron-left"></i> Tuần trước
-                </button>
-                <h5 class="mb-0 fw-bold" id="currentWeekRange">--/--/---- - --/--/----</h5>
-                <button class="btn btn-outline-secondary" id="btnNextWeek">
-                    Tuần sau <i class="bi bi-chevron-right"></i>
-                </button>
-                <button class="btn btn-primary" id="btnToday">Hôm nay</button>
-                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#registerScheduleModal">
-                    <i class="bi bi-plus-circle me-1"></i> Đăng ký lịch trực
-                </button>
-            </div>
-        </div>
-
-        <div class="schedule-container bg-white p-4 rounded shadow-sm">
-            <div class="schedule-grid" id="scheduleGrid">
-                <!-- Data will be populated by JS -->
-            </div>
-        </div>
-
-        <!-- Modal Đăng ký lịch trực -->
-        <div class="modal fade" id="registerScheduleModal" tabindex="-1" aria-labelledby="registerScheduleModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <form id="registerScheduleForm">
-                        <div class="modal-header">
-                            <h5 class="modal-title fw-bold" id="registerScheduleModalLabel">Đăng ký lịch trực</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div id="modalAlert"></div>
-                            <div class="mb-3">
-                                <label for="regWorkDate" class="form-label fw-semibold">Chọn ngày trực</label>
-                                <input type="date" id="regWorkDate" class="form-control" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="regTimeSlot" class="form-label fw-semibold">Chọn ca trực</label>
-                                <select id="regTimeSlot" class="form-select" required>
-                                    <option value="">-- Chọn ca trực --</option>
-                                    <option value="08:00 - 12:00">Ca 1 (08:00 - 12:00)</option>
-                                    <option value="13:00 - 17:00">Ca 2 (13:00 - 17:00)</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                            <button type="submit" class="btn btn-success" id="btnSubmitSchedule">Xác nhận đăng ký</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
+        <!-- Shared Master Duty Schedule Grid Component -->
+        <%@ include file="/WEB-INF/views/components/shared/duty-schedule-grid.jspf" %>
     </main>
 </div>
 <script>
@@ -156,7 +234,8 @@
     };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="${pageContext.request.contextPath}/assets/js/core/duty-schedule-shared.js"></script>
 <script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/receptionist/receptionist-utils.js?v=20260709-fontfix2"></script>
-<script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/receptionist/schedule.js?v=1"></script>
+<script charset="UTF-8" src="${pageContext.request.contextPath}/assets/js/pages/receptionist/schedule.js?v=20260725-v5"></script>
 </body>
 </html>

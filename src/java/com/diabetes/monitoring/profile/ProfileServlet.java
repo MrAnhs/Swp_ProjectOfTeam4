@@ -18,9 +18,31 @@ public class ProfileServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        User user = currentUser(request.getSession(false));
+        if (user != null && "admin".equalsIgnoreCase(user.getRole())) {
+            response.sendRedirect(request.getContextPath() + "/admin");
+            return;
+        }
         String path = request.getPathInfo();
         if (path == null || "/".equals(path)) {
-            request.getRequestDispatcher("/WEB-INF/views/settings.jsp").forward(request, response);
+            if (user == null) {
+                response.sendRedirect(request.getContextPath() + "/login.jsp");
+                return;
+            }
+            String role = user.getRole() != null ? user.getRole().toLowerCase() : "";
+            if ("patient".equals(role)) {
+                response.sendRedirect(request.getContextPath() + "/patient/dashboard");
+            } else if ("receptionist".equals(role)) {
+                response.sendRedirect(request.getContextPath() + "/receptionist/dashboard");
+            } else if ("doctor".equals(role)) {
+                response.sendRedirect(request.getContextPath() + "/doctor/dashboard");
+            } else if ("doctor_lab".equals(role) || "doctor-lab".equals(role)) {
+                response.sendRedirect(request.getContextPath() + "/doctor-lab/dashboard");
+            } else if ("admin".equals(role)) {
+                response.sendRedirect(request.getContextPath() + "/admin");
+            } else {
+                request.getRequestDispatcher("/WEB-INF/views/settings.jsp").forward(request, response);
+            }
             return;
         }
         if ("/profile".equals(path) || "/account".equals(path)) {
@@ -42,7 +64,8 @@ public class ProfileServlet extends HttpServlet {
             return;
         }
         User user = currentUser(request.getSession(false));
-        if (user == null) { writeError(response, 401, "Phiên đăng nhập đã hết hạn"); return; }
+        if (user == null) { writeError(response, 401, "Phi\u00EAn \u0111\u0103ng nh\u1EADp \u0111\u00E3 h\u1EBFt h\u1EA1n"); return; }
+        if ("admin".equalsIgnoreCase(user.getRole())) { writeError(response, 403, "T\u00E0i kho\u1EA3n Admin kh\u00F4ng s\u1EFD d\u1EE5ng trang c\u00E0i \u0111\u1EB7t c\u00E1 nh\u00E2n"); return; }
         try {
             if ("/email/request-otp".equals(path)) {
                 verificationService.requestEmailChange(user,
@@ -64,14 +87,17 @@ public class ProfileServlet extends HttpServlet {
             }
             Profile profile = new Profile();
             profile.setFullName(request.getParameter("fullName"));
-            // Email is managed by the account settings dialog, not the personal profile form.
-            // Preserve the current session value when the personal form does not submit email.
             profile.setEmail(user.getEmail());
             profile.setPhone(request.getParameter("phone"));
             profile.setDateOfBirth(request.getParameter("dateOfBirth"));
             profile.setGender(request.getParameter("gender"));
             profile.setAddress(request.getParameter("address"));
             profileService.update(user, profile);
+
+            String newPassword = request.getParameter("newPassword");
+            if (newPassword != null && !newPassword.isBlank()) {
+                profileService.updatePasswordDirectly(user, newPassword);
+            }
             writeJson(response, "{\"success\":true}");
         } catch (IllegalArgumentException e) {
             writeError(response, 400, e.getMessage());

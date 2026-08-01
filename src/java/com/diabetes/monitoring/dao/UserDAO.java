@@ -110,6 +110,9 @@ public class UserDAO {
      * For patients/doctors: also fetch role-specific profile details.
      */
     public User validateLogin(String email, String password) {
+        if (email == null || email.trim().isEmpty() || password == null) {
+            return null;
+        }
         String sqlAccount = "SELECT account_id, full_name, email, role, password_hash, status "
                 + "FROM Account WHERE LOWER(email) = LOWER(?)";
         
@@ -141,6 +144,10 @@ public class UserDAO {
                             loadPatientDetails(connection, user, accountId);
                         } else if ("Doctor".equalsIgnoreCase(userRole)) {
                             loadDoctorDetails(connection, user, accountId);
+                        } else if ("Receptionist".equalsIgnoreCase(userRole)) {
+                            loadReceptionDetails(connection, user, accountId);
+                        } else if (isDoctorLabRole(userRole)) {
+                            loadDoctorLabDetails(connection, user, accountId);
                         }
                         
                         return user;
@@ -156,15 +163,16 @@ public class UserDAO {
     public User validateLogin(String email, String password, String role) {
         return validateLogin(email, password);
     }
-private void loadPatientDetails(Connection connection, User user, int accountId) throws SQLException {
-        String sql = "SELECT patient_id, phone, address, date_of_birth, gender FROM Patient WHERE account_id = ?";
+
+    private void loadPatientDetails(Connection connection, User user, int accountId) throws SQLException {
+        String sql = "SELECT full_name, phone, address, date_of_birth, gender FROM Patient WHERE account_id = ?";
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setInt(1, accountId);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    // Store patient_id in a way that can be used later
-                    // For now, using emergencyContact field to store patient_id temporarily
-                    // or we could extend User model
+                    if (rs.getString("full_name") != null && !rs.getString("full_name").isBlank()) {
+                        user.setFullName(rs.getString("full_name"));
+                    }
                     user.setPhone(rs.getString("phone"));
                     user.setAddress(rs.getString("address"));
                     user.setDob(rs.getString("date_of_birth"));
@@ -173,18 +181,83 @@ private void loadPatientDetails(Connection connection, User user, int accountId)
             }
         }
     }
-    
+
     private void loadDoctorDetails(Connection connection, User user, int accountId) throws SQLException {
-        String sql = "SELECT doctor_id, phone, department FROM Doctor WHERE account_id = ?";
+        String sql = "SELECT full_name, phone, address, date_of_birth, gender FROM Doctor WHERE account_id = ?";
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setInt(1, accountId);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
+                    if (rs.getString("full_name") != null && !rs.getString("full_name").isBlank()) {
+                        user.setFullName(rs.getString("full_name"));
+                    }
                     user.setPhone(rs.getString("phone"));
-                    // Store department info if needed
+                    user.setAddress(rs.getString("address"));
+                    user.setDob(rs.getString("date_of_birth"));
+                    user.setGender(rs.getString("gender"));
                 }
             }
         }
+    }
+
+    private void loadReceptionDetails(Connection connection, User user, int accountId) throws SQLException {
+        String sql = "SELECT full_name, phone, address, date_of_birth, gender FROM Reception WHERE account_id = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setInt(1, accountId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    if (rs.getString("full_name") != null && !rs.getString("full_name").isBlank()) {
+                        user.setFullName(rs.getString("full_name"));
+                    }
+                    user.setPhone(rs.getString("phone"));
+                    user.setAddress(rs.getString("address"));
+                    user.setDob(rs.getString("date_of_birth"));
+                    user.setGender(rs.getString("gender"));
+                }
+            }
+        }
+    }
+
+    private void loadDoctorLabDetails(Connection connection, User user, int accountId) throws SQLException {
+        String sql = "SELECT full_name, phone, address, date_of_birth, gender FROM Doctor_Lab WHERE account_id = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setInt(1, accountId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    if (rs.getString("full_name") != null && !rs.getString("full_name").isBlank()) {
+                        user.setFullName(rs.getString("full_name"));
+                    }
+                    user.setPhone(rs.getString("phone"));
+                    user.setAddress(rs.getString("address"));
+                    user.setDob(rs.getString("date_of_birth"));
+                    user.setGender(rs.getString("gender"));
+                }
+            }
+        }
+    }
+
+    public void syncUserDetails(User user) {
+        if (user == null || user.getId() <= 0) return;
+        try (Connection connection = DatabaseConnection.getConnection()) {
+            String role = user.getRole();
+            if ("Patient".equalsIgnoreCase(role)) {
+                loadPatientDetails(connection, user, user.getId());
+            } else if ("Doctor".equalsIgnoreCase(role)) {
+                loadDoctorDetails(connection, user, user.getId());
+            } else if ("Receptionist".equalsIgnoreCase(role)) {
+                loadReceptionDetails(connection, user, user.getId());
+            } else if (isDoctorLabRole(role)) {
+                loadDoctorLabDetails(connection, user, user.getId());
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private boolean isDoctorLabRole(String role) {
+        if (role == null) return false;
+        String normalized = role.trim().replace("-", "_").replace(" ", "_");
+        return "doctor_lab".equalsIgnoreCase(normalized);
     }
     
     /**

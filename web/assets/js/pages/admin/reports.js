@@ -35,7 +35,8 @@ let revenueChart = null;
                     label: chartLabel,
                     data: values,
                     borderColor: activeColor,
-                    backgroundColor: buildChartColors(labels, selectedChartPeriod, activeColor, inactiveColor)
+                    backgroundColor: buildChartColors(labels, selectedChartPeriod, activeColor, inactiveColor),
+                    borderRadius: 8
                 }]
             },
             options: {
@@ -48,6 +49,24 @@ let revenueChart = null;
                             onPick(clickedLabel);
                         }
                     }
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#F8FAFC',
+                            font: { family: 'Inter', size: 13, weight: '600' }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: '#94A3B8', font: { family: 'Inter', size: 12 } },
+                        grid: { color: 'rgba(255, 255, 255, 0.06)' }
+                    },
+                    y: {
+                        ticks: { color: '#94A3B8', font: { family: 'Inter', size: 12 } },
+                        grid: { color: 'rgba(255, 255, 255, 0.06)' }
+                    }
                 }
             }
         };
@@ -59,9 +78,9 @@ let revenueChart = null;
             createChartConfig(
                 revenueLabels,
                 revenueValues,
-                'Doanh thu (VN\u0110)',
-                'rgba(25,135,84,.95)',
-                'rgba(25,135,84,.25)',
+                'Doanh thu (VNĐ)',
+                'rgba(42, 181, 163, 0.9)',
+                'rgba(42, 181, 163, 0.3)',
                 fetchReportDetail
             )
         );
@@ -73,9 +92,9 @@ let revenueChart = null;
             createChartConfig(
                 visitLabels,
                 visitValues,
-                'L\u01B0\u1EE3t kh\u00E1m \u0111\u00E3 ho\u00E0n t\u1EA5t',
-                'rgba(13,110,253,.95)',
-                'rgba(13,110,253,.25)',
+                'Lượt khám đã hoàn tất',
+                'rgba(56, 189, 248, 0.9)',
+                'rgba(56, 189, 248, 0.3)',
                 fetchReportDetail
             )
         );
@@ -107,26 +126,26 @@ let revenueChart = null;
         return value.toLocaleString('vi-VN', {
             minimumFractionDigits: 0,
             maximumFractionDigits: 2
-        }) + ' VN\u0110';
+        }) + ' VNĐ';
     }
 
     function getAppointmentStatusMeta(status) {
         const normalized = String(status || '').trim();
         switch (normalized) {
             case 'Completed':
-                return { label: 'Ho\u00E0n t\u1EA5t', className: 'badge bg-success' };
+                return { label: 'Hoàn tất', className: 'badge bg-success' };
             case 'Checked_In':
-                return { label: '\u0110\u00E3 check-in', className: 'badge bg-primary' };
+                return { label: 'Đã check-in', className: 'badge bg-primary' };
             case 'Cancelled':
-                return { label: '\u0110\u00E3 h\u1EE7y', className: 'badge bg-danger' };
+                return { label: 'Đã hủy', className: 'badge bg-danger' };
             case 'Absent':
-                return { label: 'Kh\u00F4ng \u0111\u1EBFn', className: 'badge bg-secondary' };
+                return { label: 'Không đến', className: 'badge bg-secondary' };
             case 'In_Progress':
-                return { label: '\u0110ang kh\u00E1m', className: 'badge bg-info text-dark' };
+                return { label: 'Đang khám', className: 'badge bg-info text-dark' };
             case 'Waiting':
-                return { label: 'Ch\u1EDD \u0111\u1EE3i', className: 'badge bg-warning text-dark' };
+                return { label: 'Chờ đợi', className: 'badge bg-warning text-dark' };
             default:
-                return { label: normalized || 'Kh\u00F4ng x\u00E1c \u0111\u1ECBnh', className: 'badge bg-secondary' };
+                return { label: normalized || 'Không xác định', className: 'badge bg-secondary' };
         }
     }
 
@@ -187,7 +206,7 @@ let revenueChart = null;
 
         const badge = document.getElementById('selectedPeriodBadge');
         if (badge) {
-            badge.textContent = selectedChartPeriod ? ('\u0110ang xem k\u1EF3: ' + selectedChartPeriod) : 'Ch\u01B0a ch\u1ECDn k\u1EF3';
+            badge.textContent = selectedChartPeriod ? ('Đang xem kỳ: ' + selectedChartPeriod) : 'Chưa chọn kỳ';
             badge.className = 'badge ' + (selectedChartPeriod ? 'bg-primary' : 'bg-secondary');
         }
 
@@ -195,8 +214,8 @@ let revenueChart = null;
             revenueChart.data.datasets[0].backgroundColor = buildChartColors(
                 revenueChart.data.labels,
                 selectedChartPeriod,
-                'rgba(25,135,84,.95)',
-                'rgba(25,135,84,.25)'
+                'rgba(42, 181, 163, 0.9)',
+                'rgba(42, 181, 163, 0.3)'
             );
             revenueChart.update();
         }
@@ -205,8 +224,8 @@ let revenueChart = null;
             visitChart.data.datasets[0].backgroundColor = buildChartColors(
                 visitChart.data.labels,
                 selectedChartPeriod,
-                'rgba(13,110,253,.95)',
-                'rgba(13,110,253,.25)'
+                'rgba(56, 189, 248, 0.9)',
+                'rgba(56, 189, 248, 0.3)'
             );
             visitChart.update();
         }
@@ -238,7 +257,7 @@ let revenueChart = null;
             renderAppointmentTable(currentDetailData.appointments);
         } catch (err) {
             console.error('[fetchReportDetail] Error:', err);
-            alert('Kh\u00F4ng th\u1EC3 t\u1EA3i d\u1EEF li\u1EC7u chi ti\u1EBFt k\u1EF3 ' + normalizedPeriod + '.');
+            alert('Không thể tải dữ liệu chi tiết kỳ ' + normalizedPeriod + '.');
         }
     }
 
@@ -250,7 +269,7 @@ let revenueChart = null;
         tbody.innerHTML = '';
 
         if (!invoices || invoices.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-3">Kh\u00F4ng c\u00F3 d\u1EEF li\u1EC7u</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-3">Không có dữ liệu</td></tr>';
             return;
         }
 
@@ -264,7 +283,7 @@ let revenueChart = null;
             html += '<td class="text-end">' + formatCurrency(item.bhytDeduction) + '</td>';
             html += '<td class="text-end fw-semibold">' + formatCurrency(item.finalAmount) + '</td>';
             html += '<td>' + escapeHtml(item.paymentDate) + '</td>';
-            html += '<td><button class="btn btn-sm btn-outline-primary" onclick="viewInvoiceDetail(\'' + safeInvoiceId + '\')">Xem chi ti\u1EBFt</button></td>';
+            html += '<td><button class="btn btn-sm btn-outline-primary" onclick="viewInvoiceDetail(\'' + safeInvoiceId + '\')">Xem chi tiết</button></td>';
             html += '</tr>';
         });
         tbody.innerHTML = html;
@@ -278,7 +297,7 @@ let revenueChart = null;
         tbody.innerHTML = '';
 
         if (!appointments || appointments.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">Kh\u00F4ng c\u00F3 d\u1EEF li\u1EC7u</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">Không có dữ liệu</td></tr>';
             return;
         }
 
@@ -305,14 +324,14 @@ let revenueChart = null;
         tbody.innerHTML = '';
 
         if (!items || items.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3">Kh\u00F4ng c\u00F3 chi ti\u1EBFt d\u1ECBch v\u1EE5</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3">Không có chi tiết dịch vụ</td></tr>';
             return;
         }
 
         let html = '';
         items.forEach(item => {
             html += '<tr>';
-            html += '<td>' + escapeHtml(item.serviceName || ('D\u1ECBch v\u1EE5 #' + item.serviceId)) + '</td>';
+            html += '<td>' + escapeHtml(item.serviceName || ('Dịch vụ #' + item.serviceId)) + '</td>';
             html += '<td class="text-end">' + escapeHtml(item.quantity) + '</td>';
             html += '<td class="text-end">' + formatCurrency(item.unitPrice) + '</td>';
             html += '<td class="text-end fw-semibold">' + formatCurrency(item.lineTotal) + '</td>';
