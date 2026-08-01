@@ -55,15 +55,19 @@
             </a>
         </section>
 
-        <section class="page-card">
-            <div class="page-card__header">
+        <section class="card-lab-style page-card p-0">
+            <div class="card-lab-header page-card__header px-4 py-3">
                 <div>
-                    <h2>L&#7847;n kh&#225;m g&#7847;n nh&#7845;t</h2>
-                    <p>Th&#244;ng tin kh&#225;m v&#224; tr&#7841;ng th&#225;i c&#244;ng b&#7889; k&#7871;t qu&#7843; m&#7899;i nh&#7845;t.</p>
+                    <h2><i class="bi bi-journal-medical"></i> L&#7847;n kh&#225;m g&#7847;n nh&#7845;t</h2>
+                    <p class="mb-0">Th&#244;ng tin kh&#225;m v&#224; tr&#7841;ng th&#225;i c&#244;ng b&#7889; k&#7871;t qu&#7843; m&#7899;i nh&#7845;t.</p>
                 </div>
-                <a href="${pageContext.request.contextPath}/patient/history">Xem t&#7845;t c&#7843;</a>
+                <a href="${pageContext.request.contextPath}/patient/history" class="btn-action-lab btn-lab-primary">
+                    <i class="bi bi-arrow-right-short"></i> Xem t&#7845;t c&#7843;
+                </a>
             </div>
-            <div id="latestRecord" class="loading-state">&#272;ang t&#7843;i l&#7847;n kh&#225;m g&#7847;n nh&#7845;t...</div>
+            <div class="p-3">
+                <div id="latestRecord" class="loading-state">&#272;ang t&#7843;i l&#7847;n kh&#225;m g&#7847;n nh&#7845;t...</div>
+            </div>
         </section>
     </main>
 

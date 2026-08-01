@@ -1,12 +1,68 @@
+/* ==========================================================================
+   DIABETESCARE SYSTEM - CORE COLOR SYSTEM & AUTOMATIC DARK MODE ARCHITECTURE
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. DEFAULT THEME: LIGHT MODE (:root)
+   -------------------------------------------------------------------------- */
 :root {
-    --color-primary: #2AB5A3;
-    --color-primary-dark: #208A7C;
-    --color-text: #1e293b;
-    --color-muted: #64748b;
-    --color-border: #e2e8f0;
-    --color-background: #f8fafc;
-    --sidebar-width: 260px;
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 20px;
+  /* Core DiabetesCare Theme Variables */
+  --bg-page: #F8F9FA;
+  --bg-card: #FFFFFF;
+  --text-primary: #212529;
+  --text-secondary: #6C757D;
+  --border-color: #DEE2E6;
+  --primary: #00C8A5;
+  --primary-light: rgba(0, 200, 165, 0.1);
+  --text-on-primary: #FFFFFF;
+
+  /* Card & Button Tokens */
+  --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  --card-border: 1px solid var(--border-color);
+  --radius-card: 16px;
+  --radius-btn: 12px;
+  --transition-theme: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+
+  /* Legacy / Compatibility Aliases */
+  --color-primary: var(--primary);
+  --color-primary-dark: #00A88B;
+  --color-text: var(--text-primary);
+  --color-muted: var(--text-secondary);
+  --color-border: var(--border-color);
+  --color-background: var(--bg-page);
+  --color-card-bg: var(--bg-card);
+  --sidebar-width: 260px;
+  --radius-sm: 8px;
+  --radius-md: var(--radius-btn);
+  --radius-lg: var(--radius-card);
+}
+
+/* --------------------------------------------------------------------------
+   2. AUTOMATIC OVERRIDE: DARK MODE (@media prefers-color-scheme: dark)
+   -------------------------------------------------------------------------- */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Dark Mode Color Palette Overrides */
+    --bg-page: #121212;
+    --bg-card: #1E1E1E;
+    --text-primary: #E0E0E0;
+    --text-secondary: #A0A0A0;
+    --border-color: #2C2C2C;
+    --primary: #00E6B8;
+    --primary-light: rgba(0, 230, 184, 0.15);
+    --text-on-primary: #121212;
+
+    /* Dark Mode Elevation & Borders */
+    --card-shadow: none;
+    --card-border: 1px solid #333333;
+
+    /* Legacy / Compatibility Aliases for Dark Mode */
+    --color-primary: var(--primary);
+    --color-primary-dark: #00C8A5;
+    --color-text: var(--text-primary);
+    --color-muted: var(--text-secondary);
+    --color-border: var(--border-color);
+    --color-background: var(--bg-page);
+    --color-card-bg: var(--bg-card);
+  }
 }
