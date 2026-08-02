@@ -15,8 +15,9 @@
 body.doctor-app {
     min-height: 100vh;
     margin: 0;
-    background: #f8fafc !important;
-    color: #1a202c !important;
+    background: #0B0F19 !important;
+    background: radial-gradient(circle at center, rgba(42, 181, 163, 0.12) 0%, #0B0F19 80%) !important;
+    color: #F8FAFC !important;
     font-family: 'Inter', "Segoe UI", system-ui, sans-serif;
 }
 
@@ -25,9 +26,9 @@ body.doctor-app {
     inset: 0 auto 0 0;
     width: 264px;
     padding: 26px 20px;
-    background: #ffffff !important;
-    border-right: 1px solid #e2e8f0 !important;
-    color: #1a202c;
+    background: rgba(15, 23, 42, 0.95) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #F8FAFC;
     z-index: 1030;
     height: 100vh;
     box-sizing: border-box;
@@ -40,7 +41,7 @@ body.doctor-app {
     margin-bottom: 28px;
     font-size: 1.15rem;
     font-weight: 800;
-    color: #1a202c !important;
+    color: #FFFFFF !important;
 }
 
 .doctor-brand-icon {
@@ -49,9 +50,9 @@ body.doctor-app {
     height: 42px;
     place-items: center;
     border-radius: 14px;
-    background: linear-gradient(135deg, #00C8A5, #009688) !important;
+    background: linear-gradient(135deg, #2AB5A3, #208A7C) !important;
     color: #fff;
-    box-shadow: 0 4px 12px rgba(0, 200, 165, 0.3);
+    box-shadow: 0 4px 12px rgba(42, 181, 163, 0.3);
 }
 
 .doctor-nav a {
@@ -61,7 +62,7 @@ body.doctor-app {
     margin-bottom: 7px;
     padding: 12px 14px;
     border-radius: 12px;
-    color: #51637a !important;
+    color: #94A3B8 !important;
     text-decoration: none;
     font-size: 15px;
     font-weight: 600;
@@ -70,8 +71,8 @@ body.doctor-app {
 
 .doctor-nav a:hover,
 .doctor-nav a.active {
-    color: #007f61 !important;
-    background: rgba(0, 200, 165, 0.12) !important;
+    color: #2AB5A3 !important;
+    background: rgba(42, 181, 163, 0.12) !important;
     font-weight: 700;
     transform: translateX(2px);
 }
@@ -79,18 +80,25 @@ body.doctor-app {
 .doctor-main {
     margin-left: 264px;
     padding: 30px;
-    background-color: #f8fafc !important;
+    background: transparent !important;
 }
 
 .doctor-topbar,
 .doctor-card,
 .doctor-stat {
-    border: 1px solid #e2e8f0 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
     border-radius: 18px;
-    background: #ffffff !important;
-    backdrop-filter: none !important;
-    color: #1a202c !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04) !important;
+    background: rgba(15, 23, 42, 0.75) !important;
+    backdrop-filter: blur(20px) !important;
+    color: #F8FAFC !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4) !important;
+    transition: all 0.25s ease;
+}
+
+.doctor-stat:hover {
+    border-color: rgba(42, 181, 163, 0.4) !important;
+    box-shadow: 0 8px 24px rgba(42, 181, 163, 0.18) !important;
+    transform: translateY(-2px);
 }
 
 .doctor-topbar,
@@ -110,71 +118,72 @@ body.doctor-app {
     place-items: center;
     border-radius: 14px;
     font-size: 1.25rem;
-    background: rgba(0, 200, 165, 0.15) !important;
-    color: #007f61 !important;
+    background: rgba(42, 181, 163, 0.15) !important;
+    color: #2AB5A3 !important;
 }
 
-.doctor-muted { color: #64748b !important; }
-.doctor-title { color: #1a202c !important; font-weight: 800; }
-.doctor-section-title { font-weight: 800; color: #1a202c !important; }
+.doctor-muted { color: #94A3B8 !important; }
+.doctor-title { color: #FFFFFF !important; font-weight: 800; }
+.doctor-section-title { font-weight: 800; color: #FFFFFF !important; }
 
 .doctor-table {
     --bs-table-bg: transparent;
-    --bs-table-color: #1a202c;
-    --bs-table-border-color: #e2e8f0;
+    --bs-table-color: #F8FAFC;
+    --bs-table-border-color: rgba(255, 255, 255, 0.08);
 }
 
 .doctor-table thead th {
     padding-block: 14px;
-    color: #64748b !important;
+    color: #94A3B8 !important;
     font-size: .76rem;
     letter-spacing: .05em;
     text-transform: uppercase;
     white-space: nowrap;
-    border-bottom: 1px solid #cbd5e1 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+    background-color: transparent;
 }
 
-.doctor-table tbody td { padding-block: 15px; border-bottom: 1px solid #e2e8f0 !important; color: #1a202c !important; }
-.doctor-table tbody tr:hover { background: rgba(0, 200, 165, 0.05) !important; }
+.doctor-table tbody td { padding-block: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important; color: #F8FAFC !important; }
+.doctor-table tbody tr:hover { background: rgba(42, 181, 163, 0.08) !important; }
 
 .doctor-badge {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 10px;
+    padding: 6px 12px;
     border-radius: 999px;
     font-size: .78rem;
     font-weight: 700;
     white-space: nowrap;
 }
 
-.badge-assigned { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
-.badge-accepted { background: rgba(0, 200, 165, 0.15); color: #007f61; border: 1px solid rgba(0, 200, 165, 0.3); }
-.badge-ai { background: rgba(59, 130, 246, 0.15); color: #2563eb; border: 1px solid rgba(59, 130, 246, 0.3); }
-.badge-editing, .badge-requested { background: rgba(234, 179, 8, 0.15); color: #ca8a04; border: 1px solid rgba(234, 179, 8, 0.3); }
-.badge-processing { background: rgba(59, 130, 246, 0.15); color: #2563eb; border: 1px solid rgba(59, 130, 246, 0.3); }
-.badge-completed { background: rgba(34, 197, 94, 0.15); color: #16a34a; border: 1px solid rgba(34, 197, 94, 0.3); }
-.badge-danger { background: rgba(239, 68, 68, 0.15); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.3); }
+.badge-assigned { background: rgba(148, 163, 184, 0.18); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.35); }
+.badge-accepted { background: rgba(42, 181, 163, 0.18); color: #34d399; border: 1px solid rgba(42, 181, 163, 0.35); }
+.badge-ai { background: rgba(14, 165, 233, 0.18); color: #38bdf8; border: 1px solid rgba(14, 165, 233, 0.35); }
+.badge-editing, .badge-requested { background: rgba(245, 158, 11, 0.18); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.35); }
+.badge-processing { background: rgba(14, 165, 233, 0.18); color: #38bdf8; border: 1px solid rgba(14, 165, 233, 0.35); }
+.badge-completed { background: rgba(16, 185, 129, 0.18); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.35); }
+.badge-danger { background: rgba(239, 68, 68, 0.18); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); }
 
 .doctor-filter {
-    border: 1px solid #cbd5e1 !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
     border-radius: 12px;
-    background: #ffffff !important;
-    color: #1a202c !important;
+    background: rgba(15, 23, 42, 0.8) !important;
+    color: #F8FAFC !important;
 }
 
 .doctor-filter option {
-    background-color: #ffffff !important;
-    color: #1a202c !important;
+    background-color: #0F172A !important;
+    color: #F8FAFC !important;
 }
 
 .doctor-empty {
     padding: 48px 20px;
-    border: 1px dashed #cbd5e1 !important;
+    border: 1px dashed rgba(255, 255, 255, 0.12) !important;
     border-radius: 16px;
     text-align: center;
-    color: #64748b !important;
-    background: #f8fafc !important;
+    color: #94A3B8 !important;
+    background: rgba(15, 23, 42, 0.5) !important;
 }
 
 .search-info-card {
@@ -184,11 +193,11 @@ body.doctor-app {
     min-height: 88px;
     height: 100%;
     padding: 16px;
-    border: 1px solid #e2e8f0 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
     border-radius: 15px;
-    background: #ffffff !important;
-    color: #1a202c !important;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+    background: rgba(15, 23, 42, 0.75) !important;
+    color: #F8FAFC !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
 }
 
 .search-info-icon {
@@ -198,20 +207,32 @@ body.doctor-app {
     height: 42px;
     place-items: center;
     border-radius: 13px;
-    background: rgba(0, 200, 165, 0.15) !important;
-    color: #007f61 !important;
+    background: rgba(42, 181, 163, 0.15) !important;
+    color: #2AB5A3 !important;
     font-size: 1.1rem;
 }
 
 .btn-doctor {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     border: none !important;
+    border-radius: 12px !important;
+    padding: 8px 16px !important;
+    font-weight: 600 !important;
+    font-size: 0.88rem !important;
     background: linear-gradient(135deg, #00C8A5, #009688) !important;
-    color: #fff !important;
+    color: #ffffff !important;
     box-shadow: 0 4px 12px rgba(0, 200, 165, 0.25) !important;
+    transition: all 0.2s ease !important;
 }
 
 .btn-doctor:hover {
-    transform: translateY(-1px);
+    background: linear-gradient(135deg, #00B394, #008073) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 16px rgba(0, 200, 165, 0.35) !important;
+    color: #ffffff !important;
 }
 
 .lab-service-option {

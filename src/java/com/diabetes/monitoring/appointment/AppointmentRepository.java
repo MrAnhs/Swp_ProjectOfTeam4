@@ -16,9 +16,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Repository xử lý workflow và dữ liệu Appointment dùng chung theo đúng phân quyền.
- */
+
 public class AppointmentRepository {
 
     private static final Logger LOGGER =

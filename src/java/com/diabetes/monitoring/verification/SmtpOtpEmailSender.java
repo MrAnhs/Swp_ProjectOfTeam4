@@ -24,8 +24,8 @@ public class SmtpOtpEmailSender implements OtpEmailSender {
 
         String host = Configuration.value("DIABETESCARE_SMTP_HOST", "smtp.gmail.com");
         String port = Configuration.value("DIABETESCARE_SMTP_PORT", "587");
-        String username = required("DIABETESCARE_SMTP_USERNAME");
-        String password = required("DIABETESCARE_SMTP_PASSWORD");
+        String username = Configuration.value("DIABETESCARE_SMTP_USERNAME", "diabetescare.system.swp@gmail.com");
+        String password = Configuration.value("DIABETESCARE_SMTP_PASSWORD", "xuyoblvebidpeqmr");
         String from = Configuration.value("DIABETESCARE_SMTP_FROM", username);
 
         Properties properties = new Properties();

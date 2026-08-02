@@ -110,11 +110,12 @@ public class PatientPageServlet extends HttpServlet {
     }
 
     private Integer findPatientId(User user) {
-        if (user == null || user.getEmail() == null) return null;
-        String sql = "SELECT patient_id FROM Patient WHERE email = ?";
+        if (user == null) return null;
+        String sql = "SELECT patient_id FROM Patient WHERE account_id = ? OR (email = ? AND email IS NOT NULL AND email <> '')";
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, user.getEmail());
+            statement.setInt(1, user.getId());
+            statement.setString(2, user.getEmail() != null ? user.getEmail() : "");
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
                     return resultSet.getInt("patient_id");

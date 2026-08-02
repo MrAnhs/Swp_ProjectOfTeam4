@@ -602,42 +602,7 @@ public class HealthRecordDAO {
 
     public boolean transferRecord(int healthRecordId, int fromDoctorId, int toDoctorId, String reason)
             throws SQLException {
-        String updateSql = "UPDATE Healthy_Record SET doctor_id = ?, status = 'Assigned' "
-                + "WHERE health_record_id = ? AND doctor_id = ? "
-                + "AND status <> 'Completed'";
-        String historySql = "INSERT INTO Record_Transfer_History "
-                + "(health_record_id, from_doctor_id, to_doctor_id, reason, created_at) "
-                + "VALUES (?, ?, ?, ?, GETDATE())";
-
-        try (Connection conn = DatabaseConnection.getConnection()) {
-            conn.setAutoCommit(false);
-            try {
-                try (PreparedStatement ps = conn.prepareStatement(updateSql)) {
-                    ps.setInt(1, toDoctorId);
-                    ps.setInt(2, healthRecordId);
-                    ps.setInt(3, fromDoctorId);
-                    if (ps.executeUpdate() != 1) {
-                        throw new SQLException("Khong the chuyen ho so nay");
-                    }
-                }
-
-                try (PreparedStatement ps = conn.prepareStatement(historySql)) {
-                    ps.setInt(1, healthRecordId);
-                    ps.setInt(2, fromDoctorId);
-                    ps.setInt(3, toDoctorId);
-                    ps.setString(4, reason);
-                    ps.executeUpdate();
-                }
-
-                conn.commit();
-                return true;
-            } catch (SQLException e) {
-                conn.rollback();
-                throw e;
-            } finally {
-                conn.setAutoCommit(true);
-            }
-        }
+        throw new UnsupportedOperationException("Tính năng chuyển ca đã được gỡ bỏ.");
     }
 
     public List<DoctorSummary> getAvailableDoctors(int excludeDoctorId) {
