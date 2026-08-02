@@ -40,7 +40,10 @@
 .notification-panel-footer { padding: 17px 24px; text-align: center; background: rgba(15, 23, 42, 0.4) !important; }
 .notification-view-more { border: 0; background: transparent; color: #2AB5A3 !important; font: inherit; font-size: 0.95rem !important; font-weight: 700; cursor: pointer; }
 .notification-view-more .bi { margin-left: 6px; }
-@keyframes notification-rotate { to { transform: rotate(360deg); } }
+@keyframes notification-rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
 @media (max-width: 760px) {
     .notification-page-header, .notification-panel-header { align-items: stretch; flex-direction: column; }
     .notification-overview { grid-template-columns: 1fr; }

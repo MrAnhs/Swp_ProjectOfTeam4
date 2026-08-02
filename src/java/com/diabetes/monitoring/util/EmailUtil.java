@@ -33,11 +33,11 @@ public class EmailUtil {
         
         final String username = (envUsername != null && !envUsername.trim().isEmpty()) 
                 ? envUsername.trim() 
-                : PROPS.getProperty("DIABETESCARE_SMTP_USERNAME");
+                : PROPS.getProperty("DIABETESCARE_SMTP_USERNAME", "diabetescare.system.swp@gmail.com");
                 
         final String passwordAuth = (envPassword != null && !envPassword.trim().isEmpty()) 
                 ? envPassword.trim() 
-                : PROPS.getProperty("DIABETESCARE_SMTP_PASSWORD");
+                : PROPS.getProperty("DIABETESCARE_SMTP_PASSWORD", "xuyoblvebidpeqmr");
                 
         final String fromEmail = (envFrom != null && !envFrom.trim().isEmpty())
                 ? envFrom.trim()
@@ -51,9 +51,13 @@ public class EmailUtil {
         Properties mailProps = new Properties();
         mailProps.put("mail.smtp.auth", "true");
         mailProps.put("mail.smtp.starttls.enable", "true");
+        mailProps.put("mail.smtp.starttls.required", "true");
         mailProps.put("mail.smtp.host", host);
         mailProps.put("mail.smtp.port", port);
         mailProps.put("mail.smtp.ssl.protocols", "TLSv1.2");
+        mailProps.put("mail.smtp.connectiontimeout", "10000");
+        mailProps.put("mail.smtp.timeout", "10000");
+        mailProps.put("mail.smtp.writetimeout", "10000");
 
         Session session = Session.getInstance(mailProps, new Authenticator() {
             @Override

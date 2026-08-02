@@ -1046,23 +1046,27 @@ public class ReceptionistDAO {
         boolean hasBookingSource = hasColumn(connection, "Appointment", "booking_source");
         boolean hasConversationId = hasColumn(connection, "Appointment", "conversation_id");
         String effectiveBookingType = bookingType == null || bookingType.isBlank() ? "At_Counter" : bookingType;
-        String columns = hasConversationId
-                ? "patient_id, schedule_id, conversation_id, appointment_time, booking_type, "
-                : "patient_id, schedule_id, appointment_time, booking_type, ";
-        String values = hasConversationId ? "?, ?, NULL, ?, ?, " : "?, ?, ?, ?, ";
-        if (hasBookingSource) {
-            columns += "booking_source, ";
-            values += "'Receptionist', ";
+        String initialStatus = "At_Counter".equalsIgnoreCase(effectiveBookingType) ? "Checked_In" : "Waiting";
+        Timestamp timestamp = appointmentTime == null ? null : Timestamp.valueOf(appointmentTime);
+
+        String sql;
+        if (hasBookingSource && hasConversationId) {
+            sql = "INSERT INTO Appointment (patient_id, schedule_id, conversation_id, appointment_time, booking_type, booking_source, queue_number, status, created_at) VALUES (?, ?, NULL, ?, ?, 'Receptionist', ?, ?, GETDATE())";
+        } else if (hasBookingSource) {
+            sql = "INSERT INTO Appointment (patient_id, schedule_id, appointment_time, booking_type, booking_source, queue_number, status, created_at) VALUES (?, ?, ?, ?, 'Receptionist', ?, ?, GETDATE())";
+        } else if (hasConversationId) {
+            sql = "INSERT INTO Appointment (patient_id, schedule_id, conversation_id, appointment_time, booking_type, queue_number, status, created_at) VALUES (?, ?, NULL, ?, ?, ?, ?, GETDATE())";
+        } else {
+            sql = "INSERT INTO Appointment (patient_id, schedule_id, appointment_time, booking_type, queue_number, status, created_at) VALUES (?, ?, ?, ?, ?, ?, GETDATE())";
         }
-        String sql = "INSERT INTO Appointment (" + columns
-                + "queue_number, status, created_at) VALUES (" + values
-                + "?, 'Waiting', GETDATE())";
+
         try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             statement.setInt(1, patientId);
             statement.setInt(2, scheduleId);
-            statement.setTimestamp(3, Timestamp.valueOf(appointmentTime));
+            statement.setTimestamp(3, timestamp);
             statement.setString(4, effectiveBookingType);
             statement.setInt(5, queueNumber);
+            statement.setString(6, initialStatus);
             statement.executeUpdate();
             try (ResultSet keys = statement.getGeneratedKeys()) {
                 if (keys.next()) {
