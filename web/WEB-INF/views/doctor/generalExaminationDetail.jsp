@@ -373,6 +373,47 @@
             </c:otherwise>
         </c:choose>
     </section>
+
+    <section id="doctorDiagnosisSection" class="doctor-card mb-4">
+        <div class="d-flex align-items-center gap-3 mb-3">
+            <span class="section-icon"><i class="bi bi-journal-medical"></i></span>
+            <div>
+                <h2 class="doctor-section-title h5 mb-0">Kết quả & Chẩn đoán của bác sĩ</h2>
+                <div class="doctor-muted small">Cập nhật ghi chú khám, chẩn đoán cuối cùng và hoàn thành hồ sơ khám.</div>
+            </div>
+        </div>
+        <div class="row g-3">
+            <div class="col-lg-8">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Ghi chú bác sĩ</label>
+                    <textarea id="doctorNotes" class="form-control" rows="5" placeholder="Nhập ghi chú hoặc kết luận lâm sàng...">${record.doctor_notes}</textarea>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Chẩn đoán cuối cùng</label>
+                    <select id="finalDiagnosis" class="form-select">
+                        <option value="Bình thường" ${record.finalDiagnosis == 'Bình thường' ? 'selected' : ''}>Bình thường</option>
+                        <option value="Tiền tiểu đường" ${record.finalDiagnosis == 'Tiền tiểu đường' ? 'selected' : ''}>Tiền tiểu đường</option>
+                        <option value="Tiểu đường Type 1" ${record.finalDiagnosis == 'Tiểu đường Type 1' or record.finalDiagnosis == 'Tiểu Đường Type 1' ? 'selected' : ''}>Tiểu Đường Type 1</option>
+                        <option value="Tiểu đường Type 2" ${record.finalDiagnosis == 'Tiểu đường Type 2' or record.finalDiagnosis == 'Tiểu Đường Type 2' or record.finalDiagnosis == 'Tiểu đường' ? 'selected' : ''}>Tiểu Đường Type 2</option>
+                        <option value="Tiểu đường Thai Kỳ" ${record.finalDiagnosis == 'Tiểu đường Thai Kỳ' or record.finalDiagnosis == 'Tiểu đường Thai kỳ' ? 'selected' : ''}>Tiểu Đường Thai Kỳ</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Hẹn ngày tái khám (Không bắt buộc)</label>
+                    <input id="revisitDate" type="date" class="form-control" value="${record.revisitDateFormatted}">
+                </div>
+                <div class="form-check mb-3">
+                    <input id="canView" class="form-check-input" type="checkbox" ${record.canPatientView ? 'checked' : ''}>
+                    <label class="form-check-label" for="canView">Cho phép bệnh nhân xem kết quả</label>
+                </div>
+                <button class="btn btn-doctor w-100" type="button" onclick="saveNotes('${record.healthRecordId}')">
+                    <i class="bi bi-save me-1"></i> Lưu và hoàn thành
+                </button>
+            </div>
+        </div>
+    </section>
 </main>
 
 <script>
@@ -496,6 +537,84 @@ document.querySelectorAll(".lab-multi-form").forEach(form => {
         }
     });
 });
+
+function saveNotes(recordId) {
+    if (!recordId || recordId === "undefined" || recordId === "null" || recordId === "0") {
+        alert("Không tìm thấy mã hồ sơ. Vui lòng tải lại trang.");
+        return;
+    }
+
+    const revisitInput = document.getElementById("revisitDate");
+    const notesInput = document.getElementById("doctorNotes");
+    const diagnosisInput = document.getElementById("finalDiagnosis");
+    const canViewInput = document.getElementById("canView");
+
+    const revisitDateVal = (revisitInput && revisitInput.value) ? revisitInput.value : "";
+    if (revisitDateVal) {
+        const selectedDate = new Date(revisitDateVal);
+        selectedDate.setHours(0, 0, 0, 0);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (selectedDate < today) {
+            alert("Ngày tái khám không được là ngày trong quá khứ!");
+            return;
+        }
+    }
+
+    const notesVal = notesInput ? notesInput.value : "";
+    const diagnosisVal = (diagnosisInput && diagnosisInput.value) ? diagnosisInput.value : "Bình thường";
+    const canViewVal = canViewInput ? canViewInput.checked : false;
+
+    const body = new URLSearchParams({
+        record_id: recordId,
+        notes: notesVal,
+        diagnosis: diagnosisVal,
+        can_view: canViewVal,
+        revisit_date: revisitDateVal
+    });
+
+    const saveBtn = document.querySelector("button[onclick*='saveNotes']");
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Đang lưu...';
+    }
+
+    fetch("${pageContext.request.contextPath}/doctor/records/save", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Accept": "application/json",
+            "X-Requested-With": "XMLHttpRequest"
+        },
+        body: body.toString()
+    })
+    .then(async response => {
+        const text = await response.text();
+        let data = {};
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            if (response.status === 401 || text.includes("login")) {
+                throw new Error("Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.");
+            }
+            throw new Error("Không thể xử lý phản hồi từ máy chủ.");
+        }
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || data.error || "Không thể lưu hồ sơ");
+        }
+        return data;
+    })
+    .then(() => {
+        window.location.href = "${pageContext.request.contextPath}/doctor/completed-records";
+    })
+    .catch(error => {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="bi bi-save me-1"></i> Lưu và hoàn thành';
+        }
+        alert(error.message);
+    });
+}
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
