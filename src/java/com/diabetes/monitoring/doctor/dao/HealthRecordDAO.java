@@ -224,7 +224,7 @@ public class HealthRecordDAO {
                 + "AND " + workflowCondition + " "
                 + "AND ( "
                 + "    (ds.work_date IS NOT NULL AND CAST(ds.work_date AS DATE) = CAST(GETDATE() AS DATE)) "
-                + "    OR (CAST(r.created_at AS DATE) = CAST(GETDATE() AS DATE)) "
+                + "    OR (ds.work_date IS NULL AND CAST(r.created_at AS DATE) = CAST(GETDATE() AS DATE)) "
                 + "    OR EXISTS (SELECT 1 FROM Record_Transfer_History h WHERE h.health_record_id = r.health_record_id AND h.to_doctor_id = ? AND CAST(h.created_at AS DATE) = CAST(GETDATE() AS DATE)) "
                 + ") "
                 + "ORDER BY r.created_at ASC, r.health_record_id ASC";
