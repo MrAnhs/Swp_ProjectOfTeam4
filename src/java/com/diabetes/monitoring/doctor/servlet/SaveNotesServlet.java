@@ -29,9 +29,9 @@ public class SaveNotesServlet extends HttpServlet {
             }
 
             User currentUser = (User) session.getAttribute("currentUser");
-            if (!"doctor".equalsIgnoreCase(currentUser.getRole())) {
+            if (currentUser == null || currentUser.getRole() == null || !currentUser.getRole().toLowerCase().contains("doctor")) {
                 sendJson(response, HttpServletResponse.SC_FORBIDDEN, false,
-                        "Khong co quyen luu ho so");
+                        "Bạn không có quyền lưu hồ sơ này.");
                 return;
             }
 
