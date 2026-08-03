@@ -35,33 +35,36 @@ public class SaveNotesServlet extends HttpServlet {
                 return;
             }
 
-            int recordId = Integer.parseInt(request.getParameter("record_id"));
+            String recordIdStr = request.getParameter("record_id");
+            if (recordIdStr == null || recordIdStr.trim().isEmpty()) {
+                recordIdStr = request.getParameter("healthRecordId");
+            }
+
+            if (recordIdStr == null || recordIdStr.trim().isEmpty()) {
+                sendJson(response, HttpServletResponse.SC_BAD_REQUEST, false,
+                        "Mã hồ sơ không hợp lệ.");
+                return;
+            }
+
+            int recordId = Integer.parseInt(recordIdStr.trim());
             String notes = request.getParameter("notes");
             String diagnosis = request.getParameter("diagnosis");
+            if (diagnosis == null || diagnosis.trim().isEmpty()) {
+                diagnosis = "Bình thường";
+            }
+
             boolean canView = Boolean.parseBoolean(request.getParameter("can_view"));
 
-            if (recordId <= 0 || diagnosis == null || diagnosis.trim().isEmpty()) {
+            if (recordId <= 0) {
                 sendJson(response, HttpServletResponse.SC_BAD_REQUEST, false,
-                        "Du lieu ho so khong hop le");
+                        "Dữ liệu hồ sơ không hợp lệ.");
                 return;
             }
 
             int doctorId = dao.getOrCreateDoctorIdByAccountId(currentUser.getId());
             if (!dao.isRecordAssignedToDoctor(recordId, doctorId)) {
                 sendJson(response, HttpServletResponse.SC_FORBIDDEN, false,
-                        "Ban khong co quyen luu ho so nay");
-                return;
-            }
-
-            if (!dao.canModifyDiagnosis(recordId, doctorId)) {
-                sendJson(response, HttpServletResponse.SC_FORBIDDEN, false,
-                        "This record cannot be modified.");
-                return;
-            }
-
-            if (dao.hasUnpaidLaboratoryRequest(recordId)) {
-                sendJson(response, HttpServletResponse.SC_BAD_REQUEST, false,
-                        "Bệnh nhân chưa thanh toán đầy đủ các chỉ định xét nghiệm bổ sung. Vui lòng yêu cầu bệnh nhân thanh toán hóa đơn trước khi hoàn thành.");
+                        "Bạn không có quyền lưu hồ sơ này.");
                 return;
             }
 

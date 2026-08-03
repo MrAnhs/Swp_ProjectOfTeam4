@@ -466,7 +466,7 @@ function saveNotes(recordId) {
     }
 
     const notesVal = notesInput ? notesInput.value : "";
-    const diagnosisVal = diagnosisInput ? diagnosisInput.value : "";
+    const diagnosisVal = (diagnosisInput && diagnosisInput.value) ? diagnosisInput.value : "Bình thường";
     const canViewVal = canViewInput ? canViewInput.checked : false;
 
     const body = new URLSearchParams({
