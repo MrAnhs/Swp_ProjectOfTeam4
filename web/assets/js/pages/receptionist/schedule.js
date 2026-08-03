@@ -1,8 +1,8 @@
 document.addEventListener('DOMContentLoaded', function () {
     let currentDate = new Date();
-    const scheduleGrid = document.getElementById('scheduleGrid');
-    const selectYear = document.getElementById('selectYear');
-    const selectWeek = document.getElementById('selectWeek');
+    const dutyGridBody = document.getElementById('dutyGridBody');
+    const selectYear = document.getElementById('dutyYearSelect');
+    const selectWeek = document.getElementById('dutyWeekSelect');
 
     function getStartOfWeek(date) {
         const start = new Date(date);
@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', function () {
         for (let y = currentY - 1; y <= currentY + 1; y++) {
             const opt = document.createElement('option');
             opt.value = y;
-            opt.textContent = y;
+            opt.textContent = 'Năm ' + y;
             if (y === currentDate.getFullYear()) opt.selected = true;
             selectYear.appendChild(opt);
         }
@@ -62,14 +62,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const currentStartOfWeekStr = formatDate(getStartOfWeek(currentDate));
 
-        for (let w = 0; w < 53; w++) {
+        for (let w = 1; w <= 53; w++) {
             const sunday = new Date(monday);
             sunday.setDate(monday.getDate() + 6);
 
             if (monday.getFullYear() > year && sunday.getFullYear() > year) break;
 
             const valStr = formatDate(monday);
-            const textStr = formatShortDate(monday) + ' To ' + formatShortDate(sunday);
+            const textStr = 'Tuần ' + String(w).padStart(2, '0') + ' [' + formatShortDate(monday) + ' - ' + formatShortDate(sunday) + ']';
 
             const opt = document.createElement('option');
             opt.value = valStr;
@@ -103,6 +103,17 @@ document.addEventListener('DOMContentLoaded', function () {
         const startStr = formatDate(startOfWeek);
         const endStr = formatDate(endOfWeek);
 
+        // Render date headers
+        const days = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+        for (let i = 0; i < 7; i++) {
+            const d = new Date(startOfWeek);
+            d.setDate(startOfWeek.getDate() + i);
+            const headerCell = document.getElementById('date' + days[i]);
+            if (headerCell) {
+                headerCell.textContent = formatShortDate(d);
+            }
+        }
+
         try {
             const response = await fetch(`${window.ReceptionistConfig.apiBase}/my-schedule?fromDate=${startStr}&toDate=${endStr}`);
             const data = await response.json();
@@ -110,20 +121,21 @@ document.addEventListener('DOMContentLoaded', function () {
             if (data.success) {
                 renderSchedule(startOfWeek, data.items || []);
             } else {
-                scheduleGrid.innerHTML = '<div class="col-12 text-center text-danger py-4">Không thể tải lịch trực: ' + (data.error || 'Lỗi không xác định') + '</div>';
+                if (dutyGridBody) {
+                    dutyGridBody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">Không thể tải lịch trực: ' + (data.error || 'Lỗi không xác định') + '</td></tr>';
+                }
             }
         } catch (error) {
             console.error('Error fetching schedule:', error);
-            scheduleGrid.innerHTML = '<div class="col-12 text-center text-danger py-4">Lỗi kết nối máy chủ.</div>';
+            if (dutyGridBody) {
+                dutyGridBody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">Lỗi kết nối máy chủ.</td></tr>';
+            }
         }
     }
 
     function renderSchedule(startOfWeek, items) {
-        scheduleGrid.innerHTML = '';
-
-        // Render headers matching Image 2
-        scheduleGrid.innerHTML += '<div class="sched-hdr-cell"><span class="sched-hdr-title">Ca / Giờ</span></div>';
-        const days = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ Nhật'];
+        if (!dutyGridBody) return;
+        dutyGridBody.innerHTML = '';
         const today = new Date();
 
         const weekDates = [];
@@ -131,48 +143,29 @@ document.addEventListener('DOMContentLoaded', function () {
             const d = new Date(startOfWeek);
             d.setDate(startOfWeek.getDate() + i);
             weekDates.push(d);
-
-            const isTodayClass = isToday(d, today) ? 'is-today' : '';
-
-            scheduleGrid.innerHTML += `
-                <div class="sched-hdr-cell ${isTodayClass}">
-                    <div class="sched-day-name">${days[i]}</div>
-                    <div class="sched-date-num">${d.getDate()}</div>
-                    <div class="sched-month-name">Tháng ${d.getMonth() + 1}</div>
-                </div>
-            `;
         }
 
         const shifts = [
-            { name: 'Ca 1', time: '08:00 - 12:00' },
-            { name: 'Ca 2', time: '13:00 - 17:00' }
+            { name: 'Ca sáng', time: '07:00 - 11:30' },
+            { name: 'Ca chiều', time: '13:30 - 17:30' }
         ];
 
-        shifts.forEach(shift => {
-            scheduleGrid.innerHTML += `
-                <div class="sched-time-col">
-                    <div class="sched-shift-title">${shift.name}</div>
-                    <div class="sched-shift-time">${shift.time}</div>
-                </div>
-            `;
+        shifts.forEach((shift, index) => {
+            let rowHtml = '<tr>' +
+                '<td class="fw-semibold text-nowrap text-center py-4" style="width: 140px; background: rgba(15, 23, 42, 0.6); color: #cbd5e1; border-color: rgba(255,255,255,0.06);">' +
+                    '<div class="small text-secondary mb-1" style="color: #94a3b8 !important;">Ca ' + (index + 1) + '</div>' +
+                    '<span class="badge slot-badge" style="background: rgba(42, 181, 163, 0.2); color: #2ab5a3; border: 1px solid rgba(42, 181, 163, 0.4);">' + shift.time + '</span>' +
+                '</td>';
 
             for (let i = 0; i < 7; i++) {
                 const dateStr = formatDate(weekDates[i]);
                 function getShiftCategory(timeSlotStr) {
-                    if (!timeSlotStr) return 'Ca 1';
+                    if (!timeSlotStr) return 'Ca sáng';
                     const str = timeSlotStr.toLowerCase().trim();
-                    if (str.includes('ca 2') || str.includes('chiều') || str.includes('tối') || str.includes('chieu') || str.includes('toi') || str.includes('night') || str.includes('afternoon')) {
-                        return 'Ca 2';
+                    if (str.includes('chiều') || str.includes('chieu') || str.includes('afternoon') || str.includes('13:30') || str.includes('ca 2')) {
+                        return 'Ca chiều';
                     }
-                    if (str.includes('ca 1') || str.includes('sáng') || str.includes('sang') || str.includes('morning')) {
-                        return 'Ca 1';
-                    }
-                    const match = str.match(/^(\d{1,2})/);
-                    if (match) {
-                        const hour = parseInt(match[1], 10);
-                        return hour >= 12 ? 'Ca 2' : 'Ca 1';
-                    }
-                    return 'Ca 1';
+                    return 'Ca sáng';
                 }
 
                 const shiftItems = items.filter(item => {
@@ -182,45 +175,55 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
 
                 let cellContent = '';
-                shiftItems.forEach(item => {
-                    const isPastDate = new Date(dateStr + 'T23:59:59') < new Date(today.getFullYear(), today.getMonth(), today.getDate());
-                    const st = (item.status || '').toLowerCase().trim();
+                if (shiftItems.length > 0) {
+                    cellContent = '<div class="d-flex flex-column gap-2">';
+                    shiftItems.forEach(item => {
+                        const isPastDate = new Date(dateStr + 'T23:59:59') < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                        const st = (item.status || '').toLowerCase().trim();
 
-                    let statusText = 'Sẵn sàng';
-                    let statusClass = 'status-scheduled';
-                    let badgeClass = 'shift-badge-scheduled';
+                        let statusText = 'Sẵn sàng';
+                        let statusClass = 'status-scheduled';
+                        let badgeClass = 'shift-badge-scheduled';
 
-                    if (st === 'cancelled' || st === 'absent') {
-                        statusText = 'Đã hủy';
-                        statusClass = 'status-expired';
-                        badgeClass = 'shift-badge-expired';
-                    } else if (st === 'completed') {
-                        statusText = 'Hoàn thành';
-                        statusClass = 'status-scheduled';
-                        badgeClass = 'shift-badge-scheduled';
-                    } else if (st === 'available' || st === 'active' || st === 'scheduled' || st === 'registered') {
-                        statusText = 'Sẵn sàng';
-                        statusClass = 'status-scheduled';
-                        badgeClass = 'shift-badge-scheduled';
-                    } else if (st === 'expired' || isPastDate) {
-                        statusText = 'Hoàn thành';
-                        statusClass = 'status-expired';
-                        badgeClass = 'shift-badge-expired';
-                    }
+                        if (st === 'cancelled' || st === 'absent') {
+                            statusText = 'Đã hủy';
+                            statusClass = 'status-expired';
+                            badgeClass = 'shift-badge-expired';
+                        } else if (st === 'completed') {
+                            statusText = 'Hoàn thành';
+                            statusClass = 'status-scheduled';
+                            badgeClass = 'shift-badge-scheduled';
+                        } else if (st === 'available' || st === 'active' || st === 'scheduled' || st === 'registered') {
+                            statusText = 'Sẵn sàng';
+                            statusClass = 'status-scheduled';
+                            badgeClass = 'shift-badge-scheduled';
+                        } else if (st === 'expired' || isPastDate) {
+                            statusText = 'Hoàn thành';
+                            statusClass = 'status-expired';
+                            badgeClass = 'shift-badge-expired';
+                        }
 
-                    const roomName = item.roomName ? item.roomName : (item.roomId ? ('Phòng ' + item.roomId) : 'Quầy lễ tân');
+                        const roomName = item.roomName ? item.roomName : (item.roomId ? ('Phòng ' + item.roomId) : 'Quầy lễ tân');
 
-                    cellContent += `
-                        <div class="shift-card ${statusClass}">
-                            <div class="shift-time-head"><i class="bi bi-clock me-1"></i>${item.timeSlot}</div>
-                            <div class="shift-room-name text-muted small my-1" style="font-size: 0.76rem;"><i class="bi bi-door-open me-1"></i>${roomName}</div>
-                            <div class="shift-staff-name small text-secondary mb-1" style="font-size: 0.76rem;"><i class="bi bi-person me-1"></i>Lễ tân: ${item.fullName || 'Nhân viên Lễ tân'}</div>
-                            <div>Trạng thái: <span class="badge ${badgeClass}">${statusText}</span></div>
-                        </div>
-                    `;
-                });
+                        cellContent += `
+                            <div class="shift-card ${statusClass} text-start p-2 rounded" style="font-size: 0.76rem; background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(255,255,255,0.08);">
+                                <div class="shift-time-head fw-bold mb-1" style="color: #2ab5a3;"><i class="bi bi-clock me-1"></i>${item.timeSlot}</div>
+                                <div class="shift-room-name text-white-50 mb-1"><i class="bi bi-door-open me-1"></i>${roomName}</div>
+                                <div class="shift-staff-name text-white-50 mb-1"><i class="bi bi-person me-1"></i>${item.fullName || 'Lễ tân'}</div>
+                                <div class="mt-1">Trạng thái: <span class="badge ${badgeClass}">${statusText}</span></div>
+                            </div>
+                        `;
+                    });
+                    cellContent += '</div>';
+                } else {
+                    cellContent = '<span class="text-white-50 opacity-25">-</span>';
+                }
 
-                scheduleGrid.innerHTML += `<div class="sched-grid-cell">${cellContent}</div>`;
+                rowHtml += `<td class="p-2 align-top text-center" style="border-color: rgba(255, 255, 255, 0.06); background: transparent;">${cellContent}</td>`;
+            }
+            rowHtml += '</tr>';
+            if (dutyGridBody) {
+                dutyGridBody.innerHTML += rowHtml;
             }
         });
     }
