@@ -521,5 +521,15 @@
     document.addEventListener('DOMContentLoaded', function () {
         setDefaultDate();
         initDoctors();
+
+        // Auto lookup if patientPhone is passed in URL query
+        const urlParams = new URLSearchParams(window.location.search);
+        const autoPhone = urlParams.get('patientPhone') || urlParams.get('phone');
+        if (autoPhone && autoPhone.trim()) {
+            if (lookupInput) {
+                lookupInput.value = autoPhone.trim();
+                lookupPatient();
+            }
+        }
     });
 })();
