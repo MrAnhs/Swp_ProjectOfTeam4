@@ -420,28 +420,11 @@ public class HealthRecordDAO {
 
     public boolean isRecordAssignedToDoctor(int healthRecordId, int doctorId) {
         String sql = "SELECT COUNT(*) FROM Healthy_Record r "
-                + "LEFT JOIN Medical_record mr ON mr.health_record_id = r.health_record_id "
-                + "LEFT JOIN Appointment a ON a.appointment_id = mr.appointment_id "
-                + "LEFT JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
-                + "WHERE r.health_record_id = ? AND ("
-                + "r.doctor_id IS NULL "
-                + "OR r.doctor_id = ? "
-                + "OR mr.doctor_id = ? "
-                + "OR ds.doctor_id = ? "
-                + "OR EXISTS (SELECT 1 FROM Invoice_Detail id WHERE id.doctor_id = ? AND (id.health_record_id = r.health_record_id OR id.appointment_id = mr.appointment_id)) "
-                + "OR EXISTS (SELECT 1 FROM Medical_record mr2 WHERE mr2.patient_id = r.patient_id AND mr2.doctor_id = ?) "
-                + "OR EXISTS (SELECT 1 FROM Record_Transfer_History h WHERE h.health_record_id = r.health_record_id AND h.to_doctor_id = ?)"
-                + ")";
+                + "WHERE r.health_record_id = ? AND (r.status IS NULL OR LOWER(r.status) NOT IN ('cancelled'))";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, healthRecordId);
-            ps.setInt(2, doctorId);
-            ps.setInt(3, doctorId);
-            ps.setInt(4, doctorId);
-            ps.setInt(5, doctorId);
-            ps.setInt(6, doctorId);
-            ps.setInt(7, doctorId);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() && rs.getInt(1) > 0;
             }
@@ -1886,12 +1869,7 @@ public class HealthRecordDAO {
             Timestamp revisitDate) throws SQLException {
 
         String lockSql = "SELECT r.patient_id, r.status FROM Healthy_Record r WITH (UPDLOCK, ROWLOCK) "
-                + "LEFT JOIN Medical_record mr ON mr.health_record_id = r.health_record_id "
-                + "LEFT JOIN Appointment a ON a.appointment_id = mr.appointment_id "
-                + "LEFT JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
-                + "WHERE r.health_record_id = ? AND ("
-                + "r.doctor_id IS NULL OR r.doctor_id = ? OR mr.doctor_id = ? OR ds.doctor_id = ? OR EXISTS (SELECT 1 FROM Record_Transfer_History h WHERE h.health_record_id = r.health_record_id AND h.to_doctor_id = ?)"
-                + ")";
+                + "WHERE r.health_record_id = ? AND (r.status IS NULL OR LOWER(r.status) NOT IN ('cancelled'))";
         String existsSql = "SELECT COUNT(*) FROM Medical_record WHERE health_record_id = ?";
         String insertSql = "INSERT INTO Medical_record "
                 + "(patient_id, doctor_id, final_diagnosis, doctor_note, health_record_id, "
@@ -1913,10 +1891,6 @@ public class HealthRecordDAO {
                 String currentStatus;
                 try (PreparedStatement ps = conn.prepareStatement(lockSql)) {
                     ps.setInt(1, healthRecordId);
-                    ps.setInt(2, doctorId);
-                    ps.setInt(3, doctorId);
-                    ps.setInt(4, doctorId);
-                    ps.setInt(5, doctorId);
                     try (ResultSet rs = ps.executeQuery()) {
                         if (!rs.next()) {
                             throw new SQLException("Hồ sơ không thuộc quyền quản lý của bác sĩ hiện tại");
