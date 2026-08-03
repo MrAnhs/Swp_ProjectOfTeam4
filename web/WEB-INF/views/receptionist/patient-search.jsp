@@ -17,6 +17,7 @@
         <h1 class="page-title">Tìm bệnh nhân</h1>
         <p class="page-subtitle">Nhập số điện thoại để xem thông tin bệnh nhân và lịch hẹn gần nhất.</p>
 
+        <%-- Vùng chứa ô nhập liệu Số điện thoại để tìm kiếm bệnh nhân --%>
         <section class="panel-card mt-4">
             <div class="row g-3 align-items-end">
                 <div class="col-md-8">
@@ -31,12 +32,13 @@
             </div>
         </section>
 
+        <%-- Khung kết quả hiển thị thông tin bệnh nhân hoặc danh sách trống --%>
         <section id="patientSearchResult" class="result-card mt-4 d-none"></section>
         <section id="patientSearchEmpty" class="empty-state mt-4">Chưa có dữ liệu tra cứu.</section>
     </main>
 </div>
 
-<!-- Modal Xác Nhận Hủy Lịch Khám -->
+<%-- Hộp thoại Modal của Bootstrap để xác nhận yêu cầu Hủy lịch hẹn của Bệnh nhân --%>
 <div class="modal fade" id="confirmCancelModal" tabindex="-1" aria-labelledby="confirmCancelModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow">

@@ -1,19 +1,23 @@
 (function () {
+    // Quản lý hóa đơn tại quầy lễ tân (chờ thanh toán, đã thanh toán, in hóa đơn)
     const utils = window.ReceptionistUtils;
     const list = document.getElementById('invoiceList');
     const message = document.getElementById('billingMessage');
-    let currentStatus = 'Pending';
+    let currentStatus = 'Pending'; // Trạng thái mặc định: Chờ thanh toán
 
+    // Hiển thị thông báo (thành công hoặc lỗi) trên giao diện thanh toán
     function setMessage(text, type) {
         message.innerHTML = text ? '<div class="alert alert-' + (type || 'info') + '">' + utils.escapeHtml(text) + '</div>' : '';
     }
 
+    // Tải số lượng hóa đơn thống kê hiển thị lên các thẻ đếm
     async function loadStats() {
         const data = await utils.requestJson(utils.apiBase() + '/invoices/stats');
         document.getElementById('pendingInvoiceCount').textContent = data.pendingCount || 0;
         document.getElementById('paidInvoiceCount').textContent = data.paidCount || 0;
     }
 
+    // Vẽ giao diện danh sách thẻ hóa đơn
     function renderInvoices(invoices) {
         if (!invoices || invoices.length === 0) {
             list.innerHTML = '<div class="empty-state">Không có hóa đơn phù hợp.</div>';
@@ -52,6 +56,7 @@
         }).join('');
     }
 
+    // Tải danh sách hóa đơn theo trạng thái và từ khóa tìm kiếm
     async function loadInvoices(status, keyword) {
         currentStatus = status || currentStatus;
         const searchKeyword = typeof keyword === 'string'
@@ -73,8 +78,9 @@
         }
     }
 
+    // Gọi API thanh toán hóa đơn cụ thể của bệnh nhân
     async function payInvoiceById(invoiceId, patientName, amount, paymentMethod) {
-        const methodText = paymentMethod === 'VNPay' ? 'VNPay' : 'Tiền mẶt';
+        const methodText = paymentMethod === 'VNPay' ? 'VNPay' : 'Tiền mặt';
         const confirmMsg = 'Xác nhận thanh toán hóa đơn #' + invoiceId
             + ' cho bệnh nhân ' + patientName
             + ' với số tiền ' + utils.formatCurrency(amount)
@@ -125,12 +131,14 @@
         printWindow.document.close();
     }
 
+    // Lắng nghe sự kiện click trên các nút lọc trạng thái hóa đơn (Pending/Paid)
     document.querySelectorAll('[data-invoice-status]').forEach(function (button) {
         button.addEventListener('click', function () {
             loadInvoices(button.dataset.invoiceStatus);
         });
     });
 
+    // Vẽ giao diện bảng chi tiết các dịch vụ y tế của một hóa đơn
     function renderInvoiceDetails(container, details) {
         if (!details || details.length === 0) {
             container.innerHTML = '<div class="text-muted p-2">Không có chi tiết dịch vụ.</div>';
@@ -160,12 +168,14 @@
         container.innerHTML = html;
     }
 
+    // Lắng nghe sự kiện click trên danh sách hóa đơn (để xem chi tiết hoặc thanh toán/in)
     list.addEventListener('click', async function (event) {
         const payMethodSelect = event.target.closest('.invoice-pay-method');
         if (payMethodSelect) {
             return;
         }
 
+        // Bấm nút Xác nhận thanh toán
         const payBtn = event.target.closest('.invoice-pay-btn');
         if (payBtn) {
             const invoiceId = payBtn.dataset.invoiceId;
@@ -177,6 +187,7 @@
             return;
         }
 
+        // Bấm nút In hóa đơn
         const printBtn = event.target.closest('.invoice-print');
         if (printBtn) {
             event.stopPropagation();
@@ -184,6 +195,7 @@
             return;
         }
 
+        // Click vào dòng hóa đơn để đóng/mở chi tiết dịch vụ
         const row = event.target.closest('.invoice-row');
         if (row) {
             const invoiceId = row.dataset.invoiceId;
@@ -198,6 +210,7 @@
                     toggleIcon.style.transform = 'rotate(90deg)';
                 }
 
+                // Nếu chưa tải chi tiết hóa đơn thì gọi API để tải
                 if (detailsDiv.querySelector('.spinner-border')) {
                     try {
                         const data = await utils.requestJson(utils.apiBase() + '/invoices/details?invoiceId=' + encodeURIComponent(invoiceId));
@@ -215,8 +228,10 @@
         }
     });
 
+    // Bấm nút tải lại danh sách hóa đơn
     document.getElementById('reloadInvoicesBtn').addEventListener('click', function () { loadInvoices(currentStatus); });
 
+    // Bấm nút Tìm kiếm hóa đơn
     const searchBtn = document.getElementById('searchInvoiceBtn');
     if (searchBtn) {
         searchBtn.addEventListener('click', function () {
@@ -225,6 +240,7 @@
         });
     }
 
+    // Nhấn phím Enter trên ô tìm kiếm
     const keywordInput = document.getElementById('billingPatientKeyword');
     if (keywordInput) {
         keywordInput.addEventListener('keyup', function (e) {
@@ -234,6 +250,7 @@
         });
     }
 
+    // Khởi tạo trang khi tải xong DOM
     document.addEventListener('DOMContentLoaded', async function () {
         await loadStats().catch(console.error);
         await loadInvoices('Pending');

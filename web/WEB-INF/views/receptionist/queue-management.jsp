@@ -17,8 +17,10 @@
         <h1 class="page-title">Hàng đợi khám hôm nay</h1>
         <p class="page-subtitle">Danh sách bệnh nhân đang chờ, đã xác nhận hoặc đang khám trong ngày.</p>
 
+        <%-- Bảng điều khiển quản lý và lọc hàng đợi bệnh nhân --%>
         <section class="panel-card mt-4">
             <div class="row g-3">
+                <%-- Bộ lọc theo trạng thái khám bệnh (Chờ xác nhận, Đã xác nhận check-in, Đang khám) --%>
                 <div class="col-md-4">
                     <label class="form-label fw-semibold">Trạng thái</label>
                     <select id="queueStatusFilter" class="form-select">
@@ -34,6 +36,7 @@
                     </button>
                 </div>
             </div>
+            <%-- Vùng danh sách chứa các hàng đợi động do JavaScript (queue-management.js) tạo ra --%>
             <div id="queueList" class="mt-4"></div>
         </section>
     </main>

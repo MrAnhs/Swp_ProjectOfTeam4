@@ -8,6 +8,9 @@
             String(now.getDate()).padStart(2, '0');
     }
 
+    // Thư viện tiện ích dùng chung của Lễ tân
+    const utils = window.ReceptionistUtils;
+    // Khai báo các phần tử DOM chính trên trang Đăng ký khám
     const result = document.getElementById('registrationResult');
     const lookupInput = document.getElementById('patientLookupKeyword');
     const lookupButton = document.getElementById('patientLookupBtn');
@@ -38,6 +41,7 @@
         return /^(0|\+84)(3|5|7|8|9)\d{8}$/.test(phone);
     }
 
+    // Kiểm tra xem ca khám đã trôi qua so với giờ hiện tại chưa (đối với lịch trong ngày hôm nay)
     function isSlotPassed(workDateStr, timeSlotStr) {
         if (!workDateStr) return false;
         const now = new Date();
@@ -65,6 +69,7 @@
         return false;
     }
 
+    // Thiết lập ngày khám mặc định là ngày hôm nay theo giờ địa phương
     function setDefaultDate() {
         if (filterDate) {
             const today = getLocalDateString();
@@ -120,6 +125,7 @@
         return true;
     }
 
+    // Tự động điền dữ liệu của bệnh nhân vào các ô input trên form đăng ký khám
     function fillPatient(patient) {
         const normGender = normalizeGenderForSelect(patient.gender);
         const values = {
@@ -136,6 +142,7 @@
         });
     }
 
+    // Xóa sạch thông tin bệnh nhân trên form khi cần tìm kiếm mới
     function clearPatientFields() {
         fillPatient({});
         currentPatientRevisitDates = [];
@@ -144,6 +151,7 @@
         }
     }
 
+    // Tra cứu bệnh nhân theo Số điện thoại hoặc Họ tên để nạp vào form đăng ký khám
     async function lookupPatient() {
         const keyword = lookupInput.value.trim();
         if (!keyword) {

@@ -17,10 +17,12 @@
         <h1 class="page-title fw-bold text-white">Đăng ký khám</h1>
         <p class="page-subtitle text-white-50">Tìm kiếm bệnh nhân, chọn ca khám của bác sĩ để đăng ký khám trực tiếp.</p>
 
-        <!-- Notification Banner Container -->
+        <%-- Vùng thông báo hiển thị kết quả sau khi đăng ký hoặc tìm kiếm --%>
         <section id="registrationResult" class="result-card my-3 d-none"></section>
 
+        <%-- Phần bảng điều khiển chính chứa tìm kiếm bệnh nhân và form đăng ký --%>
         <section class="panel-card mt-4 p-4" style="background: rgba(15, 23, 42, 0.75) !important; border: 1px solid rgba(255, 255, 255, 0.08) !important; border-radius: 20px !important;">
+            <%-- Vùng tìm kiếm nhanh hồ sơ bệnh nhân qua Số điện thoại hoặc Họ tên --%>
             <div class="row g-2 align-items-end mb-4 pb-4 border-bottom border-secondary border-opacity-25">
                 <div class="col-md-8">
                     <label class="form-label fw-semibold text-white" for="patientLookupKeyword">Tìm bệnh nhân có sẵn</label>
@@ -34,8 +36,9 @@
                 <div class="col-12"><small class="text-white-50" style="color: #94A3B8 !important;">Nhập số điện thoại để tìm kiếm bệnh nhân đã đăng ký trên hệ thống.</small></div>
             </div>
 
+            <%-- Form nhập thông tin bệnh nhân và chọn lịch khám --%>
             <form id="appointmentRegistrationForm" class="row g-3">
-                <!-- Patient Info Section -->
+                <%-- Khung thông tin cá nhân của bệnh nhân (Họ tên, SĐT, Ngày sinh, Giới tính, Địa chỉ) --%>
                 <div id="patientFieldsContainer" class="col-12 row g-3 d-none m-0 p-0 border-bottom border-secondary border-opacity-25 pb-4 mb-3">
                     <div class="col-md-6">
                         <label class="form-label fw-semibold text-white">Họ tên bệnh nhân</label>
@@ -67,7 +70,7 @@
                     </div>
                 </div>
 
-                <!-- Doctor & Schedule Filter Bar -->
+                <%-- Thanh bộ lọc nhanh danh sách Bác sĩ theo Khoa, Ngày và Ca trực --%>
                 <div class="col-12">
                     <div class="p-3 mb-3 rounded-4" style="background: rgba(30, 41, 59, 0.6) !important; border: 1px solid rgba(255, 255, 255, 0.08) !important;">
                         <div class="row g-3">
@@ -110,7 +113,7 @@
                 </div>
             </form>
 
-            <!-- Doctor Results Section -->
+            <%-- Khung hiển thị danh sách các thẻ Bác sĩ có lịch khám tương ứng --%>
             <section class="doctor-results mt-4">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <div>

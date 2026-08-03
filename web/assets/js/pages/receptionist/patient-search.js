@@ -1,4 +1,5 @@
 (function () {
+    // Quản lý việc tra cứu thông tin bệnh nhân và danh sách lịch hẹn khám của bệnh nhân đó
     const utils = window.ReceptionistUtils;
     const phoneInput = document.getElementById('patientSearchPhone');
     const searchButton = document.getElementById('patientSearchBtn');
@@ -9,15 +10,17 @@
     const cancelReasonInput = document.getElementById('cancelReasonInput');
     const confirmCancelSubmitBtn = document.getElementById('confirmCancelSubmitBtn');
 
-    let pendingCancelApptId = null;
-    let confirmCancelModalInstance = null;
+    let pendingCancelApptId = null; // Lưu ID lịch khám đang chờ xác nhận hủy
+    let confirmCancelModalInstance = null; // Đối tượng modal xác nhận hủy lịch của Bootstrap
 
+    // Hiển thị giao diện trống khi chưa tìm thấy bệnh nhân hoặc xảy ra lỗi
     function renderEmpty(message) {
         result.classList.add('d-none');
         empty.classList.remove('d-none');
         empty.textContent = message || 'Chưa có dữ liệu tra cứu.';
     }
 
+    // Định dạng lại hiển thị giới tính
     function formatGender(g) {
         if (!g) return 'Chưa cập nhật';
         const lower = g.toLowerCase();
@@ -26,6 +29,7 @@
         return g;
     }
 
+    // Hiển thị nhãn trạng thái lịch khám với các biểu tượng và màu sắc tương ứng
     function renderStatusBadge(status) {
         const s = (status || '').toLowerCase();
         if (s === 'waiting') {
@@ -42,6 +46,7 @@
         return '<span class="status-pill">' + utils.escapeHtml(status) + '</span>';
     }
 
+    // Sinh khối mã HTML cho một ô hiển thị thông tin (Tile)
     function infoTile(iconClass, label, value) {
         return '<div class="col-md-3 col-sm-6 mb-2">' +
                '  <div class="patient-info-tile">' +
@@ -52,6 +57,7 @@
                '</div>';
     }
 
+    // Vẽ giao diện thông tin bệnh nhân và danh sách lịch hẹn khám
     function renderPatient(data) {
         const patient = data.patient || {};
         const appointments = data.upcomingAppointments || (data.nextAppointment ? [data.nextAppointment] : []);
@@ -59,7 +65,7 @@
 
         let html = '';
         
-        // 1. Patient Profile Banner
+        // 1. Khung Banner Hồ Sơ Cá Nhân Bệnh Nhân
         html += '<div class="patient-profile-banner">';
         html += '  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3 pb-3 border-bottom border-secondary border-opacity-25">';
         html += '    <div class="d-flex align-items-center gap-3">';
@@ -72,7 +78,7 @@
         html += '    <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-50 px-3 py-2 rounded-pill font-monospace"><i class="bi bi-person-vcard me-1"></i>BN-' + (patient.patientId || '00') + '</span>';
         html += '  </div>';
 
-        // 2. Info Grid Tiles
+        // 2. Lưới thông tin chi tiết (Lọc thẻ Grid)
         html += '  <div class="row g-2">';
         html += infoTile('bi-person-fill', 'Họ tên', patient.fullName);
         html += infoTile('bi-telephone-fill', 'Số điện thoại', patient.phone);
@@ -84,13 +90,14 @@
         html += '  </div>';
         html += '</div>';
 
-        // 3. Appointments Section
+        // 3. Khối danh sách các Lịch hẹn khám
         html += '<div class="d-flex align-items-center justify-content-between mb-3 mt-4">';
         html += '  <h3 class="h5 text-white fw-bold mb-0"><i class="bi bi-calendar2-week-fill me-2 text-info"></i>Danh sách lịch hẹn (' + appointments.length + ')</h3>';
         html += '</div>';
         
         if (appointments && appointments.length > 0) {
             appointments.forEach(function (app, idx) {
+                // Xác định xem lịch hẹn có thể thực hiện hủy hay không (ca khám đang chờ)
                 const canCancel = app.canCancel || (app.status && app.status.toLowerCase() === 'waiting');
                 
                 html += '<div class="appointment-card-custom">';
@@ -125,7 +132,7 @@
         result.classList.remove('d-none');
         empty.classList.add('d-none');
 
-        // Bind cancel buttons
+        // Gắn sự kiện click vào các nút Hủy lịch
         const cancelBtns = result.querySelectorAll('.btn-trigger-cancel');
         cancelBtns.forEach(function (btn) {
             btn.addEventListener('click', function () {
@@ -141,6 +148,7 @@
                 
                 cancelReasonInput.value = '';
 
+                // Hiển thị hộp thoại Modal xác nhận của Bootstrap
                 if (window.bootstrap && confirmCancelModalEl) {
                     confirmCancelModalInstance = window.bootstrap.Modal.getOrCreateInstance(confirmCancelModalEl);
                     confirmCancelModalInstance.show();
@@ -149,6 +157,7 @@
         });
     }
 
+    // Thực hiện gọi API tìm kiếm thông tin bệnh nhân theo số điện thoại
     async function searchPatient() {
         const phone = phoneInput.value.trim();
         if (!phone) {
@@ -168,6 +177,7 @@
         }
     }
 
+    // Lắng nghe sự kiện click trên nút Xác nhận hủy lịch trong Modal
     if (confirmCancelSubmitBtn) {
         confirmCancelSubmitBtn.addEventListener('click', async function () {
             if (!pendingCancelApptId) return;
@@ -175,6 +185,7 @@
             confirmCancelSubmitBtn.disabled = true;
             confirmCancelSubmitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang hủy...';
             try {
+                // Gửi yêu cầu hủy lịch khám qua POST API lên Server
                 const response = await utils.requestJson(utils.apiBase() + '/appointments/cancel', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -184,7 +195,7 @@
                     confirmCancelModalInstance.hide();
                 }
                 alert(response.message || 'Đã hủy lịch khám thành công!');
-                searchPatient();
+                searchPatient(); // Tải lại danh sách lịch hẹn để cập nhật trạng thái mới
             } catch (err) {
                 alert('Lỗi: ' + (err.message || 'Không thể hủy lịch khám.'));
             } finally {

@@ -11,6 +11,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <link href="${pageContext.request.contextPath}/assets/css/pages/receptionist/receptionist.css?v=20260725-balanced" rel="stylesheet">
+    <%-- Các thuộc tính CSS tùy chỉnh dành riêng cho bảng Lịch trực --%>
     <style>
         .receptionist-page {
             background-color: #f8fafc !important;
@@ -34,7 +35,7 @@
             font-size: 0.925rem;
         }
 
-        /* Top Right Filters Box matching Image 2 */
+        /* Hộp bộ lọc Tuần/Năm ở góc trên bên phải */
         .filter-controls-box {
             background: #ffffff;
             border: 1px solid #e2e8f0;
@@ -68,7 +69,7 @@
             cursor: pointer;
         }
 
-        /* Schedule Container & Grid Table matching Image 2 */
+        /* Cấu trúc lưới Grid chia các ngày trong tuần */
         .schedule-card-panel {
             background: #ffffff;
             border: 1px solid #e2e8f0;
@@ -163,7 +164,7 @@
             gap: 8px;
         }
 
-        /* Shift Card Components (Exact Image 2 Match) */
+        /* Thẻ ca trực */
         .shift-card {
             border-radius: 8px;
             padding: 10px;
@@ -171,7 +172,7 @@
             line-height: 1.45;
         }
 
-        /* Expired / Cancelled (Red theme in Image 2) */
+        /* Trạng thái ca trực đã quá hạn hoặc bị hủy (Màu Đỏ) */
         .shift-card.status-cancelled,
         .shift-card.status-expired {
             background-color: #fce8e6;
@@ -183,7 +184,7 @@
             font-weight: 700;
         }
 
-        /* Active / Scheduled (Blue theme in Image 2) */
+        /* Trạng thái ca trực đang hoạt động (Màu Xanh) */
         .shift-card.status-scheduled,
         .shift-card.status-active {
             background-color: #e0f2fe;
@@ -223,7 +224,7 @@
 <div class="receptionist-shell">
     <%@ include file="/WEB-INF/views/components/receptionist/sidebar.jspf" %>
     <main class="receptionist-main">
-        <!-- Shared Master Duty Schedule Grid Component -->
+        <%-- Import phần khung lưới hiển thị Lịch trực dùng chung --%>
         <%@ include file="/WEB-INF/views/components/shared/duty-schedule-grid.jspf" %>
     </main>
 </div>

@@ -1,8 +1,10 @@
 (function () {
+    // Quản lý hàng đợi khám bệnh và xác nhận Check-in cho bệnh nhân tại quầy
     const utils = window.ReceptionistUtils;
     const list = document.getElementById('queueList');
     const statusFilter = document.getElementById('queueStatusFilter');
 
+    // Chuyển đổi mã trạng thái tiếng Anh sang tên Tiếng Việt thân thiện
     function statusLabel(status) {
         const map = {
             Waiting: 'Đang chờ xác nhận',
@@ -15,6 +17,7 @@
         return map[status] || status || 'Không xác định';
     }
 
+    // Chọn lớp màu sắc Bootstrap Badge phù hợp cho từng trạng thái
     function statusBadgeClass(status) {
         switch (status) {
             case 'Waiting': return 'text-bg-warning';
@@ -27,12 +30,14 @@
         }
     }
 
+    // Vẽ giao diện danh sách các bệnh nhân đang xếp hàng
     function render(items) {
         if (!items || items.length === 0) {
             list.innerHTML = '<div class="empty-state">Không có bệnh nhân trong hàng đợi phù hợp.</div>';
             return;
         }
         list.innerHTML = items.map(function (item) {
+            // Nút Check-in chỉ hiển thị khi lịch hẹn đang ở trạng thái 'Waiting'
             const action = item.status === 'Waiting'
                 ? '<button class="btn btn-sm btn-primary queue-check-in" data-appointment-id="' + utils.escapeHtml(item.appointmentId) + '">Check-in</button>'
                 : '';
@@ -51,6 +56,7 @@
         }).join('');
     }
 
+    // Tải danh sách hàng đợi từ API theo bộ lọc trạng thái được chọn
     async function loadQueue() {
         list.innerHTML = '<div class="empty-state">Đang tải hàng đợi...</div>';
         try {
@@ -63,6 +69,7 @@
         }
     }
 
+    // Thực hiện hành động gửi yêu cầu Check-in lên Server
     async function checkIn(appointmentId) {
         const body = new URLSearchParams();
         body.set('appointmentId', appointmentId);
@@ -75,9 +82,10 @@
             },
             body: body.toString()
         });
-        await loadQueue();
+        await loadQueue(); // Tải lại danh sách sau khi Check-in thành công
     }
 
+    // Lắng nghe sự kiện click trên hàng đợi để kích hoạt Check-in
     list.addEventListener('click', async function (event) {
         const button = event.target.closest('.queue-check-in');
         if (!button) return;

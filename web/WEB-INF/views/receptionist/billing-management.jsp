@@ -17,6 +17,7 @@
         <h1 class="page-title fw-bold text-white">Quản lý hóa đơn</h1>
         <p class="page-subtitle text-white-50">Xem hóa đơn chờ thanh toán và xác nhận khi bệnh nhân đã thanh toán.</p>
 
+        <%-- Các thẻ thống kê nhanh số lượng hóa đơn theo trạng thái (chờ thanh toán / đã thanh toán) --%>
         <section class="stat-grid my-4">
             <button class="stat-card text-start border-0" type="button" data-invoice-status="Pending">
                 <div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
@@ -30,6 +31,7 @@
             </button>
         </section>
 
+        <%-- Vùng tìm kiếm hóa đơn theo thông tin bệnh nhân --%>
         <section class="panel-card p-4" style="background: rgba(15, 23, 42, 0.75) !important; border: 1px solid rgba(255, 255, 255, 0.08) !important; border-radius: 20px !important;">
             <div class="row g-3 align-items-end">
                 <div class="col-md-9">
@@ -42,9 +44,11 @@
                     </button>
                 </div>
             </div>
+            <%-- Vùng hiển thị thông báo kết quả giao dịch thanh toán --%>
             <div id="billingMessage" class="mt-3"></div>
         </section>
 
+        <%-- Danh sách hiển thị các hóa đơn --%>
         <section class="panel-card mt-4 p-4" style="background: rgba(15, 23, 42, 0.75) !important; border: 1px solid rgba(255, 255, 255, 0.08) !important; border-radius: 20px !important;">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <div>
@@ -55,6 +59,7 @@
                     <i class="bi bi-arrow-clockwise me-1"></i>Tải lại
                 </button>
             </div>
+            <%-- Thân danh sách chứa các thẻ hóa đơn động do JavaScript (billing-management.js) nạp vào --%>
             <div id="invoiceList"></div>
         </section>
     </main>

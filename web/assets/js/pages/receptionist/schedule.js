@@ -1,9 +1,11 @@
 document.addEventListener('DOMContentLoaded', function () {
+    // Quản lý hiển thị lịch trực tuần của Lễ tân
     let currentDate = new Date();
     const dutyGridBody = document.getElementById('dutyGridBody');
     const selectYear = document.getElementById('dutyYearSelect');
     const selectWeek = document.getElementById('dutyWeekSelect');
 
+    // Xác định ngày Thứ Hai đầu tuần của một ngày bất kỳ
     function getStartOfWeek(date) {
         const start = new Date(date);
         const day = start.getDay();
@@ -13,6 +15,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return start;
     }
 
+    // Định dạng đối tượng Date thành chuỗi 'YYYY-MM-DD'
     function formatDate(date) {
         const d = new Date(date);
         let month = '' + (d.getMonth() + 1);
@@ -23,6 +26,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return [year, month, day].join('-');
     }
 
+    // Định dạng đối tượng Date thành chuỗi ngắn gọn 'DD/MM' để hiển thị tiêu đề cột
     function formatShortDate(date) {
         const d = new Date(date);
         let month = '' + (d.getMonth() + 1);
@@ -32,12 +36,14 @@ document.addEventListener('DOMContentLoaded', function () {
         return day + '/' + month;
     }
 
+    // Kiểm tra xem hai đối tượng ngày có phải là cùng một ngày hay không
     function isToday(d1, d2) {
         return d1.getFullYear() === d2.getFullYear() &&
             d1.getMonth() === d2.getMonth() &&
             d1.getDate() === d2.getDate();
     }
 
+    // Tạo danh sách các tùy chọn Năm trong ô chọn (Năm trước, Năm nay, Năm sau)
     function populateYearOptions() {
         if (!selectYear) return;
         const currentY = new Date().getFullYear();
@@ -51,6 +57,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // Tự động tính toán các Tuần (từ Tuần 1 đến Tuần 52/53) của năm được chọn
     function populateWeekOptions(year) {
         if (!selectWeek) return;
         selectWeek.innerHTML = '';
@@ -84,6 +91,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // Đồng bộ hóa giá trị hiển thị của ô chọn Năm và ô chọn Tuần
     function syncDropdowns() {
         if (selectYear) selectYear.value = String(currentDate.getFullYear());
         populateWeekOptions(currentDate.getFullYear());
@@ -93,6 +101,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // Gọi API để tải danh sách lịch trực của Lễ tân theo khoảng thời gian tuần
     async function loadSchedule() {
         const startOfWeek = getStartOfWeek(currentDate);
         const endOfWeek = new Date(startOfWeek);
@@ -103,7 +112,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const startStr = formatDate(startOfWeek);
         const endStr = formatDate(endOfWeek);
 
-        // Render date headers
+        // Hiển thị ngày cụ thể trên tiêu đề các cột Thứ 2 -> Chủ Nhật
         const days = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
         for (let i = 0; i < 7; i++) {
             const d = new Date(startOfWeek);
@@ -133,6 +142,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // Vẽ giao diện bảng lịch trực sau khi lấy dữ liệu thành công
     function renderSchedule(startOfWeek, items) {
         if (!dutyGridBody) return;
         dutyGridBody.innerHTML = '';
@@ -228,6 +238,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // Lắng nghe sự kiện đổi Năm để tải lại lịch tương ứng
     if (selectYear) {
         selectYear.addEventListener('change', () => {
             currentDate.setFullYear(parseInt(selectYear.value, 10));
@@ -236,6 +247,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // Lắng nghe sự kiện đổi Tuần để tải lại lịch tương ứng
     if (selectWeek) {
         selectWeek.addEventListener('change', () => {
             if (selectWeek.value) {
@@ -246,6 +258,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // Kích hoạt các hàm khởi chạy trang ban đầu
     populateYearOptions();
     syncDropdowns();
     loadSchedule();
