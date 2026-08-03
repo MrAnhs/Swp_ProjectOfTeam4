@@ -9,11 +9,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+// Lớp dịch vụ nghiệp vụ (Service) xử lý các quy trình nghiệp vụ chính của Lễ tân
 public class ReceptionistService {
     private static final Set<String> PAYMENT_METHODS = Set.of("Cash", "VNPay");
     private static final Set<String> QUEUE_STATUSES = Set.of("Waiting", "Checked_In", "In_Progress");
     private final ReceptionistDAO dao = new ReceptionistDAO();
 
+    // Tìm kiếm bệnh nhân theo số điện thoại hoặc họ tên
     public Map<String, Object> searchPatient(String keyword)
             throws SQLException, ReceptionistException {
         String normalizedKeyword = trim(keyword);
@@ -47,6 +49,7 @@ public class ReceptionistService {
         return dao.findAvailableSchedules(doctorId);
     }
 
+    // Đăng ký bệnh nhân mới tại quầy và lưu vào hệ thống
     public Map<String, Object> createPatient(Map<String, String> params)
             throws SQLException, ReceptionistException {
         ReceptionistRegistrationRequest request = new ReceptionistRegistrationRequest();
@@ -71,6 +74,7 @@ public class ReceptionistService {
         return patient;
     }
 
+    // Xử lý tạo lịch hẹn khám (Khám mới/Tái khám) và xếp số thứ tự cho bệnh nhân
     public Map<String, Object> registerAppointment(Map<String, String> params)
             throws SQLException, ReceptionistException {
         ReceptionistRegistrationRequest request = new ReceptionistRegistrationRequest();
@@ -119,6 +123,7 @@ public class ReceptionistService {
         return dao.findInvoiceDetails(invoiceId);
     }
 
+    // Thực hiện xác nhận thanh toán hóa đơn bằng từ khóa tìm kiếm bệnh nhân
     public int payInvoice(String keyword, String paymentMethod, int receptionistAccountId)
             throws SQLException, ReceptionistException {
         if (!PAYMENT_METHODS.contains(paymentMethod)) {
@@ -145,6 +150,7 @@ public class ReceptionistService {
         return dao.findTodayQueue(normalized);
     }
 
+    // Xác nhận check-in hàng đợi cho bệnh nhân khi họ đến phòng chờ khám
     public void checkInAppointment(String appointmentId)
             throws SQLException, ReceptionistException {
         int parsedId = parsePositiveInt(appointmentId, "Lịch hẹn không hợp lệ.");
@@ -173,6 +179,7 @@ public class ReceptionistService {
         return dao.findAppointmentsForCalendar(start, end);
     }
 
+    // Tái phân bổ/đổi Bác sĩ hoặc ca trực khám cho bệnh nhân khi có sự cố
     public void reassignAppointment(String appointmentId, String doctorId, String scheduleId)
             throws SQLException, ReceptionistException {
         int parsedAppointmentId = parsePositiveInt(appointmentId, "Lịch hẹn không hợp lệ.");
@@ -201,6 +208,7 @@ public class ReceptionistService {
         return dao.findMySchedule(accountId, start, end);
     }
 
+    // Đăng ký ca làm việc (lịch trực tuần) của Lễ tân vào hệ thống
     public void registerMySchedule(int accountId, String dateStr, String timeSlot) throws SQLException, ReceptionistException {
         if (dateStr == null || dateStr.isBlank()) {
             throw new ReceptionistException("Vui lòng chọn ngày trực.");
@@ -297,6 +305,7 @@ public class ReceptionistService {
         return phone != null && phone.matches("^0(3|5|7|8|9)\\d{8}$");
     }
 
+    // Lấy thông tin trạng thái ca trực hiện tại của Lễ tân (phục vụ việc khóa/mở các tính năng đón tiếp)
     public Map<String, Object> getCurrentShiftStatus(int accountId) {
         LocalDate today = LocalDate.now();
         java.time.LocalTime now = java.time.LocalTime.now();

@@ -19,12 +19,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+// Lớp truy cập cơ sở dữ liệu (DAO) thực hiện các câu lệnh SQL phục vụ cho các chức năng của Lễ tân
 public class ReceptionistDAO {
 
     public Connection openConnection() throws SQLException {
         return DatabaseConnection.getConnection();
     }
 
+    // Tìm kiếm thông tin bệnh nhân theo Số điện thoại và trả về hồ sơ kèm lịch hẹn
     public Map<String, Object> findPatientByPhone(String phone) throws SQLException {
         try (Connection connection = openConnection()) {
             Map<String, Object> patient = null;
@@ -53,6 +55,7 @@ public class ReceptionistDAO {
         }
     }
 
+    // Tra cứu thông tin tổng quan của một lịch hẹn cụ thể để hiển thị hộp thoại xác nhận check-in/hủy lịch
     public Map<String, Object> findAppointmentPreview(int appointmentId) throws SQLException {
         String sql = "SELECT TOP 1 a.appointment_id, a.patient_id, ds.doctor_id AS doctor_id, a.schedule_id, a.appointment_time, "
                 + "a.booking_type, a.queue_number, a.status, p.full_name, p.phone, p.email, p.address, "
@@ -71,6 +74,7 @@ public class ReceptionistDAO {
         }
     }
 
+    // Tìm kiếm bệnh nhân theo Họ tên chính xác
     public Map<String, Object> findPatientByName(String fullName) throws SQLException {
         try (Connection connection = openConnection()) {
             Map<String, Object> patient = null;
@@ -97,6 +101,7 @@ public class ReceptionistDAO {
         }
     }
 
+    // Lấy danh sách lịch hẹn để hiển thị lên bảng lịch biểu (Calendar) theo tuần hoặc khoảng ngày
     public List<Map<String, Object>> findAppointmentsForCalendar(LocalDate fromDate, LocalDate toDate) throws SQLException {
         String sql = "SELECT a.appointment_id, a.appointment_time, a.status, a.queue_number, a.booking_type, "
                 + "p.full_name AS patient_name, p.phone, d.full_name AS doctor_name "
@@ -129,6 +134,7 @@ public class ReceptionistDAO {
         }
     }
 
+    // Lấy danh sách bác sĩ đang hoạt động (Active) trên hệ thống
     public List<Map<String, Object>> findActiveDoctors() throws SQLException {
         String sql = "SELECT d.doctor_id, d.full_name, d.department "
                 + "FROM Doctor d INNER JOIN Account a ON a.account_id = d.account_id "
@@ -149,6 +155,7 @@ public class ReceptionistDAO {
         }
     }
 
+    // Lấy danh sách lịch trực khả dụng (còn chỗ trống và chưa quá giờ) của một Bác sĩ
     public List<Map<String, Object>> findAvailableSchedules(int doctorId) throws SQLException {
         String sql = "SELECT ds.schedule_id, ds.work_date, ds.time_slot, ds.max_patients, "
                 + "COUNT(a.appointment_id) AS booked "
@@ -184,6 +191,7 @@ public class ReceptionistDAO {
         }
     }
 
+    // Tạo mới tài khoản và hồ sơ bệnh nhân tại quầy lễ tân (tự sinh mật khẩu tạm thời)
     public Map<String, Object> createPatient(ReceptionistRegistrationRequest request)
             throws SQLException, ReceptionistException {
         Connection connection = null;
@@ -220,6 +228,7 @@ public class ReceptionistDAO {
         }
     }
 
+    // Thực hiện đăng ký ca khám bệnh cho bệnh nhân (hỗ trợ cả Khám mới và Tái khám)
     public Map<String, Object> registerAppointment(ReceptionistRegistrationRequest request)
             throws SQLException, ReceptionistException {
         Connection connection = null;

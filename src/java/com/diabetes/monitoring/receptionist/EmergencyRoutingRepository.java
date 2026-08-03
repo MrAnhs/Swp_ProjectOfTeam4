@@ -18,6 +18,7 @@ import java.util.logging.Logger;
 
 /**
  * Repository xử lý điều phối khẩn cấp và tái phân công bệnh nhân.
+ * Hỗ trợ Lễ tân chuyển đổi phòng khám hoặc đổi bác sĩ điều trị khi có sự cố.
  */
 public class EmergencyRoutingRepository {
 
@@ -27,7 +28,9 @@ public class EmergencyRoutingRepository {
     private final AppointmentRepository appointmentRepository =
             new AppointmentRepository();
 
+    // Lấy danh sách hàng đợi ngoại lệ cần điều phối khẩn cấp (Trạng thái Checked_In hoặc In_Progress nhưng quá thời gian khám)
     public List<Map<String, Object>> getExceptionQueue(Integer doctorId) {
+        // Tự động chuyển đổi các lịch hẹn Waiting trễ giờ sang NoShow
         appointmentRepository.markLateWaitingAppointmentsAsNoShow();
 
         List<Map<String, Object>> rows = new ArrayList<>();
@@ -73,6 +76,7 @@ public class EmergencyRoutingRepository {
         return rows;
     }
 
+    // Lấy danh sách bác sĩ rảnh và cùng chuyên khoa để đề xuất điều phối khẩn cấp
     public List<Map<String, Object>> getAvailableDoctorsForEmergency(String department, Integer excludeDoctorId) {
         List<Map<String, Object>> doctors = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
@@ -109,6 +113,7 @@ public class EmergencyRoutingRepository {
         return doctors;
     }
 
+    // Lấy danh sách toàn bộ bác sĩ đang hoạt động để làm phương án dự phòng khẩn cấp liên khoa
     public List<Map<String, Object>> getAllActiveDoctorsForEmergency(Integer excludeDoctorId) {
         List<Map<String, Object>> doctors = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
@@ -141,6 +146,7 @@ public class EmergencyRoutingRepository {
         return doctors;
     }
 
+    // Tìm các bác sĩ có lịch trực trong cùng ngày khám của lịch hẹn để đề xuất đổi bác sĩ
     public List<Map<String, Object>> getEmergencyCandidateDoctorsForAppointment(int appointmentId, Integer excludeDoctorId) {
         List<Map<String, Object>> doctors = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
@@ -182,7 +188,9 @@ public class EmergencyRoutingRepository {
         return doctors;
     }
 
+    // Thực hiện tái phân công lịch hẹn sang bác sĩ chỉ định (tìm lịch cùng ngày của bác sĩ đó hoặc lịch gần nhất)
     public boolean reassignAppointmentToDoctor(int appointmentId, int targetDoctorId) {
+        // Tìm ca trực cùng ngày của bác sĩ đích
         String pickSameDayScheduleSql = "SELECT TOP 1 ds.schedule_id "
                 + "FROM Appointment ap "
                 + "JOIN Doctor_Schedule src_ds ON src_ds.schedule_id = ap.schedule_id "
@@ -192,6 +200,7 @@ public class EmergencyRoutingRepository {
                 + "AND LOWER(ds.status) <> 'cancelled' "
                 + "ORDER BY TRY_CAST(LEFT(REPLACE(ds.time_slot, ' ', ''), 5) AS time) ASC";
 
+        // Phương án dự phòng: Tìm ca trực tương lai gần nhất của bác sĩ đích
         String pickFallbackScheduleSql = "SELECT TOP 1 ds.schedule_id "
                 + "FROM Doctor_Schedule ds "
                 + "WHERE ds.doctor_id = ? "
@@ -199,6 +208,7 @@ public class EmergencyRoutingRepository {
                 + "AND ds.work_date >= CAST(GETDATE() AS DATE) "
                 + "ORDER BY ds.work_date ASC, TRY_CAST(LEFT(REPLACE(ds.time_slot, ' ', ''), 5) AS time) ASC";
 
+        // Cập nhật thông tin Bác sĩ mới và Ca trực mới vào Database
         String updateAppointmentSql = "UPDATE Appointment "
                 + "SET schedule_id = ?, doctor_id = ? "
                 + "WHERE appointment_id = ? AND LOWER(status) IN ('checked_in', 'in_progress', 'in-progress')";
@@ -206,6 +216,7 @@ public class EmergencyRoutingRepository {
         try (Connection connection = DatabaseConnection.getConnection()) {
             Integer targetScheduleId = null;
 
+            // Bước 1: Thử tìm ca trực cùng ngày
             try (PreparedStatement pick = connection.prepareStatement(pickSameDayScheduleSql)) {
                 pick.setInt(1, targetDoctorId);
                 pick.setInt(2, appointmentId);
@@ -216,6 +227,7 @@ public class EmergencyRoutingRepository {
                 }
             }
 
+            // Bước 2: Nếu không có ca trực cùng ngày, thử tìm ca trực tương lai gần nhất
             if (targetScheduleId == null) {
                 try (PreparedStatement pick = connection.prepareStatement(pickFallbackScheduleSql)) {
                     pick.setInt(1, targetDoctorId);
@@ -228,9 +240,10 @@ public class EmergencyRoutingRepository {
             }
 
             if (targetScheduleId == null) {
-                return false;
+                return false; // Trả về false nếu không tìm thấy bất kỳ lịch trực khả dụng nào của bác sĩ mới
             }
 
+            // Bước 3: Cập nhật cuộc hẹn
             try (PreparedStatement update = connection.prepareStatement(updateAppointmentSql)) {
                 update.setInt(1, targetScheduleId);
                 update.setInt(2, targetDoctorId);
