@@ -24,6 +24,8 @@ public class ReceptionistApiServlet extends HttpServlet {
         prepareJson(response);
         try {
             String path = apiPath(request);
+
+            // API 1: Tìm kiếm bệnh nhân theo từ khóa (họ tên hoặc số điện thoại)
             if ("/patients/search".equals(path)) {
                 String keyword = request.getParameter("keyword");
                 if (keyword == null || keyword.isBlank()) {
@@ -32,6 +34,8 @@ public class ReceptionistApiServlet extends HttpServlet {
                 write(response, successObject(service.searchPatient(keyword)));
                 return;
             }
+
+            // API 2: Lấy danh sách bệnh nhân tái khám trong ngày (upcoming revisits)
             if ("/patients/revisit".equals(path)) {
                 String dateStr = request.getParameter("date");
                 java.time.LocalDate date = java.time.LocalDate.now();
@@ -39,60 +43,75 @@ public class ReceptionistApiServlet extends HttpServlet {
                     try {
                         date = java.time.LocalDate.parse(dateStr.trim());
                     } catch (java.time.format.DateTimeParseException e) {
-                        // Keep fallback date
+                        // Giữ nguyên ngày mặc định nếu parse lỗi
                     }
                 }
                 List<Map<String, Object>> patients = service.getUpcomingRevisits(date);
                 write(response, "{\"success\":true,\"patients\":" + toJson(patients) + "}");
                 return;
             }
+
+            // API 3: Lấy danh sách toàn bộ các Bác sĩ đang hoạt động
             if ("/doctors".equals(path)) {
                 write(response, "{\"success\":true,\"doctors\":" + toJson(service.getDoctors()) + "}");
                 return;
             }
+
+            // API 4: Lấy lịch trực và các slot khám còn trống của một Bác sĩ cụ thể
             if ("/schedules".equals(path)) {
                 int doctorId = parseInt(request.getParameter("doctorId"));
                 write(response, "{\"success\":true,\"slots\":" + toJson(service.getSchedules(doctorId)) + "}");
                 return;
             }
+
+            // API 5: Thống kê số lượng hóa đơn (chờ thanh toán và đã thanh toán)
             if ("/invoices/stats".equals(path)) {
                 write(response, successObject(service.getInvoiceStats()));
                 return;
             }
+
+            // API 6: Lấy danh sách hóa đơn theo bộ lọc trạng thái và từ khóa tìm kiếm
             if ("/invoices".equals(path)) {
                 List<Map<String, Object>> invoices = service.getInvoices(request.getParameter("status"), request.getParameter("invoiceType"), request.getParameter("keyword"));
                 write(response, "{\"success\":true,\"invoices\":" + toJson(invoices) + "}");
                 return;
             }
+
+            // API 7: Tải danh sách chi tiết các dịch vụ y tế đi kèm của một hóa đơn cụ thể
             if ("/invoices/details".equals(path)) {
                 int invoiceId = parseInt(request.getParameter("invoiceId"));
                 List<Map<String, Object>> details = service.getInvoiceDetails(invoiceId);
                 write(response, "{\"success\":true,\"details\":" + toJson(details) + "}");
                 return;
             }
+
+            // API 8: Lấy danh sách hàng đợi khám bệnh hôm nay theo trạng thái
             if ("/queue".equals(path)) {
                 List<Map<String, Object>> items = service.getTodayQueue(request.getParameter("status"));
                 write(response, "{\"success\":true,\"items\":" + toJson(items) + "}");
                 return;
             }
+
+            // API 9: Xem trước thông tin lịch hẹn khám trước khi tiến hành check-in/hủy lịch
             if ("/appointments/preview".equals(path)) {
                 write(response, successObject(service.getAppointmentPreview(request.getParameter("appointmentId"))));
                 return;
             }
+
+            // API 10: Tải lịch hẹn dạng lịch biểu (Calendar) theo tuần
             if ("/appointments/calendar".equals(path)) {
                 write(response, "{\"success\":true,\"items\":" + toJson(service.getAppointmentCalendar(request.getParameter("fromDate"), request.getParameter("toDate"))) + "}");
                 return;
             }
-            if ("/queue".equals(path)) {
-                List<Map<String, Object>> items = service.getTodayQueue(request.getParameter("status"));
-                write(response, "{\"success\":true,\"items\":" + toJson(items) + "}");
-                return;
-            }
+
+            // API 11: Lấy danh sách lịch trực tuần của chính Lễ tân đang đăng nhập
             if ("/my-schedule".equals(path)) {
                 User currentUser = currentUser(request);
                 write(response, "{\"success\":true,\"items\":" + toJson(service.getMySchedule(currentUser.getId(), request.getParameter("fromDate"), request.getParameter("toDate"))) + "}");
                 return;
             }
+
+            // API 12: Kiểm tra trạng thái ca trực hiện tại của Lễ tân (active hay không)
             if ("/shift-status".equals(path)) {
                 User currentUser = currentUser(request);
                 Map<String, Object> status = service.getCurrentShiftStatus(currentUser.getId());
@@ -114,6 +133,8 @@ public class ReceptionistApiServlet extends HttpServlet {
         prepareJson(response);
         try {
             String path = apiPath(request);
+
+            // 1. Kiểm tra an toàn: Lễ tân bắt buộc phải đang trong Ca trực được phân công thì mới được sửa đổi dữ liệu (trừ API đăng ký ca trực)
             if (!"/my-schedule/register".equals(path)) {
                 User currentUser = currentUser(request);
                 Map<String, Object> shiftStatus = service.getCurrentShiftStatus(currentUser.getId());
@@ -125,10 +146,13 @@ public class ReceptionistApiServlet extends HttpServlet {
                 }
             }
 
+            // API 13: Tạo mới hồ sơ bệnh nhân tại quầy
             if ("/patients".equals(path)) {
                 write(response, "{\"success\":true,\"patient\":" + toJson(service.createPatient(params(request))) + "}");
                 return;
             }
+
+            // API 14: Gửi email chứa tài khoản và mật khẩu tạm thời cho bệnh nhân
             if ("/patients/send-email".equals(path)) {
                 Map<String, String> parameters = params(request);
                 String email = parameters.get("email");
@@ -142,10 +166,14 @@ public class ReceptionistApiServlet extends HttpServlet {
                 write(response, "{\"success\":true,\"message\":\"Yêu cầu gửi email đã được khởi chạy thành công.\"}");
                 return;
             }
+
+            // API 15: Tạo lịch hẹn khám bệnh mới
             if ("/appointments".equals(path)) {
                 write(response, successObject(service.registerAppointment(params(request))));
                 return;
             }
+
+            // API 16: Hủy lịch hẹn khám bệnh và thông báo lý do hủy cho bệnh nhân
             if ("/appointments/cancel".equals(path)) {
                 User currentUser = currentUser(request);
                 int appointmentId = parseInt(request.getParameter("appointmentId"));
@@ -154,6 +182,8 @@ public class ReceptionistApiServlet extends HttpServlet {
                 write(response, "{\"success\":true,\"message\":\"Đã hủy lịch khám thành công và gửi thông báo tới bệnh nhân.\"}");
                 return;
             }
+
+            // API 17: Xác nhận thanh toán hóa đơn bằng Tiền mặt hoặc VNPay tại quầy
             if ("/invoices/pay".equals(path)) {
                 User currentUser = currentUser(request);
                 String invoiceIdStr = request.getParameter("invoiceId");
@@ -169,21 +199,29 @@ public class ReceptionistApiServlet extends HttpServlet {
                         + invoiceId + "}");
                 return;
             }
+
+            // API 18: Xác nhận Check-in cho bệnh nhân khi họ đến phòng chờ khám
             if ("/queue/check-in".equals(path)) {
                 service.checkInAppointment(request.getParameter("appointmentId"));
                 write(response, "{\"success\":true,\"message\":\"Đã check-in bệnh nhân.\"}");
                 return;
             }
+
+            // API 19: Phân bổ lại lịch hẹn sang Bác sĩ khác hoặc Slot thời gian khác
             if ("/queue/reassign".equals(path)) {
                 service.reassignAppointment(request.getParameter("appointmentId"), request.getParameter("doctorId"), request.getParameter("scheduleId"));
                 write(response, "{\"success\":true,\"message\":\"Đã đổi bác sĩ/ca khám thành công.\"}");
                 return;
             }
+
+            // API 20: Hủy lịch trong hàng đợi khám
             if ("/queue/cancel".equals(path)) {
                 service.cancelAppointment(request.getParameter("appointmentId"));
                 write(response, "{\"success\":true,\"message\":\"Đã hủy lịch hẹn thành công.\"}");
                 return;
             }
+
+            // API 21: Đăng ký lịch làm việc (lịch trực tuần) của Lễ tân
             if ("/my-schedule/register".equals(path)) {
                 User currentUser = currentUser(request);
                 String workDate = request.getParameter("workDate");
