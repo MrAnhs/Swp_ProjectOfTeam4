@@ -939,18 +939,11 @@ public class DoctorLabServlet extends HttpServlet {
                  if (existingWeight != null && existingHeight != null) {
                      weight = existingWeight;
                      height = existingHeight;
-                     double w = weight.doubleValue();
-                     double h = height.doubleValue();
-                     if (h > 0) {
-                         double hMeter = h / 100.0;
-                         bmi = BigDecimal.valueOf(w / (hMeter * hMeter)).setScale(2, RoundingMode.HALF_UP);
-                     } else {
-                         bmi = BigDecimal.ZERO;
-                     }
+                     bmi = null;
                  } else {
-                     weight = metrics.get("weight");
-                     height = metrics.get("height");
-                     bmi = metrics.get("bmi");
+                     weight = null;
+                     height = null;
+                     bmi = null;
                  }
                  
                  if (currentLabRoom != null) {
@@ -981,7 +974,7 @@ public class DoctorLabServlet extends HttpServlet {
                  vldl = parseDecimal(vldlStr);
                  weight = parseDecimal(weightStr);
                  height = parseDecimal(heightStr);
-                 bmi = calculateBMI(weight, height);
+                 bmi = null;
                  otherInfo = otherInfoRaw != null ? otherInfoRaw.trim() : "";
              }
 

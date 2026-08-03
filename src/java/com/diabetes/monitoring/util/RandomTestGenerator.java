@@ -219,19 +219,10 @@ public class RandomTestGenerator {
         cr = clamp(cr, CR_MIN, CR_MAX);
         metrics.put("cr", cr);
         
-        // 8. Weight & Height
-        BigDecimal weight = randomInRange(40.0, 120.0, 1);
-        weight = clamp(weight, WEIGHT_MIN, WEIGHT_MAX);
-        BigDecimal height = randomInRange(145.0, 190.0, 1);
-        height = clamp(height, HEIGHT_MIN, HEIGHT_MAX);
-        metrics.put("weight", weight);
-        metrics.put("height", height);
-        
-        // 9. BMI = weight / (height/100)^2
-        BigDecimal heightInMeters = height.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
-        BigDecimal heightSquared = heightInMeters.multiply(heightInMeters);
-        BigDecimal bmi = weight.divide(heightSquared, 2, RoundingMode.HALF_UP);
-        metrics.put("bmi", bmi);
+        // 8. Weight, Height & BMI belong to physical vitals, not lab tests
+        metrics.put("weight", null);
+        metrics.put("height", null);
+        metrics.put("bmi", null);
         
         return metrics;
     }
