@@ -424,7 +424,8 @@ public class HealthRecordDAO {
                 + "LEFT JOIN Appointment a ON a.appointment_id = mr.appointment_id "
                 + "LEFT JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
                 + "WHERE r.health_record_id = ? AND ("
-                + "r.doctor_id = ? "
+                + "r.doctor_id IS NULL "
+                + "OR r.doctor_id = ? "
                 + "OR mr.doctor_id = ? "
                 + "OR ds.doctor_id = ? "
                 + "OR EXISTS (SELECT 1 FROM Invoice_Detail id WHERE id.doctor_id = ? AND (id.health_record_id = r.health_record_id OR id.appointment_id = mr.appointment_id)) "
@@ -1889,7 +1890,7 @@ public class HealthRecordDAO {
                 + "LEFT JOIN Appointment a ON a.appointment_id = mr.appointment_id "
                 + "LEFT JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
                 + "WHERE r.health_record_id = ? AND ("
-                + "r.doctor_id = ? OR mr.doctor_id = ? OR ds.doctor_id = ? OR EXISTS (SELECT 1 FROM Record_Transfer_History h WHERE h.health_record_id = r.health_record_id AND h.to_doctor_id = ?)"
+                + "r.doctor_id IS NULL OR r.doctor_id = ? OR mr.doctor_id = ? OR ds.doctor_id = ? OR EXISTS (SELECT 1 FROM Record_Transfer_History h WHERE h.health_record_id = r.health_record_id AND h.to_doctor_id = ?)"
                 + ")";
         String existsSql = "SELECT COUNT(*) FROM Medical_record WHERE health_record_id = ?";
         String insertSql = "INSERT INTO Medical_record "
