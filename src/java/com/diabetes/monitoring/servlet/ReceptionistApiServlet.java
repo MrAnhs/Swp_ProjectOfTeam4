@@ -138,12 +138,8 @@ public class ReceptionistApiServlet extends HttpServlet {
                     writeError(response, HttpServletResponse.SC_BAD_REQUEST, "Thiếu thông tin gửi email.");
                     return;
                 }
-                try {
-                    com.diabetes.monitoring.util.EmailUtil.sendAccountDetails(email, fullName, temporaryPassword);
-                    write(response, "{\"success\":true,\"message\":\"Email đã được gửi thành công.\"}");
-                } catch (jakarta.mail.MessagingException e) {
-                    writeError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Không thể gửi email: " + e.getMessage());
-                }
+                com.diabetes.monitoring.util.EmailUtil.sendAccountDetailsAsync(email, fullName, temporaryPassword);
+                write(response, "{\"success\":true,\"message\":\"Yêu cầu gửi email đã được khởi chạy thành công.\"}");
                 return;
             }
             if ("/appointments".equals(path)) {

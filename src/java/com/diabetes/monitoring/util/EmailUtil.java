@@ -54,10 +54,11 @@ public class EmailUtil {
         mailProps.put("mail.smtp.starttls.required", "true");
         mailProps.put("mail.smtp.host", host);
         mailProps.put("mail.smtp.port", port);
-        mailProps.put("mail.smtp.ssl.protocols", "TLSv1.2");
-        mailProps.put("mail.smtp.connectiontimeout", "10000");
-        mailProps.put("mail.smtp.timeout", "10000");
-        mailProps.put("mail.smtp.writetimeout", "10000");
+        mailProps.put("mail.smtp.ssl.trust", host);
+        mailProps.put("mail.smtp.ssl.protocols", "TLSv1.2 TLSv1.3");
+        mailProps.put("mail.smtp.connectiontimeout", "5000");
+        mailProps.put("mail.smtp.timeout", "5000");
+        mailProps.put("mail.smtp.writetimeout", "5000");
 
         Session session = Session.getInstance(mailProps, new Authenticator() {
             @Override
@@ -90,5 +91,15 @@ public class EmailUtil {
             LOGGER.log(Level.SEVERE, "Failed to send email to " + toEmail, e);
             throw e;
         }
+    }
+
+    public static void sendAccountDetailsAsync(String toEmail, String fullName, String password) {
+        new Thread(() -> {
+            try {
+                sendAccountDetails(toEmail, fullName, password);
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, "Failed to send account details email asynchronously to " + toEmail, e);
+            }
+        }).start();
     }
 }
