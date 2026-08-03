@@ -87,7 +87,7 @@
             patients.forEach(p => {
                 const tr = document.createElement('tr');
                 
-                // Prefill query link to receptionist register appointment
+                // Tự động điền trước các thông tin bệnh nhân để truyền qua URL sang trang Đăng ký khám
                 const prefillParams = new URLSearchParams({
                     patientName: p.patientName || '',
                     patientPhone: p.patientPhone || '',
@@ -95,18 +95,22 @@
                     patientDob: p.patientDob || '',
                     patientGender: p.patientGender || '',
                     patientAddress: p.patientAddress || '',
-                    visitType: 'Revisit',
+                    visitType: 'Revisit', // Đánh dấu là loại hình Tái khám
                     revisitAppointmentId: p.revisitAppointmentId || ''
                 }).toString();
                 
+                // URL đích dẫn tới trang đăng ký lịch khám mới kèm theo dữ liệu prefill
                 const registerUrl = `${window.ReceptionistConfig.contextPath}/receptionist/appointments/new?${prefillParams}`;
 
                 let actionHtml = '';
+                // Kiểm tra xem bệnh nhân này đã được tạo lịch khám trong ngày hôm đó chưa
                 if (p.activeAppointmentId) {
+                    // Nếu đã đăng ký khám rồi thì hiển thị nhãn xanh lá "Đã đăng ký"
                     actionHtml = `<span class="badge bg-success-subtle text-success border border-success-subtle py-2 px-3 d-inline-flex align-items-center" style="font-size: 0.85rem; font-weight: 600;">
                                       <i class="bi bi-check-circle-fill me-1"></i>Đã đăng ký
                                   </span>`;
                 } else {
+                    // Nếu chưa thì hiển thị Nút màu xanh ngọc "Đăng ký khám" để chuyển qua trang xếp lịch
                     actionHtml = `<a href="${registerUrl}" class="btn btn-sm btn-primary" title="Đăng ký khám">
                                       <i class="bi bi-calendar-plus me-1"></i>Đăng ký khám
                                   </a>`;

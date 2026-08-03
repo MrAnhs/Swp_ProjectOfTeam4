@@ -88,6 +88,7 @@
                             <th class="text-end pe-3">Hành động</th>
                         </tr>
                     </thead>
+                    <%-- Thân bảng hiển thị danh sách bệnh nhân tái khám - Dữ liệu và nút "Đăng ký khám" được JavaScript (dashboard.js) đổ vào đây --%>
                     <tbody id="revisitTableBody">
                         <tr>
                             <td colspan="6" class="text-center text-muted py-4">Đang tải danh sách...</td>
