@@ -99,7 +99,7 @@ public class PatientInvoiceDAO {
                 + "FROM Invoice_Detail id "
                 + "INNER JOIN Invoice i ON i.invoice_id = id.invoice_id "
                 + "INNER JOIN Patient p ON p.patient_id = i.patient_id "
-                + "INNER JOIN Medical_Service ms ON ms.service_id = id.service_id "
+                + "LEFT JOIN Medical_Service ms ON ms.service_id = id.service_id "
                 + "WHERE id.invoice_id = ? AND " + matchClause + " ORDER BY id.invoice_detail_id";
         List<InvoiceItem> items = new ArrayList<>();
         try (Connection connection = DatabaseConnection.getConnection();
@@ -113,9 +113,32 @@ public class PatientInvoiceDAO {
                     InvoiceItem item = new InvoiceItem();
                     item.setInvoiceDetailId(resultSet.getInt("invoice_detail_id"));
                     item.setAppointmentId(resultSet.getInt("appointment_id"));
-                    item.setServiceId(resultSet.getInt("service_id"));
-                    item.setServiceName(resultSet.getString("service_name"));
-                    item.setServiceType(resultSet.getString("service_type"));
+                    
+                    int serviceId = resultSet.getInt("service_id");
+                    item.setServiceId(serviceId);
+                    
+                    String serviceName = resultSet.getString("service_name");
+                    if (serviceName == null) {
+                        if (serviceId == 1) {
+                            serviceName = "Khám chuyên khoa Nội tiết";
+                        } else if (serviceId == 2) {
+                            serviceName = "Gói khám tổng quát";
+                        } else {
+                            serviceName = "Dịch vụ y tế #" + serviceId;
+                        }
+                    }
+                    item.setServiceName(serviceName);
+                    
+                    String serviceType = resultSet.getString("service_type");
+                    if (serviceType == null) {
+                        if (serviceId == 1 || serviceId == 2) {
+                            serviceType = "Examination";
+                        } else {
+                            serviceType = "Lab_Test";
+                        }
+                    }
+                    item.setServiceType(serviceType);
+                    
                     item.setQuantity(resultSet.getInt("quantity"));
                     item.setPrice(resultSet.getBigDecimal("price"));
                     items.add(item);

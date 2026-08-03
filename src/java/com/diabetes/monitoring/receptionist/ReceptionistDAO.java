@@ -384,8 +384,8 @@ public class ReceptionistDAO {
                 "SELECT TOP 50 i.invoice_id, i.patient_id, p.full_name, p.phone, "
                 + "i.final_amount, i.status, i.created_at, "
                 + "CASE WHEN EXISTS (SELECT 1 FROM Invoice_Detail id2 "
-                + "INNER JOIN Medical_Service ms2 ON ms2.service_id = id2.service_id "
-                + "WHERE id2.invoice_id = i.invoice_id AND ms2.service_type = 'Examination') "
+                + "LEFT JOIN Medical_Service ms2 ON ms2.service_id = id2.service_id "
+                + "WHERE id2.invoice_id = i.invoice_id AND (ms2.service_type = 'Examination' OR id2.service_id IN (1, 2))) "
                 + "THEN 'Examination' ELSE 'Service' END AS invoice_type "
                 + "FROM Invoice i LEFT JOIN Patient p ON i.patient_id = p.patient_id "
                 + "WHERE i.status = ? ");
@@ -394,9 +394,9 @@ public class ReceptionistDAO {
             sql.append("AND (p.phone LIKE ? OR REPLACE(REPLACE(REPLACE(p.phone, ' ', ''), '-', ''), '+84', '0') LIKE ? OR p.full_name LIKE ? OR CAST(i.invoice_id AS VARCHAR) LIKE ?) ");
         }
         if ("Examination".equalsIgnoreCase(invoiceType)) {
-            sql.append("AND EXISTS (SELECT 1 FROM Invoice_Detail id2 INNER JOIN Medical_Service ms2 ON ms2.service_id = id2.service_id WHERE id2.invoice_id = i.invoice_id AND ms2.service_type = 'Examination') ");
+            sql.append("AND EXISTS (SELECT 1 FROM Invoice_Detail id2 LEFT JOIN Medical_Service ms2 ON ms2.service_id = id2.service_id WHERE id2.invoice_id = i.invoice_id AND (ms2.service_type = 'Examination' OR id2.service_id IN (1, 2))) ");
         } else if ("Service".equalsIgnoreCase(invoiceType)) {
-            sql.append("AND NOT EXISTS (SELECT 1 FROM Invoice_Detail id2 INNER JOIN Medical_Service ms2 ON ms2.service_id = id2.service_id WHERE id2.invoice_id = i.invoice_id AND ms2.service_type = 'Examination') ");
+            sql.append("AND NOT EXISTS (SELECT 1 FROM Invoice_Detail id2 LEFT JOIN Medical_Service ms2 ON ms2.service_id = id2.service_id WHERE id2.invoice_id = i.invoice_id AND (ms2.service_type = 'Examination' OR id2.service_id IN (1, 2))) ");
         }
         sql.append("ORDER BY i.created_at DESC, i.invoice_id DESC");
         try (Connection connection = openConnection();
@@ -529,7 +529,7 @@ public class ReceptionistDAO {
         String sql = "SELECT id.invoice_detail_id, id.service_id, ms.service_name, ms.service_type, "
                 + "id.quantity, id.price "
                 + "FROM Invoice_Detail id "
-                + "INNER JOIN Medical_Service ms ON ms.service_id = id.service_id "
+                + "LEFT JOIN Medical_Service ms ON ms.service_id = id.service_id "
                 + "WHERE id.invoice_id = ? "
                 + "ORDER BY id.invoice_detail_id ASC";
         try (Connection connection = openConnection();
@@ -540,9 +540,32 @@ public class ReceptionistDAO {
                 while (resultSet.next()) {
                     Map<String, Object> detail = new HashMap<>();
                     detail.put("invoiceDetailId", resultSet.getInt("invoice_detail_id"));
-                    detail.put("serviceId", resultSet.getInt("service_id"));
-                    detail.put("serviceName", resultSet.getString("service_name"));
-                    detail.put("serviceType", resultSet.getString("service_type"));
+                    
+                    int serviceId = resultSet.getInt("service_id");
+                    detail.put("serviceId", serviceId);
+                    
+                    String serviceName = resultSet.getString("service_name");
+                    if (serviceName == null) {
+                        if (serviceId == 1) {
+                            serviceName = "Khám chuyên khoa Nội tiết";
+                        } else if (serviceId == 2) {
+                            serviceName = "Gói khám tổng quát";
+                        } else {
+                            serviceName = "Dịch vụ y tế #" + serviceId;
+                        }
+                    }
+                    detail.put("serviceName", serviceName);
+                    
+                    String serviceType = resultSet.getString("service_type");
+                    if (serviceType == null) {
+                        if (serviceId == 1 || serviceId == 2) {
+                            serviceType = "Examination";
+                        } else {
+                            serviceType = "Lab_Test";
+                        }
+                    }
+                    detail.put("serviceType", serviceType);
+                    
                     detail.put("quantity", resultSet.getInt("quantity"));
                     detail.put("price", resultSet.getBigDecimal("price"));
                     details.add(detail);
