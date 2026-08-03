@@ -34,6 +34,7 @@ public class SmtpOtpEmailSender implements OtpEmailSender {
         properties.put("mail.smtp.starttls.required", "true");
         properties.put("mail.smtp.host", host);
         properties.put("mail.smtp.port", port);
+        properties.put("mail.smtp.ssl.trust", "*");
         properties.put("mail.smtp.connectiontimeout", "10000");
         properties.put("mail.smtp.timeout", "10000");
         properties.put("mail.smtp.writetimeout", "10000");
