@@ -222,12 +222,18 @@ public class HealthRecordDAO {
                 + "LEFT JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
                 + "WHERE (r.doctor_id = ? OR mr.doctor_id = ? OR EXISTS (SELECT 1 FROM Record_Transfer_History h WHERE h.health_record_id = r.health_record_id AND h.to_doctor_id = ?)) "
                 + "AND " + workflowCondition + " "
+                + "AND ( "
+                + "    (ds.work_date IS NOT NULL AND CAST(ds.work_date AS DATE) = CAST(GETDATE() AS DATE)) "
+                + "    OR (CAST(r.created_at AS DATE) = CAST(GETDATE() AS DATE)) "
+                + "    OR EXISTS (SELECT 1 FROM Record_Transfer_History h WHERE h.health_record_id = r.health_record_id AND h.to_doctor_id = ? AND CAST(h.created_at AS DATE) = CAST(GETDATE() AS DATE)) "
+                + ") "
                 + "ORDER BY r.created_at ASC, r.health_record_id ASC";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, doctorId);
             ps.setInt(2, doctorId);
             ps.setInt(3, doctorId);
+            ps.setInt(4, doctorId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     HealthRecord record = mapDashboardRecord(rs, doctorId);

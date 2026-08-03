@@ -1169,7 +1169,7 @@
                                                                   <c:when test="${isTesting}">
                                                                       <button type="button" class="btn btn-info btn-xs px-2 py-1 text-white" style="font-size: 0.75rem;"
                                                                               onclick="selectWaitingPatient('${p.patientId}', '<c:out value="${p.fullName}"/>', '<c:out value="${p.email}"/>', '<c:out value="${p.phone}"/>', '<c:out value="${p.dob}"/>', '<c:out value="${p.gender}"/>', '<c:out value="${p.address}"/>', '${p.waitingId}')">
-                                                                          <i class="bi bi-play-fill me-1"></i> Tiến hành xét nghiệm
+                                                                          <i class="bi bi-arrow-right-circle me-1"></i> Nhận kết quả
                                                                       </button>
                                                                   </c:when>
                                                               </c:choose>
@@ -1266,7 +1266,7 @@
         }
  
         function submitRandomTest(patientId, waitingId, labRoom) {
-            if (!confirm("Tiến hành xét nghiệm tự động cho bệnh nhân này?")) {
+            if (!confirm("Nhận và lưu kết quả xét nghiệm cho bệnh nhân này?")) {
                 return;
             }
  
