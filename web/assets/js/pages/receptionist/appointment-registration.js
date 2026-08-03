@@ -1,5 +1,13 @@
 (function () {
     const utils = window.ReceptionistUtils;
+
+    function getLocalDateString() {
+        const now = new Date();
+        return now.getFullYear() + '-' +
+            String(now.getMonth() + 1).padStart(2, '0') + '-' +
+            String(now.getDate()).padStart(2, '0');
+    }
+
     const result = document.getElementById('registrationResult');
     const lookupInput = document.getElementById('patientLookupKeyword');
     const lookupButton = document.getElementById('patientLookupBtn');
@@ -59,7 +67,7 @@
 
     function setDefaultDate() {
         if (filterDate) {
-            const today = new Date().toISOString().split('T')[0];
+            const today = getLocalDateString();
             filterDate.min = today;
             if (!filterDate.value || filterDate.value < today) {
                 filterDate.value = today;
@@ -361,7 +369,7 @@
 
         // Revisit Client-side Validation
         if (visitType === 'Revisit') {
-            const selectedDate = filterDate ? filterDate.value : new Date().toISOString().split('T')[0];
+            const selectedDate = filterDate ? filterDate.value : getLocalDateString();
             const hasRevisitOnDate = currentPatientRevisitDates.includes(selectedDate);
             if (!hasRevisitOnDate) {
                 showResult('Bệnh nhân không có lịch tái khám vào ngày ' + formatDateDisplay(selectedDate) + '. Vui lòng chọn đăng ký Khám mới.', 'danger');
@@ -414,7 +422,7 @@
     async function loadFilteredDoctorCards() {
         const selectedDep = filterDepartment ? filterDepartment.value.toLowerCase().trim() : '';
         const nameQuery = searchDoctorName ? searchDoctorName.value.toLowerCase().trim() : '';
-        const selectedDate = filterDate ? filterDate.value : new Date().toISOString().split('T')[0];
+        const selectedDate = filterDate ? filterDate.value : getLocalDateString();
         const selectedSession = filterSession ? filterSession.value : 'all';
 
         doctorCardsList.innerHTML = '<div class="text-center py-4 col-12 text-muted"><div class="spinner-border text-primary mb-2" role="status"></div> <div>Đang tải danh sách bác sĩ...</div></div>';
@@ -500,7 +508,7 @@
     if (searchDoctorName) searchDoctorName.addEventListener('input', loadFilteredDoctorCards);
     if (filterDate) {
         filterDate.addEventListener('change', () => {
-            const today = new Date().toISOString().split('T')[0];
+            const today = getLocalDateString();
             if (filterDate.value && filterDate.value < today) {
                 alert('Ngày khám không được chọn ngày đã qua!');
                 filterDate.value = today;
