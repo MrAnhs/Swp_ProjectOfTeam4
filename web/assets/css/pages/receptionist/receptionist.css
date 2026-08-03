@@ -637,6 +637,26 @@ select.form-select.doctor-visit-type option {
     padding: 8px !important;
 }
 
+/* Custom styling for filter dropdowns in Appointment Registration */
+#filterDepartment,
+#filterSession {
+    padding-right: 28px !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%232ab5a3' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 8px center !important;
+    background-size: 11px 9px !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+}
+
+#filterDepartment option,
+#filterSession option {
+    background-color: #0f172a !important;
+    color: #ffffff !important;
+}
+
+
 /* Receptionist Doctor Card Custom Dark Theme */
 .receptionist-page .doctor-booking-card {
     background-color: #1e293b;
