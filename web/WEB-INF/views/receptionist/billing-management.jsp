@@ -38,7 +38,7 @@
                 </div>
                 <div class="col-md-3 d-grid">
                     <button id="searchInvoiceBtn" class="master-btn-primary" type="button" style="height: 44px; display: inline-flex; align-items: center; justify-content: center;">
-                        <i class="bi bi-search me-1"></i>Tìm kiếm
+                        <i class="bi bi-search me-1"></i>Tìm kiếm hóa đơn
                     </button>
                 </div>
             </div>
