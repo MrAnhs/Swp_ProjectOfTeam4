@@ -6,49 +6,39 @@
 --%>
 
 <style>
+    .patient-reg-component .form-label {
+        font-size: 11px !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.08em !important;
+        color: rgba(255, 255, 255, 0.75) !important;
+        text-transform: uppercase !important;
+        margin-bottom: 0.6rem !important;
+        display: inline-block;
+    }
     .patient-reg-component .custom-input-group {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.03) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 12px !important;
         overflow: hidden;
-        transition: all 0.3s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        display: flex;
+        align-items: center;
     }
     .patient-reg-component .custom-input-group:focus-within {
-        border-color: #2AB5A3 !important;
-        box-shadow: 0 0 0 3px rgba(42, 181, 163, 0.2) !important;
-    }
-    .patient-reg-component .custom-input-group .input-group-text {
-        background: transparent;
-        border: none;
-        color: #2AB5A3;
-        font-size: 1.1rem;
-        padding-left: 1rem;
-    }
-    .patient-reg-component .custom-input-group .form-control,
-    .patient-reg-component .custom-input-group .form-select {
-        background: transparent;
-        border: none;
-        box-shadow: none !important;
-        padding: 0.75rem 1rem 0.75rem 0.5rem;
-    }
-    /* Unified Dark Theme Glassmorphism Inputs */
-    .patient-reg-component .custom-input-group {
-        background: rgba(255, 255, 255, 0.04) !important;
-        border: 1px solid rgba(255, 255, 255, 0.12) !important;
-        border-radius: 12px;
-        overflow: hidden;
-        transition: all 0.3s ease;
-    }
-    .patient-reg-component .custom-input-group:focus-within {
-        border-color: #2AB5A3 !important;
-        box-shadow: 0 0 0 3px rgba(42, 181, 163, 0.2) !important;
+        border-color: rgba(42, 181, 163, 0.6) !important;
+        box-shadow: 0 0 0 3px rgba(42, 181, 163, 0.15) !important;
+        background: rgba(255, 255, 255, 0.05) !important;
     }
     .patient-reg-component .custom-input-group .input-group-text {
         background: transparent !important;
         border: none !important;
         color: #2AB5A3 !important;
-        font-size: 1.1rem;
-        padding-left: 1rem;
+        font-size: 1.15rem !important;
+        padding-left: 1.2rem !important;
+        padding-right: 0.6rem !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
     .patient-reg-component .custom-input-group .form-control,
     .patient-reg-component .custom-input-group .form-select {
@@ -56,10 +46,47 @@
         border: none !important;
         box-shadow: none !important;
         color: #FFFFFF !important;
-        padding: 0.75rem 1rem 0.75rem 0.5rem;
+        font-size: 0.95rem !important;
+        padding: 0.85rem 1rem 0.85rem 0.2rem !important;
+        height: auto !important;
     }
-    .patient-reg-component .form-label {
-        color: rgba(255, 255, 255, 0.75) !important;
+    .patient-reg-component .custom-input-group .form-control::placeholder {
+        color: rgba(255, 255, 255, 0.3) !important;
+    }
+    .patient-reg-component .custom-input-group .form-select option {
+        background-color: #0F172A !important;
+        color: #ffffff !important;
+    }
+    .patient-reg-component #btnSendOtp {
+        border: 1px solid rgba(42, 181, 163, 0.4) !important;
+        color: #2AB5A3 !important;
+        background: rgba(42, 181, 163, 0.1) !important;
+        border-radius: 8px !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        padding: 0.45rem 1rem !important;
+        margin-right: 0.6rem !important;
+        white-space: nowrap;
+        transition: all 0.2s ease !important;
+    }
+    .patient-reg-component #btnSendOtp:hover {
+        background: rgba(42, 181, 163, 0.25) !important;
+        border-color: #2AB5A3 !important;
+        color: #ffffff !important;
+    }
+    /* Style custom date picker input */
+    .patient-reg-component .custom-input-group input[type="date"] {
+        color-scheme: dark !important; /* makes the native picker dark-mode compliant */
+    }
+    .patient-reg-component .custom-input-group input[type="date"]::-webkit-calendar-picker-indicator {
+        filter: invert(65%) sepia(85%) saturate(375%) hue-rotate(125deg) !important;
+        cursor: pointer;
+        opacity: 0.8;
+        padding-right: 0.5rem;
+        transition: opacity 0.2s ease;
+    }
+    .patient-reg-component .custom-input-group input[type="date"]::-webkit-calendar-picker-indicator:hover {
+        opacity: 1;
     }
 </style>
 

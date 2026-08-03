@@ -117,12 +117,7 @@ Hệ thống bao gồm **6 nhóm người dùng chính**:
 - **Mô tả**: Bác sĩ kích hoạt AI Analysis Agent (`ProcessAIServlet`) để dự đoán nguy cơ tiến triển tiểu đường dựa trên tập chỉ số tổng hợp của bệnh nhân.
 - **Đầu ra AI**: % Tỷ lệ nguy cơ, các yếu tố rủi ro chính và gợi ý phác đồ điều trị hỗ trợ bác sĩ.
 
-#### UC-DOC-05: Chuyển giao Hồ sơ & Bàn giao Ca Khám (Shift Handover & Record Transfer)
-- **Mô tả**: Bác sĩ khi kết thúc ca làm việc hoặc hết giờ khám có thể chuyển giao các hồ sơ đang trong quy trình khám/chờ xét nghiệm cho Bác sĩ nhận ca tiếp theo (`TransferRecordServlet`).
-- **Logic xử lý**:
-  - Cập nhật đồng bộ `doctor_id` trong `Healthy_Record` và `Medical_record`.
-  - Tự động ghi lại nhật ký bàn giao vào bảng `Record_Transfer_History` (gồm ID bác sĩ giao, bác sĩ nhận, lý do và thời gian).
-  - Hồ sơ sẽ tự động xuất hiện trong danh sách công việc của Bác sĩ ca sau để tiếp tục theo dõi và chẩn đoán.
+// Tôi đã bỏ tính năng chuyển ca và kê đơn thuốc //
 
 #### UC-DOC-06: Hoàn Tất Ca Khám (Complete Visit)
 - **Mô tả**: Bác sĩ nhập lời dặn, kết luận và bấm hoàn tất ca khám (`CompletedRecordsServlet`). Trạng thái ca khám đổi sang `COMPLETED`.

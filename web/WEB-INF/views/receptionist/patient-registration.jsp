@@ -8,6 +8,39 @@
     <title>Đăng ký bệnh nhân</title>
     <%@ include file="/WEB-INF/views/components/shared/master-head.jspf" %>
     <link href="${pageContext.request.contextPath}/assets/css/pages/receptionist/receptionist.css?v=20260725-balanced" rel="stylesheet">
+    <style>
+        .btn-receptionist-submit {
+            background: linear-gradient(135deg, #2AB5A3, #208A7C) !important;
+            border: none !important;
+            border-radius: 50px !important;
+            padding: 0.8rem 2.5rem !important;
+            color: #ffffff !important;
+            font-weight: 700 !important;
+            box-shadow: 0 8px 25px rgba(42, 181, 163, 0.3) !important;
+            transition: all 0.3s ease !important;
+            font-size: 0.95rem !important;
+        }
+        .btn-receptionist-submit:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 12px 30px rgba(42, 181, 163, 0.45) !important;
+        }
+        .btn-receptionist-reset {
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            border-radius: 50px !important;
+            padding: 0.8rem 2rem !important;
+            color: rgba(255, 255, 255, 0.85) !important;
+            background: transparent !important;
+            font-weight: 600 !important;
+            transition: all 0.3s ease !important;
+            font-size: 0.95rem !important;
+        }
+        .btn-receptionist-reset:hover {
+            background: rgba(255, 255, 255, 0.08) !important;
+            border-color: rgba(255, 255, 255, 0.4) !important;
+            color: #ffffff !important;
+            transform: translateY(-2px) !important;
+        }
+    </style>
 </head>
 <body class="receptionist-page">
 <div class="receptionist-shell">
@@ -22,11 +55,11 @@
                 <c:set var="isSelfRegistration" value="false" scope="request" />
                 <%@ include file="/WEB-INF/views/components/shared/patient-registration-form.jspf" %>
 
-                <div class="mt-4 d-flex gap-2">
-                    <button class="btn btn-primary btn-lg px-4 fw-semibold" type="submit">
+                <div class="mt-4 d-flex gap-3 justify-content-end align-items-center">
+                    <button class="btn btn-receptionist-reset" id="resetPatientRegistrationBtn" type="button">Làm mới</button>
+                    <button class="btn btn-receptionist-submit" type="submit">
                         <i class="bi bi-person-plus me-1"></i>Tạo hồ sơ bệnh nhân
                     </button>
-                    <button class="btn btn-outline-secondary btn-lg px-4" id="resetPatientRegistrationBtn" type="button">Làm mới</button>
                 </div>
             </form>
         </section>
