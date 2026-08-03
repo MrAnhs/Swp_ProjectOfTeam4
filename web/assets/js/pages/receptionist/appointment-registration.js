@@ -498,7 +498,16 @@
 
     if (filterDepartment) filterDepartment.addEventListener('change', loadFilteredDoctorCards);
     if (searchDoctorName) searchDoctorName.addEventListener('input', loadFilteredDoctorCards);
-    if (filterDate) filterDate.addEventListener('change', loadFilteredDoctorCards);
+    if (filterDate) {
+        filterDate.addEventListener('change', () => {
+            const today = new Date().toISOString().split('T')[0];
+            if (filterDate.value && filterDate.value < today) {
+                alert('Ngày khám không được chọn ngày đã qua!');
+                filterDate.value = today;
+            }
+            loadFilteredDoctorCards();
+        });
+    }
     if (filterSession) filterSession.addEventListener('change', loadFilteredDoctorCards);
 
     lookupButton.addEventListener('click', lookupPatient);

@@ -673,3 +673,17 @@
             </div>
         </div>
     </div>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    document.querySelectorAll('input[type="date"][name="workDate"], input[type="date"][name="startDate"]').forEach(input => {
+        input.min = todayStr;
+        input.addEventListener("change", () => {
+            if (input.value && input.value < todayStr) {
+                alert("Ngày xếp lịch / làm việc không được chọn ngày đã qua!");
+                input.value = todayStr;
+            }
+        });
+    });
+});
+</script>

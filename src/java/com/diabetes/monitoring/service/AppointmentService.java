@@ -170,6 +170,9 @@ public class AppointmentService {
 
                 ScheduleSelection schedule = new ScheduleSelection();
                 schedule.workDate = resultSet.getDate("work_date").toLocalDate();
+                if (schedule.workDate.isBefore(java.time.LocalDate.now())) {
+                    throw new AppointmentBookingException("Không thể đặt lịch hẹn cho ngày khám đã qua.");
+                }
                 schedule.timeSlot = resultSet.getString("time_slot");
                 schedule.maxPatients = resultSet.getInt("max_patients");
                 Object onlineQuotaObj = resultSet.getObject("online_quota");

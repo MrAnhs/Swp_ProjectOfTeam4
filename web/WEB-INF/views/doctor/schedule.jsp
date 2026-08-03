@@ -335,6 +335,18 @@ document.addEventListener("DOMContentLoaded", () => {
     populateYearSelect();
     generateWeekOptions();
     renderScheduleGrid();
+
+    const workDateInput = document.getElementById("workDate");
+    if (workDateInput) {
+        const todayStr = new Date().toISOString().split('T')[0];
+        workDateInput.min = todayStr;
+        workDateInput.addEventListener("change", () => {
+            if (workDateInput.value && workDateInput.value < todayStr) {
+                alert("Ngày làm việc không được chọn ngày đã qua!");
+                workDateInput.value = todayStr;
+            }
+        });
+    }
 });
 </script>
 

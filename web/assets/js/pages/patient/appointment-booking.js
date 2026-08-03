@@ -346,7 +346,14 @@
     }
 
     departmentSelect.addEventListener("change", loadDoctors);
-    dateInput.addEventListener("change", loadDoctors);
+    dateInput.addEventListener("change", () => {
+        const today = todayValue();
+        if (dateInput.value && dateInput.value < today) {
+            alert("Ngày hẹn khám không được chọn ngày đã qua!");
+            dateInput.value = today;
+        }
+        loadDoctors();
+    });
     sessionSelect.addEventListener("change", loadDoctors);
     doctorNameInput.addEventListener("input", () => {
         window.clearTimeout(searchTimer);
