@@ -129,16 +129,10 @@
 
         <!-- Email -->
         <div class="col-md-6">
-            <label class="form-label fw-bold text-uppercase tracking-wider" style="font-size: 11px; opacity: 0.75;" for="${isSelfRegistration ? 'email' : 'patientRegisterEmail'}">
-                EMAIL 
-                <c:choose>
-                    <c:when test="${isSelfRegistration}"><span class="text-danger">*</span></c:when>
-                    <c:otherwise><span class="text-muted fw-normal">(Không bắt buộc)</span></c:otherwise>
-                </c:choose>
-            </label>
+            <label class="form-label fw-bold text-uppercase tracking-wider" style="font-size: 11px; opacity: 0.75;" for="${isSelfRegistration ? 'email' : 'patientRegisterEmail'}">EMAIL <span class="text-danger">*</span></label>
             <div class="input-group custom-input-group">
                 <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                <input type="email" class="form-control border-start-0 ps-1 shadow-none" id="${isSelfRegistration ? 'email' : 'patientRegisterEmail'}" name="${isSelfRegistration ? 'email' : 'patientEmail'}" placeholder="example@gmail.com" <c:if test="${isSelfRegistration}">required</c:if>>
+                <input type="email" class="form-control border-start-0 ps-1 shadow-none" id="${isSelfRegistration ? 'email' : 'patientRegisterEmail'}" name="${isSelfRegistration ? 'email' : 'patientEmail'}" placeholder="example@gmail.com" required>
                 <c:if test="${isSelfRegistration}">
                     <button type="button" class="btn btn-outline-teal btn-sm me-1 rounded-3 px-3 py-1 fw-semibold align-self-center" id="btnSendOtp" style="font-size: 12px; border-color: rgba(42, 181, 163, 0.4); color: #2AB5A3; background: rgba(42, 181, 163, 0.1);">
                         Gửi mã OTP
