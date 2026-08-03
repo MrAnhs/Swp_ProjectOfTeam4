@@ -335,8 +335,8 @@
                             <span>Bệnh nhân chưa thanh toán xét nghiệm bổ sung. Bạn không thể hoàn thành hồ sơ lúc này.</span>
                         </div>
                     </c:if>
-                    <button class="btn btn-doctor w-100" onclick="saveNotes('${record.healthRecordId}')" ${hasPendingPayment ? 'disabled' : ''}>
-                        <i class="bi bi-save"></i> Lưu và hoàn thành
+                    <button class="btn btn-doctor w-100" type="button" onclick="saveNotes('${record.healthRecordId}')" ${hasPendingPayment ? 'disabled' : ''}>
+                        <i class="bi bi-save me-1"></i> Lưu và hoàn thành
                     </button>
                 </c:if>
             </section>
@@ -448,7 +448,12 @@ function saveVitals(recordId) {
 }
 
 function saveNotes(recordId) {
-    const revisitDateVal = document.getElementById("revisitDate").value;
+    const revisitInput = document.getElementById("revisitDate");
+    const notesInput = document.getElementById("doctorNotes");
+    const diagnosisInput = document.getElementById("finalDiagnosis");
+    const canViewInput = document.getElementById("canView");
+
+    const revisitDateVal = (revisitInput && revisitInput.value) ? revisitInput.value : "";
     if (revisitDateVal) {
         const selectedDate = new Date(revisitDateVal);
         selectedDate.setHours(0, 0, 0, 0);
@@ -460,13 +465,24 @@ function saveNotes(recordId) {
         }
     }
 
+    const notesVal = notesInput ? notesInput.value : "";
+    const diagnosisVal = diagnosisInput ? diagnosisInput.value : "";
+    const canViewVal = canViewInput ? canViewInput.checked : false;
+
     const body = new URLSearchParams({
         record_id: recordId,
-        notes: document.getElementById("doctorNotes").value,
-        diagnosis: document.getElementById("finalDiagnosis").value,
-        can_view: document.getElementById("canView").checked,
-        revisit_date: document.getElementById("revisitDate").value
+        notes: notesVal,
+        diagnosis: diagnosisVal,
+        can_view: canViewVal,
+        revisit_date: revisitDateVal
     });
+
+    const saveBtn = document.querySelector("button[onclick*='saveNotes']");
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Đang lưu...';
+    }
+
     fetch("${pageContext.request.contextPath}/doctor/records/save", {
         method: "POST",
         headers: {
@@ -490,9 +506,18 @@ function saveNotes(recordId) {
         if (!response.ok || !data.success) {
             throw new Error(data.message || data.error || "Không thể lưu hồ sơ");
         }
+        return data;
     })
-    .then(() => window.location.href = "${pageContext.request.contextPath}/doctor/completed-records")
-    .catch(error => alert(error.message));
+    .then(() => {
+        window.location.href = "${pageContext.request.contextPath}/doctor/completed-records";
+    })
+    .catch(error => {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="bi bi-save me-1"></i> Lưu và hoàn thành';
+        }
+        alert(error.message);
+    });
 }
 
 document.querySelectorAll(".lab-multi-form").forEach(form => {
