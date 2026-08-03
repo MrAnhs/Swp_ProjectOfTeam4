@@ -259,12 +259,13 @@ public class HealthRecordDAO {
                 + "LEFT JOIN Patient p ON r.patient_id = p.patient_id "
                 + "LEFT JOIN Medical_record mr ON r.health_record_id = mr.health_record_id "
                 + "LEFT JOIN Doctor_AI ai ON r.health_record_id = ai.health_record_id "
-                + "WHERE r.doctor_id = ? AND r.status = 'Completed' "
+                + "WHERE (r.doctor_id = ? OR mr.doctor_id = ?) AND r.status = 'Completed' "
                 + "ORDER BY mr.processed_at DESC, r.health_record_id DESC";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, doctorId);
+            ps.setInt(2, doctorId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     HealthRecord record = mapDashboardRecord(rs, doctorId);
@@ -1879,10 +1880,18 @@ public class HealthRecordDAO {
                 + "revisit_date = ?, processed_at = GETDATE() WHERE health_record_id = ?";
         String statusSql = "UPDATE Healthy_Record SET status = 'Completed', doctor_id = ? "
                 + "WHERE health_record_id = ? AND (status IS NULL OR status NOT IN ('Cancelled'))";
+        String linkAppointmentSql = "UPDATE mr SET mr.appointment_id = COALESCE(mr.appointment_id, i.appointment_id) "
+                + "FROM Medical_record mr "
+                + "JOIN Invoice_Detail id ON id.health_record_id = mr.health_record_id "
+                + "JOIN Invoice i ON i.invoice_id = id.invoice_id "
+                + "WHERE mr.health_record_id = ? AND i.appointment_id IS NOT NULL";
         String appointmentStatusSql = "UPDATE a SET a.status = 'Completed' "
                 + "FROM Appointment a "
-                + "JOIN Medical_record mr ON mr.appointment_id = a.appointment_id "
-                + "WHERE mr.health_record_id = ?";
+                + "WHERE a.appointment_id IN ("
+                + "    SELECT mr.appointment_id FROM Medical_record mr WHERE mr.health_record_id = ? AND mr.appointment_id IS NOT NULL "
+                + "    UNION "
+                + "    SELECT i.appointment_id FROM Invoice_Detail id JOIN Invoice i ON i.invoice_id = id.invoice_id WHERE id.health_record_id = ? AND i.appointment_id IS NOT NULL "
+                + ")";
 
         try (Connection conn = DatabaseConnection.getConnection()) {
             conn.setAutoCommit(false);
@@ -1947,8 +1956,14 @@ public class HealthRecordDAO {
                     ps.executeUpdate();
                 }
 
+                try (PreparedStatement ps = conn.prepareStatement(linkAppointmentSql)) {
+                    ps.setInt(1, healthRecordId);
+                    ps.executeUpdate();
+                }
+
                 try (PreparedStatement ps = conn.prepareStatement(appointmentStatusSql)) {
                     ps.setInt(1, healthRecordId);
+                    ps.setInt(2, healthRecordId);
                     ps.executeUpdate();
                 }
 
