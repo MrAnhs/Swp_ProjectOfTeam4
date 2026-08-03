@@ -19,6 +19,8 @@ public class GeneralExaminationListServlet extends DoctorServlet {
             int doctorId = getDoctorId(currentUser);
             request.setAttribute("generalExaminationRecords",
                     dao.getGeneralExaminationRecords(doctorId));
+            request.setAttribute("availableDoctors",
+                    dao.getAvailableDoctors(doctorId));
             request.getRequestDispatcher("/WEB-INF/views/doctor/generalExaminationList.jsp")
                     .forward(request, response);
         } catch (Exception e) {

@@ -242,24 +242,24 @@ body.doctor-app {
     min-height: 76px;
     width: 100%;
     padding: 14px 16px;
-    border: 1px solid #e2e8f0 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
     border-radius: 14px;
-    background: #ffffff !important;
-    color: #1a202c !important;
+    background: rgba(15, 23, 42, 0.75) !important;
+    color: #F8FAFC !important;
     cursor: pointer;
     transition: border-color .2s, background-color .2s, transform .2s;
 }
 
 .lab-service-option:hover {
-    border-color: #00C8A5 !important;
-    background: rgba(0, 200, 165, 0.08) !important;
+    border-color: #2AB5A3 !important;
+    background: rgba(42, 181, 163, 0.15) !important;
     transform: translateY(-1px);
 }
 
 .lab-service-option.is-selected {
-    border-color: #00C8A5 !important;
-    background: rgba(0, 200, 165, 0.12) !important;
-    box-shadow: 0 0 0 2px rgba(0, 200, 165, .2);
+    border-color: #2AB5A3 !important;
+    background: rgba(42, 181, 163, 0.25) !important;
+    box-shadow: 0 0 0 2px rgba(42, 181, 163, .3);
 }
 
 .lab-service-option input {
@@ -275,7 +275,48 @@ body.doctor-app {
 }
 
 .lab-service-option small {
-    color: #64748b !important;
+    color: #94A3B8 !important;
+}
+
+/* Master Form Controls Overrides for Doctor App */
+body.doctor-app .form-control,
+body.doctor-app .form-select,
+body.doctor-app textarea,
+body.doctor-app input[type="text"],
+body.doctor-app input[type="number"],
+body.doctor-app input[type="email"],
+body.doctor-app input[type="search"] {
+    background-color: rgba(15, 23, 42, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: #F8FAFC !important;
+    border-radius: 12px !important;
+}
+
+body.doctor-app .form-control:focus,
+body.doctor-app .form-select:focus,
+body.doctor-app textarea:focus {
+    border-color: #2AB5A3 !important;
+    background-color: rgba(15, 23, 42, 0.85) !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 0 0 3px rgba(42, 181, 163, 0.25) !important;
+}
+
+body.doctor-app .form-control:disabled,
+body.doctor-app .form-select:disabled,
+body.doctor-app input:disabled {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    color: #94A3B8 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+body.doctor-app .form-label,
+body.doctor-app label {
+    color: #94A3B8 !important;
+}
+
+body.doctor-app select.form-select option {
+    background-color: #0F172A !important;
+    color: #F8FAFC !important;
 }
 
 @media (max-width: 991px) {

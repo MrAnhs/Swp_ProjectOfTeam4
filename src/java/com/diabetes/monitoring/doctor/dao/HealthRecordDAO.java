@@ -210,7 +210,7 @@ public class HealthRecordDAO {
     private List<HealthRecord> getDoctorWorkflowRecords(
             int doctorId, String workflowCondition) {
         List<HealthRecord> list = new ArrayList<>();
-        String sql = "SELECT r.health_record_id, r.patient_id, r.status, r.created_at, "
+        String sql = "SELECT DISTINCT r.health_record_id, r.patient_id, r.status, r.created_at, "
                 + "r.urea, r.cr, r.hba1c, r.chol, r.tg, r.hdl, "
                 + "r.ldl AS ldl_value, r.vldl, r.bmi, "
                 + "p.full_name AS patient_name, mr.final_diagnosis, "
@@ -220,15 +220,14 @@ public class HealthRecordDAO {
                 + "LEFT JOIN Medical_record mr ON mr.health_record_id = r.health_record_id "
                 + "LEFT JOIN Appointment a ON a.appointment_id = mr.appointment_id "
                 + "LEFT JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
-                + "WHERE r.doctor_id = ? AND " + workflowCondition + " "
-                + "AND ( "
-                + "    (ds.work_date IS NOT NULL AND CAST(ds.work_date AS DATE) = CAST(GETDATE() AS DATE)) "
-                + "    OR (CAST(r.created_at AS DATE) = CAST(GETDATE() AS DATE)) "
-                + ") "
+                + "WHERE (r.doctor_id = ? OR mr.doctor_id = ? OR EXISTS (SELECT 1 FROM Record_Transfer_History h WHERE h.health_record_id = r.health_record_id AND h.to_doctor_id = ?)) "
+                + "AND " + workflowCondition + " "
                 + "ORDER BY r.created_at ASC, r.health_record_id ASC";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, doctorId);
+            ps.setInt(2, doctorId);
+            ps.setInt(3, doctorId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     HealthRecord record = mapDashboardRecord(rs, doctorId);
@@ -423,7 +422,8 @@ public class HealthRecordDAO {
                 + "OR mr.doctor_id = ? "
                 + "OR ds.doctor_id = ? "
                 + "OR EXISTS (SELECT 1 FROM Invoice_Detail id WHERE id.doctor_id = ? AND (id.health_record_id = r.health_record_id OR id.appointment_id = mr.appointment_id)) "
-                + "OR EXISTS (SELECT 1 FROM Medical_record mr2 WHERE mr2.patient_id = r.patient_id AND mr2.doctor_id = ?)"
+                + "OR EXISTS (SELECT 1 FROM Medical_record mr2 WHERE mr2.patient_id = r.patient_id AND mr2.doctor_id = ?) "
+                + "OR EXISTS (SELECT 1 FROM Record_Transfer_History h WHERE h.health_record_id = r.health_record_id AND h.to_doctor_id = ?)"
                 + ")";
 
         try (Connection conn = DatabaseConnection.getConnection();
@@ -434,6 +434,7 @@ public class HealthRecordDAO {
             ps.setInt(4, doctorId);
             ps.setInt(5, doctorId);
             ps.setInt(6, doctorId);
+            ps.setInt(7, doctorId);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() && rs.getInt(1) > 0;
             }
@@ -602,7 +603,43 @@ public class HealthRecordDAO {
 
     public boolean transferRecord(int healthRecordId, int fromDoctorId, int toDoctorId, String reason)
             throws SQLException {
-        throw new UnsupportedOperationException("Tính năng chuyển ca đã được gỡ bỏ.");
+        String updateHealthyRecord = "UPDATE Healthy_Record SET doctor_id = ? WHERE health_record_id = ?";
+        String updateMedicalRecord = "UPDATE Medical_record SET doctor_id = ? WHERE health_record_id = ?";
+        String insertHistory = "INSERT INTO Record_Transfer_History (health_record_id, from_doctor_id, to_doctor_id, reason, created_at) "
+                + "VALUES (?, ?, ?, ?, GETDATE())";
+
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                try (PreparedStatement ps1 = conn.prepareStatement(updateHealthyRecord)) {
+                    ps1.setInt(1, toDoctorId);
+                    ps1.setInt(2, healthRecordId);
+                    ps1.executeUpdate();
+                }
+
+                try (PreparedStatement ps2 = conn.prepareStatement(updateMedicalRecord)) {
+                    ps2.setInt(1, toDoctorId);
+                    ps2.setInt(2, healthRecordId);
+                    ps2.executeUpdate();
+                }
+
+                try (PreparedStatement ps3 = conn.prepareStatement(insertHistory)) {
+                    ps3.setInt(1, healthRecordId);
+                    ps3.setInt(2, fromDoctorId);
+                    ps3.setInt(3, toDoctorId);
+                    ps3.setString(4, reason != null && !reason.isBlank() ? reason : "Chuyển ca khám");
+                    ps3.executeUpdate();
+                }
+
+                conn.commit();
+                return true;
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(true);
+            }
+        }
     }
 
     public List<DoctorSummary> getAvailableDoctors(int excludeDoctorId) {

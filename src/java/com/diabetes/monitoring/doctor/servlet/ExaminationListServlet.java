@@ -22,6 +22,7 @@ public class ExaminationListServlet extends DoctorServlet {
             int doctorId = getDoctorId(currentUser);
             List<HealthRecord> records = dao.getDetailedExaminationRecords(doctorId);
             request.setAttribute("examinationRecords", records);
+            request.setAttribute("availableDoctors", dao.getAvailableDoctors(doctorId));
             request.getRequestDispatcher("/WEB-INF/views/doctor/examinationList.jsp")
                     .forward(request, response);
         } catch (Exception e) {

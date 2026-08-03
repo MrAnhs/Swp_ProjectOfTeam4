@@ -56,6 +56,8 @@ public class DetailServlet extends DoctorServlet {
                     hasCompletedLab);
             request.setAttribute("hasRequiredAIData",
                     dao.hasRequiredAIData(recordId, doctorId));
+            request.setAttribute("availableDoctors",
+                    dao.getAvailableDoctors(doctorId));
             request.getRequestDispatcher("/WEB-INF/views/doctor/examinationDetail.jsp")
                     .forward(request, response);
         } catch (NumberFormatException e) {

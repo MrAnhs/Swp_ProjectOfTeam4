@@ -48,6 +48,9 @@
                                     <a class="btn btn-sm btn-doctor" href="${pageContext.request.contextPath}/doctor/records/general-detail?record_id=${r.healthRecordId}">
                                         <i class="bi bi-person-vcard"></i> Mở khám tổng quát
                                     </a>
+                                    <button class="btn btn-sm btn-outline-warning text-white ms-1" type="button" onclick="openTransferModalRow(${r.healthRecordId}, '${r.patientName}')">
+                                        <i class="bi bi-arrow-left-right"></i> Chuyển ca
+                                    </button>
                                 </td>
                             </tr>
                         </c:forEach>
@@ -59,6 +62,49 @@
         </c:choose>
     </section>
 </main>
+
+<!-- Modal Chuyển ca -->
+<div class="modal fade" id="transferModalList" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content doctor-card border-0" style="background: #0F172A; color: #F8FAFC;">
+            <div class="modal-header border-bottom border-secondary border-opacity-25">
+                <h5 class="modal-title fw-bold text-white"><i class="bi bi-arrow-left-right text-primary me-2"></i> Chuyển giao hồ sơ cho Bác sĩ ca tiếp theo</h5>
+                <button type="button" class="btn-close btn-close-white" onclick="closeTransferModalList()" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="${pageContext.request.contextPath}/doctor/records/transfer" method="post">
+                <input type="hidden" id="modalRecordId" name="record_id" value="">
+                <div class="modal-body">
+                    <div class="mb-2 text-info small fw-bold" id="modalPatientInfo"></div>
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small fw-bold">CHỌN BÁC SĨ CA TIẾP THEO / TIẾP NHẬN</label>
+                        <select name="to_doctor_id" class="form-select" required>
+                            <option value="">-- Chọn bác sĩ nhận ca --</option>
+                            <c:choose>
+                                <c:when test="${not empty availableDoctors}">
+                                    <c:forEach var="doc" items="${availableDoctors}">
+                                        <option value="${doc.doctorId}">${doc.fullName} (${empty doc.department ? 'Bác sĩ chuyên khoa' : doc.department})</option>
+                                    </c:forEach>
+                                </c:when>
+                                <c:otherwise>
+                                    <option value="" disabled>Không có bác sĩ khác khả dụng</option>
+                                </c:otherwise>
+                            </c:choose>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small fw-bold">LÝ DO CHUYỂN GIAO CA</label>
+                        <textarea name="reason" class="form-control" rows="3" placeholder="Nhập lý do chuyển giao ca..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-top border-secondary border-opacity-25">
+                    <button type="button" class="btn btn-outline-secondary" onclick="closeTransferModalList()" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-doctor"><i class="bi bi-send-check me-1"></i> Xác nhận chuyển ca</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
 const rows = Array.from(document.querySelectorAll("#generalBody tr"));
 document.getElementById("generalSearch")?.addEventListener("input", event => {
@@ -71,6 +117,38 @@ document.getElementById("generalSearch")?.addEventListener("input", event => {
     });
     document.getElementById("generalEmpty")?.classList.toggle("d-none", visible !== 0);
 });
+
+function openTransferModalRow(recordId, patientName) {
+    document.getElementById("modalRecordId").value = recordId;
+    document.getElementById("modalPatientInfo").textContent = "Hồ sơ #" + recordId + " - Bệnh nhân: " + patientName;
+    const modalEl = document.getElementById("transferModalList");
+    if (!modalEl) return;
+    try {
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            bsModal.show();
+            return;
+        }
+    } catch (e) {}
+    modalEl.classList.add("show");
+    modalEl.style.display = "block";
+    document.body.classList.add("modal-open");
+}
+
+function closeTransferModalList() {
+    const modalEl = document.getElementById("transferModalList");
+    if (!modalEl) return;
+    try {
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            const bsModal = bootstrap.Modal.getInstance(modalEl);
+            if (bsModal) bsModal.hide();
+        }
+    } catch (e) {}
+    modalEl.classList.remove("show");
+    modalEl.style.display = "none";
+    document.body.classList.remove("modal-open");
+}
 </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

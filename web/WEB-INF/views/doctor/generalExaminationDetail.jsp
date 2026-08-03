@@ -16,7 +16,9 @@
             overflow: hidden;
             position: relative;
             color: #fff;
-            background: linear-gradient(135deg, #087f8c, #0f766e);
+            background: linear-gradient(135deg, rgba(42, 181, 163, 0.25), rgba(15, 23, 42, 0.95)) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 18px !important;
         }
         .exam-hero::after {
             position: absolute;
@@ -26,7 +28,7 @@
             height: 230px;
             border-radius: 50%;
             content: "";
-            background: rgba(255,255,255,.1);
+            background: rgba(255,255,255,.05);
             pointer-events: none;
             z-index: 0;
         }
@@ -34,40 +36,40 @@
             position: relative;
             z-index: 2;
         }
-        .exam-hero .doctor-muted { color: rgba(255,255,255,.78); }
+        .exam-hero .doctor-muted { color: #94A3B8 !important; }
         .section-icon {
             display:grid; width:42px; height:42px; place-items:center;
-            border-radius:13px; background:#e6f6f5; color:var(--doctor-primary);
+            border-radius:13px; background: rgba(42, 181, 163, 0.15) !important; color:#2AB5A3 !important;
+            border: 1px solid rgba(42, 181, 163, 0.2);
         }
-        .form-control, .form-select { border-radius:12px; border-color:var(--doctor-border); }
         .exam-section-nav {
             display:flex; flex-wrap:wrap; gap:10px; margin-bottom:24px;
         }
         .exam-section-nav a {
             display:inline-flex; align-items:center; gap:8px; padding:10px 15px;
-            border:1px solid var(--doctor-border); border-radius:999px;
-            background:#fff; color:var(--doctor-text); font-weight:700;
-            text-decoration:none;
+            border:1px solid rgba(255, 255, 255, 0.12) !important; border-radius:999px;
+            background: rgba(15, 23, 42, 0.75) !important; color:#94A3B8 !important; font-weight:700;
+            text-decoration:none; transition: all 0.2s ease;
         }
-        .exam-section-nav a:hover { border-color:var(--doctor-primary); color:var(--doctor-primary); }
+        .exam-section-nav a:hover { border-color:#2AB5A3 !important; color:#2AB5A3 !important; background: rgba(42, 181, 163, 0.15) !important; }
         .patient-info-grid {
             display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px;
         }
         .patient-info-item {
-            min-height:88px; padding:15px; border:1px solid var(--doctor-border);
-            border-radius:14px; background:#f8fbfd;
+            min-height:88px; padding:15px; border:1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius:14px; background: rgba(15, 23, 42, 0.6) !important; color: #F8FAFC !important;
         }
         .patient-info-item.wide { grid-column:span 2; }
         .patient-info-label {
-            margin-bottom:5px; color:var(--doctor-muted); font-size:.76rem;
+            margin-bottom:5px; color:#94A3B8 !important; font-size:.76rem;
             font-weight:800; letter-spacing:.04em; text-transform:uppercase;
         }
-        .patient-info-value { font-size:1rem; font-weight:700; overflow-wrap:anywhere; }
+        .patient-info-value { font-size:1rem; font-weight:700; overflow-wrap:anywhere; color: #FFFFFF !important; }
         .lab-request-form {
-            padding:20px; border:1px solid #cfe5e7; border-radius:16px;
-            background:linear-gradient(135deg,#f7fcfc,#eef8f8);
+            padding:20px; border:1px solid rgba(255, 255, 255, 0.08) !important; border-radius:16px;
+            background: rgba(15, 23, 42, 0.6) !important;
         }
-        .lab-request-form .form-label { margin-bottom:8px; font-size:.92rem; color:#29455d; }
+        .lab-request-form .form-label { margin-bottom:8px; font-size:.92rem; color:#94A3B8 !important; }
         .lab-request-form .form-control,
         .lab-request-form .form-select { min-height:48px; font-size:1rem; }
         .lab-request-form .btn { min-height:48px; font-weight:800; }
@@ -183,7 +185,7 @@
             </div>
             <div class="col-md-3">
                 <label class="form-label fw-semibold">Chỉ số BMI</label>
-                <input id="vitalsBmi" type="text" class="form-control bg-light fw-bold" 
+                <input id="vitalsBmi" type="text" class="form-control fw-bold" style="color: #34d399 !important;" 
                        value="${record.bmi > 0 ? record.bmi : 'Chưa tính'}" 
                        readonly disabled>
             </div>
@@ -374,20 +376,64 @@
 </main>
 
 <script>
+function openTransferModal() {
+    const modalEl = document.getElementById("transferModal");
+    if (!modalEl) return;
+    try {
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            bsModal.show();
+            return;
+        }
+    } catch (e) {
+        console.warn("Bootstrap modal fallback", e);
+    }
+    modalEl.classList.add("show");
+    modalEl.style.display = "block";
+    document.body.classList.add("modal-open");
+    if (!document.querySelector(".modal-backdrop")) {
+        const backdrop = document.createElement("div");
+        backdrop.className = "modal-backdrop fade show";
+        backdrop.id = "transferBackdrop";
+        document.body.appendChild(backdrop);
+    }
+}
+
+function closeTransferModal() {
+    const modalEl = document.getElementById("transferModal");
+    if (!modalEl) return;
+    try {
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            const bsModal = bootstrap.Modal.getInstance(modalEl);
+            if (bsModal) bsModal.hide();
+        }
+    } catch (e) {}
+    modalEl.classList.remove("show");
+    modalEl.style.display = "none";
+    document.body.classList.remove("modal-open");
+    const backdrop = document.getElementById("transferBackdrop");
+    if (backdrop) backdrop.remove();
+}
+
 function saveVitals(recordId) {
-    const height = document.getElementById("vitalsHeight").value;
-    const weight = document.getElementById("vitalsWeight").value;
+    const hInput = document.getElementById("vitalsHeight");
+    const wInput = document.getElementById("vitalsWeight");
+    if (!hInput || !wInput) return;
+    const height = hInput.value;
+    const weight = wInput.value;
     if (!height || !weight) {
         alert("Vui lòng nhập đầy đủ chiều cao và cân nặng.");
         return;
     }
     fetch("${pageContext.request.contextPath}/doctor/records/save-vitals", {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        headers: { "Content-Type": "x-www-form-urlencoded" },
         body: "record_id=" + recordId + "&height=" + height + "&weight=" + weight
     }).then(r => r.json()).then(data => {
         if (data.success) {
-            document.getElementById("vitalsBmi").value = data.bmi || "";
+            if (document.getElementById("vitalsBmi")) {
+                document.getElementById("vitalsBmi").value = data.bmi || "";
+            }
             alert("Đã lưu chỉ số thể chất thành công!");
         } else {
             alert("Lỗi: " + (data.message || "Không thể lưu chỉ số thể chất"));

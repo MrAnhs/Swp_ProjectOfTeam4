@@ -40,6 +40,21 @@ public class DatabaseConnection {
                     "END; " +
                     "ALTER TABLE Doctor_Schedule ADD CONSTRAINT CK_DoctorSchedule_Status CHECK (status IN ('Expired', 'Cancelled', 'Full', 'Available', 'Pending'));";
                 stmt.execute(sqlUpdateConstraint);
+
+                // Tự động tạo bảng Record_Transfer_History nếu chưa tồn tại
+                String sqlCreateTransferTable = 
+                    "IF OBJECT_ID('dbo.Record_Transfer_History', 'U') IS NULL " +
+                    "BEGIN " +
+                    "    CREATE TABLE dbo.Record_Transfer_History ( " +
+                    "        transfer_id INT IDENTITY(1,1) PRIMARY KEY, " +
+                    "        health_record_id INT NOT NULL, " +
+                    "        from_doctor_id INT NOT NULL, " +
+                    "        to_doctor_id INT NOT NULL, " +
+                    "        reason NVARCHAR(500) NULL, " +
+                    "        created_at DATETIME NOT NULL DEFAULT GETDATE() " +
+                    "    ); " +
+                    "END";
+                stmt.execute(sqlCreateTransferTable);
             } catch (Exception e) {
                 System.err.println("Loi khi tu dong kiem tra/nang cap schema DB: " + e.getMessage());
             }
