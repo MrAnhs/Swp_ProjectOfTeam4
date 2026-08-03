@@ -442,81 +442,86 @@ function saveVitals(recordId) {
 }
 
 function saveNotes(recordId) {
-    if (!recordId || recordId === "undefined" || recordId === "null" || recordId === "0") {
-        alert("Không tìm thấy mã hồ sơ. Vui lòng tải lại trang.");
-        return;
-    }
-
-    const revisitInput = document.getElementById("revisitDate");
-    const notesInput = document.getElementById("doctorNotes");
-    const diagnosisInput = document.getElementById("finalDiagnosis");
-    const canViewInput = document.getElementById("canView");
-
-    const revisitDateVal = (revisitInput && revisitInput.value) ? revisitInput.value : "";
-    if (revisitDateVal) {
-        const selectedDate = new Date(revisitDateVal);
-        selectedDate.setHours(0, 0, 0, 0);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        if (selectedDate < today) {
-            alert("Ngày tái khám không được là ngày trong quá khứ!");
+    try {
+        if (!recordId || recordId === "undefined" || recordId === "null" || recordId === "0") {
+            alert("Không tìm thấy mã hồ sơ. Vui lòng tải lại trang.");
             return;
         }
-    }
 
-    const notesVal = notesInput ? notesInput.value : "";
-    const diagnosisVal = (diagnosisInput && diagnosisInput.value) ? diagnosisInput.value : "Bình thường";
-    const canViewVal = canViewInput ? canViewInput.checked : false;
+        const revisitInput = document.getElementById("revisitDate");
+        const notesInput = document.getElementById("doctorNotes");
+        const diagnosisInput = document.getElementById("finalDiagnosis");
+        const canViewInput = document.getElementById("canView");
 
-    const body = new URLSearchParams({
-        record_id: recordId,
-        notes: notesVal,
-        diagnosis: diagnosisVal,
-        can_view: canViewVal,
-        revisit_date: revisitDateVal
-    });
-
-    const saveBtn = document.querySelector("button[onclick*='saveNotes']");
-    if (saveBtn) {
-        saveBtn.disabled = true;
-        saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Đang lưu...';
-    }
-
-    fetch("${pageContext.request.contextPath}/doctor/records/save", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Accept": "application/json",
-            "X-Requested-With": "XMLHttpRequest"
-        },
-        body: body.toString()
-    })
-    .then(async response => {
-        const text = await response.text();
-        let data = {};
-        try {
-            data = JSON.parse(text);
-        } catch (e) {
-            if (response.status === 401 || text.includes("login")) {
-                throw new Error("Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.");
+        const revisitDateVal = (revisitInput && revisitInput.value) ? revisitInput.value : "";
+        if (revisitDateVal) {
+            const selectedDate = new Date(revisitDateVal);
+            selectedDate.setHours(0, 0, 0, 0);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            if (selectedDate < today) {
+                alert("Ngày tái khám không được là ngày trong quá khứ!");
+                return;
             }
-            throw new Error("Không thể xử lý phản hồi từ máy chủ.");
         }
-        if (!response.ok || !data.success) {
-            throw new Error(data.message || data.error || "Không thể lưu hồ sơ");
-        }
-        return data;
-    })
-    .then(() => {
-        window.location.href = "${pageContext.request.contextPath}/doctor/completed-records";
-    })
-    .catch(error => {
+
+        const notesVal = notesInput ? notesInput.value : "";
+        const diagnosisVal = (diagnosisInput && diagnosisInput.value) ? diagnosisInput.value : "Bình thường";
+        const canViewVal = canViewInput ? canViewInput.checked : false;
+
+        const body = new URLSearchParams({
+            record_id: recordId,
+            notes: notesVal,
+            diagnosis: diagnosisVal,
+            can_view: canViewVal,
+            revisit_date: revisitDateVal
+        });
+
+        const saveBtn = document.querySelector("button[onclick*='saveNotes']");
         if (saveBtn) {
-            saveBtn.disabled = false;
-            saveBtn.innerHTML = '<i class="bi bi-save me-1"></i> Lưu và hoàn thành';
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Đang lưu...';
         }
-        alert(error.message);
-    });
+
+        fetch("${pageContext.request.contextPath}/doctor/records/save", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Accept": "application/json",
+                "X-Requested-With": "XMLHttpRequest"
+            },
+            body: body.toString()
+        })
+        .then(async response => {
+            const text = await response.text();
+            let data = {};
+            try {
+                data = JSON.parse(text);
+            } catch (e) {
+                if (response.status === 401 || text.includes("login")) {
+                    throw new Error("Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.");
+                }
+                throw new Error("Không thể xử lý phản hồi từ máy chủ.");
+            }
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || data.error || "Không thể lưu hồ sơ");
+            }
+            return data;
+        })
+        .then(() => {
+            alert("Đã lưu và hoàn thành hồ sơ thành công!");
+            window.location.href = "${pageContext.request.contextPath}/doctor/completed-records";
+        })
+        .catch(error => {
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="bi bi-save me-1"></i> Lưu và hoàn thành';
+            }
+            alert("Lỗi: " + error.message);
+        });
+    } catch (err) {
+        alert("Lỗi thao tác: " + err.message);
+    }
 }
 
 document.querySelectorAll(".lab-multi-form").forEach(form => {

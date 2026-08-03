@@ -27,7 +27,7 @@ public abstract class DoctorServlet extends HttpServlet {
         }
 
         User currentUser = (User) session.getAttribute("currentUser");
-        if (!"doctor".equalsIgnoreCase(currentUser.getRole())) {
+        if (currentUser == null || currentUser.getRole() == null || !currentUser.getRole().toLowerCase().contains("doctor")) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return null;
         }

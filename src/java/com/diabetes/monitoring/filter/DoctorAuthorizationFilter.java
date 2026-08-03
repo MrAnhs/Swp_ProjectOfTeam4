@@ -26,7 +26,7 @@ public class DoctorAuthorizationFilter implements Filter {
             return;
         }
 
-        if (!"Doctor".equalsIgnoreCase(currentUser.getRole())) {
+        if (currentUser.getRole() == null || !currentUser.getRole().toLowerCase().contains("doctor")) {
             if (isJsonRequest(httpRequest)) {
                 writeJsonError(httpResponse, HttpServletResponse.SC_FORBIDDEN, "Access denied");
             } else {
