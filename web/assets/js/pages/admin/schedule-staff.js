@@ -172,7 +172,10 @@ async function openEditStaffScheduleModal(staffScheduleId) {
             ? '<input type="hidden" name="timeSlot" data-lab-time-slot value="' + escapeHtml(schedule.timeSlot || '') + '">'
             + '<div class="col-md-6"><label class="form-label">Giờ bắt đầu</label><input type="time" class="form-control" name="startTime" value="' + escapeHtml(startTime) + '" required ' + (finalStatus ? 'disabled' : '') + '><div class="invalid-feedback">Vui lòng chọn giờ bắt đầu.</div></div>'
             + '<div class="col-md-6"><label class="form-label">Giờ kết thúc</label><input type="time" class="form-control" name="endTime" value="' + escapeHtml(endTime) + '" required ' + (finalStatus ? 'disabled' : '') + '><div class="invalid-feedback">Giờ kết thúc phải sau giờ bắt đầu.</div></div>'
-            : '<div class="col-md-6"><label class="form-label">Khung giờ</label><input type="text" class="form-control" name="timeSlot" value="' + escapeHtml(schedule.timeSlot || '') + '" placeholder="07:00-11:00" pattern="\\d{2}:\\d{2}-\\d{2}:\\d{2}" required ' + (finalStatus ? 'disabled' : '') + '></div>';
+            : '<div class="col-md-6"><label class="form-label">Khung giờ</label><select class="form-select" name="timeSlot" ' + (finalStatus ? 'disabled' : '') + '>'
+            + '<option value="07:00-11:30"' + (schedule.timeSlot === '07:00-11:30' ? ' selected' : '') + '>Ca sáng (07:00 - 11:30)</option>'
+            + '<option value="13:30-17:30"' + (schedule.timeSlot === '13:30-17:30' ? ' selected' : '') + '>Ca chiều (13:30 - 17:30)</option>'
+            + '</select></div>';
 
         const departmentControl = '<input type="hidden" name="department" value="' + escapeHtml(schedule.department || 'Xét nghiệm') + '">';
         const areaControl = '<input type="hidden" name="workArea" value="' + escapeHtml(schedule.workArea || '') + '">';

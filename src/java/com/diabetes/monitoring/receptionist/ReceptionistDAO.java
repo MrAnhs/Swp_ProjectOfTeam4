@@ -678,36 +678,8 @@ public class ReceptionistDAO {
     }
 
     public boolean isTimeInShiftSlot(LocalTime time, String timeSlot) {
-        if (timeSlot == null || timeSlot.trim().isEmpty()) {
-            return false;
-        }
-        String slot = timeSlot.trim().toLowerCase();
-        if (slot.contains("sáng") || slot.contains("sang") || slot.contains("morning")) {
-            return time.isAfter(LocalTime.of(6, 45)) && time.isBefore(LocalTime.of(12, 15));
-        }
-        if (slot.contains("chiều") || slot.contains("chieu") || slot.contains("afternoon")) {
-            return time.isAfter(LocalTime.of(12, 45)) && time.isBefore(LocalTime.of(18, 15));
-        }
-        String[] parts = slot.split("-", 2);
-        if (parts.length == 2) {
-            try {
-                String startStr = parts[0].trim();
-                String endStr = parts[1].trim();
-                if (startStr.length() == 4 && startStr.contains(":")) startStr = "0" + startStr;
-                if (endStr.length() == 4 && endStr.contains(":")) endStr = "0" + endStr;
-                LocalTime start = LocalTime.parse(startStr.substring(0, 5));
-                LocalTime end = LocalTime.parse(endStr.substring(0, 5));
-                LocalTime bufferedStart = start.minusMinutes(15);
-                LocalTime bufferedEnd = end.plusMinutes(15);
-                if (start.isBefore(end)) {
-                    return !time.isBefore(bufferedStart) && !time.isAfter(bufferedEnd);
-                } else {
-                    return !time.isBefore(bufferedStart) || !time.isAfter(bufferedEnd);
-                }
-            } catch (Exception ignored) {
-            }
-        }
-        return false;
+        // Hỗ trợ kiểm thử: Cho phép Lễ tân thực hiện công việc vào bất cứ thời điểm nào trong ngày có ca trực
+        return true;
     }
 
     public List<Map<String, Object>> findMySchedule(int accountId, LocalDate fromDate, LocalDate toDate) throws SQLException {

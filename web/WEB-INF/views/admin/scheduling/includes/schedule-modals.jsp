@@ -203,7 +203,10 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Khung giờ</label>
-                                <input class="form-control" name="timeSlot" placeholder="07:00-11:00" required>
+                                <select class="form-select" name="timeSlot" required>
+                                    <option value="07:00-11:30">Ca sáng (07:00 - 11:30)</option>
+                                    <option value="13:30-17:30">Ca chiều (13:30 - 17:30)</option>
+                                </select>
                             </div>
                             <input type="hidden" name="department" value="Tiếp nhận">
                             <input type="hidden" name="workArea" value="">
