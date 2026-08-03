@@ -1884,8 +1884,13 @@ public class HealthRecordDAO {
             boolean canView,
             Timestamp revisitDate) throws SQLException {
 
-        String lockSql = "SELECT patient_id, status FROM Healthy_Record WITH (UPDLOCK, ROWLOCK) "
-                + "WHERE health_record_id = ? AND doctor_id = ?";
+        String lockSql = "SELECT r.patient_id, r.status FROM Healthy_Record r WITH (UPDLOCK, ROWLOCK) "
+                + "LEFT JOIN Medical_record mr ON mr.health_record_id = r.health_record_id "
+                + "LEFT JOIN Appointment a ON a.appointment_id = mr.appointment_id "
+                + "LEFT JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
+                + "WHERE r.health_record_id = ? AND ("
+                + "r.doctor_id = ? OR mr.doctor_id = ? OR ds.doctor_id = ? OR EXISTS (SELECT 1 FROM Record_Transfer_History h WHERE h.health_record_id = r.health_record_id AND h.to_doctor_id = ?)"
+                + ")";
         String existsSql = "SELECT COUNT(*) FROM Medical_record WHERE health_record_id = ?";
         String insertSql = "INSERT INTO Medical_record "
                 + "(patient_id, doctor_id, final_diagnosis, doctor_note, health_record_id, "
@@ -1893,15 +1898,12 @@ public class HealthRecordDAO {
         String updateSql = "UPDATE Medical_record SET doctor_id = ?, patient_id = ?, "
                 + "doctor_note = ?, final_diagnosis = ?, result_visibility = ?, "
                 + "revisit_date = ?, processed_at = GETDATE() WHERE health_record_id = ?";
-        String statusSql = "UPDATE Healthy_Record SET status = 'Completed' "
-                + "WHERE health_record_id = ? AND doctor_id = ? "
-                + "AND status IN ('Accepted', 'AI_Processed', 'Editing', 'Completed')";
+        String statusSql = "UPDATE Healthy_Record SET status = 'Completed', doctor_id = ? "
+                + "WHERE health_record_id = ? AND (status IS NULL OR status NOT IN ('Cancelled'))";
         String appointmentStatusSql = "UPDATE a SET a.status = 'Completed' "
                 + "FROM Appointment a "
                 + "JOIN Medical_record mr ON mr.appointment_id = a.appointment_id "
-                + "INNER JOIN Doctor_Schedule ds ON ds.schedule_id = a.schedule_id "
-                + "WHERE mr.health_record_id = ? AND ds.doctor_id = ? "
-                + "AND a.status = 'In_Progress'";
+                + "WHERE mr.health_record_id = ?";
 
         try (Connection conn = DatabaseConnection.getConnection()) {
             conn.setAutoCommit(false);
@@ -1911,20 +1913,20 @@ public class HealthRecordDAO {
                 try (PreparedStatement ps = conn.prepareStatement(lockSql)) {
                     ps.setInt(1, healthRecordId);
                     ps.setInt(2, doctorId);
+                    ps.setInt(3, doctorId);
+                    ps.setInt(4, doctorId);
+                    ps.setInt(5, doctorId);
                     try (ResultSet rs = ps.executeQuery()) {
                         if (!rs.next()) {
-                            throw new SQLException("Ho so khong thuoc bac si hien tai");
+                            throw new SQLException("Hồ sơ không thuộc quyền quản lý của bác sĩ hiện tại");
                         }
                         patientId = rs.getInt("patient_id");
                         currentStatus = rs.getString("status");
                     }
                 }
 
-                if (!"Accepted".equals(currentStatus)
-                        && !"AI_Processed".equals(currentStatus)
-                        && !"Editing".equals(currentStatus)
-                        && !"Completed".equals(currentStatus)) {
-                    throw new SQLException("Ho so khong o trang thai cho phep chinh sua");
+                if ("Cancelled".equalsIgnoreCase(currentStatus)) {
+                    throw new SQLException("Hồ sơ đã bị hủy, không thể chỉnh sửa");
                 }
 
                 boolean exists;
@@ -1961,23 +1963,17 @@ public class HealthRecordDAO {
                             ps.setNull(7, java.sql.Types.TIMESTAMP);
                         }
                     }
-                    if (ps.executeUpdate() != 1) {
-                        throw new SQLException("Khong the luu Medical_record");
-                    }
+                    ps.executeUpdate();
                 }
 
                 try (PreparedStatement ps = conn.prepareStatement(statusSql)) {
-                    ps.setInt(1, healthRecordId);
-                    ps.setInt(2, doctorId);
-                    if (ps.executeUpdate() != 1) {
-                        throw new SQLException("Trang thai ho so da thay doi");
-                    }
+                    ps.setInt(1, doctorId);
+                    ps.setInt(2, healthRecordId);
+                    ps.executeUpdate();
                 }
 
-                try (PreparedStatement ps =
-                        conn.prepareStatement(appointmentStatusSql)) {
+                try (PreparedStatement ps = conn.prepareStatement(appointmentStatusSql)) {
                     ps.setInt(1, healthRecordId);
-                    ps.setInt(2, doctorId);
                     ps.executeUpdate();
                 }
 
