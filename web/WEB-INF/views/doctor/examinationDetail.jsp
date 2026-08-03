@@ -89,8 +89,8 @@
     </style>
 </head>
 <body class="doctor-app">
-<c:set var="canEditDiagnosis" value="${record.status == 'Accepted' || record.status == 'AI_Processed' || record.status == 'Editing' || record.status == 'Completed'}"/>
-<c:set var="canRunAI" value="${record.status == 'Accepted' || record.status == 'AI_Processed' || record.status == 'Editing' || record.status == 'Completed'}"/>
+<c:set var="canEditDiagnosis" value="${empty record.status or record.status != 'Cancelled'}"/>
+<c:set var="canRunAI" value="${empty record.status or record.status != 'Cancelled'}"/>
 <c:set var="hasAIResult" value="${record.status == 'AI_Processed' || record.status == 'Editing' || record.status == 'Completed'}"/>
 <c:set var="isDetailedStage" value="${hasCompletedLaboratoryRequest || hasAIResult}"/>
 
@@ -329,13 +329,7 @@
                     <label class="form-check-label" for="canView">Cho phép bệnh nhân xem kết quả</label>
                 </div>
                 <c:if test="${canEditDiagnosis}">
-                    <c:if test="${hasPendingPayment}">
-                        <div class="alert alert-danger py-2 px-3 small mb-3 border-0 d-flex align-items-center gap-2" style="background: rgba(220, 53, 69, 0.1); color: #dc3545; border-radius: 8px;">
-                            <i class="bi bi-exclamation-circle-fill"></i>
-                            <span>Bệnh nhân chưa thanh toán xét nghiệm bổ sung. Bạn không thể hoàn thành hồ sơ lúc này.</span>
-                        </div>
-                    </c:if>
-                    <button class="btn btn-doctor w-100" type="button" onclick="saveNotes('${record.healthRecordId}')" ${hasPendingPayment ? 'disabled' : ''}>
+                    <button class="btn btn-doctor w-100" type="button" onclick="saveNotes('${record.healthRecordId}')">
                         <i class="bi bi-save me-1"></i> Lưu và hoàn thành
                     </button>
                 </c:if>
@@ -448,6 +442,11 @@ function saveVitals(recordId) {
 }
 
 function saveNotes(recordId) {
+    if (!recordId || recordId === "undefined" || recordId === "null" || recordId === "0") {
+        alert("Không tìm thấy mã hồ sơ. Vui lòng tải lại trang.");
+        return;
+    }
+
     const revisitInput = document.getElementById("revisitDate");
     const notesInput = document.getElementById("doctorNotes");
     const diagnosisInput = document.getElementById("finalDiagnosis");
