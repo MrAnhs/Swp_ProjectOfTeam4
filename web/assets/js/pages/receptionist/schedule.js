@@ -206,11 +206,11 @@ document.addEventListener('DOMContentLoaded', function () {
                         const roomName = item.roomName ? item.roomName : (item.roomId ? ('Phòng ' + item.roomId) : 'Quầy lễ tân');
 
                         cellContent += `
-                            <div class="shift-card ${statusClass} text-start p-2 rounded" style="font-size: 0.76rem; background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(255,255,255,0.08);">
-                                <div class="shift-time-head fw-bold mb-1" style="color: #2ab5a3;"><i class="bi bi-clock me-1"></i>${item.timeSlot}</div>
-                                <div class="shift-room-name text-white-50 mb-1"><i class="bi bi-door-open me-1"></i>${roomName}</div>
-                                <div class="shift-staff-name text-white-50 mb-1"><i class="bi bi-person me-1"></i>${item.fullName || 'Lễ tân'}</div>
-                                <div class="mt-1">Trạng thái: <span class="badge ${badgeClass}">${statusText}</span></div>
+                            <div class="shift-card ${statusClass} text-start rounded" style="font-size: 0.68rem; background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(255,255,255,0.08); padding: 6px 8px !important; max-width: 160px; margin: 0 auto;">
+                                <div class="shift-time-head fw-bold" style="color: #2ab5a3; font-size: 0.7rem; margin-bottom: 2px;"><i class="bi bi-clock me-1"></i>${item.timeSlot}</div>
+                                <div class="shift-room-name text-white-50" style="margin-bottom: 2px; font-size: 0.65rem;"><i class="bi bi-door-open me-1"></i>${roomName}</div>
+                                <div class="shift-staff-name text-white-50" style="margin-bottom: 4px; font-size: 0.65rem;"><i class="bi bi-person me-1"></i>${item.fullName || 'Lễ tân'}</div>
+                                <div class="shift-status-badge"><span class="badge ${badgeClass}" style="padding: 2px 5px; font-size: 0.58rem; font-weight: 600;">${statusText}</span></div>
                             </div>
                         `;
                     });
