@@ -592,6 +592,51 @@ select.form-select.invoice-pay-method option {
     padding: 8px !important;
 }
 
+/* Custom styling for Doctor Visit Type select dropdown */
+select.form-select.doctor-visit-type {
+    display: inline-block !important;
+    width: 130px !important;
+    height: 32px !important;
+    padding: 2px 28px 2px 10px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: #ffffff !important;
+    background-color: #1e293b !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%2310b981' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 8px center !important;
+    background-size: 11px 9px !important;
+    border: 1px solid #475569 !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    outline: none !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    line-height: 1.5 !important;
+    box-shadow: none !important;
+}
+
+select.form-select.doctor-visit-type:hover {
+    border-color: #10b981 !important;
+    background-color: #263346 !important;
+    color: #ffffff !important;
+}
+
+select.form-select.doctor-visit-type:focus {
+    border-color: #34d399 !important;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25) !important;
+    color: #ffffff !important;
+}
+
+select.form-select.doctor-visit-type option {
+    background-color: #1e293b !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    padding: 8px !important;
+}
+
 /* Receptionist Doctor Card Custom Dark Theme */
 .receptionist-page .doctor-booking-card {
     background-color: #1e293b;
