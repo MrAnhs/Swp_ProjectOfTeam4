@@ -319,7 +319,7 @@
             scheduleArea.append(createSessionGroup('Buổi chiều', 'bi bi-sunset', doctor, afternoonSlots, card));
         }
 
-        // Card Footer with Action Controls (Image 3)
+        // Phần chân thẻ (Footer) chứa các nút hành động đăng ký khám
         const footer = document.createElement('div');
         footer.className = 'doctor-booking-card__footer d-flex align-items-center justify-content-between flex-wrap gap-2 pt-3 border-top mt-3';
 
@@ -375,7 +375,7 @@
             return;
         }
 
-        // Revisit Client-side Validation
+        // Kiểm tra hợp lệ ca tái khám phía Client
         if (visitType === 'Revisit') {
             const selectedDate = filterDate ? filterDate.value : getLocalDateString();
             const hasRevisitOnDate = currentPatientRevisitDates.includes(selectedDate);
@@ -435,7 +435,7 @@
 
         doctorCardsList.innerHTML = '<div class="text-center py-4 col-12 text-muted"><div class="spinner-border text-primary mb-2" role="status"></div> <div>Đang tải danh sách bác sĩ...</div></div>';
 
-        // 1. Filter candidate doctors by department and name search
+        // 1. Lọc danh sách bác sĩ tiềm năng theo chuyên khoa và từ khóa tên bác sĩ
         const candidateDocs = allActiveDoctors.filter(function (doc) {
             let docDep = (doc.department || '').toLowerCase().trim();
             while (docDep.startsWith('khoa ')) docDep = docDep.substring(5).trim();
@@ -445,13 +445,13 @@
             return matchDep && matchName;
         });
 
-        // 2. Concurrently fetch & filter available schedules for candidate doctors
+        // 2. Tải và lọc đồng thời danh sách lịch trực khả dụng của các bác sĩ tiềm năng
         const doctorSchedulesResults = await Promise.all(candidateDocs.map(async function (doctor) {
             try {
                 const data = await utils.requestJson(utils.apiBase() + '/schedules?doctorId=' + encodeURIComponent(doctor.doctorId));
                 let slots = data.slots || [];
 
-                // Filter slots by date and exclude passed time slots
+                // Lọc các slot theo ngày khám và loại bỏ những slot đã quá giờ khám thực tế
                 if (selectedDate) {
                     slots = slots.filter(function (s) {
                         const dateMatch = !s.workDate || s.workDate === selectedDate;
@@ -460,7 +460,7 @@
                     });
                 }
 
-                // Filter slots by session
+                // Lọc các slot trực theo ca Sáng hoặc Chiều
                 if (selectedSession !== 'all') {
                     slots = slots.filter(function (s) {
                         const isMorning = isMorningSlot(s.timeSlot);
@@ -474,12 +474,12 @@
             }
         }));
 
-        // 3. Filter out doctors who have NO available slots for the selected date & session
+        // 3. Loại bỏ những bác sĩ KHÔNG có ca khám nào còn trống trong ngày/ca đã lọc
         const validDoctorCards = doctorSchedulesResults.filter(function (item) {
             return item.slots && item.slots.length > 0;
         });
 
-        // 4. Update Count Badge & Description accurately
+        // 4. Cập nhật số lượng bác sĩ tìm thấy và nhãn mô tả bộ lọc
         const count = validDoctorCards.length;
         doctorCountElem.innerHTML = '<i class="bi bi-people me-1"></i> Tìm thấy ' + count + ' bác sĩ có ca khám phù hợp';
 
@@ -487,7 +487,7 @@
         desc += ', lịch còn trống ngày ' + formatDateDisplay(selectedDate) + ' theo bộ lọc đã chọn.';
         filterDescElem.textContent = desc;
 
-        // 5. Render Doctor Cards or Empty State Banner
+        // 5. Render danh sách thẻ thông tin bác sĩ hoặc giao diện trống (Không tìm thấy ca)
         doctorCardsList.replaceChildren();
 
         if (count === 0) {
@@ -538,7 +538,7 @@
         setDefaultDate();
         initDoctors();
 
-        // Auto lookup if patientPhone is passed in URL query
+        // Tự động tìm kiếm nếu tham số SĐT được truyền trên thanh địa chỉ URL (Query string)
         const urlParams = new URLSearchParams(window.location.search);
         const autoPhone = urlParams.get('patientPhone') || urlParams.get('phone');
         if (autoPhone && autoPhone.trim()) {
